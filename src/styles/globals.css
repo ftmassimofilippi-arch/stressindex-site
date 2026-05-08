@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --teal: #4FA39A;
+    --teal-dark: #2E746C;
+    --teal-light: #E8F4F3;
+    --anthracite: #2F343A;
+    --background: #F6F7F8;
+    --surface-white: #FFFFFF;
+    --border: #E2E6EA;
+    --text-muted: #6B7280;
+    --success: #22C55E;
+    --error: #EF4444;
+    --warning: #F59E0B;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface text-anthracite;
+  }
+
+  ::selection {
+    background-color: rgba(79, 163, 154, 0.2);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 
+           bg-teal text-white font-medium rounded-xl
+           transition-all duration-200
+           hover:bg-teal-dark hover:shadow-card-hover
+           focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-teal disabled:hover:shadow-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 
+           bg-white text-anthracite font-medium rounded-xl
+           border border-surface-border
+           transition-all duration-200
+           hover:border-teal hover:text-teal hover:shadow-card-hover
+           focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 
+           bg-white border border-surface-border rounded-xl
+           text-anthracite placeholder:text-anthracite-lighter
+           transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal
+           disabled:bg-surface disabled:cursor-not-allowed;
+  }
+
+  .input-label {
+    @apply block text-sm font-medium text-anthracite mb-1.5;
+  }
+
+  .input-error {
+    @apply text-sm text-red-500 mt-1;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl border border-surface-border shadow-card;
+  }
+}
+
+/* Smooth fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Staggered children animation */
+.stagger-children > * {
+  opacity: 0;
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(7) { animation-delay: 0.35s; }
+.stagger-children > *:nth-child(8) { animation-delay: 0.4s; }
