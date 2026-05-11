@@ -1,40 +1,723 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
-export default function Home() {
+export const metadata: Metadata = {
+  title: 'Stress Index | Software HRV Professionale per Fisioterapisti e Osteopati',
+  description:
+    'Misura lo stress dei tuoi clienti in 10 minuti. Software HRV professionale per fisioterapisti, osteopati e medici sportivi. 4 indici clinici, report PDF, 15 giorni gratis.',
+  openGraph: {
+    title: 'Stress Index | Software HRV Professionale per Fisioterapisti e Osteopati',
+    description:
+      'Misura lo stress dei tuoi clienti in 10 minuti. 4 indici clinici, report PDF, 15 giorni gratis.',
+    url: 'https://stressindex.io',
+    siteName: 'Stress Index',
+    locale: 'it_IT',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Stress Index | Software HRV Professionale per Fisioterapisti e Osteopati',
+    description:
+      'Misura lo stress dei tuoi clienti in 10 minuti. 4 indici clinici, report PDF, 15 giorni gratis.',
+  },
+}
+
+function Logo({ light = false }: { light?: boolean }) {
   return (
-    <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-4">
-      <div className="text-center max-w-lg">
-        {/* Logo placeholder — sostituire con SVG reale */}
-        <div className="mb-8">
-          <div className="inline-flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3.5 12H6.5L9 6L12 18L15 9L17.5 12H20.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+    <Link href="/" className="inline-flex items-center gap-2.5 group" aria-label="Stress Index — Home">
+      <div className="w-9 h-9 rounded-xl bg-teal flex items-center justify-center shadow-card">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path
+            d="M3.5 12H6.5L9 6L12 18L15 9L17.5 12H20.5"
+            stroke="white"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+      <span className={`text-[1.35rem] font-semibold tracking-tight ${light ? 'text-white' : 'text-anthracite'}`}>
+        Stress<span className="text-teal"> Index</span>
+      </span>
+    </Link>
+  )
+}
+
+function Navbar() {
+  return (
+    <header className="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-white/75 border-b border-surface-border">
+      <div className="max-w-7xl mx-auto px-5 md:px-8 h-16 flex items-center justify-between">
+        <Logo />
+        <nav className="hidden md:flex items-center gap-8 text-[15px] text-anthracite-light">
+          <a href="#come-funziona" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
+            Come funziona
+          </a>
+          <a href="#benefici" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
+            Funzionalità
+          </a>
+          <a href="#prezzi" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
+            Prezzi
+          </a>
+          <a href="#faq" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
+            FAQ
+          </a>
+        </nav>
+        <Link
+          href="/registrazione"
+          className="inline-flex items-center justify-center px-4 py-2 md:px-5 md:py-2.5 bg-teal text-white text-sm font-medium rounded-xl shadow-card hover:bg-teal-dark hover:shadow-card-hover transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
+        >
+          Inizia gratis
+        </Link>
+      </div>
+    </header>
+  )
+}
+
+function HeroMockup() {
+  const scores = [
+    { label: 'Stress', value: 72, barClass: 'bg-[#E85D4A]' },
+    { label: 'Recupero', value: 68, barClass: 'bg-teal' },
+    { label: 'Equilibrio', value: 55, barClass: 'bg-[#F59E0B]' },
+    { label: 'Energia', value: 63, barClass: 'bg-[#6366F1]' },
+  ]
+  return (
+    <div className="relative mx-auto w-full max-w-[480px]">
+      <div className="rounded-[28px] bg-anthracite p-3 shadow-elevated">
+        <div className="rounded-[20px] bg-surface overflow-hidden">
+          <div className="bg-teal text-white px-5 py-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-white/80" />
+              <span className="text-[13px] font-medium tracking-tight">Stress Index · Misura in corso</span>
             </div>
-            <span className="text-2xl font-semibold text-anthracite tracking-tight">
-              Stress Index
+            <span className="text-[12px] font-mono opacity-80">08:32</span>
+          </div>
+
+          <div className="p-4 grid grid-cols-2 gap-3">
+            {scores.map((s) => (
+              <div key={s.label} className="bg-white rounded-xl p-3.5 shadow-card border border-surface-border">
+                <div className="text-[11px] uppercase tracking-wider text-anthracite-lighter font-medium">{s.label}</div>
+                <div className="mt-1 flex items-baseline gap-1">
+                  <span className="text-3xl font-semibold text-anthracite tabular-nums">{s.value}</span>
+                  <span className="text-xs text-anthracite-lighter">/100</span>
+                </div>
+                <div className="mt-2 h-1.5 rounded-full bg-surface-border overflow-hidden">
+                  <div className={`h-full rounded-full ${s.barClass}`} style={{ width: `${s.value}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mx-4 mb-4 rounded-xl bg-white border border-surface-border px-3.5 py-3 flex items-center gap-3 shadow-card">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-60" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
             </span>
+            <span className="text-[12px] font-medium text-anthracite">Polar H10</span>
+            <span className="text-[12px] text-anthracite-lighter">·</span>
+            <span className="text-[12px] text-anthracite-lighter tabular-nums">65 bpm · ECG live</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="absolute -inset-6 -z-10 bg-teal/10 blur-3xl rounded-[40px]" aria-hidden="true" />
+    </div>
+  )
+}
+
+function Hero() {
+  return (
+    <section className="pt-28 md:pt-32 pb-16 md:pb-24 px-5 md:px-8">
+      <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+        <div>
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium">
+            Software HRV per Professionisti del Benessere
+          </span>
+          <h1 className="mt-5 font-serif text-[36px] md:text-[54px] leading-[1.05] tracking-tight text-anthracite">
+            Il tuo cliente è stressato.{' '}
+            <em className="italic text-teal">Adesso puoi dimostrarlo.</em>
+          </h1>
+          <p className="mt-5 text-[17px] md:text-lg text-anthracite-light leading-relaxed max-w-xl">
+            Stress Index misura il sistema nervoso autonomo in 10 minuti e ti consegna 4 indici clinici
+            pronti da usare in seduta. Basta valutazioni a occhio. Basta spiegare senza dati.
+          </p>
+          <div className="mt-7 flex flex-wrap items-center gap-4">
+            <Link
+              href="/registrazione"
+              className="inline-flex items-center justify-center px-6 py-3.5 bg-teal text-white font-medium rounded-xl shadow-card hover:bg-teal-dark hover:shadow-card-hover transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
+            >
+              Prova gratis 15 giorni
+              <span className="ml-2" aria-hidden="true">→</span>
+            </Link>
+            <a
+              href="#come-funziona"
+              className="inline-flex items-center text-anthracite font-medium hover:text-teal transition-colors focus:outline-none focus-visible:text-teal"
+            >
+              Guarda come funziona
+              <span className="ml-1" aria-hidden="true">↓</span>
+            </a>
+          </div>
+          <p className="mt-4 text-sm text-anthracite-lighter">
+            Carta di credito richiesta · Nessun addebito per 15 giorni · Disdici quando vuoi
+          </p>
+        </div>
+
+        <div className="md:pl-4">
+          <HeroMockup />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function TrustBar() {
+  const items = [
+    { icon: '🔬', text: '24 parametri HRV' },
+    { icon: '📱', text: 'Android e iOS' },
+    { icon: '🇪🇺', text: 'Server EU · GDPR' },
+    { icon: '📄', text: 'Report PDF clinico' },
+    { icon: '🩺', text: 'Per professionisti della salute' },
+  ]
+  return (
+    <section className="bg-surface border-y border-surface-border py-5 px-5 md:px-8">
+      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[14px] text-anthracite-light">
+        {items.map((it) => (
+          <div key={it.text} className="flex items-center gap-2">
+            <span aria-hidden="true">{it.icon}</span>
+            <span>{it.text}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function Problem() {
+  const cards = [
+    {
+      icon: '🎯',
+      title: 'Valuto tutto clinicamente',
+      body:
+        "Funziona. Finché il cliente non ti chiede perché non migliora, o finché un collega non gli porta un report con i dati. L'impressione clinica non si difende, i numeri sì.",
+    },
+    {
+      icon: '⏳',
+      title: 'Gli strumenti HRV esistono già',
+      body:
+        'Sì, esistono. Sono pensati per ricercatori, costano migliaia di euro, producono report incomprensibili e richiedono settimane di formazione. Non sono stati costruiti per il tuo studio.',
+    },
+    {
+      icon: '🔁',
+      title: 'Faccio vedere i miglioramenti al cliente',
+      body:
+        'Come? A parole? Il cliente vuole vedere il suo grafico che migliora nel tempo. Vuole il PDF da mostrare al medico. Vuole capire perché oggi si sente diverso da tre settimane fa.',
+    },
+  ]
+  return (
+    <section className="bg-anthracite text-white py-20 md:py-28 px-5 md:px-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="max-w-3xl">
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal/15 text-teal-light text-[13px] font-medium">
+            Il problema reale
+          </span>
+          <h2 className="mt-5 font-serif text-[32px] md:text-5xl leading-[1.1] tracking-tight">
+            Sai già che lo stress cambia tutto. <em className="italic text-teal">Ma riesci a misurarlo davvero?</em>
+          </h2>
+          <p className="mt-5 text-[17px] text-white/75 leading-relaxed">
+            Ogni giorno lavori con persone che dormono male, recuperano lentamente, si infortunano sempre
+            nello stesso periodo, non rispondono come dovrebbero al protocollo. Tu sai che dietro c&apos;è il
+            sistema nervoso. Ma non hai un numero da mostrare.
+          </p>
+        </div>
+
+        <div className="mt-12 grid md:grid-cols-3 gap-5">
+          {cards.map((c) => (
+            <div
+              key={c.title}
+              className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 md:p-7 hover:border-teal/40 hover:bg-white/[0.05] transition-colors"
+            >
+              <div className="text-2xl" aria-hidden="true">{c.icon}</div>
+              <h3 className="mt-4 text-lg font-semibold tracking-tight">{c.title}</h3>
+              <p className="mt-3 text-[15px] text-white/70 leading-relaxed">{c.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ScoreCard({
+  label,
+  value,
+  color,
+}: {
+  label: string
+  value: number
+  color: string
+}) {
+  return (
+    <div className="bg-white rounded-2xl p-5 shadow-card border border-surface-border">
+      <div className="text-[11px] uppercase tracking-wider text-anthracite-lighter font-medium">{label}</div>
+      <div className="mt-1.5 flex items-baseline gap-1">
+        <span className="text-4xl font-semibold text-anthracite tabular-nums">{value}</span>
+        <span className="text-sm text-anthracite-lighter">/100</span>
+      </div>
+      <div className="mt-3 h-2 rounded-full bg-surface-border overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${value}%`, backgroundColor: color }} />
+      </div>
+    </div>
+  )
+}
+
+function Solution() {
+  const features = [
+    {
+      title: 'Indice di Stress',
+      body:
+        'Sai esattamente quanto il simpatico sta dominando. Intervieni prima che il cliente arrivi al collasso, non dopo.',
+    },
+    {
+      title: 'Indice di Recupero',
+      body:
+        'Smetti di indovinare se è pronto per un carico maggiore. Il numero ti dice quando spingere e quando fermarsi.',
+    },
+    {
+      title: 'Indice di Equilibrio',
+      body:
+        "La firma del sistema nervoso autonomo. In un colpo d'occhio vedi se il bilanciamento simpatico-parasimpatico è dove deve essere.",
+    },
+    {
+      title: 'Indice di Energia',
+      body:
+        'Le riserve reali, non quelle percepite. Fondamentale per chi lavora su burnout, performance sportiva o gestione delle energie.',
+    },
+  ]
+  return (
+    <section className="py-20 md:py-28 px-5 md:px-8">
+      <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-14 md:gap-20 items-center">
+        <div>
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium">
+            La risposta
+          </span>
+          <h2 className="mt-5 font-serif text-[32px] md:text-5xl leading-[1.1] tracking-tight text-anthracite">
+            4 numeri. <em className="italic text-teal">Tutto quello che ti serve.</em>
+          </h2>
+          <p className="mt-5 text-[17px] text-anthracite-light leading-relaxed">
+            Stress Index elabora 24 parametri HRV e li traduce in 4 indici su scala 0-100.
+            Tu li leggi in un secondo. Il cliente li capisce senza spiegazioni.
+          </p>
+          <ul className="mt-8 space-y-5">
+            {features.map((f) => (
+              <li key={f.title} className="flex gap-4">
+                <span className="flex-shrink-0 w-6 h-6 rounded-md bg-teal flex items-center justify-center mt-0.5" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </span>
+                <div>
+                  <div className="font-semibold text-anthracite">{f.title}</div>
+                  <p className="mt-1 text-[15px] text-anthracite-light leading-relaxed">{f.body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="relative">
+          <div className="rounded-3xl bg-white border border-surface-border shadow-elevated p-6 md:p-7">
+            <div className="grid grid-cols-2 gap-4">
+              <ScoreCard label="Stress" value={72} color="#E85D4A" />
+              <ScoreCard label="Recupero" value={68} color="#4FA39A" />
+              <ScoreCard label="Equilibrio" value={55} color="#F59E0B" />
+              <ScoreCard label="Energia" value={63} color="#6366F1" />
+            </div>
+            <div className="mt-5 rounded-xl bg-surface border border-surface-border px-4 py-3.5">
+              <div className="text-[11px] uppercase tracking-wider text-anthracite-lighter font-medium">
+                Modulazione Infiammatoria
+              </div>
+              <div className="mt-1 text-[14px] text-anthracite leading-relaxed">
+                <span className="font-semibold">58/100</span> · Attività vagale nella norma per fascia demografica.
+                Consigliato monitoraggio settimanale.
+              </div>
+            </div>
+          </div>
+          <div className="absolute -inset-6 -z-10 bg-teal/10 blur-3xl rounded-[40px]" aria-hidden="true" />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function HowItWorks() {
+  const steps = [
+    {
+      num: '01',
+      icon: '🩺',
+      title: 'Collega la fascia',
+      body:
+        'Qualsiasi fascia cardio Bluetooth. Il Polar H10 è il riferimento per qualità ECG, ma funziona con molti altri sensori. Un minuto e sei pronto.',
+    },
+    {
+      num: '02',
+      icon: '⏱️',
+      title: 'Misura in 10 minuti',
+      body:
+        'Il cliente si siede, tu avvii la misurazione. Stress Index legge il segnale in tempo reale e filtra automaticamente gli artefatti. Zero configurazioni.',
+    },
+    {
+      num: '03',
+      icon: '📋',
+      title: 'Condividi il report',
+      body:
+        "PDF professionale con i 4 indici, i grafici clinici e l'analisi del sistema nervoso autonomo. Lo invii al cliente con un tap. Lo stampi. Lo archivi nel CRM.",
+    },
+  ]
+  return (
+    <section id="come-funziona" className="bg-surface py-20 md:py-28 px-5 md:px-8 scroll-mt-20">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto">
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium">
+            Semplicità operativa
+          </span>
+          <h2 className="mt-5 font-serif text-[32px] md:text-5xl leading-[1.1] tracking-tight text-anthracite">
+            Tre passi. <em className="italic text-teal">Poi hai il report.</em>
+          </h2>
+        </div>
+
+        <div className="mt-14 grid md:grid-cols-3 gap-6">
+          {steps.map((s) => (
+            <div
+              key={s.num}
+              className="relative bg-white rounded-2xl p-7 border border-surface-border shadow-card hover:shadow-card-hover transition-shadow"
+            >
+              <span className="absolute top-5 right-6 font-serif text-5xl text-teal-light leading-none select-none" aria-hidden="true">
+                {s.num}
+              </span>
+              <div className="text-3xl" aria-hidden="true">{s.icon}</div>
+              <h3 className="mt-5 text-xl font-semibold text-anthracite tracking-tight">{s.title}</h3>
+              <p className="mt-3 text-[15px] text-anthracite-light leading-relaxed">{s.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Benefits() {
+  const items = [
+    {
+      icon: '📱',
+      title: 'Funziona su tutto',
+      body:
+        'Android, iOS, tablet, smartphone. Bluetooth 4.0 o superiore. Portalo in studio, in palestra, in campo. Nessun hardware proprietario da comprare.',
+    },
+    {
+      icon: '👥',
+      title: 'I tuoi clienti, organizzati',
+      body:
+        "CRM integrato con anagrafica, storico misurazioni e confronto tra sessioni. Vedi l'evoluzione nel tempo e aggiusti il protocollo con dati alla mano.",
+    },
+    {
+      icon: '🇪🇺',
+      title: 'Privacy garantita per legge',
+      body:
+        "Server in Germania, GDPR compliant, consenso del cliente registrato automaticamente. I dati non escono dall'Europa. Mai.",
+    },
+    {
+      icon: '📊',
+      title: 'Scienza seria, linguaggio semplice',
+      body:
+        '24 parametri HRV su letteratura internazionale, normalizzazione demografica per età e sesso. Il rigore clinico che ti aspetti, senza la complessità che non ti serve.',
+    },
+  ]
+  return (
+    <section id="benefici" className="py-20 md:py-28 px-5 md:px-8 scroll-mt-20">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto">
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium">
+            Perché sceglierlo
+          </span>
+          <h2 className="mt-5 font-serif text-[32px] md:text-5xl leading-[1.1] tracking-tight text-anthracite">
+            Costruito per chi lavora <em className="italic text-teal">nel benessere reale.</em>
+          </h2>
+        </div>
+
+        <div className="mt-14 grid md:grid-cols-2 gap-6">
+          {items.map((b) => (
+            <div
+              key={b.title}
+              className="bg-white rounded-2xl p-7 border border-surface-border shadow-card hover:shadow-card-hover transition-shadow"
+            >
+              <div className="w-12 h-12 rounded-xl bg-teal-light flex items-center justify-center text-2xl" aria-hidden="true">
+                {b.icon}
+              </div>
+              <h3 className="mt-5 text-xl font-semibold text-anthracite tracking-tight">{b.title}</h3>
+              <p className="mt-3 text-[15px] text-anthracite-light leading-relaxed">{b.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Pricing() {
+  const features = [
+    'Clienti e misurazioni illimitati',
+    'Report PDF professionali illimitati',
+    'CRM clienti con storico completo',
+    'Export CSV dei dati',
+    'Android e iOS inclusi',
+    'Aggiornamenti automatici per sempre',
+    'Supporto prioritario via email',
+  ]
+  return (
+    <section id="prezzi" className="bg-surface py-20 md:py-28 px-5 md:px-8 scroll-mt-20">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto">
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium">
+            Prezzo trasparente
+          </span>
+          <h2 className="mt-5 font-serif text-[32px] md:text-5xl leading-[1.1] tracking-tight text-anthracite">
+            Un abbonamento. <em className="italic text-teal">Tutto incluso, per sempre.</em>
+          </h2>
+          <p className="mt-5 text-[17px] text-anthracite-light leading-relaxed">
+            Niente costi per cliente, niente report extra, niente sorprese. Paghi una cifra fissa ogni mese
+            e usi tutto senza limiti.
+          </p>
+        </div>
+
+        <div className="mt-14 mx-auto max-w-[620px] bg-white rounded-3xl border-2 border-teal shadow-elevated p-8 md:p-10 relative">
+          <div className="flex justify-center">
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-teal text-white text-[13px] font-medium">
+              <span aria-hidden="true">⭐</span> Offerta Founding Members · Primi 200 iscritti
+            </span>
+          </div>
+
+          <div className="mt-7 text-center">
+            <h3 className="font-serif text-3xl md:text-4xl text-anthracite tracking-tight">Stress Index Pro</h3>
+            <p className="mt-2 text-anthracite-light">
+              Per fisioterapisti, osteopati, medici sportivi e coach del benessere
+            </p>
+          </div>
+
+          <div className="mt-7 text-center">
+            <div className="font-serif text-5xl md:text-6xl text-anthracite tracking-tight">
+              € 49,90
+              <span className="text-xl md:text-2xl text-anthracite-light font-sans font-normal"> /mese</span>
+            </div>
+            <p className="mt-3 text-sm text-anthracite-lighter">
+              Prezzo standard <s>69,90€/mese</s> · Founding Members 49,90€/mese per i primi 200
+            </p>
+          </div>
+
+          <div className="mt-6 rounded-xl bg-teal-light text-teal-dark px-4 py-3.5 text-[14px] leading-relaxed text-center">
+            <span aria-hidden="true">🎯</span> Sei tra i primi 200 iscritti? Il prezzo di{' '}
+            <strong>49,90€/mese</strong> è bloccato per sempre.
+          </div>
+
+          <ul className="mt-7 space-y-3">
+            {features.map((f) => (
+              <li key={f} className="flex items-start gap-3 text-[15px] text-anthracite">
+                <span className="flex-shrink-0 w-5 h-5 rounded-md bg-teal flex items-center justify-center mt-0.5" aria-hidden="true">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </span>
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+
+          <Link
+            href="/registrazione"
+            className="mt-8 w-full inline-flex items-center justify-center px-6 py-4 bg-teal text-white font-medium rounded-xl shadow-card hover:bg-teal-dark hover:shadow-card-hover transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
+          >
+            Inizia 15 giorni gratis
+            <span className="ml-2" aria-hidden="true">→</span>
+          </Link>
+
+          <p className="mt-4 text-center text-sm text-anthracite-lighter">
+            Carta di credito richiesta · Nessun addebito per 15 giorni · Poi 49,90€/mese · Disdici quando vuoi
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Faq() {
+  const items = [
+    {
+      q: 'Ho bisogno del Polar H10?',
+      a: 'No. Funziona con qualsiasi fascia cardio Bluetooth. Il Polar H10 è quello che consigliamo per la qualità del segnale ECG, specialmente su Android, ma non è obbligatorio.',
+    },
+    {
+      q: 'Funziona su iPhone?',
+      a: 'Sì. Android e iOS, tablet e smartphone. Qualsiasi dispositivo con Bluetooth 4.0.',
+    },
+    {
+      q: 'I dati dei miei clienti sono al sicuro?',
+      a: "Server in Germania, GDPR compliant. I dati non vengono mai condivisi con terzi. Il consenso del cliente viene registrato automaticamente dall'app ad ogni misurazione.",
+    },
+    {
+      q: 'Posso usarlo senza internet?',
+      a: 'La misurazione è completamente offline. I dati si sincronizzano automaticamente quando torni online. Non perdi nessuna sessione.',
+    },
+    {
+      q: 'Cosa succede dopo i 15 giorni?',
+      a: "Ti arriva una notifica prima della scadenza. Se vuoi continuare, l'abbonamento parte in automatico. Se no, annulli e non ti addebitiamo niente. Zero burocrazia.",
+    },
+    {
+      q: 'Il prezzo Founding Members dura quanto?',
+      a: 'Per sempre. I primi 200 professionisti che si iscrivono bloccano 49,90€/mese a vita, anche quando il prezzo standard salirà a 69,90€/mese.',
+    },
+  ]
+  return (
+    <section id="faq" className="py-20 md:py-28 px-5 md:px-8 scroll-mt-20">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto">
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium">
+            Domande frequenti
+          </span>
+          <h2 className="mt-5 font-serif text-[32px] md:text-5xl leading-[1.1] tracking-tight text-anthracite">
+            Tutto chiaro, <em className="italic text-teal">prima di iniziare.</em>
+          </h2>
+        </div>
+
+        <div className="mt-12 max-w-[720px] mx-auto space-y-3">
+          {items.map((it, i) => (
+            <details
+              key={i}
+              className="group bg-white rounded-2xl border border-surface-border shadow-card open:shadow-card-hover transition-shadow"
+            >
+              <summary className="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 font-medium text-anthracite focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 rounded-2xl">
+                <span>{it.q}</span>
+                <span
+                  className="flex-shrink-0 w-7 h-7 rounded-full bg-teal-light text-teal-dark flex items-center justify-center transition-transform group-open:rotate-45"
+                  aria-hidden="true"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </span>
+              </summary>
+              <div className="px-6 pb-5 -mt-1 text-[15px] text-anthracite-light leading-relaxed">
+                {it.a}
+              </div>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function FinalCta() {
+  return (
+    <section className="bg-teal text-white py-20 md:py-28 px-5 md:px-8">
+      <div className="max-w-3xl mx-auto text-center">
+        <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/15 text-white text-[13px] font-medium">
+          Inizia oggi
+        </span>
+        <h2 className="mt-5 font-serif text-[32px] md:text-5xl leading-[1.1] tracking-tight">
+          Il prossimo cliente che entra, <em className="italic">misuralo davvero.</em>
+        </h2>
+        <p className="mt-5 text-lg text-white/85 leading-relaxed">
+          15 giorni gratis. Nessun vincolo. Smetti quando vuoi.
+        </p>
+        <div className="mt-8 flex justify-center">
+          <Link
+            href="/registrazione"
+            className="inline-flex items-center justify-center px-8 py-4 bg-white text-teal-dark font-semibold rounded-xl shadow-elevated hover:bg-surface transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-teal text-lg"
+          >
+            Prova gratis 15 giorni
+            <span className="ml-2" aria-hidden="true">→</span>
+          </Link>
+        </div>
+        <p className="mt-4 text-sm text-white/75">
+          Carta di credito richiesta · Poi 49,90€/mese · Disdici in qualsiasi momento
+        </p>
+      </div>
+    </section>
+  )
+}
+
+function Footer() {
+  return (
+    <footer className="bg-anthracite text-white px-5 md:px-8 pt-16 pb-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr] gap-10 md:gap-12">
+          <div>
+            <Logo light />
+            <p className="mt-5 text-[14px] text-white/65 leading-relaxed max-w-sm">
+              Software HRV professionale per fisioterapisti, osteopati, medici sportivi e coach del benessere.
+              Misura lo stress del sistema nervoso autonomo in 10 minuti.
+            </p>
+          </div>
+
+          <div>
+            <h4 className="text-[13px] uppercase tracking-wider text-white/50 font-semibold">Prodotto</h4>
+            <ul className="mt-4 space-y-2.5 text-[14px]">
+              <li><a className="text-white/80 hover:text-teal transition-colors" href="#come-funziona">Come funziona</a></li>
+              <li><a className="text-white/80 hover:text-teal transition-colors" href="#benefici">Funzionalità</a></li>
+              <li><a className="text-white/80 hover:text-teal transition-colors" href="#prezzi">Prezzi</a></li>
+              <li><Link className="text-white/80 hover:text-teal transition-colors" href="/registrazione">Inizia gratis</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-[13px] uppercase tracking-wider text-white/50 font-semibold">Supporto</h4>
+            <ul className="mt-4 space-y-2.5 text-[14px]">
+              <li><a className="text-white/80 hover:text-teal transition-colors" href="#faq">FAQ</a></li>
+              <li><a className="text-white/80 hover:text-teal transition-colors" href="mailto:info@stressindex.io">Contattaci</a></li>
+              <li><a className="text-white/80 hover:text-teal transition-colors" href="#come-funziona">Guida utente</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-[13px] uppercase tracking-wider text-white/50 font-semibold">Legale</h4>
+            <ul className="mt-4 space-y-2.5 text-[14px]">
+              <li><a className="text-white/80 hover:text-teal transition-colors" href="/privacy">Privacy Policy</a></li>
+              <li><a className="text-white/80 hover:text-teal transition-colors" href="/termini">Termini di Servizio</a></li>
+              <li><a className="text-white/80 hover:text-teal transition-colors" href="/cookie">Cookie Policy</a></li>
+            </ul>
           </div>
         </div>
 
-        <h1 className="text-3xl sm:text-4xl font-semibold text-anthracite mb-4 tracking-tight">
-          Analisi HRV Professionale
-        </h1>
-        
-        <p className="text-anthracite-lighter text-lg mb-8 leading-relaxed">
-          Il primo software italiano per l'analisi della variabilità cardiaca. 
-          Per medici, fisioterapisti, osteopati e coach.
-        </p>
-
-        <Link href="/registrazione" className="btn-primary text-lg px-8 py-4">
-          Prova gratuita 90 giorni
-        </Link>
-
-        <p className="mt-4 text-sm text-anthracite-lighter">
-          Nessuna carta di credito richiesta
-        </p>
+        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row md:items-end md:justify-between gap-6 text-[13px] text-white/60">
+          <div className="leading-relaxed">
+            <div className="font-medium text-white/80">Minimax Srl</div>
+            <div>Via Francesco Baracca, 88 · 36100 Vicenza (VI) · Italy</div>
+            <div>P.IVA 04496840242</div>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 md:justify-end">
+            <span>© 2026 Minimax Srl · Tutti i diritti riservati</span>
+            <a className="hover:text-teal transition-colors" href="/privacy">Privacy Policy</a>
+            <a className="hover:text-teal transition-colors" href="/termini">Termini</a>
+          </div>
+        </div>
       </div>
-    </div>
+    </footer>
+  )
+}
+
+export default function Home() {
+  return (
+    <main className="bg-white text-anthracite">
+      <Navbar />
+      <Hero />
+      <TrustBar />
+      <Problem />
+      <Solution />
+      <HowItWorks />
+      <Benefits />
+      <Pricing />
+      <Faq />
+      <FinalCta />
+      <Footer />
+    </main>
   )
 }
