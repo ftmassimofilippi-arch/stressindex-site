@@ -3,29 +3,23 @@
 import Link from 'next/link'
 import { AlertTriangle, Sparkles } from 'lucide-react'
 import { ScoreGauge } from '@/components/dashboard/ScoreGauge'
-import { TrendChart } from '@/components/dashboard/TrendChart'
+import { AdvancedTrendChart, TREND_METRICS } from '@/components/dashboard/AdvancedTrendChart'
 import { AlertBadge } from '@/components/dashboard/AlertBadge'
 import type { Alert, Client, MeasurementAnalytics } from '@/lib/types'
 import { ALERT_TYPE_LABEL } from '@/lib/types'
 import { formatDateTime } from '@/lib/format'
 
-const TREND_SERIES = [
-  { key: 'score_stress', label: 'Stress', color: '#EF4444' },
-  { key: 'score_recupero', label: 'Recupero', color: '#10B981' },
-  { key: 'score_equilibrio', label: 'Equilibrio', color: '#4FA39A' },
-  { key: 'score_energia', label: 'Energia', color: '#F59E0B' },
-]
-
 export function OverviewTab({ client, measurements, alerts }: { client: Client; measurements: MeasurementAnalytics[]; alerts: Alert[] }) {
   const latest = measurements[0]
 
-  const trendData = measurements.slice(0, 30).slice().reverse().map((m) => ({
-    date: m.measured_at.slice(0, 10),
-    score_stress: m.score_stress,
-    score_recupero: m.score_recupero,
-    score_equilibrio: m.score_equilibrio,
-    score_energia: m.score_energia,
-  }))
+  // Trend completo: tutte le 24+ metriche disponibili; il chart filtra internamente per periodo e selezione.
+  const trendData = measurements.slice().reverse().map((m) => {
+    const point = { date: m.measured_at.slice(0, 10) } as { date: string } & Record<string, number | string | null>
+    for (const def of TREND_METRICS) {
+      point[def.key] = (m as unknown as Record<string, number | null>)[def.key] ?? null
+    }
+    return point
+  })
 
   return (
     <div className="space-y-6">
@@ -40,12 +34,18 @@ export function OverviewTab({ client, measurements, alerts }: { client: Client; 
       </section>
 
       <section className="card p-6">
-        <h2 className="font-serif text-lg text-anthracite mb-1">Andamento <em className="italic">30 giorni</em></h2>
-        <p className="text-sm text-anthracite-lighter mb-4">Trend dei 4 indici clinici</p>
+        <h2 className="font-serif text-lg text-anthracite mb-1">Andamento <em className="italic">clinico</em></h2>
+        <p className="text-sm text-anthracite-lighter mb-4">Multi-metrica con doppio asse Y · seleziona indicatori e periodo</p>
         {trendData.length === 0 ? (
           <p className="text-sm text-anthracite-lighter">Nessun dato disponibile</p>
         ) : (
-          <TrendChart data={trendData} series={TREND_SERIES} height={260} />
+          <AdvancedTrendChart
+            data={trendData}
+            defaultSelected={['score_stress', 'score_recupero']}
+            defaultPreset="30"
+            height={280}
+            storageKey="sx-client-overview-trend"
+          />
         )}
       </section>
 

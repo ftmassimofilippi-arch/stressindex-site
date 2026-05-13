@@ -215,15 +215,20 @@ export async function listClientsEnriched(): Promise<ClientWithLastMeasurement[]
   }))
 }
 
-export type DailyAveragePoint = {
-  date: string
-  score_stress: number | null
-  score_recupero: number | null
-  score_equilibrio: number | null
-  score_energia: number | null
-  score_modulazione_infiammatoria: number | null
-  score_composito: number | null
-}
+// Tutte le colonne aggregabili per il trend chart professionale.
+// Lista esaustiva — l'AdvancedTrendChart sceglie quali metriche mostrare.
+const TREND_COLUMNS = [
+  'score_stress', 'score_recupero', 'score_equilibrio', 'score_energia',
+  'score_modulazione_infiammatoria', 'score_composito',
+  'sdnn', 'rmssd', 'pnn50', 'pnn20', 'mean_hr', 'cv', 'rmssd_sdnn_ratio',
+  'vlf_power', 'lf_power', 'hf_power', 'total_power', 'lf_hf_ratio', 'lf_nu', 'hf_nu',
+  'vlf_power_ls', 'lf_power_ls', 'hf_power_ls', 'total_power_ls', 'lf_hf_ratio_ls',
+  'sd1', 'sd2', 'sd1_sd2_ratio', 'dfa_alpha1', 'dfa_alpha2', 'sample_entropy', 'approximate_entropy',
+  'triangular_index', 'tinn', 'stress_index_baevsky',
+] as const
+
+export type TrendColumn = typeof TREND_COLUMNS[number]
+export type DailyAveragePoint = { date: string } & { [K in TrendColumn]: number | null }
 
 export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAveragePoint[]> {
   const supabase = await createClient()
@@ -231,33 +236,30 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
   from.setDate(from.getDate() - daysBack)
   from.setHours(0, 0, 0, 0)
 
+  const select = ['measured_at', ...TREND_COLUMNS].join(',')
   const { data } = await supabase
     .from('measurement_analytics')
-    .select('measured_at,score_stress,score_recupero,score_equilibrio,score_energia,score_modulazione_infiammatoria,score_composito')
+    .select(select)
     .gte('measured_at', from.toISOString())
     .order('measured_at', { ascending: true })
 
-  type Bucket = { s: number[]; r: number[]; b: number[]; e: number[]; m: number[]; c: number[] }
-  const buckets = new Map<string, Bucket>()
-  type Row = {
-    measured_at: string
-    score_stress: number | null
-    score_recupero: number | null
-    score_equilibrio: number | null
-    score_energia: number | null
-    score_modulazione_infiammatoria: number | null
-    score_composito: number | null
-  }
-  for (const row of (data ?? []) as Row[]) {
+  type Row = { measured_at: string } & { [K in TrendColumn]: number | null }
+  const buckets = new Map<string, Map<TrendColumn, number[]>>()
+  for (const row of (data ?? []) as unknown as Row[]) {
     const day = row.measured_at.slice(0, 10)
-    const bucket: Bucket = buckets.get(day) ?? { s: [], r: [], b: [], e: [], m: [], c: [] }
-    if (row.score_stress != null) bucket.s.push(row.score_stress)
-    if (row.score_recupero != null) bucket.r.push(row.score_recupero)
-    if (row.score_equilibrio != null) bucket.b.push(row.score_equilibrio)
-    if (row.score_energia != null) bucket.e.push(row.score_energia)
-    if (row.score_modulazione_infiammatoria != null) bucket.m.push(row.score_modulazione_infiammatoria)
-    if (row.score_composito != null) bucket.c.push(row.score_composito)
-    buckets.set(day, bucket)
+    let bucket = buckets.get(day)
+    if (!bucket) {
+      bucket = new Map()
+      buckets.set(day, bucket)
+    }
+    for (const col of TREND_COLUMNS) {
+      const v = row[col]
+      if (v != null && !Number.isNaN(v)) {
+        const arr = bucket.get(col) ?? []
+        arr.push(v)
+        bucket.set(col, arr)
+      }
+    }
   }
 
   const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null)
@@ -268,15 +270,12 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
     d.setDate(d.getDate() - i)
     const day = d.toISOString().slice(0, 10)
     const b = buckets.get(day)
-    out.push({
-      date: day,
-      score_stress: b ? avg(b.s) : null,
-      score_recupero: b ? avg(b.r) : null,
-      score_equilibrio: b ? avg(b.b) : null,
-      score_energia: b ? avg(b.e) : null,
-      score_modulazione_infiammatoria: b ? avg(b.m) : null,
-      score_composito: b ? avg(b.c) : null,
-    })
+    const point = { date: day } as unknown as Record<string, number | string | null>
+    for (const col of TREND_COLUMNS) {
+      const arr = b?.get(col)
+      point[col] = arr ? avg(arr) : null
+    }
+    out.push(point as unknown as DailyAveragePoint)
   }
   return out
 }

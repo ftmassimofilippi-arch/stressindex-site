@@ -21,15 +21,6 @@ import { formatGreeting, formatTime, todayLongIt, daysSince } from '@/lib/format
 export const metadata = { title: 'Oggi' }
 export const dynamic = 'force-dynamic'
 
-const TREND_SERIES = [
-  { key: 'score_stress', label: 'Stress', color: '#EF4444' },
-  { key: 'score_recupero', label: 'Recupero', color: '#10B981' },
-  { key: 'score_equilibrio', label: 'Equilibrio', color: '#4FA39A' },
-  { key: 'score_energia', label: 'Energia', color: '#F59E0B' },
-  { key: 'score_modulazione_infiammatoria', label: 'Mod. infiammatoria', color: '#8B5CF6' },
-  { key: 'score_composito', label: 'Composito', color: '#2F343A' },
-]
-
 export default async function DashboardHome() {
   const [professional, alerts, measurements, contacts, trend, allClients, notes] = await Promise.all([
     getProfessionalProfile(),
@@ -190,10 +181,11 @@ export default async function DashboardHome() {
             </div>
             <AdvancedTrendChart
               data={trend}
-              series={TREND_SERIES}
+              defaultSelected={['score_stress', 'score_recupero']}
               defaultPreset="30"
               height={220}
-              storageKey="sx-home-trend-range"
+              storageKey="sx-home-trend"
+              showBrush={false}
             />
           </section>
 

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
-import { AdvancedTrendChart } from '@/components/dashboard/AdvancedTrendChart'
+import { AdvancedTrendChart, TREND_METRICS } from '@/components/dashboard/AdvancedTrendChart'
 import { formatDateTime } from '@/lib/format'
 import type { MeasurementAnalytics } from '@/lib/types'
 
@@ -27,15 +27,6 @@ const METRICS = [
   { key: 'score_energia', label: 'Energia', color: '#F59E0B' },
 ] as const
 
-const TREND_SERIES = [
-  { key: 'score_stress', label: 'Stress', color: '#EF4444' },
-  { key: 'score_recupero', label: 'Recupero', color: '#10B981' },
-  { key: 'score_equilibrio', label: 'Equilibrio', color: '#4FA39A' },
-  { key: 'score_energia', label: 'Energia', color: '#F59E0B' },
-  { key: 'score_modulazione_infiammatoria', label: 'Mod. infiammatoria', color: '#8B5CF6' },
-  { key: 'score_composito', label: 'Composito', color: '#2F343A' },
-]
-
 export function AdvancedAnalyticsTab({ measurements }: { measurements: MeasurementAnalytics[] }) {
   const [rangeA, setRangeA] = useState<DateRange>(defaultRange(30))
   const [rangeB, setRangeB] = useState<DateRange>({ ...defaultRange(60), to: defaultRange(31).from })
@@ -43,16 +34,15 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
   const inA = useMemo(() => filterRange(measurements, rangeA), [measurements, rangeA])
   const inB = useMemo(() => filterRange(measurements, rangeB), [measurements, rangeB])
 
-  // Punti trend su tutto lo storico — il chart filtra internamente con i propri controlli
-  const allTrendData = useMemo(() => measurements.slice().reverse().map((m) => ({
-    date: m.measured_at.slice(0, 10),
-    score_stress: m.score_stress,
-    score_recupero: m.score_recupero,
-    score_equilibrio: m.score_equilibrio,
-    score_energia: m.score_energia,
-    score_modulazione_infiammatoria: m.score_modulazione_infiammatoria,
-    score_composito: m.score_composito,
-  })), [measurements])
+  // Punti trend su tutto lo storico — il chart filtra internamente con i propri controlli.
+  // Mappa tutte le metriche supportate (24+ parametri HRV) dal record di measurement_analytics.
+  const allTrendData = useMemo(() => measurements.slice().reverse().map((m) => {
+    const point = { date: m.measured_at.slice(0, 10) } as { date: string } & Record<string, number | string | null>
+    for (const def of TREND_METRICS) {
+      point[def.key] = (m as unknown as Record<string, number | null>)[def.key] ?? null
+    }
+    return point
+  }), [measurements])
 
   const topByStress = useMemo(() => [...inA].filter((m) => m.score_stress != null).sort((a, b) => (a.score_stress ?? 0) - (b.score_stress ?? 0)).slice(0, 5), [inA])
   const bottomByStress = useMemo(() => [...inA].filter((m) => m.score_stress != null).sort((a, b) => (b.score_stress ?? 0) - (a.score_stress ?? 0)).slice(0, 5), [inA])
@@ -114,10 +104,10 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
         ) : (
           <AdvancedTrendChart
             data={allTrendData}
-            series={TREND_SERIES}
+            defaultSelected={['score_stress', 'score_recupero']}
             defaultPreset="30"
-            height={300}
-            storageKey="sx-client-trend-range"
+            height={320}
+            storageKey="sx-client-trend"
           />
         )}
       </section>
