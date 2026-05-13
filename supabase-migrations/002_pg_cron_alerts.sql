@@ -27,7 +27,7 @@ BEGIN
     SELECT DISTINCT ON (s.client_id)
       s.id AS session_id,
       s.client_id,
-      c.professional_id,
+      c.professionista_id AS professional_id,
       s.stress_score,
       s.recovery_score,
       s.balance_score,
@@ -89,7 +89,7 @@ BEGIN
   FOR rec IN
     SELECT
       c.id AS client_id,
-      c.professional_id,
+      c.professionista_id AS professional_id,
       c.last_measurement_at,
       cs.expected_frequency_per_week,
       EXTRACT(EPOCH FROM (NOW() - c.last_measurement_at))/86400 AS days_since

@@ -20,8 +20,10 @@ export interface ProfessionalProfile {
 }
 
 export interface Client {
+  // NB: clients.id è TEXT nel DB (non UUID), ma teniamo string per compatibilità del tipo
   id: UUID
-  professional_id: UUID
+  // Colonna del DB esistente: professionista_id (italiano), non professional_id
+  professionista_id: UUID
   nome: string | null
   cognome: string | null
   email?: string | null
