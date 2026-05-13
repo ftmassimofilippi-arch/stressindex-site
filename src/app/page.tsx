@@ -61,6 +61,9 @@ function Navbar() {
           <a href="#faq" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
             FAQ
           </a>
+          <Link href="/area-professionisti/login" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
+            Area Professionisti
+          </Link>
         </nav>
         <Link
           href="/registrazione"
