@@ -7,7 +7,7 @@ import { DataTable, type Column } from '@/components/dashboard/DataTable'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { formatDateTime, formatDate } from '@/lib/format'
-import type { Client, Session } from '@/lib/types'
+import type { Client, MeasurementAnalytics } from '@/lib/types'
 
 const DURATION_FILTERS = [
   { value: 'all', label: 'Tutte le durate' },
@@ -15,39 +15,39 @@ const DURATION_FILTERS = [
   { value: '10', label: '10 min' },
 ] as const
 
-export function MeasurementsTab({ client, sessions }: { client: Client; sessions: Session[] }) {
+export function MeasurementsTab({ client, measurements }: { client: Client; measurements: MeasurementAnalytics[] }) {
   const [range, setRange] = useState<DateRange>(defaultRange(90))
   const [duration, setDuration] = useState<typeof DURATION_FILTERS[number]['value']>('all')
 
   const filtered = useMemo(() => {
     const fromMs = new Date(range.from).getTime()
     const toMs = new Date(range.to).getTime() + 24 * 3600 * 1000
-    return sessions.filter((s) => {
-      const t = new Date(s.created_at).getTime()
+    return measurements.filter((m) => {
+      const t = new Date(m.measured_at).getTime()
       if (t < fromMs || t > toMs) return false
       if (duration !== 'all') {
-        const d = (s.duration_seconds ?? 0) / 60
+        const d = (m.duration_seconds ?? 0) / 60
         const target = Number(duration)
         if (Math.abs(d - target) > 1.5) return false
       }
       return true
     })
-  }, [sessions, range, duration])
+  }, [measurements, range, duration])
 
   function exportCsv() {
-    const headers = ['Data','Durata (s)','Stress','Recupero','Equilibrio','Energia','Mod. Infiamm.','BPM','SDNN','RMSSD','Quality']
-    const rows = filtered.map((s) => [
-      formatDateTime(s.created_at),
-      s.duration_seconds ?? '',
-      s.stress_score ?? '',
-      s.recovery_score ?? '',
-      s.balance_score ?? '',
-      s.energy_score ?? '',
-      s.inflammatory_modulation ?? '',
-      s.bpm_mean ?? '',
-      s.sdnn ?? '',
-      s.rmssd ?? '',
-      s.signal_quality ?? '',
+    const headers = ['Data','Durata (s)','Stress','Recupero','Equilibrio','Energia','Mod. Infiamm.','BPM','SDNN','RMSSD','Artifact %']
+    const rows = filtered.map((m) => [
+      formatDateTime(m.measured_at),
+      m.duration_seconds ?? '',
+      m.score_stress ?? '',
+      m.score_recupero ?? '',
+      m.score_equilibrio ?? '',
+      m.score_energia ?? '',
+      m.score_modulazione_infiammatoria ?? '',
+      m.mean_hr ?? '',
+      m.sdnn ?? '',
+      m.rmssd ?? '',
+      m.artifact_percentage ?? '',
     ].join(','))
     const csv = [headers.join(','), ...rows].join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -59,18 +59,18 @@ export function MeasurementsTab({ client, sessions }: { client: Client; sessions
     URL.revokeObjectURL(url)
   }
 
-  const columns: Column<Session>[] = [
-    { key: 'created_at', header: 'Data', accessor: (s) => s.created_at, sortable: true, render: (s) => formatDateTime(s.created_at) },
-    { key: 'duration', header: 'Durata', accessor: (s) => s.duration_seconds ?? 0, sortable: true, render: (s) => s.duration_seconds ? `${Math.round(s.duration_seconds / 60)} min` : '—' },
-    { key: 'stress', header: 'Stress', accessor: (s) => s.stress_score ?? -1, sortable: true, render: (s) => <ScoreBar value={s.stress_score} inverted /> },
-    { key: 'recovery', header: 'Recupero', accessor: (s) => s.recovery_score ?? -1, sortable: true, render: (s) => <ScoreBar value={s.recovery_score} /> },
-    { key: 'balance', header: 'Equilibrio', accessor: (s) => s.balance_score ?? -1, sortable: true, render: (s) => <ScoreBar value={s.balance_score} /> },
-    { key: 'energy', header: 'Energia', accessor: (s) => s.energy_score ?? -1, sortable: true, render: (s) => <ScoreBar value={s.energy_score} /> },
-    { key: 'infl', header: 'Infiamm.', accessor: (s) => s.inflammatory_modulation ?? -1, sortable: true, render: (s) => s.inflammatory_modulation != null ? s.inflammatory_modulation.toFixed(1) : '—' },
-    { key: 'quality', header: 'Qualità', accessor: (s) => s.signal_quality ?? -1, sortable: true, render: (s) => s.signal_quality != null ? `${Math.round(s.signal_quality)}%` : '—' },
+  const columns: Column<MeasurementAnalytics>[] = [
+    { key: 'measured_at', header: 'Data', accessor: (m) => m.measured_at, sortable: true, render: (m) => formatDateTime(m.measured_at) },
+    { key: 'duration', header: 'Durata', accessor: (m) => m.duration_seconds ?? 0, sortable: true, render: (m) => m.duration_seconds ? `${Math.round(m.duration_seconds / 60)} min` : '—' },
+    { key: 'stress', header: 'Stress', accessor: (m) => m.score_stress ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_stress} inverted /> },
+    { key: 'recupero', header: 'Recupero', accessor: (m) => m.score_recupero ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_recupero} /> },
+    { key: 'equilibrio', header: 'Equilibrio', accessor: (m) => m.score_equilibrio ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_equilibrio} /> },
+    { key: 'energia', header: 'Energia', accessor: (m) => m.score_energia ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_energia} /> },
+    { key: 'infl', header: 'Infiamm.', accessor: (m) => m.score_modulazione_infiammatoria ?? -1, sortable: true, render: (m) => m.score_modulazione_infiammatoria != null ? m.score_modulazione_infiammatoria.toFixed(1) : '—' },
+    { key: 'quality', header: 'Artifact', accessor: (m) => m.artifact_percentage ?? -1, sortable: true, render: (m) => m.artifact_percentage != null ? `${m.artifact_percentage.toFixed(1)}%` : '—' },
     {
-      key: 'actions', header: '', render: (s) => (
-        <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${s.id}`} className="text-teal-dark text-sm hover:underline">Apri →</Link>
+      key: 'actions', header: '', render: (m) => (
+        <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}`} className="text-teal-dark text-sm hover:underline">Apri →</Link>
       )
     },
   ]
@@ -95,8 +95,8 @@ export function MeasurementsTab({ client, sessions }: { client: Client; sessions
       <DataTable
         columns={columns}
         rows={filtered}
-        rowKey={(s) => s.id}
-        initialSort={{ key: 'created_at', dir: 'desc' }}
+        rowKey={(m) => m.id}
+        initialSort={{ key: 'measured_at', dir: 'desc' }}
         emptyState={<div className="card p-10 text-center text-sm text-anthracite-lighter">Nessuna misurazione nel periodo selezionato</div>}
       />
     </div>

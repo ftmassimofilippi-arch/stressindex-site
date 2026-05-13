@@ -1,32 +1,40 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Trash2, Edit3 } from 'lucide-react'
+import { Plus, Trash2, Edit3, Bell } from 'lucide-react'
 import { Modal } from '@/components/dashboard/Modal'
 import { EmptyState } from '@/components/dashboard/EmptyState'
 import { createClient } from '@/lib/supabase-browser'
 import { formatDate } from '@/lib/format'
-import type { Client, ClientNote } from '@/lib/types'
+import type { Client, ClientNote, NoteCategory } from '@/lib/types'
+import { NOTE_CATEGORIES } from '@/lib/types'
 import { useRouter } from 'next/navigation'
 
-const TAG_PRESETS = ['valutazione iniziale', 'post-trattamento', 'follow-up', 'osservazione']
+const TAG_PRESETS = ['urgente', 'da rivedere', 'documentazione', 'protocollo']
 
 export function NotesTab({ client, initialNotes }: { client: Client; initialNotes: ClientNote[] }) {
   const router = useRouter()
   const [notes, setNotes] = useState<ClientNote[]>(initialNotes)
   const [open, setOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [content, setContent] = useState('')
+  const [testo, setTesto] = useState('')
+  const [categoria, setCategoria] = useState<NoteCategory | ''>('')
+  const [dataReminder, setDataReminder] = useState<string>('')
   const [tags, setTags] = useState<string[]>([])
   const [search, setSearch] = useState('')
-  const [tagFilter, setTagFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState<NoteCategory | ''>('')
   const [loading, setLoading] = useState(false)
 
   function startNew() {
-    setEditingId(null); setContent(''); setTags([]); setOpen(true)
+    setEditingId(null); setTesto(''); setCategoria(''); setDataReminder(''); setTags([]); setOpen(true)
   }
   function startEdit(n: ClientNote) {
-    setEditingId(n.id); setContent(n.content); setTags(n.tags ?? []); setOpen(true)
+    setEditingId(n.id)
+    setTesto(n.testo)
+    setCategoria((n.categoria as NoteCategory) ?? '')
+    setDataReminder(n.data_reminder ? n.data_reminder.slice(0, 10) : '')
+    setTags(n.tags ?? [])
+    setOpen(true)
   }
 
   function toggleTag(t: string) {
@@ -34,16 +42,23 @@ export function NotesTab({ client, initialNotes }: { client: Client; initialNote
   }
 
   async function save() {
-    if (!content.trim()) return
+    if (!testo.trim()) return
     setLoading(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
 
+    const payload = {
+      testo,
+      categoria: categoria || null,
+      data_reminder: dataReminder ? new Date(dataReminder).toISOString() : null,
+      tags,
+    }
+
     if (editingId) {
       const { data, error } = await supabase
         .from('client_notes')
-        .update({ content, tags, updated_at: new Date().toISOString() })
+        .update(payload)
         .eq('id', editingId)
         .select()
         .maybeSingle()
@@ -51,7 +66,12 @@ export function NotesTab({ client, initialNotes }: { client: Client; initialNote
     } else {
       const { data, error } = await supabase
         .from('client_notes')
-        .insert({ professional_id: user.id, client_id: client.id, content, tags })
+        .insert({
+          professionista_id: user.id,
+          client_id: client.id,
+          data_creazione: new Date().toISOString(),
+          ...payload,
+        })
         .select()
         .maybeSingle()
       if (!error && data) setNotes((n) => [data as ClientNote, ...n])
@@ -69,12 +89,12 @@ export function NotesTab({ client, initialNotes }: { client: Client; initialNote
   }
 
   const filtered = notes.filter((n) => {
-    if (search && !n.content.toLowerCase().includes(search.toLowerCase())) return false
-    if (tagFilter && !(n.tags ?? []).includes(tagFilter)) return false
+    if (search && !n.testo.toLowerCase().includes(search.toLowerCase())) return false
+    if (categoryFilter && n.categoria !== categoryFilter) return false
     return true
   })
 
-  const allTags = Array.from(new Set(notes.flatMap((n) => n.tags ?? []))).sort()
+  const now = Date.now()
 
   return (
     <div className="space-y-4">
@@ -87,12 +107,10 @@ export function NotesTab({ client, initialNotes }: { client: Client; initialNote
             placeholder="Cerca nelle note…"
             className="flex-1 min-w-[200px] px-3 py-2 text-sm bg-white border border-surface-border rounded-xl"
           />
-          {allTags.length > 0 && (
-            <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)} className="px-3 py-2 text-sm bg-white border border-surface-border rounded-xl">
-              <option value="">Tutti i tag</option>
-              {allTags.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          )}
+          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value as NoteCategory | '')} className="px-3 py-2 text-sm bg-white border border-surface-border rounded-xl">
+            <option value="">Tutte le categorie</option>
+            {NOTE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
         </div>
         <button type="button" onClick={startNew} className="btn-primary text-sm inline-flex items-center gap-1.5">
           <Plus size={15} /> Nuova nota
@@ -105,27 +123,40 @@ export function NotesTab({ client, initialNotes }: { client: Client; initialNote
         </div>
       ) : (
         <ul className="space-y-3">
-          {filtered.map((n) => (
-            <li key={n.id} className="card p-5">
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-xs text-anthracite-lighter">{formatDate(n.created_at, 'd MMMM yyyy')}</span>
-                  {(n.tags ?? []).map((t) => (
-                    <span key={t} className="px-2 py-0.5 rounded-full text-[11px] bg-teal-light text-teal-dark">{t}</span>
-                  ))}
+          {filtered.map((n) => {
+            const reminderFuture = n.data_reminder && new Date(n.data_reminder).getTime() > now
+            return (
+              <li key={n.id} className="card p-5">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-anthracite-lighter">{formatDate(n.data_creazione, 'd MMMM yyyy')}</span>
+                    {n.categoria && (
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-teal text-white">
+                        {n.categoria}
+                      </span>
+                    )}
+                    {(n.tags ?? []).map((t) => (
+                      <span key={t} className="px-2 py-0.5 rounded-full text-[11px] bg-teal-light text-teal-dark">{t}</span>
+                    ))}
+                    {reminderFuture && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-amber-50 text-amber-700" title={`Reminder: ${formatDate(n.data_reminder!, 'd MMM yyyy')}`}>
+                        <Bell size={11} /> {formatDate(n.data_reminder!, 'd MMM')}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-1">
+                    <button type="button" onClick={() => startEdit(n)} className="w-8 h-8 rounded-lg hover:bg-surface flex items-center justify-center" aria-label="Modifica">
+                      <Edit3 size={14} />
+                    </button>
+                    <button type="button" onClick={() => remove(n.id)} className="w-8 h-8 rounded-lg hover:bg-red-50 text-red-500 flex items-center justify-center" aria-label="Elimina">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-1">
-                  <button type="button" onClick={() => startEdit(n)} className="w-8 h-8 rounded-lg hover:bg-surface flex items-center justify-center" aria-label="Modifica">
-                    <Edit3 size={14} />
-                  </button>
-                  <button type="button" onClick={() => remove(n.id)} className="w-8 h-8 rounded-lg hover:bg-red-50 text-red-500 flex items-center justify-center" aria-label="Elimina">
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-              <p className="text-sm text-anthracite whitespace-pre-wrap leading-relaxed">{n.content}</p>
-            </li>
-          ))}
+                <p className="text-sm text-anthracite whitespace-pre-wrap leading-relaxed">{n.testo}</p>
+              </li>
+            )
+          })}
         </ul>
       )}
 
@@ -138,7 +169,7 @@ export function NotesTab({ client, initialNotes }: { client: Client; initialNote
         footer={
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => setOpen(false)} className="btn-secondary text-sm">Annulla</button>
-            <button type="button" onClick={save} disabled={loading || !content.trim()} className="btn-primary text-sm">
+            <button type="button" onClick={save} disabled={loading || !testo.trim()} className="btn-primary text-sm">
               {loading ? 'Salvataggio…' : 'Salva'}
             </button>
           </div>
@@ -146,15 +177,31 @@ export function NotesTab({ client, initialNotes }: { client: Client; initialNote
       >
         <div className="space-y-4">
           <div>
-            <label className="input-label">Contenuto</label>
+            <label className="input-label">Testo nota</label>
             <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
+              value={testo}
+              onChange={(e) => setTesto(e.target.value)}
               rows={6}
               placeholder="Annotazioni cliniche, osservazioni, follow-up…"
               className="input-field resize-y"
             />
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="input-label">Categoria</label>
+              <select value={categoria} onChange={(e) => setCategoria(e.target.value as NoteCategory | '')} className="input-field">
+                <option value="">— Nessuna —</option>
+                {NOTE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="input-label">Reminder (opzionale)</label>
+              <input type="date" value={dataReminder} onChange={(e) => setDataReminder(e.target.value)} className="input-field" />
+              <p className="text-xs text-anthracite-lighter mt-1">Una notifica ti ricorderà di rivedere la nota in quella data.</p>
+            </div>
+          </div>
+
           <div>
             <label className="input-label">Tag</label>
             <div className="flex flex-wrap gap-1.5">

@@ -1,23 +1,38 @@
 import Link from 'next/link'
-import { Activity, AlertTriangle, ArrowRight, Calendar, FileText, NotebookPen, TrendingUp, UserCheck, Users } from 'lucide-react'
+import { Activity, AlertTriangle, ArrowRight, Calendar, NotebookPen, TrendingUp, UserCheck } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { TrendChart } from '@/components/dashboard/TrendChart'
 import { AlertBadge } from '@/components/dashboard/AlertBadge'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { EmptyState } from '@/components/dashboard/EmptyState'
-import { aggregatedDailyAverages, clientsToContact, getProfessionalProfile, listAlerts, listClients, listRecentNotes, todaysSessions } from '@/lib/dashboard-data'
+import {
+  aggregatedDailyAverages,
+  clientsToContact,
+  getProfessionalProfile,
+  listAlerts,
+  listClients,
+  listRecentNotes,
+  todaysMeasurements,
+} from '@/lib/dashboard-data'
 import { ALERT_TYPE_LABEL } from '@/lib/types'
 import { formatGreeting, formatTime, todayLongIt, daysSince } from '@/lib/format'
 
 export const metadata = { title: 'Oggi' }
 export const dynamic = 'force-dynamic'
 
+const TREND_SERIES = [
+  { key: 'score_stress', label: 'Stress', color: '#EF4444' },
+  { key: 'score_recupero', label: 'Recupero', color: '#10B981' },
+  { key: 'score_equilibrio', label: 'Equilibrio', color: '#4FA39A' },
+  { key: 'score_energia', label: 'Energia', color: '#F59E0B' },
+]
+
 export default async function DashboardHome() {
-  const [professional, alerts, sessions, contacts, trend, allClients, notes] = await Promise.all([
+  const [professional, alerts, measurements, contacts, trend, allClients, notes] = await Promise.all([
     getProfessionalProfile(),
     listAlerts({ status: ['new', 'seen'], limit: 5 }),
-    todaysSessions(),
+    todaysMeasurements(),
     clientsToContact(),
     aggregatedDailyAverages(30),
     listClients(),
@@ -26,10 +41,6 @@ export default async function DashboardHome() {
 
   const clientMap = new Map(allClients.map((c) => [c.id, c]))
   const newAlertCount = alerts.filter((a) => a.status === 'new').length
-
-  // Statistiche rapide
-  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
-  const lastMonthStart = new Date(monthStart); lastMonthStart.setMonth(lastMonthStart.getMonth() - 1)
   const totalActive = allClients.length
 
   return (
@@ -42,10 +53,7 @@ export default async function DashboardHome() {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Colonna 1+2 */}
         <div className="lg:col-span-8 space-y-6">
-
-          {/* Alert prioritari */}
           <section className="card overflow-hidden">
             <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -84,16 +92,15 @@ export default async function DashboardHome() {
             )}
           </section>
 
-          {/* Misurazioni di oggi */}
           <section className="card overflow-hidden">
             <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Activity size={18} className="text-teal" />
                 <h2 className="font-serif text-lg text-anthracite">Misurazioni di oggi</h2>
-                <span className="text-sm text-anthracite-lighter">({sessions.length})</span>
+                <span className="text-sm text-anthracite-lighter">({measurements.length})</span>
               </div>
             </div>
-            {sessions.length === 0 ? (
+            {measurements.length === 0 ? (
               <div className="px-6 py-8 text-center text-sm text-anthracite-lighter">
                 Nessuna misurazione registrata oggi
               </div>
@@ -110,18 +117,18 @@ export default async function DashboardHome() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sessions.slice(0, 10).map((s) => {
-                      const c = clientMap.get(s.client_id)
+                    {measurements.slice(0, 10).map((m) => {
+                      const c = clientMap.get(m.client_id)
                       return (
-                        <tr key={s.id} className="border-t border-surface-border hover:bg-surface transition-colors">
+                        <tr key={m.id} className="border-t border-surface-border hover:bg-surface transition-colors">
                           <td className="px-6 py-3 font-medium text-anthracite">
                             {c ? `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() : '—'}
                           </td>
-                          <td className="px-3 py-3 text-anthracite-lighter">{formatTime(s.created_at)}</td>
-                          <td className="px-3 py-3 w-40"><ScoreBar value={s.stress_score} inverted /></td>
-                          <td className="px-3 py-3 w-40"><ScoreBar value={s.recovery_score} /></td>
+                          <td className="px-3 py-3 text-anthracite-lighter">{formatTime(m.measured_at)}</td>
+                          <td className="px-3 py-3 w-40"><ScoreBar value={m.score_stress} inverted /></td>
+                          <td className="px-3 py-3 w-40"><ScoreBar value={m.score_recupero} /></td>
                           <td className="px-3 py-3 text-right">
-                            <Link href={`/area-professionisti/clienti/${s.client_id}/misurazione/${s.id}`} className="text-teal-dark text-sm hover:underline">
+                            <Link href={`/area-professionisti/clienti/${m.client_id}/misurazione/${m.session_id}`} className="text-teal-dark text-sm hover:underline">
                               Apri →
                             </Link>
                           </td>
@@ -134,7 +141,6 @@ export default async function DashboardHome() {
             )}
           </section>
 
-          {/* Da contattare */}
           <section className="card overflow-hidden">
             <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -167,11 +173,10 @@ export default async function DashboardHome() {
           </section>
         </div>
 
-        {/* Colonna 3 */}
         <aside className="lg:col-span-4 space-y-6">
           <div className="grid grid-cols-2 gap-3">
             <MetricCard label="Clienti attivi" value={totalActive} hint="totali" />
-            <MetricCard label="Mis. mese" value={sessions.length} hint="oggi" />
+            <MetricCard label="Mis. oggi" value={measurements.length} />
             <MetricCard label="Alert risolti" value="—" hint="settimana" />
             <MetricCard label="Trend" value="—" hint="vs mese scorso" />
           </div>
@@ -181,7 +186,7 @@ export default async function DashboardHome() {
               <TrendingUp size={16} className="text-teal" />
               <h3 className="font-serif text-base text-anthracite">Andamento medio · 30 giorni</h3>
             </div>
-            <TrendChart data={trend} height={200} />
+            <TrendChart data={trend} series={TREND_SERIES} height={200} />
           </section>
 
           <section className="card overflow-hidden">
@@ -199,9 +204,10 @@ export default async function DashboardHome() {
                     <li key={n.id} className="px-5 py-3">
                       <Link href={`/area-professionisti/clienti/${n.client_id}?tab=note`} className="block hover:bg-surface -mx-5 px-5 py-1 transition-colors">
                         <div className="text-xs font-medium text-anthracite-lighter mb-0.5">
-                          {c ? `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() : 'Cliente'} · {daysSince(n.created_at)}gg fa
+                          {c ? `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() : 'Cliente'} · {daysSince(n.data_creazione)}gg fa
+                          {n.categoria ? ` · ${n.categoria}` : ''}
                         </div>
-                        <p className="text-sm text-anthracite line-clamp-2">{n.content}</p>
+                        <p className="text-sm text-anthracite line-clamp-2">{n.testo}</p>
                       </Link>
                     </li>
                   )

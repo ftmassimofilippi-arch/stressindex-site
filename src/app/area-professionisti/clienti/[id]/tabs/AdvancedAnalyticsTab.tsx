@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
 import { TrendChart } from '@/components/dashboard/TrendChart'
 import { formatDateTime } from '@/lib/format'
-import type { Session } from '@/lib/types'
+import type { MeasurementAnalytics } from '@/lib/types'
 
 function stats(values: number[]) {
   if (!values.length) return { mean: null, median: null, min: null, max: null, std: null }
@@ -21,33 +21,31 @@ function stats(values: number[]) {
 function fmt(v: number | null) { return v == null ? '—' : v.toFixed(1) }
 
 const METRICS = [
-  { key: 'stress_score', label: 'Stress', color: '#EF4444', inverted: true },
-  { key: 'recovery_score', label: 'Recupero', color: '#10B981' },
-  { key: 'balance_score', label: 'Equilibrio', color: '#4FA39A' },
-  { key: 'energy_score', label: 'Energia', color: '#F59E0B' },
+  { key: 'score_stress', label: 'Stress', color: '#EF4444', inverted: true },
+  { key: 'score_recupero', label: 'Recupero', color: '#10B981' },
+  { key: 'score_equilibrio', label: 'Equilibrio', color: '#4FA39A' },
+  { key: 'score_energia', label: 'Energia', color: '#F59E0B' },
 ] as const
 
-export function AdvancedAnalyticsTab({ sessions }: { sessions: Session[] }) {
+const TREND_SERIES = METRICS.map(({ key, label, color }) => ({ key, label, color }))
+
+export function AdvancedAnalyticsTab({ measurements }: { measurements: MeasurementAnalytics[] }) {
   const [rangeA, setRangeA] = useState<DateRange>(defaultRange(30))
   const [rangeB, setRangeB] = useState<DateRange>({ ...defaultRange(60), to: defaultRange(31).from })
 
-  const inA = useMemo(() => filterRange(sessions, rangeA), [sessions, rangeA])
-  const inB = useMemo(() => filterRange(sessions, rangeB), [sessions, rangeB])
+  const inA = useMemo(() => filterRange(measurements, rangeA), [measurements, rangeA])
+  const inB = useMemo(() => filterRange(measurements, rangeB), [measurements, rangeB])
 
-  const trendData = useMemo(() => {
-    const arr = inA.slice().reverse().map((s) => ({
-      date: s.created_at.slice(0, 10),
-      stress_score: s.stress_score,
-      recovery_score: s.recovery_score,
-      balance_score: s.balance_score,
-      energy_score: s.energy_score,
-    }))
-    return arr
-  }, [inA])
+  const trendData = useMemo(() => inA.slice().reverse().map((m) => ({
+    date: m.measured_at.slice(0, 10),
+    score_stress: m.score_stress,
+    score_recupero: m.score_recupero,
+    score_equilibrio: m.score_equilibrio,
+    score_energia: m.score_energia,
+  })), [inA])
 
-  // Top 5 / Bottom 5 for stress score
-  const topByStress = useMemo(() => [...inA].filter((s) => s.stress_score != null).sort((a, b) => (a.stress_score ?? 0) - (b.stress_score ?? 0)).slice(0, 5), [inA])
-  const bottomByStress = useMemo(() => [...inA].filter((s) => s.stress_score != null).sort((a, b) => (b.stress_score ?? 0) - (a.stress_score ?? 0)).slice(0, 5), [inA])
+  const topByStress = useMemo(() => [...inA].filter((m) => m.score_stress != null).sort((a, b) => (a.score_stress ?? 0) - (b.score_stress ?? 0)).slice(0, 5), [inA])
+  const bottomByStress = useMemo(() => [...inA].filter((m) => m.score_stress != null).sort((a, b) => (b.score_stress ?? 0) - (a.score_stress ?? 0)).slice(0, 5), [inA])
 
   return (
     <div className="space-y-6">
@@ -67,8 +65,8 @@ export function AdvancedAnalyticsTab({ sessions }: { sessions: Session[] }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {METRICS.map((m) => {
-          const valsA = inA.map((s) => (s as any)[m.key]).filter((v): v is number => v != null)
-          const valsB = inB.map((s) => (s as any)[m.key]).filter((v): v is number => v != null)
+          const valsA = inA.map((s) => s[m.key as keyof MeasurementAnalytics] as number | null).filter((v): v is number => v != null)
+          const valsB = inB.map((s) => s[m.key as keyof MeasurementAnalytics] as number | null).filter((v): v is number => v != null)
           const sA = stats(valsA)
           const sB = stats(valsB)
           const variation = sA.mean != null && sB.mean ? ((sA.mean - sB.mean) / sB.mean) * 100 : null
@@ -100,7 +98,7 @@ export function AdvancedAnalyticsTab({ sessions }: { sessions: Session[] }) {
         {trendData.length === 0 ? (
           <p className="text-sm text-anthracite-lighter">Nessun dato nel periodo</p>
         ) : (
-          <TrendChart data={trendData} height={260} />
+          <TrendChart data={trendData} series={TREND_SERIES} height={260} />
         )}
       </section>
 
@@ -110,10 +108,10 @@ export function AdvancedAnalyticsTab({ sessions }: { sessions: Session[] }) {
             <h3 className="font-serif text-base text-anthracite">Top 5 — Stress più basso</h3>
           </div>
           <ul className="divide-y divide-surface-border">
-            {topByStress.length === 0 ? <li className="p-5 text-sm text-anthracite-lighter">—</li> : topByStress.map((s) => (
-              <li key={s.id} className="px-5 py-3 flex items-center justify-between text-sm">
-                <span className="text-anthracite-lighter">{formatDateTime(s.created_at)}</span>
-                <span className="font-medium text-emerald-600">{s.stress_score?.toFixed(0)}</span>
+            {topByStress.length === 0 ? <li className="p-5 text-sm text-anthracite-lighter">—</li> : topByStress.map((m) => (
+              <li key={m.id} className="px-5 py-3 flex items-center justify-between text-sm">
+                <span className="text-anthracite-lighter">{formatDateTime(m.measured_at)}</span>
+                <span className="font-medium text-emerald-600">{m.score_stress?.toFixed(0)}</span>
               </li>
             ))}
           </ul>
@@ -124,41 +122,39 @@ export function AdvancedAnalyticsTab({ sessions }: { sessions: Session[] }) {
             <h3 className="font-serif text-base text-anthracite">Top 5 — Stress più alto</h3>
           </div>
           <ul className="divide-y divide-surface-border">
-            {bottomByStress.length === 0 ? <li className="p-5 text-sm text-anthracite-lighter">—</li> : bottomByStress.map((s) => (
-              <li key={s.id} className="px-5 py-3 flex items-center justify-between text-sm">
-                <span className="text-anthracite-lighter">{formatDateTime(s.created_at)}</span>
-                <span className="font-medium text-red-500">{s.stress_score?.toFixed(0)}</span>
+            {bottomByStress.length === 0 ? <li className="p-5 text-sm text-anthracite-lighter">—</li> : bottomByStress.map((m) => (
+              <li key={m.id} className="px-5 py-3 flex items-center justify-between text-sm">
+                <span className="text-anthracite-lighter">{formatDateTime(m.measured_at)}</span>
+                <span className="font-medium text-red-500">{m.score_stress?.toFixed(0)}</span>
               </li>
             ))}
           </ul>
         </section>
       </div>
 
-      <HourlyHeatmap sessions={inA} />
+      <HourlyHeatmap measurements={inA} />
     </div>
   )
 }
 
-function filterRange(sessions: Session[], r: DateRange): Session[] {
+function filterRange(measurements: MeasurementAnalytics[], r: DateRange): MeasurementAnalytics[] {
   const fromMs = new Date(r.from).getTime()
   const toMs = new Date(r.to).getTime() + 24 * 3600 * 1000
-  return sessions.filter((s) => {
-    const t = new Date(s.created_at).getTime()
+  return measurements.filter((m) => {
+    const t = new Date(m.measured_at).getTime()
     return t >= fromMs && t <= toMs
   })
 }
 
-function HourlyHeatmap({ sessions }: { sessions: Session[] }) {
-  // 7 days x 24 hours grid with avg stress
+function HourlyHeatmap({ measurements }: { measurements: MeasurementAnalytics[] }) {
   const grid: Array<Array<{ sum: number; n: number }>> = Array.from({ length: 7 }, () =>
     Array.from({ length: 24 }, () => ({ sum: 0, n: 0 })))
-  for (const s of sessions) {
-    if (s.stress_score == null) continue
-    const d = new Date(s.created_at)
-    // ISO weekday: Mon=0..Sun=6
+  for (const m of measurements) {
+    if (m.score_stress == null) continue
+    const d = new Date(m.measured_at)
     const dow = (d.getDay() + 6) % 7
     const h = d.getHours()
-    grid[dow][h].sum += s.stress_score
+    grid[dow][h].sum += m.score_stress
     grid[dow][h].n += 1
   }
   const days = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom']

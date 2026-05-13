@@ -22,34 +22,34 @@ RETURNS void AS $$
 DECLARE
   rec RECORD;
 BEGIN
-  -- Trova le ultime sessioni delle ultime 2 ore e confronta con soglie cliente
+  -- Score letti da measurement_analytics (fonte autoritativa); le ultime 2 ore.
   FOR rec IN
-    SELECT DISTINCT ON (s.client_id)
-      s.id AS session_id,
-      s.client_id,
+    SELECT DISTINCT ON (ma.client_id)
+      ma.session_id,
+      ma.client_id,
       c.professionista_id AS professional_id,
-      s.stress_score,
-      s.recovery_score,
-      s.balance_score,
-      s.energy_score,
-      s.created_at,
+      ma.score_stress,
+      ma.score_recupero,
+      ma.score_equilibrio,
+      ma.score_energia,
+      ma.measured_at,
       COALESCE(cs.alert_threshold_stress, 80) AS thr_stress,
       COALESCE(cs.alert_threshold_recovery, 30) AS thr_recovery,
       COALESCE(cs.alert_threshold_balance, 30) AS thr_balance,
       COALESCE(cs.alert_threshold_energy, 30) AS thr_energy
-    FROM sessions s
-    JOIN clients c ON c.id = s.client_id
-    LEFT JOIN client_settings cs ON cs.client_id = s.client_id
-    WHERE s.created_at > NOW() - INTERVAL '2 hours'
-    ORDER BY s.client_id, s.created_at DESC
+    FROM measurement_analytics ma
+    JOIN clients c ON c.id = ma.client_id
+    LEFT JOIN client_settings cs ON cs.client_id = ma.client_id
+    WHERE ma.measured_at > NOW() - INTERVAL '2 hours'
+    ORDER BY ma.client_id, ma.measured_at DESC
   LOOP
     -- High stress
-    IF rec.stress_score IS NOT NULL AND rec.stress_score >= rec.thr_stress THEN
+    IF rec.score_stress IS NOT NULL AND rec.score_stress >= rec.thr_stress THEN
       INSERT INTO alerts (professional_id, client_id, type, severity, message, triggering_value, triggering_metric)
       SELECT rec.professional_id, rec.client_id, 'high_stress',
-        CASE WHEN rec.stress_score >= 90 THEN 'high' ELSE 'medium' END,
+        CASE WHEN rec.score_stress >= 90 THEN 'high' ELSE 'medium' END,
         'Indice di stress elevato rilevato',
-        rec.stress_score, 'stress_score'
+        rec.score_stress, 'score_stress'
       WHERE NOT EXISTS (
         SELECT 1 FROM alerts a
         WHERE a.client_id = rec.client_id
@@ -60,16 +60,48 @@ BEGIN
     END IF;
 
     -- Low recovery
-    IF rec.recovery_score IS NOT NULL AND rec.recovery_score <= rec.thr_recovery THEN
+    IF rec.score_recupero IS NOT NULL AND rec.score_recupero <= rec.thr_recovery THEN
       INSERT INTO alerts (professional_id, client_id, type, severity, message, triggering_value, triggering_metric)
       SELECT rec.professional_id, rec.client_id, 'low_recovery',
-        CASE WHEN rec.recovery_score <= 15 THEN 'high' ELSE 'medium' END,
+        CASE WHEN rec.score_recupero <= 15 THEN 'high' ELSE 'medium' END,
         'Recupero insufficiente',
-        rec.recovery_score, 'recovery_score'
+        rec.score_recupero, 'score_recupero'
       WHERE NOT EXISTS (
         SELECT 1 FROM alerts a
         WHERE a.client_id = rec.client_id
           AND a.type = 'low_recovery'
+          AND a.status IN ('new','seen')
+          AND a.created_at > NOW() - INTERVAL '24 hours'
+      );
+    END IF;
+
+    -- Low balance
+    IF rec.score_equilibrio IS NOT NULL AND rec.score_equilibrio <= rec.thr_balance THEN
+      INSERT INTO alerts (professional_id, client_id, type, severity, message, triggering_value, triggering_metric)
+      SELECT rec.professional_id, rec.client_id, 'abnormal_value', 'medium',
+        'Equilibrio autonomico basso',
+        rec.score_equilibrio, 'score_equilibrio'
+      WHERE NOT EXISTS (
+        SELECT 1 FROM alerts a
+        WHERE a.client_id = rec.client_id
+          AND a.type = 'abnormal_value'
+          AND a.triggering_metric = 'score_equilibrio'
+          AND a.status IN ('new','seen')
+          AND a.created_at > NOW() - INTERVAL '24 hours'
+      );
+    END IF;
+
+    -- Low energy
+    IF rec.score_energia IS NOT NULL AND rec.score_energia <= rec.thr_energy THEN
+      INSERT INTO alerts (professional_id, client_id, type, severity, message, triggering_value, triggering_metric)
+      SELECT rec.professional_id, rec.client_id, 'abnormal_value', 'low',
+        'Energia bassa',
+        rec.score_energia, 'score_energia'
+      WHERE NOT EXISTS (
+        SELECT 1 FROM alerts a
+        WHERE a.client_id = rec.client_id
+          AND a.type = 'abnormal_value'
+          AND a.triggering_metric = 'score_energia'
           AND a.status IN ('new','seen')
           AND a.created_at > NOW() - INTERVAL '24 hours'
       );

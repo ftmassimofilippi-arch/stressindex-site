@@ -1,5 +1,6 @@
 // Tipi condivisi del database Stress Index
-// Allineato allo schema Supabase esistente + estensioni dashboard
+// Allineato allo schema Supabase reale (legacy app Flutter + estensioni dashboard)
+// Le colonne in italiano sono volute: rispecchiano le colonne fisiche su DB.
 
 export type UUID = string
 
@@ -20,9 +21,9 @@ export interface ProfessionalProfile {
 }
 
 export interface Client {
-  // NB: clients.id è TEXT nel DB (non UUID), ma teniamo string per compatibilità del tipo
-  id: UUID
-  // Colonna del DB esistente: professionista_id (italiano), non professional_id
+  // clients.id è TEXT nel DB (non UUID), ma teniamo string per il tipo
+  id: string
+  // Colonna del DB: professionista_id (italiano), non professional_id
   professionista_id: UUID
   nome: string | null
   cognome: string | null
@@ -41,60 +42,120 @@ export interface Client {
   note?: string | null
 }
 
+// Tabella sessions: solo record raw della misurazione.
+// Gli score proprietari e i parametri HRV calcolati sono in measurement_analytics.
 export interface Session {
-  id: UUID
-  client_id: UUID
-  professional_id?: UUID
+  id: string
+  professionista_id: UUID
+  client_id: string
+  client_nome: string | null
+  started_at: string
+  duration_seconds: number
+  sample_count: number
+  hrv_data: unknown | null
   created_at: string
-  duration_seconds?: number | null
+  notes_professionista: string | null
+  indicazioni: string | null
+  tags: string[]
+  test_type: string | null
+}
 
-  // Score proprietari (0–100)
-  stress_score?: number | null
-  recovery_score?: number | null
-  balance_score?: number | null
-  energy_score?: number | null
-  inflammatory_modulation?: number | null
+// Tabella measurement_analytics: contiene tutti gli score proprietari
+// e i 24+ parametri HRV in colonne separate. Fonte autoritativa per la dashboard.
+export interface MeasurementAnalytics {
+  id: UUID
+  session_id: string // FK → sessions.id
+  user_id: UUID // = auth.uid() del professionista (RLS)
+  client_id: string
+  measured_at: string
+  duration_seconds: number
+  sensor_type: string | null
+  sensor_name: string | null
+
+  age: number | null
+  sex: 'M' | 'F' | 'X' | null
+  is_smoker: boolean | null
+  is_athlete: boolean | null
+  activity_level: string | null
+
+  rr_intervals: number[] | null
+  rr_count: number | null
+  artifact_percentage: number | null
 
   // Time domain
-  mean_rr?: number | null
-  sdnn?: number | null
-  rmssd?: number | null
-  pnn50?: number | null
-  cv?: number | null
-  bpm_mean?: number | null
+  mean_rr: number | null
+  sdnn: number | null
+  rmssd: number | null
+  pnn50: number | null
+  pnn20: number | null
+  mean_hr: number | null
+  sdnn_index: number | null
+  cv: number | null
+  rmssd_sdnn_ratio: number | null
 
-  // Frequency domain
-  vlf?: number | null
-  lf?: number | null
-  hf?: number | null
-  lf_hf_ratio?: number | null
-  total_power?: number | null
-  lf_nu?: number | null
-  hf_nu?: number | null
+  // Frequency domain (Welch)
+  vlf_power: number | null
+  lf_power: number | null
+  hf_power: number | null
+  total_power: number | null
+  lf_hf_ratio: number | null
+  lf_nu: number | null
+  hf_nu: number | null
+  lf_vlf_ratio: number | null
+
+  // Frequency Lomb-Scargle
+  vlf_power_ls: number | null
+  lf_power_ls: number | null
+  hf_power_ls: number | null
+  total_power_ls: number | null
+  lf_hf_ratio_ls: number | null
 
   // Non-linear
-  sd1?: number | null
-  sd2?: number | null
-  sd1_sd2_ratio?: number | null
-  dfa_alpha1?: number | null
-  dfa_alpha2?: number | null
-  sample_entropy?: number | null
-  approx_entropy?: number | null
+  sd1: number | null
+  sd2: number | null
+  sd1_sd2_ratio: number | null
+  dfa_alpha1: number | null
+  dfa_alpha2: number | null
+  sample_entropy: number | null
+  approximate_entropy: number | null
 
   // Geometric
-  hrv_triangular_index?: number | null
-  tinn?: number | null
+  triangular_index: number | null
+  tinn: number | null
 
-  signal_quality?: number | null
-  sensor_used?: string | null
-  rr_intervals?: number[] | null
-  notes?: string | null
+  // Baevsky
+  stress_index_baevsky: number | null
+
+  // Score proprietari (0–100)
+  score_stress: number | null
+  score_recupero: number | null
+  score_equilibrio: number | null
+  score_energia: number | null
+  score_modulazione_infiammatoria: number | null
+  score_composito: number | null
+
+  // Meta
+  algorithm_version: string | null
+  score_weights: unknown | null
+  tags: string[] | null
+  created_at: string
+  test_type: string | null
+
+  // Future features
+  orthostatic_data: unknown | null
+  coherence_data: unknown | null
+}
+
+// Tipo arricchito con i campi di sessions utili per il dettaglio misurazione
+export interface MeasurementWithSession extends MeasurementAnalytics {
+  notes_professionista: string | null
+  indicazioni: string | null
 }
 
 export interface Alert {
   id: UUID
   professional_id: UUID
-  client_id: UUID
+  client_id: string
   type: 'high_stress' | 'low_recovery' | 'missed_measurement' | 'abnormal_value' | 'trend_negative'
   severity: 'low' | 'medium' | 'high'
   message?: string | null
@@ -107,7 +168,7 @@ export interface Alert {
 }
 
 export interface ClientSettings {
-  client_id: UUID
+  client_id: string
   expected_frequency_per_week: number
   alert_threshold_stress: number
   alert_threshold_recovery: number
@@ -118,22 +179,23 @@ export interface ClientSettings {
   last_measurement_at?: string | null
 }
 
+// Schema reale (italiano): testo, categoria, data_creazione, data_reminder
 export interface ClientNote {
-  id: UUID
-  professional_id: UUID
-  client_id: UUID
-  session_id?: UUID | null
-  content: string
+  id: string
+  professionista_id: UUID
+  client_id: string
+  testo: string
+  categoria: string | null
+  data_creazione: string
+  data_reminder: string | null
   tags: string[]
   attachments_urls: string[]
-  created_at: string
-  updated_at?: string
 }
 
 export interface Message {
   id: UUID
   professional_id: UUID
-  client_id: UUID
+  client_id: string
   subject?: string | null
   content?: string | null
   channel: 'email' | 'push'
@@ -153,7 +215,7 @@ export interface NotificationPreferences {
 
 export interface AiInsight {
   id: UUID
-  client_id: UUID
+  client_id: string
   summary?: string | null
   recommendations?: string | null
   generated_at?: string | null
@@ -170,8 +232,18 @@ export const ALERT_TYPE_LABEL: Record<Alert['type'], string> = {
 }
 
 export const SCORE_LABEL = {
-  stress_score: 'Stress',
-  recovery_score: 'Recupero',
-  balance_score: 'Equilibrio',
-  energy_score: 'Energia',
+  score_stress: 'Stress',
+  score_recupero: 'Recupero',
+  score_equilibrio: 'Equilibrio',
+  score_energia: 'Energia',
 } as const
+
+export const NOTE_CATEGORIES = [
+  'valutazione',
+  'follow-up',
+  'post-trattamento',
+  'anamnesi',
+  'altro',
+] as const
+
+export type NoteCategory = typeof NOTE_CATEGORIES[number]

@@ -1,16 +1,15 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { DataTable, type Column } from '@/components/dashboard/DataTable'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { CountBadge } from '@/components/dashboard/AlertBadge'
 import { age, fullName, initials, formatRelative } from '@/lib/format'
-import type { ClientWithLastSession } from '@/lib/dashboard-data'
+import type { ClientWithLastMeasurement } from '@/lib/dashboard-data'
 import { useRouter } from 'next/navigation'
 
-type Props = { clients: ClientWithLastSession[] }
+type Props = { clients: ClientWithLastMeasurement[] }
 
 const FILTER_PERIODS = [
   { value: 'all', label: 'Tutti' },
@@ -57,7 +56,7 @@ export function ClientsTable({ clients }: Props) {
     })
   }, [clients, search, tagFilter, periodFilter])
 
-  const columns: Column<ClientWithLastSession>[] = [
+  const columns: Column<ClientWithLastMeasurement>[] = [
     {
       key: 'name',
       header: 'Cliente',
@@ -107,9 +106,9 @@ export function ClientsTable({ clients }: Props) {
     {
       key: 'stress',
       header: 'Stress',
-      accessor: (c) => c.lastSession?.stress_score ?? -1,
+      accessor: (c) => c.lastMeasurement?.score_stress ?? -1,
       sortable: true,
-      render: (c) => <ScoreBar value={c.lastSession?.stress_score} inverted />,
+      render: (c) => <ScoreBar value={c.lastMeasurement?.score_stress} inverted />,
     },
     {
       key: 'alerts',

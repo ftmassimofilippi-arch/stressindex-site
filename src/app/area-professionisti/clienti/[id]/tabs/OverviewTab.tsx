@@ -5,31 +5,38 @@ import { AlertTriangle, Sparkles } from 'lucide-react'
 import { ScoreGauge } from '@/components/dashboard/ScoreGauge'
 import { TrendChart } from '@/components/dashboard/TrendChart'
 import { AlertBadge } from '@/components/dashboard/AlertBadge'
-import type { Alert, Client, Session } from '@/lib/types'
+import type { Alert, Client, MeasurementAnalytics } from '@/lib/types'
 import { ALERT_TYPE_LABEL } from '@/lib/types'
 import { formatDateTime } from '@/lib/format'
 
-export function OverviewTab({ client, sessions, alerts }: { client: Client; sessions: Session[]; alerts: Alert[] }) {
-  const latest = sessions[0]
+const TREND_SERIES = [
+  { key: 'score_stress', label: 'Stress', color: '#EF4444' },
+  { key: 'score_recupero', label: 'Recupero', color: '#10B981' },
+  { key: 'score_equilibrio', label: 'Equilibrio', color: '#4FA39A' },
+  { key: 'score_energia', label: 'Energia', color: '#F59E0B' },
+]
 
-  const trendData = sessions.slice(0, 30).slice().reverse().map((s) => ({
-    date: s.created_at.slice(0, 10),
-    stress_score: s.stress_score,
-    recovery_score: s.recovery_score,
-    balance_score: s.balance_score,
-    energy_score: s.energy_score,
+export function OverviewTab({ client, measurements, alerts }: { client: Client; measurements: MeasurementAnalytics[]; alerts: Alert[] }) {
+  const latest = measurements[0]
+
+  const trendData = measurements.slice(0, 30).slice().reverse().map((m) => ({
+    date: m.measured_at.slice(0, 10),
+    score_stress: m.score_stress,
+    score_recupero: m.score_recupero,
+    score_equilibrio: m.score_equilibrio,
+    score_energia: m.score_energia,
   }))
 
   return (
     <div className="space-y-6">
       <section>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <ScoreGauge label="Stress" value={latest?.stress_score} inverted />
-          <ScoreGauge label="Recupero" value={latest?.recovery_score} />
-          <ScoreGauge label="Equilibrio" value={latest?.balance_score} />
-          <ScoreGauge label="Energia" value={latest?.energy_score} />
+          <ScoreGauge label="Stress" value={latest?.score_stress} inverted />
+          <ScoreGauge label="Recupero" value={latest?.score_recupero} />
+          <ScoreGauge label="Equilibrio" value={latest?.score_equilibrio} />
+          <ScoreGauge label="Energia" value={latest?.score_energia} />
         </div>
-        {latest && <p className="mt-3 text-xs text-anthracite-lighter">Ultimo aggiornamento: {formatDateTime(latest.created_at)}</p>}
+        {latest && <p className="mt-3 text-xs text-anthracite-lighter">Ultimo aggiornamento: {formatDateTime(latest.measured_at)}</p>}
       </section>
 
       <section className="card p-6">
@@ -38,7 +45,7 @@ export function OverviewTab({ client, sessions, alerts }: { client: Client; sess
         {trendData.length === 0 ? (
           <p className="text-sm text-anthracite-lighter">Nessun dato disponibile</p>
         ) : (
-          <TrendChart data={trendData} height={260} />
+          <TrendChart data={trendData} series={TREND_SERIES} height={260} />
         )}
       </section>
 
@@ -71,19 +78,19 @@ export function OverviewTab({ client, sessions, alerts }: { client: Client; sess
           <div className="px-5 py-4 border-b border-surface-border flex items-center justify-between">
             <h3 className="font-serif text-base text-anthracite">Ultime 3 misurazioni</h3>
           </div>
-          {sessions.length === 0 ? (
+          {measurements.length === 0 ? (
             <div className="px-5 py-6 text-sm text-anthracite-lighter text-center">Nessuna misurazione</div>
           ) : (
             <ul className="divide-y divide-surface-border">
-              {sessions.slice(0, 3).map((s) => (
-                <li key={s.id} className="px-5 py-3 flex items-center gap-3">
+              {measurements.slice(0, 3).map((m) => (
+                <li key={m.id} className="px-5 py-3 flex items-center gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-anthracite">{formatDateTime(s.created_at)}</div>
+                    <div className="text-sm font-medium text-anthracite">{formatDateTime(m.measured_at)}</div>
                     <div className="text-xs text-anthracite-lighter mt-0.5">
-                      Stress {s.stress_score?.toFixed(0) ?? '—'} · Recupero {s.recovery_score?.toFixed(0) ?? '—'}
+                      Stress {m.score_stress?.toFixed(0) ?? '—'} · Recupero {m.score_recupero?.toFixed(0) ?? '—'}
                     </div>
                   </div>
-                  <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${s.id}`} className="text-teal-dark text-sm hover:underline">
+                  <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}`} className="text-teal-dark text-sm hover:underline">
                     Apri →
                   </Link>
                 </li>

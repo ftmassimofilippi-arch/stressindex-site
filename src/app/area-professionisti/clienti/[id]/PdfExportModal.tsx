@@ -2,49 +2,48 @@
 
 import { useMemo, useState } from 'react'
 import { Modal } from '@/components/dashboard/Modal'
-import type { Client, ClientNote, ProfessionalProfile, Session } from '@/lib/types'
+import type { Client, ClientNote, MeasurementAnalytics, ProfessionalProfile } from '@/lib/types'
 import { fullName, formatDate, formatDateTime } from '@/lib/format'
 
 type Props = {
   open: boolean
   onClose: () => void
   client: Client
-  sessions: Session[]
+  measurements: MeasurementAnalytics[]
   notes: ClientNote[]
   professional: ProfessionalProfile | null
 }
 
 const SCORE_OPTIONS = [
-  { key: 'stress_score', label: 'Stress' },
-  { key: 'recovery_score', label: 'Recupero' },
-  { key: 'balance_score', label: 'Equilibrio' },
-  { key: 'energy_score', label: 'Energia' },
+  { key: 'score_stress', label: 'Stress' },
+  { key: 'score_recupero', label: 'Recupero' },
+  { key: 'score_equilibrio', label: 'Equilibrio' },
+  { key: 'score_energia', label: 'Energia' },
 ] as const
 
-export function PdfExportModal({ open, onClose, client, sessions, notes, professional }: Props) {
+export function PdfExportModal({ open, onClose, client, measurements, notes, professional }: Props) {
   const [from, setFrom] = useState(() => {
     const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().slice(0, 10)
   })
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10))
-  const [scores, setScores] = useState<Record<string, boolean>>({ stress_score: true, recovery_score: true, balance_score: true, energy_score: true })
+  const [scores, setScores] = useState<Record<string, boolean>>({ score_stress: true, score_recupero: true, score_equilibrio: true, score_energia: true })
   const [includeHrv, setIncludeHrv] = useState(false)
   const [includeNotes, setIncludeNotes] = useState(true)
   const [includeHeader, setIncludeHeader] = useState(true)
   const [loading, setLoading] = useState(false)
 
-  const filteredSessions = useMemo(() => {
+  const filteredMeasurements = useMemo(() => {
     const fMs = new Date(from).getTime()
     const tMs = new Date(to).getTime() + 24 * 3600 * 1000
-    return sessions.filter((s) => {
-      const t = new Date(s.created_at).getTime()
+    return measurements.filter((m) => {
+      const t = new Date(m.measured_at).getTime()
       return t >= fMs && t <= tMs
     })
-  }, [sessions, from, to])
+  }, [measurements, from, to])
 
   async function generate() {
     setLoading(true)
     try {
-      // dynamic import per evitare SSR di @react-pdf
       const { pdf, Document, Page, Text, View, StyleSheet } = await import('@react-pdf/renderer')
 
       const styles = StyleSheet.create({
@@ -82,7 +81,7 @@ export function PdfExportModal({ open, onClose, client, sessions, notes, profess
               <View style={styles.kv}><Text>Sesso</Text><Text>{client.sesso ?? '—'}</Text></View>
               <View style={styles.kv}><Text>Data di nascita</Text><Text>{client.data_nascita ?? '—'}</Text></View>
               <View style={styles.kv}><Text>Periodo report</Text><Text>{from} → {to}</Text></View>
-              <View style={styles.kv}><Text>Misurazioni nel periodo</Text><Text>{filteredSessions.length}</Text></View>
+              <View style={styles.kv}><Text>Misurazioni nel periodo</Text><Text>{filteredMeasurements.length}</Text></View>
             </View>
 
             <View style={styles.section}>
@@ -93,30 +92,31 @@ export function PdfExportModal({ open, onClose, client, sessions, notes, profess
                   <Text key={o.key} style={[styles.col, { fontWeight: 700 }]}>{o.label}</Text>
                 ))}
               </View>
-              {filteredSessions.map((s) => (
-                <View key={s.id} style={styles.row}>
-                  <Text style={styles.col}>{formatDateTime(s.created_at)}</Text>
+              {filteredMeasurements.map((m) => (
+                <View key={m.id} style={styles.row}>
+                  <Text style={styles.col}>{formatDateTime(m.measured_at)}</Text>
                   {SCORE_OPTIONS.filter(o => scores[o.key]).map((o) => {
-                    const v = (s as any)[o.key]
-                    return <Text key={o.key} style={styles.col}>{v != null ? Number(v).toFixed(0) : '—'}</Text>
+                    const v = m[o.key as keyof MeasurementAnalytics] as number | null
+                    return <Text key={o.key} style={styles.col}>{v != null ? v.toFixed(0) : '—'}</Text>
                   })}
                 </View>
               ))}
-              {filteredSessions.length === 0 && <Text style={styles.muted}>Nessuna misurazione nel periodo</Text>}
+              {filteredMeasurements.length === 0 && <Text style={styles.muted}>Nessuna misurazione nel periodo</Text>}
             </View>
 
-            {includeHrv && filteredSessions.length > 0 && (
+            {includeHrv && filteredMeasurements.length > 0 && (
               <View style={styles.section}>
                 <Text style={styles.h2}>Parametri HRV (ultima misurazione)</Text>
                 {(() => {
-                  const s = filteredSessions[0]
-                  const fields: Array<[string, string | number | null | undefined]> = [
-                    ['Mean RR', s.mean_rr], ['SDNN', s.sdnn], ['RMSSD', s.rmssd], ['pNN50', s.pnn50],
-                    ['BPM medio', s.bpm_mean], ['VLF', s.vlf], ['LF', s.lf], ['HF', s.hf], ['LF/HF', s.lf_hf_ratio],
-                    ['SD1', s.sd1], ['SD2', s.sd2], ['DFA α1', s.dfa_alpha1], ['Sample Entropy', s.sample_entropy],
+                  const m = filteredMeasurements[0]
+                  const fields: Array<[string, number | null]> = [
+                    ['Mean RR', m.mean_rr], ['SDNN', m.sdnn], ['RMSSD', m.rmssd], ['pNN50', m.pnn50],
+                    ['BPM medio', m.mean_hr], ['VLF', m.vlf_power], ['LF', m.lf_power], ['HF', m.hf_power], ['LF/HF', m.lf_hf_ratio],
+                    ['SD1', m.sd1], ['SD2', m.sd2], ['DFA α1', m.dfa_alpha1], ['Sample Entropy', m.sample_entropy],
+                    ['Baevsky SI', m.stress_index_baevsky],
                   ]
                   return fields.map(([k, v]) => (
-                    <View key={k} style={styles.kv}><Text>{k}</Text><Text>{v != null ? Number(v).toFixed(2) : '—'}</Text></View>
+                    <View key={k} style={styles.kv}><Text>{k}</Text><Text>{v != null ? v.toFixed(2) : '—'}</Text></View>
                   ))
                 })()}
               </View>
@@ -127,8 +127,12 @@ export function PdfExportModal({ open, onClose, client, sessions, notes, profess
                 <Text style={styles.h2}>Note cliniche</Text>
                 {notes.slice(0, 10).map((n) => (
                   <View key={n.id} style={styles.noteBlock}>
-                    <Text style={styles.muted}>{formatDate(n.created_at, 'd MMMM yyyy')}{(n.tags ?? []).length ? ` · ${(n.tags ?? []).join(', ')}` : ''}</Text>
-                    <Text>{n.content}</Text>
+                    <Text style={styles.muted}>
+                      {formatDate(n.data_creazione, 'd MMMM yyyy')}
+                      {n.categoria ? ` · ${n.categoria}` : ''}
+                      {(n.tags ?? []).length ? ` · ${(n.tags ?? []).join(', ')}` : ''}
+                    </Text>
+                    <Text>{n.testo}</Text>
                   </View>
                 ))}
               </View>
@@ -206,7 +210,7 @@ export function PdfExportModal({ open, onClose, client, sessions, notes, profess
         </div>
 
         <div className="bg-surface rounded-xl p-4 text-xs text-anthracite-lighter">
-          <p>Anteprima: il PDF includerà <b>{filteredSessions.length}</b> misurazioni nel periodo, intestazione studio
+          <p>Anteprima: il PDF includerà <b>{filteredMeasurements.length}</b> misurazioni nel periodo, intestazione studio
           {professional?.nome_studio ? ` "${professional.nome_studio}"` : ''}, ed eventualmente le note cliniche. I grafici PSD, Poincaré e ritmogramma sono in arrivo con la generazione server-side.</p>
         </div>
       </div>

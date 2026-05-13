@@ -5,74 +5,73 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { fullName } from '@/lib/format'
-import type { Session } from '@/lib/types'
-import type { ClientWithLastSession } from '@/lib/dashboard-data'
+import type { MeasurementAnalytics } from '@/lib/types'
+import type { ClientWithLastMeasurement } from '@/lib/dashboard-data'
 import Link from 'next/link'
 
-type Props = { clients: ClientWithLastSession[]; sessions: Session[] }
+type Props = { clients: ClientWithLastMeasurement[]; measurements: MeasurementAnalytics[] }
 
 function avgOf(values: number[]) {
   if (!values.length) return null
   return values.reduce((a, b) => a + b, 0) / values.length
 }
 
-export function AnalyticsClient({ clients, sessions }: Props) {
+export function AnalyticsClient({ clients, measurements }: Props) {
   const [range, setRange] = useState<DateRange>(defaultRange(30))
   const [segmentDim, setSegmentDim] = useState<'tag' | 'sesso' | 'atleta' | 'fumatore'>('sesso')
 
-  const filteredSessions = useMemo(() => {
+  const filtered = useMemo(() => {
     const f = new Date(range.from).getTime()
     const t = new Date(range.to).getTime() + 24 * 3600 * 1000
-    return sessions.filter((s) => {
-      const v = new Date(s.created_at).getTime()
+    return measurements.filter((m) => {
+      const v = new Date(m.measured_at).getTime()
       return v >= f && v <= t
     })
-  }, [sessions, range])
+  }, [measurements, range])
 
-  const activeClientIds = new Set(filteredSessions.map((s) => s.client_id))
+  const activeClientIds = new Set(filtered.map((m) => m.client_id))
   const activeClients = activeClientIds.size
-  const totalMeasurements = filteredSessions.length
+  const totalMeasurements = filtered.length
   const alertCount = clients.reduce((acc, c) => acc + (c.activeAlerts ?? 0), 0)
   const adherence = clients.length === 0 ? 0 : (activeClients / clients.length) * 100
 
-  // Top performers by recovery
+  // Per-client recovery average
   const recoveryByClient = new Map<string, number[]>()
-  for (const s of filteredSessions) {
-    if (s.recovery_score == null) continue
-    const arr = recoveryByClient.get(s.client_id) ?? []
-    arr.push(s.recovery_score)
-    recoveryByClient.set(s.client_id, arr)
+  for (const m of filtered) {
+    if (m.score_recupero == null) continue
+    const arr = recoveryByClient.get(m.client_id) ?? []
+    arr.push(m.score_recupero)
+    recoveryByClient.set(m.client_id, arr)
   }
   const perClient = clients.map((c) => {
     const recs = recoveryByClient.get(c.id) ?? []
     const avg = avgOf(recs)
     return { client: c, recoveryAvg: avg, n: recs.length }
-  }).filter((x) => x.recoveryAvg != null) as Array<{ client: ClientWithLastSession; recoveryAvg: number; n: number }>
+  }).filter((x) => x.recoveryAvg != null) as Array<{ client: ClientWithLastMeasurement; recoveryAvg: number; n: number }>
 
   const topPerformers = [...perClient].sort((a, b) => b.recoveryAvg - a.recoveryAvg).slice(0, 5)
   const critical = [...perClient].sort((a, b) => a.recoveryAvg - b.recoveryAvg).slice(0, 5)
 
-  // Distribuzione score: istogramma in 5 bin per ogni metrica
+  // Distribution histogram in 5 bins per score
   const bins = ['0-20', '21-40', '41-60', '61-80', '81-100']
   const distData = bins.map((label, i) => ({
     bin: label,
     Stress: 0, Recupero: 0, Equilibrio: 0, Energia: 0,
     binStart: i * 20,
   }))
-  function inc(s: Session, key: 'Stress' | 'Recupero' | 'Equilibrio' | 'Energia', value: number | null | undefined) {
+  function inc(key: 'Stress' | 'Recupero' | 'Equilibrio' | 'Energia', value: number | null | undefined) {
     if (value == null) return
     const idx = Math.min(4, Math.floor(value / 20))
     distData[idx][key]++
   }
-  for (const s of filteredSessions) {
-    inc(s, 'Stress', s.stress_score)
-    inc(s, 'Recupero', s.recovery_score)
-    inc(s, 'Equilibrio', s.balance_score)
-    inc(s, 'Energia', s.energy_score)
+  for (const m of filtered) {
+    inc('Stress', m.score_stress)
+    inc('Recupero', m.score_recupero)
+    inc('Equilibrio', m.score_equilibrio)
+    inc('Energia', m.score_energia)
   }
 
-  // Segment comparison
-  const segments = useMemo(() => buildSegments(clients, filteredSessions, segmentDim), [clients, filteredSessions, segmentDim])
+  const segments = useMemo(() => buildSegments(clients, filtered, segmentDim), [clients, filtered, segmentDim])
 
   return (
     <div className="space-y-6">
@@ -178,12 +177,12 @@ export function AnalyticsClient({ clients, sessions }: Props) {
   )
 }
 
-function buildSegments(clients: ClientWithLastSession[], sessions: Session[], dim: 'tag' | 'sesso' | 'atleta' | 'fumatore') {
+function buildSegments(clients: ClientWithLastMeasurement[], measurements: MeasurementAnalytics[], dim: 'tag' | 'sesso' | 'atleta' | 'fumatore') {
   const groups = new Map<string, { stress: number[]; recupero: number[] }>()
   const clientMap = new Map(clients.map((c) => [c.id, c]))
 
-  for (const s of sessions) {
-    const c = clientMap.get(s.client_id)
+  for (const m of measurements) {
+    const c = clientMap.get(m.client_id)
     if (!c) continue
     let keys: string[] = []
     if (dim === 'tag') keys = (c.settings?.tags ?? [])
@@ -192,8 +191,8 @@ function buildSegments(clients: ClientWithLastSession[], sessions: Session[], di
     else if (dim === 'fumatore') keys = [c.fumatore ? 'Fumatori' : 'Non fumatori']
     for (const k of keys.length ? keys : ['—']) {
       const g = groups.get(k) ?? { stress: [], recupero: [] }
-      if (s.stress_score != null) g.stress.push(s.stress_score)
-      if (s.recovery_score != null) g.recupero.push(s.recovery_score)
+      if (m.score_stress != null) g.stress.push(m.score_stress)
+      if (m.score_recupero != null) g.recupero.push(m.score_recupero)
       groups.set(k, g)
     }
   }

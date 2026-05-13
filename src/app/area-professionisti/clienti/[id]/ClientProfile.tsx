@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Download, Mail, MoreHorizontal, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import type { Alert, Client, ClientNote, ClientSettings, Message, ProfessionalProfile, Session } from '@/lib/types'
+import type { Alert, Client, ClientNote, ClientSettings, MeasurementAnalytics, Message, ProfessionalProfile } from '@/lib/types'
 import { age, fullName, initials } from '@/lib/format'
 import { OverviewTab } from './tabs/OverviewTab'
 import { MeasurementsTab } from './tabs/MeasurementsTab'
@@ -27,7 +27,7 @@ type TabId = typeof TABS[number]['id']
 
 type Props = {
   client: Client
-  sessions: Session[]
+  measurements: MeasurementAnalytics[]
   alerts: Alert[]
   notes: ClientNote[]
   settings: ClientSettings | null
@@ -35,13 +35,13 @@ type Props = {
   professional: ProfessionalProfile | null
 }
 
-export function ClientProfile({ client, sessions, alerts, notes, settings, messages, professional }: Props) {
+export function ClientProfile({ client, measurements, alerts, notes, settings, messages, professional }: Props) {
   const [tab, setTab] = useState<TabId>('panoramica')
   const [pdfOpen, setPdfOpen] = useState(false)
   const [msgOpen, setMsgOpen] = useState(false)
-  const latest = sessions[0]
+  const latest = measurements[0]
 
-  const totalSessions = sessions.length
+  const totalMeasurements = measurements.length
   const memberSince = client.created_at ? Math.floor((Date.now() - new Date(client.created_at).getTime()) / (1000 * 60 * 60 * 24)) : null
 
   return (
@@ -77,15 +77,15 @@ export function ClientProfile({ client, sessions, alerts, notes, settings, messa
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
             <div>
               <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter">Stress</div>
-              <div className="font-serif text-2xl text-anthracite mt-0.5">{latest?.stress_score != null ? Math.round(latest.stress_score) : '—'}</div>
+              <div className="font-serif text-2xl text-anthracite mt-0.5">{latest?.score_stress != null ? Math.round(latest.score_stress) : '—'}</div>
             </div>
             <div>
               <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter">Recupero</div>
-              <div className="font-serif text-2xl text-anthracite mt-0.5">{latest?.recovery_score != null ? Math.round(latest.recovery_score) : '—'}</div>
+              <div className="font-serif text-2xl text-anthracite mt-0.5">{latest?.score_recupero != null ? Math.round(latest.score_recupero) : '—'}</div>
             </div>
             <div>
               <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter">Misurazioni</div>
-              <div className="font-serif text-2xl text-anthracite mt-0.5">{totalSessions}</div>
+              <div className="font-serif text-2xl text-anthracite mt-0.5">{totalMeasurements}</div>
             </div>
             <div>
               <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter">In carico da</div>
@@ -122,9 +122,9 @@ export function ClientProfile({ client, sessions, alerts, notes, settings, messa
         ))}
       </div>
 
-      {tab === 'panoramica' && <OverviewTab client={client} sessions={sessions} alerts={alerts} />}
-      {tab === 'misurazioni' && <MeasurementsTab client={client} sessions={sessions} />}
-      {tab === 'analytics' && <AdvancedAnalyticsTab sessions={sessions} />}
+      {tab === 'panoramica' && <OverviewTab client={client} measurements={measurements} alerts={alerts} />}
+      {tab === 'misurazioni' && <MeasurementsTab client={client} measurements={measurements} />}
+      {tab === 'analytics' && <AdvancedAnalyticsTab measurements={measurements} />}
       {tab === 'note' && <NotesTab client={client} initialNotes={notes} />}
       {tab === 'messaggi' && <MessagesTab client={client} initialMessages={messages} />}
       {tab === 'impostazioni' && <ClientSettingsTab client={client} initialSettings={settings} />}
@@ -133,7 +133,7 @@ export function ClientProfile({ client, sessions, alerts, notes, settings, messa
         open={pdfOpen}
         onClose={() => setPdfOpen(false)}
         client={client}
-        sessions={sessions}
+        measurements={measurements}
         notes={notes}
         professional={professional}
       />
