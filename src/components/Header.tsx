@@ -15,9 +15,15 @@ export function Header() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-4">
-          <Link 
-            href="/registrazione" 
+        <nav className="flex items-center gap-2 sm:gap-4">
+          <Link
+            href="/area-professionisti/login"
+            className="text-sm font-medium text-anthracite hover:text-teal transition-colors px-3 py-2"
+          >
+            Area Professionisti
+          </Link>
+          <Link
+            href="/registrazione"
             className="btn-primary text-sm px-5 py-2.5"
           >
             Prova gratuita

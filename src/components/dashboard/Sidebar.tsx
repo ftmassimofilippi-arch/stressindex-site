@@ -1,0 +1,129 @@
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { Home, Users, BarChart3, Settings, LogOut, Menu, X } from 'lucide-react'
+import { useState } from 'react'
+import { createClient } from '@/lib/supabase-browser'
+import { useRouter } from 'next/navigation'
+import { initials } from '@/lib/format'
+
+type SidebarProps = {
+  professional: {
+    nome?: string | null
+    cognome?: string | null
+    professione?: string | null
+    logo_url?: string | null
+  } | null
+}
+
+const NAV_ITEMS = [
+  { href: '/area-professionisti', label: 'Oggi', icon: Home, exact: true },
+  { href: '/area-professionisti/clienti', label: 'Clienti', icon: Users },
+  { href: '/area-professionisti/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/area-professionisti/impostazioni', label: 'Impostazioni', icon: Settings },
+]
+
+export function Sidebar({ professional }: SidebarProps) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/area-professionisti/login')
+    router.refresh()
+  }
+
+  const isActive = (href: string, exact?: boolean) =>
+    exact ? pathname === href : pathname === href || pathname.startsWith(href + '/')
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Apri menu"
+        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-xl bg-white border border-surface-border shadow-card flex items-center justify-center"
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
+      {open && (
+        <div
+          className="lg:hidden fixed inset-0 bg-anthracite/40 backdrop-blur-sm z-30"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={`fixed top-0 left-0 h-screen w-[260px] bg-white border-r border-surface-border z-40 flex flex-col transition-transform duration-200
+          ${open ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+      >
+        <div className="p-6 border-b border-surface-border">
+          <Link href="/area-professionisti" className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-teal flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.5 12H6.5L9 6L12 18L15 9L17.5 12H20.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-anthracite leading-tight">Stress Index</div>
+              <div className="text-[11px] text-anthracite-lighter">Area Professionisti</div>
+            </div>
+          </Link>
+        </div>
+
+        <nav className="flex-1 p-4">
+          <ul className="space-y-1">
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon
+              const active = isActive(item.href, item.exact)
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
+                      ${active
+                        ? 'bg-teal-light text-teal-dark'
+                        : 'text-anthracite hover:bg-surface'}`}
+                  >
+                    <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
+                    {item.label}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </nav>
+
+        <div className="p-4 border-t border-surface-border">
+          <div className="flex items-center gap-3 px-2 py-2">
+            <div className="w-9 h-9 rounded-full bg-teal-light text-teal-dark flex items-center justify-center text-sm font-semibold">
+              {initials(professional)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium text-anthracite truncate">
+                {professional?.nome || ''} {professional?.cognome || ''}
+              </div>
+              <div className="text-[11px] text-anthracite-lighter truncate">
+                {professional?.professione || 'Professionista'}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label="Esci"
+              className="w-9 h-9 rounded-lg hover:bg-surface flex items-center justify-center text-anthracite-lighter hover:text-anthracite transition-colors"
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
+  )
+}
