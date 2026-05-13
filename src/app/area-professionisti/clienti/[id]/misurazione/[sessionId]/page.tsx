@@ -86,16 +86,21 @@ export default async function SessionDetailPage({ params }: { params: { id: stri
           <PoincareScatter rr={measurement.rr_intervals ?? null} sd1={measurement.sd1} sd2={measurement.sd2} />
         </div>
         <div className="card p-6">
-          <h3 className="font-serif text-base text-anthracite mb-1">Ritmogramma RR</h3>
-          <p className="text-xs text-anthracite-lighter mb-3">Intervalli RR nel tempo</p>
-          <Rhythmogram rr={measurement.rr_intervals ?? null} />
+          <h3 className="font-serif text-base text-anthracite mb-1">Spettro frequenze (PSD)</h3>
+          <p className="text-xs text-anthracite-lighter mb-3">Densità spettrale di potenza — bande VLF / LF / HF</p>
+          <PsdPlaceholder
+            vlf={measurement.vlf_power}
+            lf={measurement.lf_power}
+            hf={measurement.hf_power}
+            lfHfRatio={measurement.lf_hf_ratio}
+          />
         </div>
       </section>
 
       <section className="card p-6 mb-6">
-        <h3 className="font-serif text-base text-anthracite mb-1">Spettro frequenze (PSD)</h3>
-        <p className="text-xs text-anthracite-lighter mb-3">Densità spettrale di potenza — bande VLF / LF / HF</p>
-        <PsdPlaceholder vlf={measurement.vlf_power} lf={measurement.lf_power} hf={measurement.hf_power} />
+        <h3 className="font-serif text-base text-anthracite mb-1">Ritmogramma RR</h3>
+        <p className="text-xs text-anthracite-lighter mb-3">Intervalli RR nel tempo · usa il selettore inferiore per zoom temporale</p>
+        <Rhythmogram rr={measurement.rr_intervals ?? null} />
       </section>
 
       <section className="card p-6">

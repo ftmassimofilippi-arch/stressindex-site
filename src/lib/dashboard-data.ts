@@ -221,6 +221,8 @@ export type DailyAveragePoint = {
   score_recupero: number | null
   score_equilibrio: number | null
   score_energia: number | null
+  score_modulazione_infiammatoria: number | null
+  score_composito: number | null
 }
 
 export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAveragePoint[]> {
@@ -231,18 +233,30 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
 
   const { data } = await supabase
     .from('measurement_analytics')
-    .select('measured_at,score_stress,score_recupero,score_equilibrio,score_energia')
+    .select('measured_at,score_stress,score_recupero,score_equilibrio,score_energia,score_modulazione_infiammatoria,score_composito')
     .gte('measured_at', from.toISOString())
     .order('measured_at', { ascending: true })
 
-  const buckets = new Map<string, { s: number[]; r: number[]; b: number[]; e: number[] }>()
-  for (const row of (data ?? []) as Array<{ measured_at: string; score_stress: number | null; score_recupero: number | null; score_equilibrio: number | null; score_energia: number | null }>) {
+  type Bucket = { s: number[]; r: number[]; b: number[]; e: number[]; m: number[]; c: number[] }
+  const buckets = new Map<string, Bucket>()
+  type Row = {
+    measured_at: string
+    score_stress: number | null
+    score_recupero: number | null
+    score_equilibrio: number | null
+    score_energia: number | null
+    score_modulazione_infiammatoria: number | null
+    score_composito: number | null
+  }
+  for (const row of (data ?? []) as Row[]) {
     const day = row.measured_at.slice(0, 10)
-    const bucket = buckets.get(day) ?? { s: [], r: [], b: [], e: [] }
+    const bucket: Bucket = buckets.get(day) ?? { s: [], r: [], b: [], e: [], m: [], c: [] }
     if (row.score_stress != null) bucket.s.push(row.score_stress)
     if (row.score_recupero != null) bucket.r.push(row.score_recupero)
     if (row.score_equilibrio != null) bucket.b.push(row.score_equilibrio)
     if (row.score_energia != null) bucket.e.push(row.score_energia)
+    if (row.score_modulazione_infiammatoria != null) bucket.m.push(row.score_modulazione_infiammatoria)
+    if (row.score_composito != null) bucket.c.push(row.score_composito)
     buckets.set(day, bucket)
   }
 
@@ -260,6 +274,8 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
       score_recupero: b ? avg(b.r) : null,
       score_equilibrio: b ? avg(b.b) : null,
       score_energia: b ? avg(b.e) : null,
+      score_modulazione_infiammatoria: b ? avg(b.m) : null,
+      score_composito: b ? avg(b.c) : null,
     })
   }
   return out

@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Activity, AlertTriangle, ArrowRight, Calendar, NotebookPen, TrendingUp, UserCheck } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { MetricCard } from '@/components/dashboard/MetricCard'
-import { TrendChart } from '@/components/dashboard/TrendChart'
+import { AdvancedTrendChart } from '@/components/dashboard/AdvancedTrendChart'
 import { AlertBadge } from '@/components/dashboard/AlertBadge'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { EmptyState } from '@/components/dashboard/EmptyState'
@@ -26,6 +26,8 @@ const TREND_SERIES = [
   { key: 'score_recupero', label: 'Recupero', color: '#10B981' },
   { key: 'score_equilibrio', label: 'Equilibrio', color: '#4FA39A' },
   { key: 'score_energia', label: 'Energia', color: '#F59E0B' },
+  { key: 'score_modulazione_infiammatoria', label: 'Mod. infiammatoria', color: '#8B5CF6' },
+  { key: 'score_composito', label: 'Composito', color: '#2F343A' },
 ]
 
 export default async function DashboardHome() {
@@ -34,7 +36,7 @@ export default async function DashboardHome() {
     listAlerts({ status: ['new', 'seen'], limit: 5 }),
     todaysMeasurements(),
     clientsToContact(),
-    aggregatedDailyAverages(30),
+    aggregatedDailyAverages(365),
     listClients(),
     listRecentNotes(3),
   ])
@@ -184,9 +186,15 @@ export default async function DashboardHome() {
           <section className="card p-5">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp size={16} className="text-teal" />
-              <h3 className="font-serif text-base text-anthracite">Andamento medio · 30 giorni</h3>
+              <h3 className="font-serif text-base text-anthracite">Andamento medio aggregato</h3>
             </div>
-            <TrendChart data={trend} series={TREND_SERIES} height={200} />
+            <AdvancedTrendChart
+              data={trend}
+              series={TREND_SERIES}
+              defaultPreset="30"
+              height={220}
+              storageKey="sx-home-trend-range"
+            />
           </section>
 
           <section className="card overflow-hidden">
