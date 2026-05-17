@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import GuideChatWidget from '@/components/GuideChatWidget'
 
 type SectionDef = {
   id: string
@@ -1437,60 +1438,43 @@ export default function GuideClient() {
                 ))}
               </div>
 
-              {/* NotebookLM placeholder */}
+              {/* AI assistant promo */}
               <section
                 aria-labelledby="ai-help-title"
                 className="mt-20 rounded-2xl border border-teal-mid/60 bg-gradient-to-br from-teal-light/60 to-white p-6 sm:p-8"
               >
-                <h2
-                  id="ai-help-title"
-                  className="text-xl sm:text-2xl font-semibold text-anthracite tracking-tight"
-                >
-                  Non trovi quello che cerchi?
-                </h2>
-                <p className="mt-2 text-[15.5px] text-anthracite-light leading-relaxed max-w-2xl">
-                  Chiedi direttamente al nostro assistente virtuale. Ha letto
-                  tutte le guide e può risponderti in tempo reale.
-                </p>
-
-                {/* TODO: embed NotebookLM widget quando pronto */}
-                <div
-                  id="notebooklm-widget"
-                  className="mt-6 rounded-xl border border-dashed border-teal-mid bg-white/60 p-6 text-center text-[14px] text-anthracite-lighter"
-                  data-placeholder="notebooklm"
-                >
-                  Assistente virtuale in arrivo.
-                </div>
-
-                <div className="mt-6">
-                  <a
-                    href="mailto:support@stressindex.io"
-                    className="btn-primary text-[14.5px]"
-                  >
-                    Contattaci
-                    <svg
-                      className="ml-2"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
+                <div className="flex items-start gap-4">
+                  <div className="hidden sm:flex w-12 h-12 rounded-xl bg-teal text-white items-center justify-center flex-shrink-0 shadow-card">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path
-                        d="M5 12H19M19 12L13 6M19 12L13 18"
+                        d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12z"
                         stroke="currentColor"
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       />
                     </svg>
-                  </a>
+                  </div>
+                  <div>
+                    <h2
+                      id="ai-help-title"
+                      className="text-xl sm:text-2xl font-semibold text-anthracite tracking-tight"
+                    >
+                      Non trovi quello che cerchi?
+                    </h2>
+                    <p className="mt-2 text-[15.5px] text-anthracite-light leading-relaxed max-w-2xl">
+                      Usa l&apos;assistente in basso a destra per fare domande
+                      in tempo reale. Ha letto tutte le guide e può
+                      risponderti subito.
+                    </p>
+                  </div>
                 </div>
               </section>
             </div>
           </div>
         </div>
 
-        {/* Back to top */}
+        {/* Back to top (a sinistra per non collidere col chat launcher) */}
         {showBackTop && (
           <button
             type="button"
@@ -1498,7 +1482,7 @@ export default function GuideClient() {
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }
             aria-label="Torna su"
-            className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-anthracite text-white shadow-elevated hover:bg-teal-dark transition-colors flex items-center justify-center"
+            className="fixed bottom-6 left-6 z-40 w-12 h-12 rounded-full bg-anthracite text-white shadow-elevated hover:bg-teal-dark transition-colors flex items-center justify-center"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path
@@ -1513,6 +1497,7 @@ export default function GuideClient() {
         )}
       </main>
       <Footer />
+      <GuideChatWidget />
     </>
   )
 }
