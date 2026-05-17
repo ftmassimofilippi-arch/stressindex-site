@@ -61,6 +61,9 @@ function Navbar() {
           <a href="#faq" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
             FAQ
           </a>
+          <Link href="/guide" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
+            Guide
+          </Link>
           <Link href="/area-professionisti/login" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
             Area Professionisti
           </Link>
@@ -674,9 +677,9 @@ function Footer() {
           <div>
             <h4 className="text-[13px] uppercase tracking-wider text-white/50 font-semibold">Supporto</h4>
             <ul className="mt-4 space-y-2.5 text-[14px]">
+              <li><Link className="text-white/80 hover:text-teal transition-colors" href="/guide">Guide e Supporto</Link></li>
               <li><a className="text-white/80 hover:text-teal transition-colors" href="#faq">FAQ</a></li>
-              <li><a className="text-white/80 hover:text-teal transition-colors" href="mailto:info@stressindex.io">Contattaci</a></li>
-              <li><a className="text-white/80 hover:text-teal transition-colors" href="#come-funziona">Guida utente</a></li>
+              <li><a className="text-white/80 hover:text-teal transition-colors" href="mailto:support@stressindex.io">Contattaci</a></li>
             </ul>
           </div>
 

@@ -17,6 +17,12 @@ export function Header() {
 
         <nav className="flex items-center gap-2 sm:gap-4">
           <Link
+            href="/guide"
+            className="hidden sm:inline-block text-sm font-medium text-anthracite hover:text-teal transition-colors px-3 py-2"
+          >
+            Guide
+          </Link>
+          <Link
             href="/area-professionisti/login"
             className="text-sm font-medium text-anthracite hover:text-teal transition-colors px-3 py-2"
           >
