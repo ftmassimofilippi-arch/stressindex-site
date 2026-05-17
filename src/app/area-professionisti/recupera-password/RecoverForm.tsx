@@ -26,8 +26,9 @@ export function RecoverForm() {
 
   if (done) {
     return (
-      <div className="px-4 py-3 rounded-xl bg-teal-light text-teal-dark text-sm">
-        Ti abbiamo inviato un&apos;email con le istruzioni per reimpostare la password. Controlla anche la cartella spam.
+      <div className="px-4 py-3 rounded-lg bg-teal-light/60 border-l-4 border-teal text-sm text-anthracite flex items-start gap-3">
+        <span aria-hidden="true" className="text-lg leading-none mt-0.5">✉️</span>
+        <span>Ti abbiamo inviato un&apos;email con le istruzioni per reimpostare la password. Controlla anche la cartella spam.</span>
       </div>
     )
   }
@@ -48,8 +49,9 @@ export function RecoverForm() {
         />
       </div>
       {error && (
-        <div className="px-3 py-2 rounded-xl bg-red-50 text-red-700 text-sm border border-red-100">
-          {error}
+        <div className="px-4 py-3 rounded-lg bg-red-50 text-red-700 text-sm border-l-4 border-red-400 flex items-start gap-3">
+          <span aria-hidden="true" className="text-lg leading-none mt-0.5">⚠️</span>
+          <span>{error}</span>
         </div>
       )}
       <button type="submit" disabled={loading} className="btn-primary w-full">

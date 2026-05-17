@@ -9,43 +9,44 @@ export const metadata: Metadata = {
 
 export default function RecuperaPasswordPage() {
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      <section
-        className="lg:w-1/2 px-8 sm:px-12 lg:px-16 py-12 lg:py-0 flex items-center justify-center text-white relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #4FA39A 0%, #2E746C 100%)' }}
-      >
-        <div className="max-w-md">
-          <Link href="/" className="inline-flex items-center gap-2.5 mb-12 group">
-            <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <div className="min-h-screen bg-white flex flex-col">
+      <header className="border-b border-gray-100">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-teal flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M3.5 12H6.5L9 6L12 18L15 9L17.5 12H20.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <span className="text-lg font-semibold tracking-tight">Stress Index</span>
+            <span className="text-lg font-semibold text-anthracite tracking-tight">Stress Index</span>
           </Link>
-          <h1 className="font-serif text-4xl lg:text-5xl leading-tight">
-            Recupera <em className="font-serif italic">l&apos;accesso.</em>
-          </h1>
-          <p className="mt-6 text-white/85 text-base leading-relaxed">
-            Inserisci la tua email e riceverai un link per reimpostare la password.
-          </p>
         </div>
-      </section>
+      </header>
 
-      <section className="lg:w-1/2 flex items-center justify-center px-6 sm:px-12 py-12 bg-surface">
+      <main className="flex-1 flex items-center justify-center px-6 py-16">
         <div className="w-full max-w-sm">
-          <h2 className="font-serif text-3xl text-anthracite">Password dimenticata</h2>
-          <p className="text-sm text-anthracite-lighter mt-1.5">Ti invieremo un&apos;email con il link di recupero</p>
+          <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider mb-4">
+            <span aria-hidden="true">🔑</span>
+            <span>Recupera accesso</span>
+          </div>
+          <h1 className="font-serif text-4xl text-anthracite tracking-tight">
+            Password dimenticata
+          </h1>
+          <p className="mt-3 text-anthracite-light">
+            Inserisci la tua email e ti invieremo un link per reimpostare la password.
+          </p>
+
           <div className="mt-8">
             <RecoverForm />
           </div>
+
           <p className="mt-8 text-sm text-anthracite-lighter text-center">
             <Link href="/area-professionisti/login" className="text-teal-dark font-medium hover:underline">
               ← Torna al login
             </Link>
           </p>
         </div>
-      </section>
+      </main>
     </div>
   )
 }

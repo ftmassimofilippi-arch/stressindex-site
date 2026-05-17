@@ -25,19 +25,19 @@ export const metadata: Metadata = {
 function Logo({ light = false }: { light?: boolean }) {
   return (
     <Link href="/" className="inline-flex items-center gap-2.5 group" aria-label="Stress Index — Home">
-      <div className="w-9 h-9 rounded-xl bg-teal flex items-center justify-center shadow-card">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <div className="w-8 h-8 rounded-lg bg-teal flex items-center justify-center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path
             d="M3.5 12H6.5L9 6L12 18L15 9L17.5 12H20.5"
             stroke="white"
-            strokeWidth="2.2"
+            strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
         </svg>
       </div>
-      <span className={`text-[1.35rem] font-semibold tracking-tight ${light ? 'text-white' : 'text-anthracite'}`}>
-        Stress<span className="text-teal"> Index</span>
+      <span className={`text-lg font-semibold tracking-tight ${light ? 'text-white' : 'text-anthracite'}`}>
+        Stress Index
       </span>
     </Link>
   )
@@ -45,32 +45,32 @@ function Logo({ light = false }: { light?: boolean }) {
 
 function Navbar() {
   return (
-    <header className="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-white/75 border-b border-surface-border">
-      <div className="max-w-7xl mx-auto px-5 md:px-8 h-16 flex items-center justify-between">
+    <header className="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <Logo />
-        <nav className="hidden md:flex items-center gap-8 text-[15px] text-anthracite-light">
-          <a href="#come-funziona" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
+        <nav className="hidden md:flex items-center gap-1 text-[14px] text-anthracite-light">
+          <a href="#come-funziona" className="px-3 py-2 rounded-md hover:text-teal transition-colors">
             Come funziona
           </a>
-          <a href="#benefici" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
+          <a href="#benefici" className="px-3 py-2 rounded-md hover:text-teal transition-colors">
             Funzionalità
           </a>
-          <a href="#prezzi" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
+          <a href="#prezzi" className="px-3 py-2 rounded-md hover:text-teal transition-colors">
             Prezzi
           </a>
-          <a href="#faq" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
+          <a href="#faq" className="px-3 py-2 rounded-md hover:text-teal transition-colors">
             FAQ
           </a>
-          <Link href="/guide" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
+          <Link href="/guide" className="px-3 py-2 rounded-md hover:text-teal transition-colors">
             Guide
           </Link>
-          <Link href="/area-professionisti/login" className="hover:text-teal transition-colors focus:outline-none focus-visible:text-teal">
+          <Link href="/area-professionisti/login" className="px-3 py-2 rounded-md hover:text-teal transition-colors">
             Area Professionisti
           </Link>
         </nav>
         <Link
           href="/registrazione"
-          className="inline-flex items-center justify-center px-4 py-2 md:px-5 md:py-2.5 bg-teal text-white text-sm font-medium rounded-xl shadow-card hover:bg-teal-dark hover:shadow-card-hover transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
+          className="inline-flex items-center justify-center px-4 py-2 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal-dark transition-colors"
         >
           Inizia gratis
         </Link>
@@ -87,10 +87,10 @@ function HeroMockup() {
     { label: 'Energia', value: 63, barClass: 'bg-[#6366F1]' },
   ]
   return (
-    <div className="relative mx-auto w-full max-w-[480px]">
-      <div className="rounded-[28px] bg-anthracite p-3 shadow-elevated">
-        <div className="rounded-[20px] bg-surface overflow-hidden">
-          <div className="bg-teal text-white px-5 py-3.5 flex items-center justify-between">
+    <div className="relative mx-auto w-full max-w-[460px]">
+      <div className="rounded-2xl bg-white border border-gray-200 p-4">
+        <div className="rounded-xl bg-surface overflow-hidden border border-gray-100">
+          <div className="bg-teal text-white px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-white/80" />
               <span className="text-[13px] font-medium tracking-tight">Stress Index · Misura in corso</span>
@@ -100,20 +100,20 @@ function HeroMockup() {
 
           <div className="p-4 grid grid-cols-2 gap-3">
             {scores.map((s) => (
-              <div key={s.label} className="bg-white rounded-xl p-3.5 shadow-card border border-surface-border">
+              <div key={s.label} className="bg-white rounded-lg p-3.5 border border-gray-200">
                 <div className="text-[11px] uppercase tracking-wider text-anthracite-lighter font-medium">{s.label}</div>
                 <div className="mt-1 flex items-baseline gap-1">
                   <span className="text-3xl font-semibold text-anthracite tabular-nums">{s.value}</span>
                   <span className="text-xs text-anthracite-lighter">/100</span>
                 </div>
-                <div className="mt-2 h-1.5 rounded-full bg-surface-border overflow-hidden">
+                <div className="mt-2 h-1.5 rounded-full bg-gray-100 overflow-hidden">
                   <div className={`h-full rounded-full ${s.barClass}`} style={{ width: `${s.value}%` }} />
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mx-4 mb-4 rounded-xl bg-white border border-surface-border px-3.5 py-3 flex items-center gap-3 shadow-card">
+          <div className="mx-4 mb-4 rounded-lg bg-white border border-gray-200 px-3.5 py-3 flex items-center gap-3">
             <span className="relative flex h-2.5 w-2.5">
               <span className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-60" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
@@ -124,21 +124,20 @@ function HeroMockup() {
           </div>
         </div>
       </div>
-
-      <div className="absolute -inset-6 -z-10 bg-teal/10 blur-3xl rounded-[40px]" aria-hidden="true" />
     </div>
   )
 }
 
 function Hero() {
   return (
-    <section className="pt-28 md:pt-32 pb-16 md:pb-24 px-5 md:px-8">
-      <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+    <section className="pt-32 md:pt-36 pb-16 md:pb-20 px-6">
+      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 md:gap-16 items-center">
         <div>
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium">
-            Software HRV per Professionisti del Benessere
-          </span>
-          <h1 className="mt-5 font-serif text-[36px] md:text-[54px] leading-[1.05] tracking-tight text-anthracite">
+          <div className="inline-flex items-center gap-2 text-[13px] font-medium text-teal-dark">
+            <span aria-hidden="true">🩺</span>
+            <span>Software HRV per professionisti del benessere</span>
+          </div>
+          <h1 className="mt-4 font-serif text-[36px] md:text-[52px] leading-[1.08] tracking-tight text-anthracite">
             Il tuo cliente è stressato.{' '}
             <em className="italic text-teal">Adesso puoi dimostrarlo.</em>
           </h1>
@@ -149,14 +148,14 @@ function Hero() {
           <div className="mt-7 flex flex-wrap items-center gap-4">
             <Link
               href="/registrazione"
-              className="inline-flex items-center justify-center px-6 py-3.5 bg-teal text-white font-medium rounded-xl shadow-card hover:bg-teal-dark hover:shadow-card-hover transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
+              className="inline-flex items-center justify-center px-6 py-3 bg-teal text-white font-medium rounded-lg hover:bg-teal-dark transition-colors"
             >
               Prova gratis 15 giorni
               <span className="ml-2" aria-hidden="true">→</span>
             </Link>
             <a
               href="#come-funziona"
-              className="inline-flex items-center text-anthracite font-medium hover:text-teal transition-colors focus:outline-none focus-visible:text-teal"
+              className="inline-flex items-center px-2 py-3 text-anthracite font-medium hover:text-teal transition-colors"
             >
               Guarda come funziona
               <span className="ml-1" aria-hidden="true">↓</span>
@@ -184,8 +183,8 @@ function TrustBar() {
     { icon: '🩺', text: 'Per professionisti della salute' },
   ]
   return (
-    <section className="bg-surface border-y border-surface-border py-5 px-5 md:px-8">
-      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[14px] text-anthracite-light">
+    <section className="border-y border-gray-100 py-5 px-6">
+      <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[14px] text-anthracite-light">
         {items.map((it) => (
           <div key={it.text} className="flex items-center gap-2">
             <span aria-hidden="true">{it.icon}</span>
@@ -219,16 +218,17 @@ function Problem() {
     },
   ]
   return (
-    <section className="bg-anthracite text-white py-20 md:py-28 px-5 md:px-8">
-      <div className="max-w-6xl mx-auto">
+    <section className="py-16 md:py-24 px-6 border-b border-gray-100">
+      <div className="max-w-5xl mx-auto">
         <div className="max-w-3xl">
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal/15 text-teal-light text-[13px] font-medium">
-            Il problema reale
-          </span>
-          <h2 className="mt-5 font-serif text-[32px] md:text-5xl leading-[1.1] tracking-tight">
+          <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">
+            <span aria-hidden="true">⚡</span>
+            <span>Il problema reale</span>
+          </div>
+          <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
             Sai già che lo stress cambia tutto. <em className="italic text-teal">Ma riesci a misurarlo davvero?</em>
           </h2>
-          <p className="mt-5 text-[17px] text-white/75 leading-relaxed">
+          <p className="mt-5 text-[17px] text-anthracite-light leading-relaxed">
             Ogni giorno lavori con persone che dormono male, recuperano lentamente, si infortunano sempre
             nello stesso periodo, non rispondono come dovrebbero al protocollo. Tu sai che dietro c&apos;è il
             sistema nervoso. Ma non hai un numero da mostrare.
@@ -239,11 +239,11 @@ function Problem() {
           {cards.map((c) => (
             <div
               key={c.title}
-              className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 md:p-7 hover:border-teal/40 hover:bg-white/[0.05] transition-colors"
+              className="rounded-xl border border-gray-200 bg-white p-6"
             >
               <div className="text-2xl" aria-hidden="true">{c.icon}</div>
-              <h3 className="mt-4 text-lg font-semibold tracking-tight">{c.title}</h3>
-              <p className="mt-3 text-[15px] text-white/70 leading-relaxed">{c.body}</p>
+              <h3 className="mt-3 text-lg font-semibold text-anthracite tracking-tight">{c.title}</h3>
+              <p className="mt-2 text-[15px] text-anthracite-light leading-relaxed">{c.body}</p>
             </div>
           ))}
         </div>
@@ -262,13 +262,13 @@ function ScoreCard({
   color: string
 }) {
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-card border border-surface-border">
+    <div className="bg-white rounded-lg p-5 border border-gray-200">
       <div className="text-[11px] uppercase tracking-wider text-anthracite-lighter font-medium">{label}</div>
       <div className="mt-1.5 flex items-baseline gap-1">
         <span className="text-4xl font-semibold text-anthracite tabular-nums">{value}</span>
         <span className="text-sm text-anthracite-lighter">/100</span>
       </div>
-      <div className="mt-3 h-2 rounded-full bg-surface-border overflow-hidden">
+      <div className="mt-3 h-2 rounded-full bg-gray-100 overflow-hidden">
         <div className="h-full rounded-full" style={{ width: `${value}%`, backgroundColor: color }} />
       </div>
     </div>
@@ -299,13 +299,14 @@ function Solution() {
     },
   ]
   return (
-    <section className="py-20 md:py-28 px-5 md:px-8">
-      <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-14 md:gap-20 items-center">
+    <section className="py-16 md:py-24 px-6 border-b border-gray-100">
+      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-14 md:gap-20 items-center">
         <div>
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium">
-            La risposta
-          </span>
-          <h2 className="mt-5 font-serif text-[32px] md:text-5xl leading-[1.1] tracking-tight text-anthracite">
+          <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">
+            <span aria-hidden="true">📊</span>
+            <span>La risposta</span>
+          </div>
+          <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
             4 numeri. <em className="italic text-teal">Tutto quello che ti serve.</em>
           </h2>
           <p className="mt-5 text-[17px] text-anthracite-light leading-relaxed">
@@ -314,11 +315,9 @@ function Solution() {
           </p>
           <ul className="mt-8 space-y-5">
             {features.map((f) => (
-              <li key={f.title} className="flex gap-4">
-                <span className="flex-shrink-0 w-6 h-6 rounded-md bg-teal flex items-center justify-center mt-0.5" aria-hidden="true">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
+              <li key={f.title} className="flex gap-3">
+                <span className="flex-shrink-0 text-teal mt-0.5 font-semibold" aria-hidden="true">
+                  ✓
                 </span>
                 <div>
                   <div className="font-semibold text-anthracite">{f.title}</div>
@@ -329,17 +328,17 @@ function Solution() {
           </ul>
         </div>
 
-        <div className="relative">
-          <div className="rounded-3xl bg-white border border-surface-border shadow-elevated p-6 md:p-7">
+        <div>
+          <div className="rounded-2xl bg-white border border-gray-200 p-6 md:p-7">
             <div className="grid grid-cols-2 gap-4">
               <ScoreCard label="Stress" value={72} color="#E85D4A" />
               <ScoreCard label="Recupero" value={68} color="#4FA39A" />
               <ScoreCard label="Equilibrio" value={55} color="#F59E0B" />
               <ScoreCard label="Energia" value={63} color="#6366F1" />
             </div>
-            <div className="mt-5 rounded-xl bg-surface border border-surface-border px-4 py-3.5">
-              <div className="text-[11px] uppercase tracking-wider text-anthracite-lighter font-medium">
-                Modulazione Infiammatoria
+            <div className="mt-5 rounded-lg border-l-4 border-teal bg-teal-light/50 px-4 py-3.5">
+              <div className="text-[11px] uppercase tracking-wider text-teal-dark font-semibold">
+                💡 Modulazione Infiammatoria
               </div>
               <div className="mt-1 text-[14px] text-anthracite leading-relaxed">
                 <span className="font-semibold">58/100</span> · Attività vagale nella norma per fascia demografica.
@@ -347,7 +346,6 @@ function Solution() {
               </div>
             </div>
           </div>
-          <div className="absolute -inset-6 -z-10 bg-teal/10 blur-3xl rounded-[40px]" aria-hidden="true" />
         </div>
       </div>
     </section>
@@ -379,29 +377,32 @@ function HowItWorks() {
     },
   ]
   return (
-    <section id="come-funziona" className="bg-surface py-20 md:py-28 px-5 md:px-8 scroll-mt-20">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center max-w-2xl mx-auto">
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium">
-            Semplicità operativa
-          </span>
-          <h2 className="mt-5 font-serif text-[32px] md:text-5xl leading-[1.1] tracking-tight text-anthracite">
+    <section id="come-funziona" className="py-16 md:py-24 px-6 scroll-mt-20 border-b border-gray-100">
+      <div className="max-w-5xl mx-auto">
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">
+            <span aria-hidden="true">🎯</span>
+            <span>Come funziona</span>
+          </div>
+          <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
             Tre passi. <em className="italic text-teal">Poi hai il report.</em>
           </h2>
         </div>
 
-        <div className="mt-14 grid md:grid-cols-3 gap-6">
+        <div className="mt-12 grid md:grid-cols-3 gap-5">
           {steps.map((s) => (
             <div
               key={s.num}
-              className="relative bg-white rounded-2xl p-7 border border-surface-border shadow-card hover:shadow-card-hover transition-shadow"
+              className="relative bg-white rounded-xl p-6 border border-gray-200"
             >
-              <span className="absolute top-5 right-6 font-serif text-5xl text-teal-light leading-none select-none" aria-hidden="true">
-                {s.num}
-              </span>
-              <div className="text-3xl" aria-hidden="true">{s.icon}</div>
-              <h3 className="mt-5 text-xl font-semibold text-anthracite tracking-tight">{s.title}</h3>
-              <p className="mt-3 text-[15px] text-anthracite-light leading-relaxed">{s.body}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl" aria-hidden="true">{s.icon}</span>
+                <span className="font-mono text-[13px] text-anthracite-lighter tabular-nums" aria-hidden="true">
+                  {s.num}
+                </span>
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-anthracite tracking-tight">{s.title}</h3>
+              <p className="mt-2 text-[15px] text-anthracite-light leading-relaxed">{s.body}</p>
             </div>
           ))}
         </div>
@@ -431,35 +432,36 @@ function Benefits() {
         "Server in Germania, GDPR compliant, consenso del cliente registrato automaticamente. I dati non escono dall'Europa. Mai.",
     },
     {
-      icon: '📊',
+      icon: '🔬',
       title: 'Scienza seria, linguaggio semplice',
       body:
         '24 parametri HRV su letteratura internazionale, normalizzazione demografica per età e sesso. Il rigore clinico che ti aspetti, senza la complessità che non ti serve.',
     },
   ]
   return (
-    <section id="benefici" className="py-20 md:py-28 px-5 md:px-8 scroll-mt-20">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center max-w-2xl mx-auto">
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium">
-            Perché sceglierlo
-          </span>
-          <h2 className="mt-5 font-serif text-[32px] md:text-5xl leading-[1.1] tracking-tight text-anthracite">
+    <section id="benefici" className="py-16 md:py-24 px-6 scroll-mt-20 border-b border-gray-100">
+      <div className="max-w-5xl mx-auto">
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">
+            <span aria-hidden="true">💡</span>
+            <span>Perché Stress Index</span>
+          </div>
+          <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
             Costruito per chi lavora <em className="italic text-teal">nel benessere reale.</em>
           </h2>
         </div>
 
-        <div className="mt-14 grid md:grid-cols-2 gap-6">
+        <div className="mt-12 grid md:grid-cols-2 gap-5">
           {items.map((b) => (
             <div
               key={b.title}
-              className="bg-white rounded-2xl p-7 border border-surface-border shadow-card hover:shadow-card-hover transition-shadow"
+              className="bg-white rounded-xl p-6 border border-gray-200"
             >
-              <div className="w-12 h-12 rounded-xl bg-teal-light flex items-center justify-center text-2xl" aria-hidden="true">
+              <div className="text-2xl" aria-hidden="true">
                 {b.icon}
               </div>
-              <h3 className="mt-5 text-xl font-semibold text-anthracite tracking-tight">{b.title}</h3>
-              <p className="mt-3 text-[15px] text-anthracite-light leading-relaxed">{b.body}</p>
+              <h3 className="mt-3 text-lg font-semibold text-anthracite tracking-tight">{b.title}</h3>
+              <p className="mt-2 text-[15px] text-anthracite-light leading-relaxed">{b.body}</p>
             </div>
           ))}
         </div>
@@ -479,13 +481,14 @@ function Pricing() {
     'Supporto prioritario via email',
   ]
   return (
-    <section id="prezzi" className="bg-surface py-20 md:py-28 px-5 md:px-8 scroll-mt-20">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center max-w-2xl mx-auto">
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium">
-            Prezzo trasparente
-          </span>
-          <h2 className="mt-5 font-serif text-[32px] md:text-5xl leading-[1.1] tracking-tight text-anthracite">
+    <section id="prezzi" className="py-16 md:py-24 px-6 scroll-mt-20 border-b border-gray-100">
+      <div className="max-w-5xl mx-auto">
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">
+            <span aria-hidden="true">💰</span>
+            <span>Pricing</span>
+          </div>
+          <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
             Un abbonamento. <em className="italic text-teal">Tutto incluso, per sempre.</em>
           </h2>
           <p className="mt-5 text-[17px] text-anthracite-light leading-relaxed">
@@ -494,42 +497,43 @@ function Pricing() {
           </p>
         </div>
 
-        <div className="mt-14 mx-auto max-w-[620px] bg-white rounded-3xl border-2 border-teal shadow-elevated p-8 md:p-10 relative">
+        <div className="mt-12 mx-auto max-w-[640px] bg-white rounded-xl border border-gray-200 p-8 md:p-10">
           <div className="flex justify-center">
-            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-teal text-white text-[13px] font-medium">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium">
               <span aria-hidden="true">⭐</span> Offerta Founding Members · Primi 200 iscritti
             </span>
           </div>
 
-          <div className="mt-7 text-center">
-            <h3 className="font-serif text-3xl md:text-4xl text-anthracite tracking-tight">Stress Index Pro</h3>
-            <p className="mt-2 text-anthracite-light">
+          <div className="mt-6 text-center">
+            <h3 className="font-serif text-2xl md:text-3xl text-anthracite tracking-tight">Stress Index Pro</h3>
+            <p className="mt-2 text-anthracite-light text-[15px]">
               Per fisioterapisti, osteopati, medici sportivi e coach del benessere
             </p>
           </div>
 
-          <div className="mt-7 text-center">
-            <div className="font-serif text-5xl md:text-6xl text-anthracite tracking-tight">
+          <div className="mt-6 text-center">
+            <div className="font-serif text-5xl text-anthracite tracking-tight">
               € 49,90
-              <span className="text-xl md:text-2xl text-anthracite-light font-sans font-normal"> /mese</span>
+              <span className="text-xl text-anthracite-light font-sans font-normal"> /mese</span>
             </div>
             <p className="mt-3 text-sm text-anthracite-lighter">
               Prezzo standard <s>69,90€/mese</s> · Founding Members 49,90€/mese per i primi 200
             </p>
           </div>
 
-          <div className="mt-6 rounded-xl bg-teal-light text-teal-dark px-4 py-3.5 text-[14px] leading-relaxed text-center">
-            <span aria-hidden="true">🎯</span> Sei tra i primi 200 iscritti? Il prezzo di{' '}
-            <strong>49,90€/mese</strong> è bloccato per sempre.
+          <div className="mt-6 rounded-lg border-l-4 border-teal bg-teal-light/50 px-4 py-3 flex items-start gap-3">
+            <span aria-hidden="true" className="text-lg leading-none mt-0.5">🎯</span>
+            <p className="text-[14px] text-anthracite leading-relaxed">
+              Sei tra i primi 200 iscritti? Il prezzo di{' '}
+              <strong>49,90€/mese</strong> è bloccato per sempre.
+            </p>
           </div>
 
           <ul className="mt-7 space-y-3">
             {features.map((f) => (
               <li key={f} className="flex items-start gap-3 text-[15px] text-anthracite">
-                <span className="flex-shrink-0 w-5 h-5 rounded-md bg-teal flex items-center justify-center mt-0.5" aria-hidden="true">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
+                <span className="flex-shrink-0 text-teal font-semibold mt-0.5" aria-hidden="true">
+                  ✓
                 </span>
                 <span>{f}</span>
               </li>
@@ -538,7 +542,7 @@ function Pricing() {
 
           <Link
             href="/registrazione"
-            className="mt-8 w-full inline-flex items-center justify-center px-6 py-4 bg-teal text-white font-medium rounded-xl shadow-card hover:bg-teal-dark hover:shadow-card-hover transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
+            className="mt-8 w-full inline-flex items-center justify-center px-6 py-3 bg-teal text-white font-medium rounded-lg hover:bg-teal-dark transition-colors"
           >
             Inizia 15 giorni gratis
             <span className="ml-2" aria-hidden="true">→</span>
@@ -581,36 +585,36 @@ function Faq() {
     },
   ]
   return (
-    <section id="faq" className="py-20 md:py-28 px-5 md:px-8 scroll-mt-20">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center max-w-2xl mx-auto">
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium">
-            Domande frequenti
-          </span>
-          <h2 className="mt-5 font-serif text-[32px] md:text-5xl leading-[1.1] tracking-tight text-anthracite">
+    <section id="faq" className="py-16 md:py-24 px-6 scroll-mt-20 border-b border-gray-100">
+      <div className="max-w-5xl mx-auto">
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">
+            <span aria-hidden="true">❓</span>
+            <span>Domande frequenti</span>
+          </div>
+          <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
             Tutto chiaro, <em className="italic text-teal">prima di iniziare.</em>
           </h2>
         </div>
 
-        <div className="mt-12 max-w-[720px] mx-auto space-y-3">
+        <div className="mt-10 max-w-[760px] space-y-2">
           {items.map((it, i) => (
             <details
               key={i}
-              className="group bg-white rounded-2xl border border-surface-border shadow-card open:shadow-card-hover transition-shadow"
+              className="group border-b border-gray-100"
             >
-              <summary className="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 font-medium text-anthracite focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 rounded-2xl">
-                <span>{it.q}</span>
+              <summary className="cursor-pointer list-none px-2 py-5 flex items-center justify-between gap-4 font-medium text-anthracite hover:text-teal transition-colors focus:outline-none">
+                <span className="text-[16px]">{it.q}</span>
                 <span
-                  className="flex-shrink-0 w-7 h-7 rounded-full bg-teal-light text-teal-dark flex items-center justify-center transition-transform group-open:rotate-45"
+                  className="flex-shrink-0 text-anthracite-lighter transition-transform group-open:rotate-90"
                   aria-hidden="true"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <polyline points="9 18 15 12 9 6" />
                   </svg>
                 </span>
               </summary>
-              <div className="px-6 pb-5 -mt-1 text-[15px] text-anthracite-light leading-relaxed">
+              <div className="px-2 pb-5 -mt-1 text-[15px] text-anthracite-light leading-relaxed">
                 {it.a}
               </div>
             </details>
@@ -623,29 +627,32 @@ function Faq() {
 
 function FinalCta() {
   return (
-    <section className="bg-teal text-white py-20 md:py-28 px-5 md:px-8">
-      <div className="max-w-3xl mx-auto text-center">
-        <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/15 text-white text-[13px] font-medium">
-          Inizia oggi
-        </span>
-        <h2 className="mt-5 font-serif text-[32px] md:text-5xl leading-[1.1] tracking-tight">
-          Il prossimo cliente che entra, <em className="italic">misuralo davvero.</em>
-        </h2>
-        <p className="mt-5 text-lg text-white/85 leading-relaxed">
-          15 giorni gratis. Nessun vincolo. Smetti quando vuoi.
-        </p>
-        <div className="mt-8 flex justify-center">
-          <Link
-            href="/registrazione"
-            className="inline-flex items-center justify-center px-8 py-4 bg-white text-teal-dark font-semibold rounded-xl shadow-elevated hover:bg-surface transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-teal text-lg"
-          >
-            Prova gratis 15 giorni
-            <span className="ml-2" aria-hidden="true">→</span>
-          </Link>
+    <section className="py-16 md:py-24 px-6 border-b border-gray-100">
+      <div className="max-w-3xl mx-auto">
+        <div className="rounded-2xl bg-teal-light/50 border border-teal-mid/40 p-8 md:p-12 text-center">
+          <div className="inline-flex items-center gap-2 text-[13px] font-medium text-teal-dark uppercase tracking-wider">
+            <span aria-hidden="true">🚀</span>
+            <span>Inizia oggi</span>
+          </div>
+          <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
+            Il prossimo cliente che entra, <em className="italic text-teal">misuralo davvero.</em>
+          </h2>
+          <p className="mt-4 text-[17px] text-anthracite-light leading-relaxed">
+            15 giorni gratis. Nessun vincolo. Smetti quando vuoi.
+          </p>
+          <div className="mt-8 flex justify-center">
+            <Link
+              href="/registrazione"
+              className="inline-flex items-center justify-center px-6 py-3 bg-teal text-white font-medium rounded-lg hover:bg-teal-dark transition-colors"
+            >
+              Prova gratis 15 giorni
+              <span className="ml-2" aria-hidden="true">→</span>
+            </Link>
+          </div>
+          <p className="mt-4 text-sm text-anthracite-lighter">
+            Carta di credito richiesta · Poi 49,90€/mese · Disdici in qualsiasi momento
+          </p>
         </div>
-        <p className="mt-4 text-sm text-white/75">
-          Carta di credito richiesta · Poi 49,90€/mese · Disdici in qualsiasi momento
-        </p>
       </div>
     </section>
   )
@@ -653,49 +660,49 @@ function FinalCta() {
 
 function Footer() {
   return (
-    <footer className="bg-anthracite text-white px-5 md:px-8 pt-16 pb-8">
-      <div className="max-w-7xl mx-auto">
+    <footer className="bg-white px-6 pt-16 pb-10">
+      <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr] gap-10 md:gap-12">
           <div>
-            <Logo light />
-            <p className="mt-5 text-[14px] text-white/65 leading-relaxed max-w-sm">
+            <Logo />
+            <p className="mt-4 text-[14px] text-anthracite-light leading-relaxed max-w-sm">
               Software HRV professionale per fisioterapisti, osteopati, medici sportivi e coach del benessere.
               Misura lo stress del sistema nervoso autonomo in 10 minuti.
             </p>
           </div>
 
           <div>
-            <h4 className="text-[13px] uppercase tracking-wider text-white/50 font-semibold">Prodotto</h4>
+            <h4 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">Prodotto</h4>
             <ul className="mt-4 space-y-2.5 text-[14px]">
-              <li><a className="text-white/80 hover:text-teal transition-colors" href="#come-funziona">Come funziona</a></li>
-              <li><a className="text-white/80 hover:text-teal transition-colors" href="#benefici">Funzionalità</a></li>
-              <li><a className="text-white/80 hover:text-teal transition-colors" href="#prezzi">Prezzi</a></li>
-              <li><Link className="text-white/80 hover:text-teal transition-colors" href="/registrazione">Inizia gratis</Link></li>
+              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="#come-funziona">Come funziona</a></li>
+              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="#benefici">Funzionalità</a></li>
+              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="#prezzi">Prezzi</a></li>
+              <li><Link className="text-anthracite-light hover:text-teal transition-colors" href="/registrazione">Inizia gratis</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-[13px] uppercase tracking-wider text-white/50 font-semibold">Supporto</h4>
+            <h4 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">Supporto</h4>
             <ul className="mt-4 space-y-2.5 text-[14px]">
-              <li><Link className="text-white/80 hover:text-teal transition-colors" href="/guide">Guide e Supporto</Link></li>
-              <li><a className="text-white/80 hover:text-teal transition-colors" href="#faq">FAQ</a></li>
-              <li><a className="text-white/80 hover:text-teal transition-colors" href="mailto:support@stressindex.io">Contattaci</a></li>
+              <li><Link className="text-anthracite-light hover:text-teal transition-colors" href="/guide">Guide e Supporto</Link></li>
+              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="#faq">FAQ</a></li>
+              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="mailto:support@stressindex.io">Contattaci</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-[13px] uppercase tracking-wider text-white/50 font-semibold">Legale</h4>
+            <h4 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">Legale</h4>
             <ul className="mt-4 space-y-2.5 text-[14px]">
-              <li><a className="text-white/80 hover:text-teal transition-colors" href="/privacy">Privacy Policy</a></li>
-              <li><a className="text-white/80 hover:text-teal transition-colors" href="/termini">Termini di Servizio</a></li>
-              <li><a className="text-white/80 hover:text-teal transition-colors" href="/cookie">Cookie Policy</a></li>
+              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="/privacy">Privacy Policy</a></li>
+              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="/termini">Termini di Servizio</a></li>
+              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="/cookie">Cookie Policy</a></li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row md:items-end md:justify-between gap-6 text-[13px] text-white/60">
+        <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col md:flex-row md:items-end md:justify-between gap-6 text-[13px] text-anthracite-lighter">
           <div className="leading-relaxed">
-            <div className="font-medium text-white/80">Minimax Srl</div>
+            <div className="font-medium text-anthracite-light">Minimax Srl</div>
             <div>Via Francesco Baracca, 88 · 36100 Vicenza (VI) · Italy</div>
             <div>P.IVA 04496840242</div>
           </div>

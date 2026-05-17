@@ -137,8 +137,9 @@ export function RegistrationForm() {
     <form onSubmit={handleSubmit} noValidate className="space-y-5 stagger-children">
       {/* General error */}
       {errors.general && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-          {errors.general}
+        <div className="px-4 py-3 bg-red-50 border-l-4 border-red-400 rounded-lg text-sm text-red-700 flex items-start gap-3">
+          <span aria-hidden="true" className="text-lg leading-none mt-0.5">⚠️</span>
+          <span>{errors.general}</span>
         </div>
       )}
 

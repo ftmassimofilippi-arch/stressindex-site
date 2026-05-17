@@ -88,7 +88,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
             type="checkbox"
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
-            className="w-4 h-4 rounded border-surface-border text-teal focus:ring-teal/30"
+            className="w-4 h-4 rounded border-gray-300 text-teal focus:ring-teal/30"
           />
           Ricordami
         </label>
@@ -98,8 +98,9 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       </div>
 
       {error && (
-        <div className="px-3 py-2 rounded-xl bg-red-50 text-red-700 text-sm border border-red-100">
-          {error}
+        <div className="px-4 py-3 rounded-lg bg-red-50 text-red-700 text-sm border-l-4 border-red-400 flex items-start gap-3">
+          <span aria-hidden="true" className="text-lg leading-none mt-0.5">⚠️</span>
+          <span>{error}</span>
         </div>
       )}
 

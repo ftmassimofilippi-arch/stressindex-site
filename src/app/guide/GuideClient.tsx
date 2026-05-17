@@ -8,6 +8,8 @@ import GuideChatWidget from '@/components/GuideChatWidget'
 type SectionDef = {
   id: string
   title: string
+  /** Emoji visiva accanto al titolo (stile Notion). */
+  emoji: string
   /** Plain text usato dal filtro di ricerca, generato dal contenuto. */
   searchText: string
   /** Render JSX della sezione. */
@@ -175,8 +177,11 @@ function TroubleshootBlock({
   bullets: React.ReactNode[]
 }) {
   return (
-    <div className="rounded-xl border border-surface-border bg-surface/60 p-4 sm:p-5">
-      <p className="font-medium text-anthracite mb-3">&ldquo;{title}&rdquo;</p>
+    <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
+      <p className="font-medium text-anthracite mb-3 flex items-start gap-2">
+        <span aria-hidden="true">🔧</span>
+        <span>&ldquo;{title}&rdquo;</span>
+      </p>
       <ul className="space-y-2">
         {bullets.map((b, i) => (
           <li
@@ -202,29 +207,35 @@ function Callout({
   variant?: 'info' | 'warn'
 }) {
   const isWarn = variant === 'warn'
+  const emoji = isWarn ? '⚠️' : '💡'
   return (
     <div
-      className={`rounded-xl p-4 sm:p-5 border ${
+      className={`rounded-lg p-4 sm:p-5 border-l-4 flex items-start gap-3 ${
         isWarn
-          ? 'bg-amber-50 border-amber-200'
-          : 'bg-teal-light/60 border-teal-mid/60'
+          ? 'bg-amber-50 border-amber-400'
+          : 'bg-teal-light/60 border-teal'
       }`}
     >
-      {title && (
-        <p
-          className={`font-semibold mb-1.5 ${
-            isWarn ? 'text-amber-900' : 'text-teal-dark'
+      <span aria-hidden="true" className="text-lg leading-none mt-0.5">
+        {emoji}
+      </span>
+      <div className="min-w-0 flex-1">
+        {title && (
+          <p
+            className={`font-semibold mb-1 ${
+              isWarn ? 'text-amber-900' : 'text-teal-dark'
+            }`}
+          >
+            {title}
+          </p>
+        )}
+        <div
+          className={`text-[14.5px] leading-relaxed ${
+            isWarn ? 'text-amber-900/90' : 'text-anthracite'
           }`}
         >
-          {title}
-        </p>
-      )}
-      <div
-        className={`text-[14.5px] leading-relaxed ${
-          isWarn ? 'text-amber-900/90' : 'text-anthracite'
-        }`}
-      >
-        {children}
+          {children}
+        </div>
       </div>
     </div>
   )
@@ -244,7 +255,7 @@ function ScoreCard({
   color: string
 }) {
   return (
-    <div className="rounded-xl border border-surface-border bg-white p-5">
+    <div className="rounded-xl border border-gray-200 bg-white p-5">
       <div className="flex items-center gap-2.5 mb-2">
         <span className="text-xl" aria-hidden="true">
           {emoji}
@@ -255,7 +266,7 @@ function ScoreCard({
         {desc}
       </p>
       {ranges && (
-        <div className="mt-3 pt-3 border-t border-surface-border space-y-1.5">
+        <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
           {ranges.map((r, i) => (
             <div key={i} className="flex items-center gap-2 text-[13px]">
               <span
@@ -357,36 +368,30 @@ function AccordionItem({
   onToggle: () => void
 }) {
   return (
-    <div className="rounded-xl border border-surface-border bg-white overflow-hidden">
+    <div className="border-b border-gray-100">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="w-full flex items-center justify-between gap-4 px-4 sm:px-5 py-4 text-left hover:bg-surface/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-inset"
+        className="w-full flex items-center justify-between gap-4 px-2 py-4 text-left hover:text-teal transition-colors focus:outline-none"
       >
         <span className="font-medium text-anthracite">{item.q}</span>
         <svg
-          width="20"
-          height="20"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={`text-anthracite-lighter flex-shrink-0 transition-transform duration-200 ${
-            open ? 'rotate-180' : ''
+            open ? 'rotate-90' : ''
           }`}
           aria-hidden="true"
         >
-          <path
-            d="M6 9L12 15L18 9"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <polyline points="9 18 15 12 9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
       {open && (
-        <div className="px-4 sm:px-5 pb-5 pt-1 text-[15px] text-anthracite-light leading-relaxed border-t border-surface-border/60 animate-fade-in">
+        <div className="px-2 pb-5 pt-0 -mt-1 text-[15px] text-anthracite-light leading-relaxed animate-fade-in">
           {item.a}
         </div>
       )}
@@ -427,6 +432,7 @@ export default function GuideClient() {
       {
         id: 'sensori',
         title: 'Connessione sensori',
+        emoji: '📡',
         searchText:
           'connessione sensori BLE bluetooth GPS localizzazione Android fascia toracica bagnata Polar Flow Garmin Connect accoppiato impostazioni telefono procedura passo passo seleziona sensore home connesso cuore lampeggia troubleshooting non appare nella lista riposizionare disconnette risparmio energetico batteria nessuna restrizione',
         render: () => (
@@ -507,6 +513,7 @@ export default function GuideClient() {
       {
         id: 'sensori-compatibili',
         title: 'Sensori compatibili',
+        emoji: '🔌',
         searchText:
           'sensori compatibili Polar H10 H9 OH1 Verity Sense Wahoo TICKR CooSpo H808S Whoop Garmin HRM-Dual HRM-Pro Apple Watch smartwatch smartband intervalli RR BPM',
         render: () => (
@@ -517,9 +524,9 @@ export default function GuideClient() {
               fanno. Ecco l&apos;elenco aggiornato.
             </p>
 
-            <div className="mt-6 rounded-xl border border-surface-border overflow-hidden">
+            <div className="mt-6 rounded-lg border border-gray-200 overflow-hidden">
               <table className="w-full text-left">
-                <thead className="bg-surface text-[13px] uppercase tracking-wider text-anthracite-lighter font-semibold">
+                <thead className="bg-gray-50 text-[13px] uppercase tracking-wider text-anthracite-lighter font-semibold">
                   <tr>
                     <th className="px-4 py-3">Sensore</th>
                     <th className="px-4 py-3 hidden sm:table-cell">Stato</th>
@@ -527,15 +534,13 @@ export default function GuideClient() {
                   </tr>
                 </thead>
                 <tbody className="text-[14.5px]">
-                  {SENSOR_TABLE.map((s, i) => (
+                  {SENSOR_TABLE.map((s) => (
                     <tr
                       key={s.name}
-                      className={`${
-                        i % 2 === 0 ? 'bg-white' : 'bg-surface/60'
-                      } border-t border-surface-border`}
+                      className="bg-white border-t border-gray-100"
                     >
                       <td className="px-4 py-3 align-top">
-                        <div className="font-medium text-anthracite">
+                        <div className="font-medium text-anthracite font-mono">
                           {s.name}
                         </div>
                         <div className="sm:hidden mt-1">
@@ -569,6 +574,7 @@ export default function GuideClient() {
       {
         id: 'prima-misurazione',
         title: 'La prima misurazione',
+        emoji: '🩺',
         searchText:
           'prima misurazione setup ambiente tranquillo luce soffusa temperatura notifiche silenziose seduto supino 2 minuti posizione standardizzata respirazione naturale durata 5 minuti 10 minuti Task Force ESC NASPE 1996 trattamenti intervalli RR filtra artefatti',
         render: () => (
@@ -640,12 +646,13 @@ export default function GuideClient() {
       {
         id: 'tipi-test',
         title: 'I 3 tipi di test',
+        emoji: '🧪',
         searchText:
           'tipi test misurazione standard tonico fasico test ortostatico Indice Reattività Ortostatica supino piedi 5 minuti respirazione coerenza cardiaca animazione sfera 6 respiri minuto Score Coerenza frequenza risonanza ansia insonnia dolore cronico',
         render: () => (
           <>
             <div className="space-y-6">
-              <div className="rounded-xl border border-surface-border bg-white p-5 sm:p-6">
+              <div className="rounded-xl border border-gray-200 bg-white p-5 sm:p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <span className="inline-block w-2.5 h-2.5 rounded-full bg-teal" />
                   <h3 className="text-lg font-semibold text-anthracite">
@@ -682,7 +689,7 @@ export default function GuideClient() {
                 </dl>
               </div>
 
-              <div className="rounded-xl border border-surface-border bg-white p-5 sm:p-6">
+              <div className="rounded-xl border border-gray-200 bg-white p-5 sm:p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500" />
                   <h3 className="text-lg font-semibold text-anthracite">
@@ -737,7 +744,7 @@ export default function GuideClient() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-surface-border bg-white p-5 sm:p-6">
+              <div className="rounded-xl border border-gray-200 bg-white p-5 sm:p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <span className="inline-block w-2.5 h-2.5 rounded-full bg-indigo-500" />
                   <h3 className="text-lg font-semibold text-anthracite">
@@ -803,6 +810,7 @@ export default function GuideClient() {
       {
         id: 'risultati',
         title: 'Leggere i risultati',
+        emoji: '📊',
         searchText:
           'risultati 5 score Indice Stress Recupero Equilibrio Energia Modulazione Infiammatoria Tracey 2002 riflesso antinfiammatorio colinergico Stress Index Composito tachimetro parametri avanzati Time Domain Frequency Domain Non-linear Geometric semaforo verde giallo rosso range normativi età sesso',
         render: () => (
@@ -895,6 +903,7 @@ export default function GuideClient() {
       {
         id: 'confronto',
         title: 'Confronto sessioni',
+        emoji: '🔀',
         searchText:
           'confronto sessioni scheda cliente confronta delta frecce tendenza Score Time Frequency Non-linear Geometric parametri selezionati ortostatico standard stesse condizioni',
         render: () => (
@@ -944,6 +953,7 @@ export default function GuideClient() {
       {
         id: 'clienti',
         title: 'Gestione clienti',
+        emoji: '👥',
         searchText:
           'gestione clienti aggiungere anagrafica nome cognome data nascita sesso fumatore atleta livello attività normalizzazione parametri età semafori storico note libere',
         render: () => (
@@ -987,6 +997,7 @@ export default function GuideClient() {
       {
         id: 'report-pdf',
         title: 'Report PDF',
+        emoji: '📋',
         searchText:
           'report PDF icona alto destra 4 pagine score parametri grafici Poincaré ritmogramma spettro PSD disclaimer medico sessioni lunghe trend segmenti pre post trattamento WhatsApp email rullino foto profilo professionale titolo studio contatti',
         render: () => (
@@ -1038,6 +1049,7 @@ export default function GuideClient() {
       {
         id: 'problemi',
         title: 'Troubleshooting',
+        emoji: '🛠️',
         searchText:
           'troubleshooting problemi app chiusa misurazione valori strani dashboard web PDF non genera password dimenticata FAQ',
         render: () => (
@@ -1074,6 +1086,7 @@ export default function GuideClient() {
       {
         id: 'supporto',
         title: 'Contatti e supporto',
+        emoji: '💬',
         searchText:
           'contatti supporto email Telegram sito stressindex.io support@stressindex.io',
         render: () => (
@@ -1084,7 +1097,7 @@ export default function GuideClient() {
             <div className="mt-5 grid sm:grid-cols-2 gap-4">
               <a
                 href="mailto:support@stressindex.io"
-                className="block rounded-xl border border-surface-border bg-white p-5 hover:border-teal hover:shadow-card-hover transition-all"
+                className="block rounded-xl border border-gray-200 bg-white p-5 hover:border-teal transition-colors"
               >
                 <div className="flex items-center gap-2 mb-1.5">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -1107,7 +1120,7 @@ export default function GuideClient() {
                 href="https://t.me/stressindex"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block rounded-xl border border-surface-border bg-white p-5 hover:border-teal hover:shadow-card-hover transition-all"
+                className="block rounded-xl border border-gray-200 bg-white p-5 hover:border-teal transition-colors"
               >
                 <div className="flex items-center gap-2 mb-1.5">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -1130,7 +1143,7 @@ export default function GuideClient() {
 
               <a
                 href="https://stressindex.io"
-                className="block rounded-xl border border-surface-border bg-white p-5 hover:border-teal hover:shadow-card-hover transition-all sm:col-span-2"
+                className="block rounded-xl border border-gray-200 bg-white p-5 hover:border-teal transition-colors sm:col-span-2"
               >
                 <div className="flex items-center gap-2 mb-1.5">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -1218,31 +1231,24 @@ export default function GuideClient() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-surface pt-16">
+      <main className="min-h-screen bg-white pt-16">
         {/* Hero */}
-        <div className="bg-gradient-to-b from-teal-light/40 to-transparent">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-8">
+        <div className="border-b border-gray-100">
+          <div className="max-w-5xl mx-auto px-6 pt-12 sm:pt-16 pb-10">
             <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-teal-light text-teal-dark text-[13px] font-medium rounded-full mb-4">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M12 8v4M12 16h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                Centro assistenza
+              <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider mb-4">
+                <span aria-hidden="true">📚</span>
+                <span>Centro assistenza</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-anthracite tracking-tight">
+              <h1 className="font-serif text-4xl sm:text-5xl font-normal text-anthracite tracking-tight">
                 Guide e Supporto
               </h1>
-              <p className="mt-3 text-lg text-anthracite-light leading-relaxed">
+              <p className="mt-4 text-lg text-anthracite-light leading-relaxed">
                 Tutto quello che ti serve per usare Stress Index al meglio.
               </p>
 
               {/* Search */}
-              <div className="mt-7 relative max-w-xl">
+              <div className="mt-8 relative max-w-xl">
                 <svg
                   width="20"
                   height="20"
@@ -1271,7 +1277,7 @@ export default function GuideClient() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Cerca nelle guide, ad esempio 'Polar H10' o 'ortostatico'…"
-                  className="w-full pl-11 pr-11 py-3.5 bg-white border border-surface-border rounded-xl text-anthracite placeholder:text-anthracite-lighter focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal transition-all"
+                  className="w-full pl-11 pr-11 py-3 bg-white border border-gray-200 rounded-lg text-anthracite placeholder:text-anthracite-lighter focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal transition-colors"
                   aria-label="Cerca nelle guide"
                 />
                 {query && (
@@ -1297,16 +1303,19 @@ export default function GuideClient() {
         </div>
 
         {/* Mobile nav dropdown */}
-        <div className="md:hidden sticky top-16 z-30 bg-surface/95 backdrop-blur border-b border-surface-border">
-          <div className="max-w-5xl mx-auto px-4 py-3">
+        <div className="md:hidden sticky top-16 z-30 bg-white/95 backdrop-blur border-b border-gray-100">
+          <div className="max-w-5xl mx-auto px-6 py-3">
             <button
               type="button"
               onClick={() => setMobileNavOpen((v) => !v)}
               aria-expanded={mobileNavOpen}
-              className="w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-white border border-surface-border rounded-xl text-left"
+              className="w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-left"
             >
               <span className="text-[14.5px] font-medium text-anthracite">
-                {sections.find((s) => s.id === activeId)?.title ?? 'Sezioni'}
+                {(() => {
+                  const s = sections.find((s) => s.id === activeId)
+                  return s ? `${s.emoji} ${s.title}` : 'Sezioni'
+                })()}
               </span>
               <svg
                 width="18"
@@ -1327,19 +1336,20 @@ export default function GuideClient() {
               </svg>
             </button>
             {mobileNavOpen && (
-              <div className="mt-2 bg-white border border-surface-border rounded-xl overflow-hidden">
+              <div className="mt-2 bg-white border border-gray-200 rounded-lg overflow-hidden">
                 {sections.map((s) => (
                   <button
                     key={s.id}
                     type="button"
                     onClick={() => scrollToSection(s.id)}
-                    className={`w-full text-left px-4 py-2.5 text-[14.5px] border-t border-surface-border first:border-t-0 ${
+                    className={`w-full text-left px-4 py-2.5 text-[14.5px] border-t border-gray-100 first:border-t-0 flex items-center gap-2 ${
                       activeId === s.id
                         ? 'bg-teal-light/60 text-teal-dark font-medium'
                         : 'text-anthracite hover:bg-surface'
                     }`}
                   >
-                    {s.title}
+                    <span aria-hidden="true">{s.emoji}</span>
+                    <span>{s.title}</span>
                   </button>
                 ))}
               </div>
@@ -1359,22 +1369,22 @@ export default function GuideClient() {
                 <p className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold mb-3">
                   Indice
                 </p>
-                <ul className="space-y-1">
-                  {sections.map((s, i) => (
+                <ul className="space-y-0.5">
+                  {sections.map((s) => (
                     <li key={s.id}>
                       <button
                         type="button"
                         onClick={() => scrollToSection(s.id)}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-[14px] transition-colors ${
+                        className={`w-full text-left px-3 py-2 rounded-md text-[14px] transition-colors flex items-center gap-2.5 ${
                           activeId === s.id
                             ? 'bg-teal-light text-teal-dark font-medium'
-                            : 'text-anthracite-light hover:bg-surface hover:text-anthracite'
+                            : 'text-anthracite-light hover:bg-gray-50 hover:text-anthracite'
                         }`}
                       >
-                        <span className="text-anthracite-lighter font-mono text-[12px] mr-2 tabular-nums">
-                          {String(i + 1).padStart(2, '0')}
+                        <span aria-hidden="true" className="text-base leading-none">
+                          {s.emoji}
                         </span>
-                        {s.title}
+                        <span>{s.title}</span>
                       </button>
                     </li>
                   ))}
@@ -1385,7 +1395,7 @@ export default function GuideClient() {
             {/* Sections */}
             <div className="min-w-0 max-w-3xl">
               {noResults && (
-                <div className="rounded-xl border border-dashed border-surface-border p-8 text-center bg-white">
+                <div className="rounded-lg border border-dashed border-gray-200 p-8 text-center bg-white">
                   <p className="text-anthracite font-medium">
                     Nessun risultato per &ldquo;{query}&rdquo;.
                   </p>
@@ -1402,7 +1412,7 @@ export default function GuideClient() {
                 </div>
               )}
 
-              <div className="space-y-14">
+              <div className="space-y-16">
                 {filteredSections.map((s, i) => (
                   <section
                     key={s.id}
@@ -1411,14 +1421,12 @@ export default function GuideClient() {
                     className="scroll-mt-24"
                   >
                     <div className="flex items-baseline gap-3 mb-5">
-                      <span className="text-[13px] font-mono text-teal tabular-nums">
-                        {String(sections.indexOf(s) + 1).padStart(2, '0')}
-                      </span>
                       <h2
                         id={`${s.id}-title`}
-                        className="text-2xl sm:text-[28px] font-semibold text-anthracite tracking-tight"
+                        className="text-2xl sm:text-3xl font-bold text-anthracite tracking-tight flex items-center gap-3"
                       >
-                        {s.title}
+                        <span aria-hidden="true" className="text-3xl leading-none">{s.emoji}</span>
+                        <span>{s.title}</span>
                       </h2>
                       <a
                         href={`#${s.id}`}
@@ -1432,7 +1440,7 @@ export default function GuideClient() {
                       {s.render()}
                     </div>
                     {i < filteredSections.length - 1 && (
-                      <div className="mt-14 border-t border-surface-border" />
+                      <div className="mt-16 border-t border-gray-100" />
                     )}
                   </section>
                 ))}
@@ -1441,33 +1449,21 @@ export default function GuideClient() {
               {/* AI assistant promo */}
               <section
                 aria-labelledby="ai-help-title"
-                className="mt-20 rounded-2xl border border-teal-mid/60 bg-gradient-to-br from-teal-light/60 to-white p-6 sm:p-8"
+                className="mt-20 rounded-lg border-l-4 border-teal bg-teal-light/40 p-5 sm:p-6 flex items-start gap-4"
               >
-                <div className="flex items-start gap-4">
-                  <div className="hidden sm:flex w-12 h-12 rounded-xl bg-teal text-white items-center justify-center flex-shrink-0 shadow-card">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path
-                        d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2
-                      id="ai-help-title"
-                      className="text-xl sm:text-2xl font-semibold text-anthracite tracking-tight"
-                    >
-                      Non trovi quello che cerchi?
-                    </h2>
-                    <p className="mt-2 text-[15.5px] text-anthracite-light leading-relaxed max-w-2xl">
-                      Usa l&apos;assistente in basso a destra per fare domande
-                      in tempo reale. Ha letto tutte le guide e può
-                      risponderti subito.
-                    </p>
-                  </div>
+                <span aria-hidden="true" className="text-2xl leading-none mt-0.5">💬</span>
+                <div>
+                  <h2
+                    id="ai-help-title"
+                    className="text-lg sm:text-xl font-semibold text-anthracite tracking-tight"
+                  >
+                    Non trovi quello che cerchi?
+                  </h2>
+                  <p className="mt-1.5 text-[15px] text-anthracite-light leading-relaxed max-w-2xl">
+                    Usa l&apos;assistente in basso a destra per fare domande
+                    in tempo reale. Ha letto tutte le guide e può
+                    risponderti subito.
+                  </p>
                 </div>
               </section>
             </div>
@@ -1482,7 +1478,7 @@ export default function GuideClient() {
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }
             aria-label="Torna su"
-            className="fixed bottom-6 left-6 z-40 w-12 h-12 rounded-full bg-anthracite text-white shadow-elevated hover:bg-teal-dark transition-colors flex items-center justify-center"
+            className="fixed bottom-6 left-6 z-40 w-11 h-11 rounded-full bg-anthracite text-white hover:bg-teal-dark transition-colors flex items-center justify-center"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path
