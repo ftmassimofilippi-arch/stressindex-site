@@ -56,9 +56,9 @@ export function RegistrationForm() {
     try {
       const supabase = createClient()
 
-      // Calculate trial expiry: 90 days from now
+      // Calculate trial expiry: 60 days from now
       const trialExpiresAt = new Date()
-      trialExpiresAt.setDate(trialExpiresAt.getDate() + 90)
+      trialExpiresAt.setDate(trialExpiresAt.getDate() + 60)
 
       // 1. Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({

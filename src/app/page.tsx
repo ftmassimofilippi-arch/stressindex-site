@@ -4,11 +4,11 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Stress Index | Software HRV Professionale per Fisioterapisti e Osteopati',
   description:
-    'Misura lo stress dei tuoi clienti in 10 minuti. Software HRV professionale per fisioterapisti, osteopati e medici sportivi. 4 indici clinici, report PDF, 15 giorni gratis.',
+    'Misura lo stress dei tuoi clienti in 10 minuti. Software HRV professionale per fisioterapisti, osteopati e medici sportivi. 4 indici clinici, report PDF, 60 giorni gratis.',
   openGraph: {
     title: 'Stress Index | Software HRV Professionale per Fisioterapisti e Osteopati',
     description:
-      'Misura lo stress dei tuoi clienti in 10 minuti. 4 indici clinici, report PDF, 15 giorni gratis.',
+      'Misura lo stress dei tuoi clienti in 10 minuti. 4 indici clinici, report PDF, 60 giorni gratis.',
     url: 'https://stressindex.io',
     siteName: 'Stress Index',
     locale: 'it_IT',
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Stress Index | Software HRV Professionale per Fisioterapisti e Osteopati',
     description:
-      'Misura lo stress dei tuoi clienti in 10 minuti. 4 indici clinici, report PDF, 15 giorni gratis.',
+      'Misura lo stress dei tuoi clienti in 10 minuti. 4 indici clinici, report PDF, 60 giorni gratis.',
   },
 }
 
@@ -150,7 +150,7 @@ function Hero() {
               href="/registrazione"
               className="inline-flex items-center justify-center px-6 py-3 bg-teal text-white font-medium rounded-lg hover:bg-teal-dark transition-colors"
             >
-              Prova gratis 15 giorni
+              Prova gratis 60 giorni
               <span className="ml-2" aria-hidden="true">→</span>
             </Link>
             <a
@@ -162,7 +162,7 @@ function Hero() {
             </a>
           </div>
           <p className="mt-4 text-sm text-anthracite-lighter">
-            Carta di credito richiesta · Nessun addebito per 15 giorni · Disdici quando vuoi
+            Carta di credito richiesta · Nessun addebito per 60 giorni · Disdici quando vuoi
           </p>
         </div>
 
@@ -544,12 +544,12 @@ function Pricing() {
             href="/registrazione"
             className="mt-8 w-full inline-flex items-center justify-center px-6 py-3 bg-teal text-white font-medium rounded-lg hover:bg-teal-dark transition-colors"
           >
-            Inizia 15 giorni gratis
+            Inizia 60 giorni gratis
             <span className="ml-2" aria-hidden="true">→</span>
           </Link>
 
           <p className="mt-4 text-center text-sm text-anthracite-lighter">
-            Carta di credito richiesta · Nessun addebito per 15 giorni · Poi 49,90€/mese · Disdici quando vuoi
+            Carta di credito richiesta · Nessun addebito per 60 giorni · Poi 49,90€/mese · Disdici quando vuoi
           </p>
         </div>
       </div>
@@ -576,7 +576,7 @@ function Faq() {
       a: 'La misurazione è completamente offline. I dati si sincronizzano automaticamente quando torni online. Non perdi nessuna sessione.',
     },
     {
-      q: 'Cosa succede dopo i 15 giorni?',
+      q: 'Cosa succede dopo i 60 giorni?',
       a: "Ti arriva una notifica prima della scadenza. Se vuoi continuare, l'abbonamento parte in automatico. Se no, annulli e non ti addebitiamo niente. Zero burocrazia.",
     },
     {
@@ -638,14 +638,14 @@ function FinalCta() {
             Il prossimo cliente che entra, <em className="italic text-teal">misuralo davvero.</em>
           </h2>
           <p className="mt-4 text-[17px] text-anthracite-light leading-relaxed">
-            15 giorni gratis. Nessun vincolo. Smetti quando vuoi.
+            60 giorni gratis. Nessun vincolo. Smetti quando vuoi.
           </p>
           <div className="mt-8 flex justify-center">
             <Link
               href="/registrazione"
               className="inline-flex items-center justify-center px-6 py-3 bg-teal text-white font-medium rounded-lg hover:bg-teal-dark transition-colors"
             >
-              Prova gratis 15 giorni
+              Prova gratis 60 giorni
               <span className="ml-2" aria-hidden="true">→</span>
             </Link>
           </div>

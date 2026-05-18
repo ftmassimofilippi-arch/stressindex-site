@@ -25,7 +25,7 @@ export default function ConfermaPage() {
             </h1>
 
             <p className="text-lg text-anthracite-light leading-relaxed mb-10 text-center">
-              Il tuo account è stato creato con successo. Hai 90 giorni di accesso
+              Il tuo account è stato creato con successo. Hai 60 giorni di accesso
               completo a tutte le funzionalità.
             </p>
 

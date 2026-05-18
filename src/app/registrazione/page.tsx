@@ -4,9 +4,9 @@ import { Footer } from '@/components/Footer'
 import { RegistrationForm } from './RegistrationForm'
 
 export const metadata: Metadata = {
-  title: 'Registrazione Trial Gratuito 90 Giorni',
+  title: 'Registrazione Trial Gratuito 60 Giorni',
   description:
-    'Registrati per provare Stress Index gratuitamente per 90 giorni. Nessuna carta di credito richiesta. Per medici, fisioterapisti, osteopati e coach.',
+    'Registrati per provare Stress Index gratuitamente per 60 giorni. Nessuna carta di credito richiesta. Per medici, fisioterapisti, osteopati e coach.',
 }
 
 export default function RegistrazionePage() {
@@ -20,7 +20,7 @@ export default function RegistrazionePage() {
             <div className="mb-10">
               <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider mb-4">
                 <span aria-hidden="true">🚀</span>
-                <span>Trial gratuito 90 giorni</span>
+                <span>Trial gratuito 60 giorni</span>
               </div>
 
               <h1 className="font-serif text-4xl sm:text-5xl font-normal text-anthracite tracking-tight mb-4">
@@ -29,7 +29,7 @@ export default function RegistrazionePage() {
 
               <p className="text-anthracite-light text-lg leading-relaxed">
                 Crea il tuo account professionale e accedi a tutte le funzionalità
-                di Stress Index per 90 giorni, senza impegno.
+                di Stress Index per 60 giorni, senza impegno.
               </p>
             </div>
 

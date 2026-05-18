@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     template: '%s | Stress Index',
   },
   description:
-    'Misura lo stress dei tuoi clienti in 10 minuti. Software HRV professionale per fisioterapisti, osteopati e medici sportivi. 4 indici clinici, report PDF, 15 giorni gratis.',
+    'Misura lo stress dei tuoi clienti in 10 minuti. Software HRV professionale per fisioterapisti, osteopati e medici sportivi. 4 indici clinici, report PDF, 60 giorni gratis.',
   keywords: [
     'HRV',
     'Heart Rate Variability',
@@ -31,13 +31,13 @@ export const metadata: Metadata = {
     siteName: 'Stress Index',
     title: 'Stress Index | Software HRV Professionale per Fisioterapisti e Osteopati',
     description:
-      'Misura lo stress dei tuoi clienti in 10 minuti. Software HRV professionale per fisioterapisti, osteopati e medici sportivi. 4 indici clinici, report PDF, 15 giorni gratis.',
+      'Misura lo stress dei tuoi clienti in 10 minuti. Software HRV professionale per fisioterapisti, osteopati e medici sportivi. 4 indici clinici, report PDF, 60 giorni gratis.',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Stress Index | Software HRV Professionale per Fisioterapisti e Osteopati',
     description:
-      'Misura lo stress dei tuoi clienti in 10 minuti. 4 indici clinici, report PDF, 15 giorni gratis.',
+      'Misura lo stress dei tuoi clienti in 10 minuti. 4 indici clinici, report PDF, 60 giorni gratis.',
   },
   robots: {
     index: true,
