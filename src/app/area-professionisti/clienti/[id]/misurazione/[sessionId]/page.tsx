@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { DownloadMeasurementPdfButton } from '@/components/dashboard/DownloadMeasurementPdfButton'
 import { ScoreGauge } from '@/components/dashboard/ScoreGauge'
 import { getClient, getMeasurementBySessionId, getProfessionalProfile, listAlerts } from '@/lib/dashboard-data'
 import { fullName, formatDateTime, num } from '@/lib/format'
@@ -41,6 +42,7 @@ export default async function SessionDetailPage({ params }: { params: { id: stri
               {measurement.artifact_percentage != null ? ` · Artifact: ${measurement.artifact_percentage.toFixed(1)}%` : ''}
             </p>
           </div>
+          <DownloadMeasurementPdfButton sessionId={measurement.session_id} clientId={client.id} />
         </div>
       </header>
 

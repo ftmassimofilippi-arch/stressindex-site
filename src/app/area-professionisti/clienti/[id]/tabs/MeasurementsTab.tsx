@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Download } from 'lucide-react'
 import { DataTable, type Column } from '@/components/dashboard/DataTable'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
+import { DownloadMeasurementPdfButton } from '@/components/dashboard/DownloadMeasurementPdfButton'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { formatDateTime, formatDate } from '@/lib/format'
 import type { Client, MeasurementAnalytics } from '@/lib/types'
@@ -70,7 +71,10 @@ export function MeasurementsTab({ client, measurements }: { client: Client; meas
     { key: 'quality', header: 'Artifact', accessor: (m) => m.artifact_percentage ?? -1, sortable: true, render: (m) => m.artifact_percentage != null ? `${m.artifact_percentage.toFixed(1)}%` : '—' },
     {
       key: 'actions', header: '', render: (m) => (
-        <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}`} className="text-teal-dark text-sm hover:underline">Apri →</Link>
+        <div className="flex items-center gap-1 justify-end">
+          <DownloadMeasurementPdfButton sessionId={m.session_id} clientId={client.id} variant="icon" />
+          <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}`} className="text-teal-dark text-sm hover:underline">Apri →</Link>
+        </div>
       )
     },
   ]

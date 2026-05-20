@@ -10,6 +10,7 @@ import { MeasurementsTab } from './tabs/MeasurementsTab'
 import { AdvancedAnalyticsTab } from './tabs/AdvancedAnalyticsTab'
 import { NotesTab } from './tabs/NotesTab'
 import { MessagesTab } from './tabs/MessagesTab'
+import { ReportTab } from './tabs/ReportTab'
 import { ClientSettingsTab } from './tabs/ClientSettingsTab'
 import { PdfExportModal } from './PdfExportModal'
 import { MessageComposer } from './MessageComposer'
@@ -18,6 +19,7 @@ const TABS = [
   { id: 'panoramica', label: 'Panoramica' },
   { id: 'misurazioni', label: 'Misurazioni' },
   { id: 'analytics', label: 'Analytics' },
+  { id: 'report', label: 'Report' },
   { id: 'note', label: 'Note' },
   { id: 'messaggi', label: 'Messaggi' },
   { id: 'impostazioni', label: 'Impostazioni' },
@@ -125,6 +127,7 @@ export function ClientProfile({ client, measurements, alerts, notes, settings, m
       {tab === 'panoramica' && <OverviewTab client={client} measurements={measurements} alerts={alerts} />}
       {tab === 'misurazioni' && <MeasurementsTab client={client} measurements={measurements} />}
       {tab === 'analytics' && <AdvancedAnalyticsTab measurements={measurements} />}
+      {tab === 'report' && <ReportTab client={client} />}
       {tab === 'note' && <NotesTab client={client} initialNotes={notes} />}
       {tab === 'messaggi' && <MessagesTab client={client} initialMessages={messages} />}
       {tab === 'impostazioni' && <ClientSettingsTab client={client} initialSettings={settings} />}
