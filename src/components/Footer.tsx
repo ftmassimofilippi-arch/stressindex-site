@@ -18,7 +18,13 @@ export function Footer() {
             </span>
           </div>
 
-          <nav className="flex items-center gap-5 text-sm text-anthracite-lighter">
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-anthracite-lighter">
+            <Link href="/funzionalita" className="hover:text-teal transition-colors">
+              Funzionalità
+            </Link>
+            <Link href="/sport" className="hover:text-teal transition-colors">
+              Sport
+            </Link>
             <Link href="/guide" className="hover:text-teal transition-colors">
               Guide
             </Link>

@@ -17,6 +17,21 @@ export function Header() {
 
         <nav className="flex items-center gap-1 sm:gap-2">
           <Link
+            href="/funzionalita"
+            className="hidden sm:inline-block text-sm font-medium text-anthracite-light hover:text-teal transition-colors px-3 py-2 rounded-md"
+          >
+            Funzionalità
+          </Link>
+          <Link
+            href="/sport"
+            className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-anthracite-light hover:text-teal transition-colors px-3 py-2 rounded-md"
+          >
+            Sport
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-teal text-white text-[10px] font-semibold uppercase tracking-wider">
+              Nuovo
+            </span>
+          </Link>
+          <Link
             href="/guide"
             className="hidden sm:inline-block text-sm font-medium text-anthracite-light hover:text-teal transition-colors px-3 py-2 rounded-md"
           >

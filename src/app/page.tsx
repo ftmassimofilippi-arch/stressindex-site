@@ -470,6 +470,68 @@ function Benefits() {
   )
 }
 
+function ExplorePages() {
+  return (
+    <section className="py-16 md:py-24 px-6 border-b border-gray-100">
+      <div className="max-w-5xl mx-auto">
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">
+            <span aria-hidden="true">🧭</span>
+            <span>Scopri di più</span>
+          </div>
+          <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
+            Vai in profondità. <em className="italic text-teal">Da dove vuoi partire?</em>
+          </h2>
+        </div>
+
+        <div className="mt-12 grid md:grid-cols-2 gap-5">
+          <Link
+            href="/funzionalita"
+            className="group rounded-xl border border-gray-200 bg-white p-6 md:p-7 transition-all hover:shadow-md hover:border-gray-300"
+          >
+            <div className="text-3xl" aria-hidden="true">🔬</div>
+            <h3 className="mt-4 text-xl font-semibold text-anthracite tracking-tight">
+              Scopri tutte le funzionalità
+            </h3>
+            <p className="mt-3 text-[15px] text-anthracite-light leading-relaxed">
+              5 score proprietari, 25+ parametri, 3 tipi di test, sessioni lunghe, report PDF,
+              CRM clienti, dashboard web.
+            </p>
+            <span className="mt-5 inline-flex items-center text-teal-dark font-medium group-hover:text-teal transition-colors">
+              Esplora le funzionalità
+              <span className="ml-1.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true">
+                →
+              </span>
+            </span>
+          </Link>
+
+          <Link
+            href="/sport"
+            className="group rounded-xl border border-gray-200 bg-white p-6 md:p-7 transition-all hover:shadow-md hover:border-gray-300 relative"
+          >
+            <div className="absolute top-5 right-5 inline-flex items-center px-2 py-0.5 rounded-full bg-teal text-white text-[10px] font-semibold uppercase tracking-wider">
+              Nuovo
+            </div>
+            <div className="text-3xl" aria-hidden="true">🏋️</div>
+            <h3 className="mt-4 text-xl font-semibold text-anthracite tracking-tight">
+              Modulo Sport per professionisti
+            </h3>
+            <p className="mt-3 text-[15px] text-anthracite-light leading-relaxed">
+              DFA Alpha1 real-time, zone metaboliche, questionario post-allenamento, dashboard atleta.
+            </p>
+            <span className="mt-5 inline-flex items-center text-teal-dark font-medium group-hover:text-teal transition-colors">
+              Scopri il Piano Pro
+              <span className="ml-1.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true">
+                →
+              </span>
+            </span>
+          </Link>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function Pricing() {
   const features = [
     'Clienti e misurazioni illimitati',
@@ -727,6 +789,7 @@ export default function Home() {
       <Solution />
       <HowItWorks />
       <Benefits />
+      <ExplorePages />
       <Pricing />
       <Faq />
       <FinalCta />
