@@ -59,20 +59,139 @@ export async function getClient(id: string): Promise<Client | null> {
 
 export async function listMeasurementsForClient(clientId: string, opts?: { limit?: number; from?: string; to?: string }): Promise<MeasurementAnalytics[]> {
   const supabase = await createClient()
-  let q = supabase
+
+  // 1. Source of truth: sessions (sempre popolato dall'app Flutter via sync_service).
+  //    measurement_analytics è scritta in fire-and-forget e può mancare di righe.
+  let sq = supabase
+    .from('sessions')
+    .select('id, client_id, professionista_id, started_at, created_at, duration_seconds, hrv_data, test_type, tags')
+    .eq('client_id', clientId)
+    .order('started_at', { ascending: false, nullsFirst: false })
+  if (opts?.from) sq = sq.gte('started_at', opts.from)
+  if (opts?.to) sq = sq.lte('started_at', opts.to)
+  if (opts?.limit) sq = sq.limit(opts.limit)
+
+  const { data: sessions, error: sessErr } = await sq
+  if (sessErr) {
+    console.error('[listMeasurementsForClient] sessions query error', { clientId, error: sessErr })
+    return []
+  }
+  console.log('[listMeasurementsForClient] sessions found', { clientId, count: sessions?.length ?? 0 })
+  if (!sessions || sessions.length === 0) return []
+
+  // 2. Enrichment: measurement_analytics (score proprietari calcolati dal trigger SQL).
+  const sessionIds = sessions.map((s) => s.id as string)
+  const { data: maRows, error: maErr } = await supabase
     .from('measurement_analytics')
     .select('*')
-    .eq('client_id', clientId)
-    .order('measured_at', { ascending: false })
-  if (opts?.from) q = q.gte('measured_at', opts.from)
-  if (opts?.to) q = q.lte('measured_at', opts.to)
-  if (opts?.limit) q = q.limit(opts.limit)
-  const { data } = await q
-  return (data ?? []) as MeasurementAnalytics[]
+    .in('session_id', sessionIds)
+  if (maErr) {
+    console.error('[listMeasurementsForClient] measurement_analytics query error', { clientId, error: maErr })
+  }
+  const maBySession = new Map<string, MeasurementAnalytics>()
+  for (const row of (maRows ?? []) as MeasurementAnalytics[]) {
+    if (row.session_id) maBySession.set(row.session_id, row)
+  }
+  console.log('[listMeasurementsForClient] measurement_analytics rows', { clientId, total: maRows?.length ?? 0, missing: sessionIds.length - (maRows?.length ?? 0) })
+
+  // 3. Merge: preferisci la riga measurement_analytics (con score); altrimenti
+  //    sintetizza da sessions.hrv_data così la misurazione appare comunque.
+  return sessions.map((s) => maBySession.get(s.id as string) ?? sessionToMeasurementAnalytics(s))
 }
 
-// Carica la singola misurazione e fa join con la session raw per recuperare
-// notes_professionista e indicazioni (colonne testuali presenti solo in sessions).
+// Costruisce una MeasurementAnalytics minimale a partire da una riga `sessions`.
+// Usato come fallback quando measurement_analytics non contiene la riga per quel
+// session_id (es. fire-and-forget Flutter fallito, sync queue non drenata).
+// I campi score_* restano null: la dashboard mostra "—" per le metriche calcolate.
+type SessionRow = {
+  id: string
+  client_id: string
+  professionista_id: string
+  started_at: string | null
+  created_at: string | null
+  duration_seconds: number | null
+  hrv_data: Record<string, unknown> | null
+  test_type: string | null
+  tags: string[] | null
+}
+
+function sessionToMeasurementAnalytics(s: SessionRow): MeasurementAnalytics {
+  const h = (s.hrv_data ?? {}) as Record<string, unknown>
+  const num = (k: string): number | null => {
+    const v = h[k]
+    if (v === null || v === undefined) return null
+    const n = typeof v === 'number' ? v : Number(v)
+    return Number.isFinite(n) ? n : null
+  }
+  const meanBpm = num('meanBpm')
+  return {
+    id: s.id,
+    session_id: s.id,
+    user_id: s.professionista_id,
+    client_id: s.client_id,
+    measured_at: (s.started_at ?? s.created_at ?? new Date().toISOString()) as string,
+    duration_seconds: s.duration_seconds ?? 0,
+    sensor_type: null,
+    sensor_name: null,
+    age: null,
+    sex: null,
+    is_smoker: null,
+    is_athlete: null,
+    activity_level: null,
+    rr_intervals: null,
+    rr_count: num('sampleCount'),
+    artifact_percentage: null,
+    mean_rr: meanBpm && meanBpm > 0 ? 60000 / meanBpm : null,
+    sdnn: num('sdnn'),
+    rmssd: num('rmssd'),
+    pnn50: num('pnn50'),
+    pnn20: num('pnn20'),
+    mean_hr: meanBpm,
+    sdnn_index: null,
+    cv: num('cv'),
+    rmssd_sdnn_ratio: num('rmssdSdnnRatio'),
+    vlf_power: num('vlfPower'),
+    lf_power: num('lfPower'),
+    hf_power: num('hfPower'),
+    total_power: num('totalPower'),
+    lf_hf_ratio: num('lfHfRatio'),
+    lf_nu: num('lfNorm'),
+    hf_nu: num('hfNorm'),
+    lf_vlf_ratio: null,
+    vlf_power_ls: num('vlfPowerLs'),
+    lf_power_ls: num('lfPowerLs'),
+    hf_power_ls: num('hfPowerLs'),
+    total_power_ls: num('totalPowerLs'),
+    lf_hf_ratio_ls: num('lfHfRatioLs'),
+    sd1: num('sd1'),
+    sd2: num('sd2'),
+    sd1_sd2_ratio: num('sd1Sd2Ratio'),
+    dfa_alpha1: num('dfaAlpha1'),
+    dfa_alpha2: num('dfaAlpha2'),
+    sample_entropy: num('sampEn'),
+    approximate_entropy: num('apEn'),
+    triangular_index: num('hrvTriangularIndex'),
+    tinn: num('tinn'),
+    stress_index_baevsky: num('stressIndex'),
+    score_stress: null,
+    score_recupero: null,
+    score_equilibrio: null,
+    score_energia: null,
+    score_modulazione_infiammatoria: null,
+    score_composito: null,
+    algorithm_version: null,
+    score_weights: null,
+    tags: s.tags ?? null,
+    created_at: (s.created_at ?? s.started_at ?? new Date().toISOString()) as string,
+    test_type: s.test_type,
+    orthostatic_data: null,
+    coherence_data: null,
+  }
+}
+
+// Carica la singola misurazione. Preferisce measurement_analytics (con score),
+// altrimenti sintetizza da sessions.hrv_data come fallback. In entrambi i casi
+// fa join con sessions per notes_professionista / indicazioni.
 export async function getMeasurementBySessionId(sessionId: string): Promise<MeasurementWithSession | null> {
   const supabase = await createClient()
   const { data: ma } = await supabase
@@ -80,14 +199,17 @@ export async function getMeasurementBySessionId(sessionId: string): Promise<Meas
     .select('*')
     .eq('session_id', sessionId)
     .maybeSingle()
-  if (!ma) return null
   const { data: s } = await supabase
     .from('sessions')
-    .select('notes_professionista, indicazioni')
+    .select('*')
     .eq('id', sessionId)
     .maybeSingle()
+  if (!ma && !s) return null
+  const base = ma
+    ? (ma as MeasurementAnalytics)
+    : sessionToMeasurementAnalytics(s as SessionRow)
   return {
-    ...(ma as MeasurementAnalytics),
+    ...base,
     notes_professionista: (s?.notes_professionista as string | null) ?? null,
     indicazioni: (s?.indicazioni as string | null) ?? null,
   }
