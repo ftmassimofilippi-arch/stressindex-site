@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import GuideChatWidget from '@/components/GuideChatWidget'
@@ -1446,10 +1447,52 @@ export default function GuideClient() {
                 ))}
               </div>
 
+              {/* Vedi anche */}
+              <section
+                aria-labelledby="vedi-anche-title"
+                className="mt-20 rounded-xl border border-gray-200 bg-white p-6"
+              >
+                <h2
+                  id="vedi-anche-title"
+                  className="text-lg font-semibold text-anthracite tracking-tight"
+                >
+                  Vedi anche
+                </h2>
+                <p className="mt-1.5 text-[14.5px] text-anthracite-light leading-relaxed">
+                  Approfondisci le altre pagine del sito.
+                </p>
+                <div className="mt-4 grid sm:grid-cols-2 gap-3">
+                  <Link
+                    href="/funzionalita"
+                    className="block rounded-lg border border-gray-200 p-4 hover:border-teal transition-colors"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span aria-hidden="true">✨</span>
+                      <span className="font-medium text-anthracite">Funzionalità</span>
+                    </div>
+                    <p className="text-[13.5px] text-anthracite-light leading-relaxed">
+                      5 score, 25+ parametri HRV, 3 tipi di test, report PDF, CRM.
+                    </p>
+                  </Link>
+                  <Link
+                    href="/sport"
+                    className="block rounded-lg border border-gray-200 p-4 hover:border-teal transition-colors"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span aria-hidden="true">⚡</span>
+                      <span className="font-medium text-anthracite">Modulo Sport</span>
+                    </div>
+                    <p className="text-[13.5px] text-anthracite-light leading-relaxed">
+                      DFA Alpha1 real-time, zone metaboliche live, dashboard atleta.
+                    </p>
+                  </Link>
+                </div>
+              </section>
+
               {/* AI assistant promo */}
               <section
                 aria-labelledby="ai-help-title"
-                className="mt-20 rounded-lg border-l-4 border-teal bg-teal-light/40 p-5 sm:p-6 flex items-start gap-4"
+                className="mt-8 rounded-lg border-l-4 border-teal bg-teal-light/40 p-5 sm:p-6 flex items-start gap-4"
               >
                 <span aria-hidden="true" className="text-2xl leading-none mt-0.5">💬</span>
                 <div>

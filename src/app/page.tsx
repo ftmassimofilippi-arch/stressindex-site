@@ -622,33 +622,35 @@ function Pricing() {
   )
 }
 
+const FAQ_ITEMS = [
+  {
+    q: 'Ho bisogno del Polar H10?',
+    a: 'No. Funziona con qualsiasi fascia cardio Bluetooth. Il Polar H10 è quello che consigliamo per la qualità del segnale ECG, specialmente su Android, ma non è obbligatorio.',
+  },
+  {
+    q: 'Funziona su iPhone?',
+    a: 'Sì. Android e iOS, tablet e smartphone. Qualsiasi dispositivo con Bluetooth 4.0.',
+  },
+  {
+    q: 'I dati dei miei clienti sono al sicuro?',
+    a: "Server in Germania, GDPR compliant. I dati non vengono mai condivisi con terzi. Il consenso del cliente viene registrato automaticamente dall'app ad ogni misurazione.",
+  },
+  {
+    q: 'Posso usarlo senza internet?',
+    a: 'La misurazione è completamente offline. I dati si sincronizzano automaticamente quando torni online. Non perdi nessuna sessione.',
+  },
+  {
+    q: 'Cosa succede dopo i 60 giorni?',
+    a: "Ti arriva una notifica prima della scadenza. Se vuoi continuare, l'abbonamento parte in automatico. Se no, annulli e non ti addebitiamo niente. Zero burocrazia.",
+  },
+  {
+    q: 'Il prezzo Founding Members dura quanto?',
+    a: 'Per sempre. I primi 200 professionisti che si iscrivono bloccano 49,90€/mese a vita, anche quando il prezzo standard salirà a 69,90€/mese.',
+  },
+]
+
 function Faq() {
-  const items = [
-    {
-      q: 'Ho bisogno del Polar H10?',
-      a: 'No. Funziona con qualsiasi fascia cardio Bluetooth. Il Polar H10 è quello che consigliamo per la qualità del segnale ECG, specialmente su Android, ma non è obbligatorio.',
-    },
-    {
-      q: 'Funziona su iPhone?',
-      a: 'Sì. Android e iOS, tablet e smartphone. Qualsiasi dispositivo con Bluetooth 4.0.',
-    },
-    {
-      q: 'I dati dei miei clienti sono al sicuro?',
-      a: "Server in Germania, GDPR compliant. I dati non vengono mai condivisi con terzi. Il consenso del cliente viene registrato automaticamente dall'app ad ogni misurazione.",
-    },
-    {
-      q: 'Posso usarlo senza internet?',
-      a: 'La misurazione è completamente offline. I dati si sincronizzano automaticamente quando torni online. Non perdi nessuna sessione.',
-    },
-    {
-      q: 'Cosa succede dopo i 60 giorni?',
-      a: "Ti arriva una notifica prima della scadenza. Se vuoi continuare, l'abbonamento parte in automatico. Se no, annulli e non ti addebitiamo niente. Zero burocrazia.",
-    },
-    {
-      q: 'Il prezzo Founding Members dura quanto?',
-      a: 'Per sempre. I primi 200 professionisti che si iscrivono bloccano 49,90€/mese a vita, anche quando il prezzo standard salirà a 69,90€/mese.',
-    },
-  ]
+  const items = FAQ_ITEMS
   return (
     <section id="faq" className="py-16 md:py-24 px-6 scroll-mt-20 border-b border-gray-100">
       <div className="max-w-5xl mx-auto">
@@ -798,12 +800,26 @@ const softwareApplicationJsonLd = {
   },
 }
 
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQ_ITEMS.map((it) => ({
+    '@type': 'Question',
+    name: it.q,
+    acceptedAnswer: { '@type': 'Answer', text: it.a },
+  })),
+}
+
 export default function Home() {
   return (
     <main className="bg-white text-anthracite">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <Navbar />
       <Hero />
