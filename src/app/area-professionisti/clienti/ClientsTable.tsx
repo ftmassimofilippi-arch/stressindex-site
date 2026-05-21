@@ -9,7 +9,7 @@ import { age, fullName, initials, formatRelative } from '@/lib/format'
 import type { ClientWithLastMeasurement } from '@/lib/dashboard-data'
 import { useRouter } from 'next/navigation'
 
-type Props = { clients: ClientWithLastMeasurement[] }
+type Props = { clients: ClientWithLastMeasurement[]; professionistaId?: string }
 
 const FILTER_PERIODS = [
   { value: 'all', label: 'Tutti' },
@@ -19,8 +19,9 @@ const FILTER_PERIODS = [
   { value: 'never', label: 'Mai' },
 ] as const
 
-export function ClientsTable({ clients }: Props) {
+export function ClientsTable({ clients, professionistaId }: Props) {
   const router = useRouter()
+  const qs = professionistaId ? `?professionista=${professionistaId}` : ''
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState<string>('')
   const [periodFilter, setPeriodFilter] = useState<typeof FILTER_PERIODS[number]['value']>('all')
@@ -155,7 +156,7 @@ export function ClientsTable({ clients }: Props) {
         columns={columns}
         rows={filtered}
         rowKey={(c) => c.id}
-        onRowClick={(c) => router.push(`/area-professionisti/clienti/${c.id}`)}
+        onRowClick={(c) => router.push(`/area-professionisti/clienti/${c.id}${qs}`)}
         initialSort={{ key: 'last', dir: 'desc' }}
       />
     </div>

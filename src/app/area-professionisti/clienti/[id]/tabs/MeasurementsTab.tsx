@@ -16,7 +16,8 @@ const DURATION_FILTERS = [
   { value: '10', label: '10 min' },
 ] as const
 
-export function MeasurementsTab({ client, measurements }: { client: Client; measurements: MeasurementAnalytics[] }) {
+export function MeasurementsTab({ client, measurements, professionistaId }: { client: Client; measurements: MeasurementAnalytics[]; professionistaId?: string }) {
+  const qs = professionistaId ? `?professionista=${professionistaId}` : ''
   const [range, setRange] = useState<DateRange>(defaultRange(90))
   const [duration, setDuration] = useState<typeof DURATION_FILTERS[number]['value']>('all')
 
@@ -73,7 +74,7 @@ export function MeasurementsTab({ client, measurements }: { client: Client; meas
       key: 'actions', header: '', render: (m) => (
         <div className="flex items-center gap-1 justify-end">
           <DownloadMeasurementPdfButton sessionId={m.session_id} clientId={client.id} variant="icon" />
-          <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}`} className="text-teal-dark text-sm hover:underline">Apri →</Link>
+          <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${qs}`} className="text-teal-dark text-sm hover:underline">Apri →</Link>
         </div>
       )
     },

@@ -6,12 +6,14 @@ import { AdvancedTrendChart } from '@/components/dashboard/AdvancedTrendChart'
 import { AlertBadge } from '@/components/dashboard/AlertBadge'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { EmptyState } from '@/components/dashboard/EmptyState'
+import { InviteBanner } from '@/components/dashboard/InviteBanner'
 import {
   aggregatedDailyAverages,
   clientsToContact,
   getProfessionalProfile,
   listAlerts,
   listClients,
+  listPendingInvitesForCurrentUser,
   listRecentNotes,
   todaysMeasurements,
 } from '@/lib/dashboard-data'
@@ -22,7 +24,7 @@ export const metadata = { title: 'Oggi' }
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardHome() {
-  const [professional, alerts, measurements, contacts, trend, allClients, notes] = await Promise.all([
+  const [professional, alerts, measurements, contacts, trend, allClients, notes, invites] = await Promise.all([
     getProfessionalProfile(),
     listAlerts({ status: ['new', 'seen'], limit: 5 }),
     todaysMeasurements(),
@@ -30,6 +32,7 @@ export default async function DashboardHome() {
     aggregatedDailyAverages(365),
     listClients(),
     listRecentNotes(3),
+    listPendingInvitesForCurrentUser(),
   ])
 
   const clientMap = new Map(allClients.map((c) => [c.id, c]))
@@ -38,6 +41,7 @@ export default async function DashboardHome() {
 
   return (
     <DashboardLayout professional={professional} alertCount={newAlertCount}>
+      <InviteBanner invites={invites} />
       <header className="mb-8">
         <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
           {formatGreeting()}, <em className="italic text-teal-dark">{professional?.nome ?? 'Dottore'}</em>

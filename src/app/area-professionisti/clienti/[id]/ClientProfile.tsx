@@ -14,8 +14,9 @@ import { ReportTab } from './tabs/ReportTab'
 import { ClientSettingsTab } from './tabs/ClientSettingsTab'
 import { PdfExportModal } from './PdfExportModal'
 import { MessageComposer } from './MessageComposer'
+import { formatDate } from '@/lib/format'
 
-const TABS = [
+const ALL_TABS = [
   { id: 'panoramica', label: 'Panoramica' },
   { id: 'misurazioni', label: 'Misurazioni' },
   { id: 'analytics', label: 'Analytics' },
@@ -25,7 +26,9 @@ const TABS = [
   { id: 'impostazioni', label: 'Impostazioni' },
 ] as const
 
-type TabId = typeof TABS[number]['id']
+const READONLY_TABS = ALL_TABS.filter((t) => t.id !== 'messaggi' && t.id !== 'impostazioni')
+
+type TabId = typeof ALL_TABS[number]['id']
 
 type Props = {
   client: Client
@@ -35,10 +38,17 @@ type Props = {
   settings: ClientSettings | null
   messages: Message[]
   professional: ProfessionalProfile | null
+  readOnly?: boolean
+  viewingMemberName?: string
+  professionistaId?: string
 }
 
-export function ClientProfile({ client, measurements, alerts, notes, settings, messages, professional }: Props) {
+export function ClientProfile({ client, measurements, alerts, notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId }: Props) {
   const [tab, setTab] = useState<TabId>('panoramica')
+  const TABS = readOnly ? READONLY_TABS : ALL_TABS
+  const backHref = professionistaId
+    ? `/area-professionisti/clienti?professionista=${professionistaId}`
+    : '/area-professionisti/clienti'
   const [pdfOpen, setPdfOpen] = useState(false)
   const [msgOpen, setMsgOpen] = useState(false)
   const latest = measurements[0]
@@ -48,8 +58,21 @@ export function ClientProfile({ client, measurements, alerts, notes, settings, m
 
   return (
     <>
+      {readOnly && viewingMemberName && (
+        <div className="mb-4 flex items-center gap-3 flex-wrap px-5 py-3 rounded-2xl bg-amber-50 border border-amber-200">
+          <div className="text-sm text-amber-800">
+            Stai visualizzando i dati di <strong>{viewingMemberName}</strong> in sola lettura
+          </div>
+          <Link
+            href="/area-professionisti/organizzazione"
+            className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-amber-900 hover:underline"
+          >
+            <ArrowLeft size={14} /> Torna al tuo team
+          </Link>
+        </div>
+      )}
       <div className="mb-6">
-        <Link href="/area-professionisti/clienti" className="inline-flex items-center gap-1.5 text-sm text-anthracite-lighter hover:text-anthracite transition-colors">
+        <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm text-anthracite-lighter hover:text-anthracite transition-colors">
           <ArrowLeft size={14} /> Clienti
         </Link>
       </div>
@@ -99,12 +122,16 @@ export function ClientProfile({ client, measurements, alerts, notes, settings, m
             <button type="button" onClick={() => setPdfOpen(true)} className="btn-secondary text-sm inline-flex items-center gap-1.5">
               <Download size={15} /> PDF
             </button>
-            <button type="button" onClick={() => setMsgOpen(true)} className="btn-secondary text-sm inline-flex items-center gap-1.5">
-              <Mail size={15} /> Messaggio
-            </button>
-            <button type="button" className="w-10 h-10 rounded-xl border border-surface-border hover:bg-surface flex items-center justify-center" aria-label="Altre azioni">
-              <MoreHorizontal size={16} />
-            </button>
+            {!readOnly && (
+              <>
+                <button type="button" onClick={() => setMsgOpen(true)} className="btn-secondary text-sm inline-flex items-center gap-1.5">
+                  <Mail size={15} /> Messaggio
+                </button>
+                <button type="button" className="w-10 h-10 rounded-xl border border-surface-border hover:bg-surface flex items-center justify-center" aria-label="Altre azioni">
+                  <MoreHorizontal size={16} />
+                </button>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -124,13 +151,14 @@ export function ClientProfile({ client, measurements, alerts, notes, settings, m
         ))}
       </div>
 
-      {tab === 'panoramica' && <OverviewTab client={client} measurements={measurements} alerts={alerts} />}
-      {tab === 'misurazioni' && <MeasurementsTab client={client} measurements={measurements} />}
+      {tab === 'panoramica' && <OverviewTab client={client} measurements={measurements} alerts={alerts} professionistaId={professionistaId} />}
+      {tab === 'misurazioni' && <MeasurementsTab client={client} measurements={measurements} professionistaId={professionistaId} />}
       {tab === 'analytics' && <AdvancedAnalyticsTab measurements={measurements} />}
       {tab === 'report' && <ReportTab client={client} />}
-      {tab === 'note' && <NotesTab client={client} initialNotes={notes} />}
-      {tab === 'messaggi' && <MessagesTab client={client} initialMessages={messages} />}
-      {tab === 'impostazioni' && <ClientSettingsTab client={client} initialSettings={settings} />}
+      {!readOnly && tab === 'note' && <NotesTab client={client} initialNotes={notes} />}
+      {readOnly && tab === 'note' && <ReadOnlyNotesList notes={notes} />}
+      {!readOnly && tab === 'messaggi' && <MessagesTab client={client} initialMessages={messages} />}
+      {!readOnly && tab === 'impostazioni' && <ClientSettingsTab client={client} initialSettings={settings} />}
 
       <PdfExportModal
         open={pdfOpen}
@@ -141,7 +169,42 @@ export function ClientProfile({ client, measurements, alerts, notes, settings, m
         professional={professional}
       />
 
-      <MessageComposer open={msgOpen} onClose={() => setMsgOpen(false)} client={client} />
+      {!readOnly && <MessageComposer open={msgOpen} onClose={() => setMsgOpen(false)} client={client} />}
     </>
+  )
+}
+
+function ReadOnlyNotesList({ notes }: { notes: ClientNote[] }) {
+  if (notes.length === 0) {
+    return (
+      <div className="card p-10 text-center text-sm text-anthracite-lighter">
+        Nessuna nota per questo cliente
+      </div>
+    )
+  }
+  return (
+    <ul className="space-y-3">
+      {notes.map((n) => (
+        <li key={n.id} className="card p-5">
+          <div className="flex items-center gap-2 text-xs text-anthracite-lighter mb-2">
+            <span>{formatDate(n.data_creazione)}</span>
+            {n.categoria && (
+              <>
+                <span>·</span>
+                <span className="px-2 py-0.5 rounded-full bg-teal-light text-teal-dark">{n.categoria}</span>
+              </>
+            )}
+          </div>
+          <p className="text-sm text-anthracite whitespace-pre-wrap">{n.testo}</p>
+          {n.tags?.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {n.tags.map((t) => (
+                <span key={t} className="px-2 py-0.5 rounded-full text-[11px] bg-surface text-anthracite-lighter">{t}</span>
+              ))}
+            </div>
+          )}
+        </li>
+      ))}
+    </ul>
   )
 }

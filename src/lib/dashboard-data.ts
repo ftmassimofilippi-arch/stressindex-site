@@ -307,11 +307,17 @@ export type ClientWithLastMeasurement = Client & {
   settings?: ClientSettings | null
 }
 
-export async function listClientsEnriched(): Promise<ClientWithLastMeasurement[]> {
+export async function listClientsEnriched(opts?: { professionistaId?: string }): Promise<ClientWithLastMeasurement[]> {
   const supabase = await createClient()
+  const clientsQ = opts?.professionistaId
+    ? supabase.from('clients').select('*').eq('professionista_id', opts.professionistaId).order('cognome', { ascending: true })
+    : supabase.from('clients').select('*').order('cognome', { ascending: true })
+  const measurementsQ = opts?.professionistaId
+    ? supabase.from('measurement_analytics').select('*').eq('user_id', opts.professionistaId).order('measured_at', { ascending: false })
+    : supabase.from('measurement_analytics').select('*').order('measured_at', { ascending: false })
   const [clientsRes, measurementsRes, alertsRes, settingsRes] = await Promise.all([
-    supabase.from('clients').select('*').order('cognome', { ascending: true }),
-    supabase.from('measurement_analytics').select('*').order('measured_at', { ascending: false }),
+    clientsQ,
+    measurementsQ,
     supabase.from('alerts').select('client_id,status').in('status', ['new', 'seen']),
     supabase.from('client_settings').select('*'),
   ])
@@ -426,6 +432,264 @@ export async function clientsToContact(): Promise<Array<{ client: Client; settin
     }
   }
   return out.sort((a, b) => b.daysSinceLast - a.daysSinceLast).slice(0, 10)
+}
+
+// ============================================================================
+// ORGANIZATIONS
+// ============================================================================
+
+export interface Organization {
+  id: string
+  name: string
+  owner_id: string
+  logo_url: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface OrganizationMember {
+  id: string
+  organization_id: string
+  user_id: string | null
+  email: string
+  role: 'owner' | 'admin' | 'member'
+  status: 'pending' | 'active' | 'revoked'
+  invited_at: string
+  accepted_at: string | null
+  invited_by: string
+}
+
+export interface OrganizationContext {
+  organization: Organization | null
+  members: OrganizationMember[]
+  role: OrganizationMember['role'] | null
+}
+
+export async function getOrganizationContext(): Promise<OrganizationContext> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { organization: null, members: [], role: null }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .maybeSingle()
+  if (!profile?.organization_id) return { organization: null, members: [], role: null }
+
+  const [{ data: organization }, { data: members }] = await Promise.all([
+    supabase.from('organizations').select('*').eq('id', profile.organization_id).maybeSingle(),
+    supabase
+      .from('organization_members')
+      .select('*')
+      .eq('organization_id', profile.organization_id)
+      .order('invited_at', { ascending: true }),
+  ])
+  const myMember = (members ?? []).find((m) => m.user_id === user.id) ?? null
+  return {
+    organization: (organization as Organization) ?? null,
+    members: (members ?? []) as OrganizationMember[],
+    role: (myMember?.role as OrganizationMember['role']) ?? null,
+  }
+}
+
+export interface PendingInvite {
+  id: string
+  organization_id: string
+  organization_name: string | null
+  email: string
+  role: OrganizationMember['role']
+  invited_at: string
+}
+
+export async function listPendingInvitesForCurrentUser(): Promise<PendingInvite[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email) return []
+  const { data: invites } = await supabase
+    .from('organization_members')
+    .select('id, organization_id, email, role, invited_at, status')
+    .eq('email', user.email.toLowerCase())
+    .eq('status', 'pending')
+  if (!invites || invites.length === 0) return []
+  const orgIds = invites.map((i) => i.organization_id as string)
+  const { data: orgs } = await supabase.from('organizations').select('id, name').in('id', orgIds)
+  const orgMap = new Map<string, string>((orgs ?? []).map((o) => [o.id as string, o.name as string]))
+  return invites.map((i) => ({
+    id: i.id as string,
+    organization_id: i.organization_id as string,
+    organization_name: orgMap.get(i.organization_id as string) ?? null,
+    email: i.email as string,
+    role: i.role as OrganizationMember['role'],
+    invited_at: i.invited_at as string,
+  }))
+}
+
+export interface OrgMemberStats {
+  user_id: string
+  full_name: string
+  email: string | null
+  clients_count: number
+  measurements_count: number
+  last_activity: string | null
+}
+
+export async function getOrgMembersStats(): Promise<OrgMemberStats[]> {
+  const ctx = await getOrganizationContext()
+  if (!ctx.organization || (ctx.role !== 'owner' && ctx.role !== 'admin')) return []
+  const supabase = await createClient()
+
+  const userIds = ctx.members
+    .filter((m) => m.status === 'active' && m.user_id)
+    .map((m) => m.user_id as string)
+  if (userIds.length === 0) return []
+
+  const [{ data: profilesRows }, { data: profProfilesRows }, { data: clientsRows }, { data: measurementsRows }] = await Promise.all([
+    supabase.from('profiles').select('id, nome, cognome, email').in('id', userIds),
+    supabase.from('professional_profiles').select('id, nome, cognome').in('id', userIds),
+    supabase.from('clients').select('id, professionista_id').in('professionista_id', userIds),
+    supabase.from('measurement_analytics').select('user_id, measured_at').in('user_id', userIds),
+  ])
+
+  const profileMap = new Map<string, { nome: string | null; cognome: string | null; email: string | null }>()
+  for (const p of (profilesRows ?? []) as Array<{ id: string; nome: string | null; cognome: string | null; email: string | null }>) {
+    profileMap.set(p.id, { nome: p.nome, cognome: p.cognome, email: p.email })
+  }
+  const profProfMap = new Map<string, { nome: string | null; cognome: string | null }>()
+  for (const p of (profProfilesRows ?? []) as Array<{ id: string; nome: string | null; cognome: string | null }>) {
+    profProfMap.set(p.id, { nome: p.nome, cognome: p.cognome })
+  }
+
+  const clientsByUser = new Map<string, number>()
+  for (const c of (clientsRows ?? []) as Array<{ professionista_id: string }>) {
+    clientsByUser.set(c.professionista_id, (clientsByUser.get(c.professionista_id) ?? 0) + 1)
+  }
+  const measurementsByUser = new Map<string, number>()
+  const lastByUser = new Map<string, string>()
+  for (const m of (measurementsRows ?? []) as Array<{ user_id: string; measured_at: string }>) {
+    measurementsByUser.set(m.user_id, (measurementsByUser.get(m.user_id) ?? 0) + 1)
+    const prev = lastByUser.get(m.user_id)
+    if (!prev || new Date(m.measured_at).getTime() > new Date(prev).getTime()) {
+      lastByUser.set(m.user_id, m.measured_at)
+    }
+  }
+
+  return userIds.map((uid) => {
+    const p = profileMap.get(uid)
+    const pp = profProfMap.get(uid)
+    const nome = pp?.nome ?? p?.nome ?? ''
+    const cognome = pp?.cognome ?? p?.cognome ?? ''
+    const member = ctx.members.find((m) => m.user_id === uid)
+    const full = `${nome} ${cognome}`.trim() || member?.email || 'Professionista'
+    return {
+      user_id: uid,
+      full_name: full,
+      email: p?.email ?? member?.email ?? null,
+      clients_count: clientsByUser.get(uid) ?? 0,
+      measurements_count: measurementsByUser.get(uid) ?? 0,
+      last_activity: lastByUser.get(uid) ?? null,
+    }
+  })
+}
+
+export interface OrgOverview {
+  total_professionals: number
+  total_clients: number
+  total_measurements: number
+  measurements_this_week: number
+  recent: Array<{
+    session_id: string
+    client_id: string
+    client_name: string
+    professional_id: string
+    professional_name: string
+    measured_at: string
+    score_stress: number | null
+  }>
+}
+
+export async function getOrgOverview(): Promise<OrgOverview | null> {
+  const ctx = await getOrganizationContext()
+  if (!ctx.organization || (ctx.role !== 'owner' && ctx.role !== 'admin')) return null
+  const supabase = await createClient()
+
+  const activeUserIds = ctx.members
+    .filter((m) => m.status === 'active' && m.user_id)
+    .map((m) => m.user_id as string)
+
+  const { count: clientsCount } = await supabase
+    .from('clients')
+    .select('*', { count: 'exact', head: true })
+    .in('professionista_id', activeUserIds.length ? activeUserIds : ['00000000-0000-0000-0000-000000000000'])
+
+  const { count: measurementsCount } = await supabase
+    .from('measurement_analytics')
+    .select('*', { count: 'exact', head: true })
+    .in('user_id', activeUserIds.length ? activeUserIds : ['00000000-0000-0000-0000-000000000000'])
+
+  const weekAgo = new Date()
+  weekAgo.setDate(weekAgo.getDate() - 7)
+  const { count: weeklyCount } = await supabase
+    .from('measurement_analytics')
+    .select('*', { count: 'exact', head: true })
+    .in('user_id', activeUserIds.length ? activeUserIds : ['00000000-0000-0000-0000-000000000000'])
+    .gte('measured_at', weekAgo.toISOString())
+
+  const { data: recentRows } = await supabase
+    .from('measurement_analytics')
+    .select('session_id, client_id, user_id, measured_at, score_stress')
+    .in('user_id', activeUserIds.length ? activeUserIds : ['00000000-0000-0000-0000-000000000000'])
+    .order('measured_at', { ascending: false })
+    .limit(20)
+
+  const recent = (recentRows ?? []) as Array<{
+    session_id: string
+    client_id: string
+    user_id: string
+    measured_at: string
+    score_stress: number | null
+  }>
+  const clientIds = Array.from(new Set(recent.map((r) => r.client_id)))
+  const profIds = Array.from(new Set(recent.map((r) => r.user_id)))
+  const [{ data: clientRows }, { data: profileRows }, { data: profProfileRows }] = await Promise.all([
+    clientIds.length
+      ? supabase.from('clients').select('id, nome, cognome').in('id', clientIds)
+      : Promise.resolve({ data: [] }),
+    profIds.length
+      ? supabase.from('profiles').select('id, nome, cognome').in('id', profIds)
+      : Promise.resolve({ data: [] }),
+    profIds.length
+      ? supabase.from('professional_profiles').select('id, nome, cognome').in('id', profIds)
+      : Promise.resolve({ data: [] }),
+  ])
+  const clientMap = new Map<string, string>()
+  for (const c of (clientRows ?? []) as Array<{ id: string; nome: string | null; cognome: string | null }>) {
+    clientMap.set(c.id, `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || 'Cliente')
+  }
+  const profMap = new Map<string, string>()
+  for (const p of (profileRows ?? []) as Array<{ id: string; nome: string | null; cognome: string | null }>) {
+    profMap.set(p.id, `${p.nome ?? ''} ${p.cognome ?? ''}`.trim())
+  }
+  for (const p of (profProfileRows ?? []) as Array<{ id: string; nome: string | null; cognome: string | null }>) {
+    const full = `${p.nome ?? ''} ${p.cognome ?? ''}`.trim()
+    if (full && !profMap.get(p.id)) profMap.set(p.id, full)
+  }
+
+  return {
+    total_professionals: activeUserIds.length,
+    total_clients: clientsCount ?? 0,
+    total_measurements: measurementsCount ?? 0,
+    measurements_this_week: weeklyCount ?? 0,
+    recent: recent.map((r) => ({
+      session_id: r.session_id,
+      client_id: r.client_id,
+      client_name: clientMap.get(r.client_id) ?? 'Cliente',
+      professional_id: r.user_id,
+      professional_name: profMap.get(r.user_id) || 'Professionista',
+      measured_at: r.measured_at,
+      score_stress: r.score_stress,
+    })),
+  }
 }
 
 // Carica TUTTE le misurazioni dello studio (per pagina analytics)

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, BarChart3, Settings, LogOut, Menu, X } from 'lucide-react'
+import { Home, Users, BarChart3, Settings, LogOut, Menu, X, Building2 } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
@@ -22,6 +22,7 @@ const NAV_ITEMS = [
   { href: '/area-professionisti/clienti', label: 'Clienti', icon: Users },
   { href: '/area-professionisti/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/area-professionisti/impostazioni', label: 'Impostazioni', icon: Settings },
+  { href: '/area-professionisti/organizzazione', label: 'Organizzazione', icon: Building2 },
 ]
 
 export function Sidebar({ professional }: SidebarProps) {

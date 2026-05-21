@@ -9,8 +9,9 @@ import type { Alert, Client, MeasurementAnalytics } from '@/lib/types'
 import { ALERT_TYPE_LABEL } from '@/lib/types'
 import { formatDateTime } from '@/lib/format'
 
-export function OverviewTab({ client, measurements, alerts }: { client: Client; measurements: MeasurementAnalytics[]; alerts: Alert[] }) {
+export function OverviewTab({ client, measurements, alerts, professionistaId }: { client: Client; measurements: MeasurementAnalytics[]; alerts: Alert[]; professionistaId?: string }) {
   const latest = measurements[0]
+  const qs = professionistaId ? `?professionista=${professionistaId}` : ''
 
   // Trend completo: tutte le 24+ metriche disponibili; il chart filtra internamente per periodo e selezione.
   const trendData = measurements.slice().reverse().map((m) => {
@@ -90,7 +91,7 @@ export function OverviewTab({ client, measurements, alerts }: { client: Client; 
                       Stress {m.score_stress?.toFixed(0) ?? '—'} · Recupero {m.score_recupero?.toFixed(0) ?? '—'}
                     </div>
                   </div>
-                  <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}`} className="text-teal-dark text-sm hover:underline">
+                  <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${qs}`} className="text-teal-dark text-sm hover:underline">
                     Apri →
                   </Link>
                 </li>

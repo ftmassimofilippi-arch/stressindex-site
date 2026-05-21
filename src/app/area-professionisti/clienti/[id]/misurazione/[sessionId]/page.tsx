@@ -12,7 +12,13 @@ import { HrvParamsTable } from './HrvParamsTable'
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Dettaglio misurazione' }
 
-export default async function SessionDetailPage({ params }: { params: { id: string; sessionId: string } }) {
+export default async function SessionDetailPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string; sessionId: string }
+  searchParams?: { professionista?: string }
+}) {
   const [measurement, client, professional, alerts] = await Promise.all([
     getMeasurementBySessionId(params.sessionId),
     getClient(params.id),
@@ -22,13 +28,16 @@ export default async function SessionDetailPage({ params }: { params: { id: stri
 
   if (!measurement || !client) notFound()
 
+  const qs = searchParams?.professionista ? `?professionista=${searchParams.professionista}` : ''
+  const backHref = `/area-professionisti/clienti/${client.id}${qs}${qs ? '&' : '?'}tab=misurazioni`
+
   const duration = measurement.duration_seconds ? `${Math.round(measurement.duration_seconds / 60)} min` : '—'
   const sensorLabel = measurement.sensor_name ?? measurement.sensor_type ?? 'Polar H10'
 
   return (
     <DashboardLayout professional={professional} alertCount={alerts.length}>
       <div className="mb-6">
-        <Link href={`/area-professionisti/clienti/${client.id}?tab=misurazioni`} className="inline-flex items-center gap-1.5 text-sm text-anthracite-lighter hover:text-anthracite transition-colors">
+        <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm text-anthracite-lighter hover:text-anthracite transition-colors">
           <ArrowLeft size={14} /> {fullName(client)} · Misurazioni
         </Link>
       </div>

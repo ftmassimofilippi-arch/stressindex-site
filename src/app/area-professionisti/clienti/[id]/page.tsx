@@ -3,6 +3,8 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import {
   getClient,
   getClientSettings,
+  getOrganizationContext,
+  getOrgMembersStats,
   getProfessionalProfile,
   listAlerts,
   listMeasurementsForClient,
@@ -14,7 +16,24 @@ import { ClientProfile } from './ClientProfile'
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Profilo cliente' }
 
-export default async function ClientPage({ params }: { params: { id: string } }) {
+export default async function ClientPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string }
+  searchParams?: { professionista?: string }
+}) {
+  let viewingMember: { user_id: string; full_name: string } | null = null
+  if (searchParams?.professionista) {
+    const ctx = await getOrganizationContext()
+    if (ctx.role === 'owner' || ctx.role === 'admin') {
+      const stats = await getOrgMembersStats()
+      const m = stats.find((s) => s.user_id === searchParams.professionista)
+      if (m) viewingMember = { user_id: m.user_id, full_name: m.full_name }
+    }
+  }
+  const readOnly = !!viewingMember
+
   const [client, professional, measurements, alerts, notes, settings, messages, allAlerts] = await Promise.all([
     getClient(params.id),
     getProfessionalProfile(),
@@ -38,6 +57,9 @@ export default async function ClientPage({ params }: { params: { id: string } })
         settings={settings}
         messages={messages}
         professional={professional}
+        readOnly={readOnly}
+        viewingMemberName={viewingMember?.full_name}
+        professionistaId={viewingMember?.user_id}
       />
     </DashboardLayout>
   )
