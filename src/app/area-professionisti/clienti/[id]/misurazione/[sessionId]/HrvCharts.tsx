@@ -92,7 +92,7 @@ export function PoincareScatter({ rr, sd1, sd2 }: { rr: number[] | null; sd1: nu
                 )
               }}
             />
-            <Scatter data={sample} fill="#4FA39A" fillOpacity={0.45} />
+            <Scatter data={sample} fill="#4FA39A" fillOpacity={0.4} />
             <Customized component={(props: unknown) => (
               <PoincareOverlay
                 chart={props as ChartInternals}
@@ -104,9 +104,52 @@ export function PoincareScatter({ rr, sd1, sd2 }: { rr: number[] | null; sd1: nu
           </ScatterChart>
         </ResponsiveContainer>
       </div>
-      <div className="flex items-center justify-around mt-3 text-xs text-anthracite-lighter">
-        <div>SD1: <b className="text-anthracite">{num(sd1)}</b> ms</div>
-        <div>SD2: <b className="text-anthracite">{num(sd2)}</b> ms</div>
+      <PoincareLegend sd1={sd1} sd2={sd2} />
+    </div>
+  )
+}
+
+function PoincareLegend({ sd1, sd2 }: { sd1: number | null; sd2: number | null }) {
+  const ratio = sd1 != null && sd2 != null && sd2 > 0 ? sd1 / sd2 : null
+  let interp: { label: string; tone: string } | null = null
+  if (ratio != null) {
+    if (ratio < 0.5) interp = { label: 'Predominanza lungo termine', tone: 'text-blue-700' }
+    else if (ratio > 1.0) interp = { label: 'Predominanza breve termine', tone: 'text-orange-700' }
+    else interp = { label: 'Bilanciato', tone: 'text-emerald-700' }
+  }
+  return (
+    <div className="mt-3 space-y-2">
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div className="rounded-lg border border-surface-border bg-surface px-3 py-2">
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-anthracite-lighter">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#F97316' }} />
+            SD1
+          </div>
+          <div className="text-sm font-semibold text-anthracite mt-0.5">
+            {num(sd1)} <span className="text-[10px] text-anthracite-lighter font-normal">ms</span>
+          </div>
+          <div className="text-[10px] text-anthracite-lighter mt-0.5">var. breve termine</div>
+        </div>
+        <div className="rounded-lg border border-surface-border bg-surface px-3 py-2">
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-anthracite-lighter">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#3B82F6' }} />
+            SD2
+          </div>
+          <div className="text-sm font-semibold text-anthracite mt-0.5">
+            {num(sd2)} <span className="text-[10px] text-anthracite-lighter font-normal">ms</span>
+          </div>
+          <div className="text-[10px] text-anthracite-lighter mt-0.5">var. lungo termine</div>
+        </div>
+        <div className="rounded-lg border border-surface-border bg-surface px-3 py-2">
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-anthracite-lighter">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#2F343A' }} />
+            SD1/SD2
+          </div>
+          <div className="text-sm font-semibold text-anthracite mt-0.5">
+            {ratio == null ? '—' : ratio.toFixed(2)}
+          </div>
+          {interp && <div className={`text-[10px] font-medium mt-0.5 ${interp.tone}`}>{interp.label}</div>}
+        </div>
       </div>
     </div>
   )
@@ -150,18 +193,18 @@ function PoincareOverlay({ chart, meanRr, sd1, sd2 }: { chart: ChartInternals; m
       {/* ellisse SD1/SD2 */}
       {sd1Pos > 0 && sd2Pos > 0 && (
         <g transform={`translate(${cx},${cy}) rotate(${rotation})`}>
-          <ellipse cx={0} cy={0} rx={rx} ry={ry} fill="#4FA39A" fillOpacity={0.12} stroke="#4FA39A" strokeWidth={1.5} />
-          {/* asse maggiore SD2 lungo orizzontale (post-rotazione = diagonale) */}
-          <line x1={-rx} y1={0} x2={rx} y2={0} stroke="#4FA39A" strokeWidth={1} strokeDasharray="3 3" />
-          {/* asse minore SD1 verticale (post-rotazione = perpendicolare) */}
-          <line x1={0} y1={-ry} x2={0} y2={ry} stroke="#4FA39A" strokeWidth={1} strokeDasharray="3 3" />
+          <ellipse cx={0} cy={0} rx={rx} ry={ry} fill="#4FA39A" fillOpacity={0.1} stroke="#4FA39A" strokeWidth={1.5} strokeOpacity={0.7} />
+          {/* asse maggiore SD2 lungo orizzontale (post-rotazione = diagonale) — blu */}
+          <line x1={-rx} y1={0} x2={rx} y2={0} stroke="#3B82F6" strokeWidth={1.5} />
+          {/* asse minore SD1 verticale (post-rotazione = perpendicolare) — arancio */}
+          <line x1={0} y1={-ry} x2={0} y2={ry} stroke="#F97316" strokeWidth={1.5} />
           {/* label SD2 al tip dell'asse lungo */}
           <g transform={`translate(${rx + 6},0) rotate(${-rotation})`}>
-            <text x={0} y={4} fontSize={10} fill="#1F2A37" fontWeight={600}>SD2 {sd2Pos.toFixed(0)} ms</text>
+            <text x={0} y={4} fontSize={10} fill="#1D4ED8" fontWeight={700}>SD2 {sd2Pos.toFixed(0)} ms</text>
           </g>
           {/* label SD1 al tip dell'asse breve */}
           <g transform={`translate(0,${-ry - 6}) rotate(${-rotation})`}>
-            <text x={4} y={0} fontSize={10} fill="#1F2A37" fontWeight={600}>SD1 {sd1Pos.toFixed(0)} ms</text>
+            <text x={4} y={0} fontSize={10} fill="#C2410C" fontWeight={700}>SD1 {sd1Pos.toFixed(0)} ms</text>
           </g>
         </g>
       )}
