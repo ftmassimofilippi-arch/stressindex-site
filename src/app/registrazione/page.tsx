@@ -4,9 +4,27 @@ import { Footer } from '@/components/Footer'
 import { RegistrationForm } from './RegistrationForm'
 
 export const metadata: Metadata = {
-  title: 'Registrazione Trial Gratuito 60 Giorni',
+  title: 'Prova Gratis 60 Giorni | Stress Index',
   description:
-    'Registrati per provare Stress Index gratuitamente per 60 giorni. Nessuna carta di credito richiesta. Per medici, fisioterapisti, osteopati e coach.',
+    'Registrati e prova Stress Index gratis per 60 giorni. Tutte le funzionalità, nessun vincolo. Per fisioterapisti e professionisti.',
+  alternates: { canonical: 'https://stressindex.io/registrazione' },
+  openGraph: {
+    title: 'Prova Gratis 60 Giorni | Stress Index',
+    description:
+      'Registrati e prova Stress Index gratis per 60 giorni. Tutte le funzionalità, nessun vincolo. Per fisioterapisti e professionisti.',
+    url: 'https://stressindex.io/registrazione',
+    siteName: 'Stress Index',
+    locale: 'it_IT',
+    type: 'website',
+    images: [{ url: 'https://stressindex.io/og-image.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Prova Gratis 60 Giorni | Stress Index',
+    description:
+      'Registrati e prova Stress Index gratis per 60 giorni. Tutte le funzionalità, nessun vincolo.',
+    images: ['https://stressindex.io/og-image.png'],
+  },
 }
 
 export default function RegistrazionePage() {

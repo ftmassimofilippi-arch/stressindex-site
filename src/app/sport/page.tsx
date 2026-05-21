@@ -4,24 +4,26 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Modulo Sport | Stress Index — DFA Alpha1 Real-Time per Professionisti',
+  title: 'Modulo Sport | DFA Alpha1 Real-Time — Stress Index',
   description:
-    'DFA Alpha1 in tempo reale, zone metaboliche, rischio infortuni, questionario post-allenamento. Il modulo sport professionale per preparatori atletici e fisioterapisti.',
+    'DFA Alpha1 in tempo reale, zone metaboliche, rischio infortuni, questionario post-allenamento. Per preparatori atletici e medici sportivi.',
   alternates: { canonical: 'https://stressindex.io/sport' },
   openGraph: {
-    title: 'Modulo Sport | Stress Index — DFA Alpha1 Real-Time per Professionisti',
+    title: 'Modulo Sport | DFA Alpha1 Real-Time — Stress Index',
     description:
-      'DFA Alpha1 in tempo reale, zone metaboliche, rischio infortuni, questionario post-allenamento. Il modulo sport professionale per preparatori atletici e fisioterapisti.',
+      'DFA Alpha1 in tempo reale, zone metaboliche, rischio infortuni, questionario post-allenamento. Per preparatori atletici e medici sportivi.',
     url: 'https://stressindex.io/sport',
     siteName: 'Stress Index',
     locale: 'it_IT',
     type: 'website',
+    images: [{ url: 'https://stressindex.io/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Modulo Sport | Stress Index — DFA Alpha1 Real-Time per Professionisti',
+    title: 'Modulo Sport | DFA Alpha1 Real-Time — Stress Index',
     description:
       'DFA Alpha1 in tempo reale, zone metaboliche, rischio infortuni, questionario post-allenamento.',
+    images: ['https://stressindex.io/og-image.png'],
   },
 }
 
@@ -541,6 +543,15 @@ export default function SportPage() {
             </div>
             <p className="mt-5 text-sm text-white/70">
               Include tutte le funzionalità del Piano Base (49,90€/mese) + Modulo Sport completo
+            </p>
+            <p className="mt-3 text-sm text-white/70">
+              <Link href="/funzionalita" className="underline underline-offset-2 hover:text-white">
+                Vedi tutte le funzionalità base
+              </Link>
+              <span className="mx-2" aria-hidden="true">·</span>
+              <Link href="/guide" className="underline underline-offset-2 hover:text-white">
+                Guide e supporto
+              </Link>
             </p>
           </div>
         </section>

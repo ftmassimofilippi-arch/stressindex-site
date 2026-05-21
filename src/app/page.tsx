@@ -2,23 +2,26 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Stress Index | Software HRV Professionale per Fisioterapisti e Osteopati',
+  title: 'Stress Index | Software HRV Professionale per Fisioterapisti',
   description:
-    'Misura lo stress dei tuoi clienti in 10 minuti. Software HRV professionale per fisioterapisti, osteopati e medici sportivi. 4 indici clinici, report PDF, 60 giorni gratis.',
+    'Misura lo stress del sistema nervoso autonomo in 10 minuti. 5 score clinici, 25+ parametri HRV, report PDF. Per fisioterapisti e professionisti del benessere.',
+  alternates: { canonical: 'https://stressindex.io' },
   openGraph: {
-    title: 'Stress Index | Software HRV Professionale per Fisioterapisti e Osteopati',
+    title: 'Stress Index | Software HRV Professionale per Fisioterapisti',
     description:
-      'Misura lo stress dei tuoi clienti in 10 minuti. 4 indici clinici, report PDF, 60 giorni gratis.',
+      'Misura lo stress del sistema nervoso autonomo in 10 minuti. 5 score clinici, 25+ parametri HRV, report PDF. Per fisioterapisti e professionisti del benessere.',
     url: 'https://stressindex.io',
     siteName: 'Stress Index',
     locale: 'it_IT',
     type: 'website',
+    images: [{ url: 'https://stressindex.io/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Stress Index | Software HRV Professionale per Fisioterapisti e Osteopati',
+    title: 'Stress Index | Software HRV Professionale per Fisioterapisti',
     description:
-      'Misura lo stress dei tuoi clienti in 10 minuti. 4 indici clinici, report PDF, 60 giorni gratis.',
+      'Misura lo stress del sistema nervoso autonomo in 10 minuti. 5 score clinici, 25+ parametri HRV, report PDF.',
+    images: ['https://stressindex.io/og-image.png'],
   },
 }
 
@@ -734,7 +737,7 @@ function Footer() {
           </div>
 
           <div>
-            <h4 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">Prodotto</h4>
+            <h3 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">Prodotto</h3>
             <ul className="mt-4 space-y-2.5 text-[14px]">
               <li><a className="text-anthracite-light hover:text-teal transition-colors" href="#come-funziona">Come funziona</a></li>
               <li><a className="text-anthracite-light hover:text-teal transition-colors" href="#benefici">Funzionalità</a></li>
@@ -744,7 +747,7 @@ function Footer() {
           </div>
 
           <div>
-            <h4 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">Supporto</h4>
+            <h3 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">Supporto</h3>
             <ul className="mt-4 space-y-2.5 text-[14px]">
               <li><Link className="text-anthracite-light hover:text-teal transition-colors" href="/guide">Guide e Supporto</Link></li>
               <li><a className="text-anthracite-light hover:text-teal transition-colors" href="#faq">FAQ</a></li>
@@ -753,7 +756,7 @@ function Footer() {
           </div>
 
           <div>
-            <h4 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">Legale</h4>
+            <h3 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">Legale</h3>
             <ul className="mt-4 space-y-2.5 text-[14px]">
               <li><a className="text-anthracite-light hover:text-teal transition-colors" href="/privacy">Privacy Policy</a></li>
               <li><a className="text-anthracite-light hover:text-teal transition-colors" href="/termini">Termini di Servizio</a></li>
@@ -779,9 +782,29 @@ function Footer() {
   )
 }
 
+const softwareApplicationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Stress Index',
+  applicationCategory: 'HealthApplication',
+  operatingSystem: 'Android, iOS',
+  description:
+    "Software HRV professionale per l'analisi del sistema nervoso autonomo",
+  offers: {
+    '@type': 'Offer',
+    price: '49.90',
+    priceCurrency: 'EUR',
+    priceValidUntil: '2027-01-01',
+  },
+}
+
 export default function Home() {
   return (
     <main className="bg-white text-anthracite">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd) }}
+      />
       <Navbar />
       <Hero />
       <TrustBar />

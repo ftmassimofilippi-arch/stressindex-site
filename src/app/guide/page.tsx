@@ -2,20 +2,26 @@ import type { Metadata } from 'next'
 import GuideClient from './GuideClient'
 
 export const metadata: Metadata = {
-  title: 'Guide e Supporto',
+  title: 'Guide e Supporto | Stress Index',
   description:
-    'Come usare Stress Index: connessione sensori, tipi di test HRV, leggere i risultati, troubleshooting.',
+    'Come usare Stress Index: connessione sensori, tipi di test HRV, leggere i risultati, troubleshooting e supporto.',
+  alternates: { canonical: 'https://stressindex.io/guide' },
   openGraph: {
     title: 'Guide e Supporto | Stress Index',
     description:
-      'Come usare Stress Index: connessione sensori, tipi di test HRV, leggere i risultati, troubleshooting.',
+      'Come usare Stress Index: connessione sensori, tipi di test HRV, leggere i risultati, troubleshooting e supporto.',
     url: 'https://stressindex.io/guide',
     siteName: 'Stress Index',
     locale: 'it_IT',
     type: 'website',
+    images: [{ url: 'https://stressindex.io/og-image.png', width: 1200, height: 630 }],
   },
-  alternates: {
-    canonical: 'https://stressindex.io/guide',
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Guide e Supporto | Stress Index',
+    description:
+      'Come usare Stress Index: connessione sensori, tipi di test HRV, leggere i risultati, troubleshooting e supporto.',
+    images: ['https://stressindex.io/og-image.png'],
   },
 }
 

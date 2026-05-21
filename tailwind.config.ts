@@ -37,9 +37,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['"DM Sans"', 'system-ui', '-apple-system', 'sans-serif'],
-        serif: ['"DM Serif Display"', 'Georgia', 'serif'],
-        mono: ['"DM Mono"', 'monospace'],
+        sans: ['var(--font-dm-sans)', '"DM Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        serif: ['var(--font-dm-serif)', '"DM Serif Display"', 'Georgia', 'serif'],
+        mono: ['var(--font-dm-mono)', '"DM Mono"', 'monospace'],
       },
       borderRadius: {
         'xl': '12px',

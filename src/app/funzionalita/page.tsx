@@ -4,24 +4,26 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Funzionalità | Stress Index — Software HRV Professionale',
+  title: 'Funzionalità | Stress Index — Analisi HRV Completa',
   description:
-    'Scopri tutte le funzionalità di Stress Index: 5 score proprietari, 25+ parametri HRV, 3 tipi di test, report PDF, CRM clienti, dashboard web.',
+    '5 score proprietari, 25+ parametri HRV, 3 tipi di test, sessioni lunghe, report PDF, CRM clienti, dashboard web. Scopri tutte le funzionalità.',
   alternates: { canonical: 'https://stressindex.io/funzionalita' },
   openGraph: {
-    title: 'Funzionalità | Stress Index — Software HRV Professionale',
+    title: 'Funzionalità | Stress Index — Analisi HRV Completa',
     description:
-      'Scopri tutte le funzionalità di Stress Index: 5 score proprietari, 25+ parametri HRV, 3 tipi di test, report PDF, CRM clienti, dashboard web.',
+      '5 score proprietari, 25+ parametri HRV, 3 tipi di test, sessioni lunghe, report PDF, CRM clienti, dashboard web. Scopri tutte le funzionalità.',
     url: 'https://stressindex.io/funzionalita',
     siteName: 'Stress Index',
     locale: 'it_IT',
     type: 'website',
+    images: [{ url: 'https://stressindex.io/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Funzionalità | Stress Index — Software HRV Professionale',
+    title: 'Funzionalità | Stress Index — Analisi HRV Completa',
     description:
-      'Scopri tutte le funzionalità di Stress Index: 5 score proprietari, 25+ parametri HRV, 3 tipi di test, report PDF, CRM clienti, dashboard web.',
+      '5 score proprietari, 25+ parametri HRV, 3 tipi di test, sessioni lunghe, report PDF, CRM clienti, dashboard web.',
+    images: ['https://stressindex.io/og-image.png'],
   },
 }
 
@@ -352,6 +354,13 @@ export default function FunzionalitaPage() {
                 </div>
               ))}
             </div>
+
+            <p className="mt-8 text-[14.5px] text-anthracite-lighter">
+              Lavori con atleti? Esiste un modulo dedicato con DFA Alpha1 real-time e zone metaboliche live.{' '}
+              <Link href="/sport" className="text-teal-dark font-medium hover:text-teal hover:underline">
+                Scopri il Modulo Sport →
+              </Link>
+            </p>
           </div>
         </section>
 
@@ -574,6 +583,11 @@ export default function FunzionalitaPage() {
               <Callout>
                 <span className="font-medium">💡 La nostra scelta.</span> Consigliamo Polar H10: ECG,
                 precisione al millisecondo. È quello che usiamo internamente per ogni test e validazione.
+                Per la configurazione passo-passo, vedi le{' '}
+                <Link href="/guide" className="text-teal-dark font-medium hover:underline">
+                  guide al sensore
+                </Link>
+                .
               </Callout>
             </div>
 
