@@ -110,18 +110,31 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderLeft: `3pt solid ${COLORS.teal}`,
     borderRadius: 4,
-    padding: 10,
+    padding: 12,
   },
-  scoreCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  scoreCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   scoreCardTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite },
   scoreCardTrend: { fontSize: 9, fontFamily: 'Helvetica-Bold' },
-  scoreCardMain: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 4 },
-  scoreCardMean: { fontSize: 22, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite },
-  scoreCardMeanUnit: { fontSize: 9, color: COLORS.anthraciteLighter, marginLeft: 4 },
-  scoreCardStats: { flexDirection: 'row', gap: 12 },
-  scoreCardStat: { flexDirection: 'column' },
-  scoreCardStatLabel: { fontSize: 7, color: COLORS.anthraciteLighter, textTransform: 'uppercase' },
-  scoreCardStatValue: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite },
+  // Valore grande centrato + caption "media · N mis." accanto, baseline-aligned.
+  // lineHeight 1 evita che la line-box del numero grande invada la riga stat.
+  scoreCardMain: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  scoreCardMean: { fontSize: 24, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite, lineHeight: 1 },
+  scoreCardMeanUnit: { fontSize: 9, color: COLORS.anthraciteLighter, marginLeft: 6 },
+  // MIN/MAX/PRIMA/ULTIMA su riga separata, 4 colonne equidistanti (25% ciascuna),
+  // separate dal valore grande da un bordo superiore.
+  scoreCardStats: {
+    flexDirection: 'row',
+    borderTop: `0.5pt solid ${COLORS.border}`,
+    paddingTop: 8,
+  },
+  scoreCardStat: { width: '25%', alignItems: 'center' },
+  scoreCardStatLabel: { fontSize: 7, color: COLORS.anthraciteLighter, textTransform: 'uppercase', marginBottom: 2, textAlign: 'center' },
+  scoreCardStatValue: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite, textAlign: 'center' },
 
   // Best / worst day
   daysRow: { flexDirection: 'row', gap: 12, marginTop: 10 },
