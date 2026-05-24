@@ -191,9 +191,16 @@ function fmtScore(v?: number | null): string {
   return Math.round(v).toString()
 }
 
+// Le date delle misurazioni sono ora locale salvata come UTC (vedi lib/format.ts):
+// leggiamo i componenti UTC verbatim. Le date di periodo (YYYY-MM-DD) restano
+// invariate perché prive di orario.
 function fmtDateShort(d?: string | null): string {
   if (!d) return '—'
-  try { return format(parseISO(d), 'd MMM yyyy', { locale: it }) } catch { return d }
+  try {
+    const t = new Date(d)
+    const wc = new Date(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate(), t.getUTCHours(), t.getUTCMinutes(), t.getUTCSeconds())
+    return format(wc, 'd MMM yyyy', { locale: it })
+  } catch { return d }
 }
 
 function fmtAge(birth?: string | null): string {

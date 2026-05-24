@@ -7,7 +7,7 @@ import { AdvancedTrendChart, TREND_METRICS } from '@/components/dashboard/Advanc
 import { AlertBadge } from '@/components/dashboard/AlertBadge'
 import type { Alert, Client, MeasurementAnalytics } from '@/lib/types'
 import { ALERT_TYPE_LABEL } from '@/lib/types'
-import { formatDateTime } from '@/lib/format'
+import { formatDateTime, formatMeasuredAt } from '@/lib/format'
 
 export function OverviewTab({ client, measurements, alerts, professionistaId }: { client: Client; measurements: MeasurementAnalytics[]; alerts: Alert[]; professionistaId?: string }) {
   const latest = measurements[0]
@@ -31,7 +31,7 @@ export function OverviewTab({ client, measurements, alerts, professionistaId }: 
           <ScoreGauge label="Equilibrio" value={latest?.score_equilibrio} />
           <ScoreGauge label="Energia" value={latest?.score_energia} />
         </div>
-        {latest && <p className="mt-3 text-xs text-anthracite-lighter">Ultimo aggiornamento: {formatDateTime(latest.measured_at)}</p>}
+        {latest && <p className="mt-3 text-xs text-anthracite-lighter">Ultimo aggiornamento: {formatMeasuredAt(latest.measured_at)}</p>}
       </section>
 
       <section className="card p-6">
@@ -86,7 +86,7 @@ export function OverviewTab({ client, measurements, alerts, professionistaId }: 
               {measurements.slice(0, 3).map((m) => (
                 <li key={m.id} className="px-5 py-3 flex items-center gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-anthracite">{formatDateTime(m.measured_at)}</div>
+                    <div className="text-sm font-medium text-anthracite">{formatMeasuredAt(m.measured_at)}</div>
                     <div className="text-xs text-anthracite-lighter mt-0.5">
                       Stress {m.score_stress?.toFixed(0) ?? '—'} · Recupero {m.score_recupero?.toFixed(0) ?? '—'}
                     </div>

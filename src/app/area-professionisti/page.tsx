@@ -18,7 +18,7 @@ import {
   todaysMeasurements,
 } from '@/lib/dashboard-data'
 import { ALERT_TYPE_LABEL } from '@/lib/types'
-import { formatGreeting, formatTime, todayLongIt, daysSince } from '@/lib/format'
+import { formatGreeting, formatMeasuredTime, todayLongIt, daysSince } from '@/lib/format'
 
 export const metadata = { title: 'Oggi' }
 export const dynamic = 'force-dynamic'
@@ -121,7 +121,7 @@ export default async function DashboardHome() {
                           <td className="px-6 py-3 font-medium text-anthracite">
                             {c ? `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() : '—'}
                           </td>
-                          <td className="px-3 py-3 text-anthracite-lighter">{formatTime(m.measured_at)}</td>
+                          <td className="px-3 py-3 text-anthracite-lighter">{formatMeasuredTime(m.measured_at)}</td>
                           <td className="px-3 py-3 w-40"><ScoreBar value={m.score_stress} inverted /></td>
                           <td className="px-3 py-3 w-40"><ScoreBar value={m.score_recupero} /></td>
                           <td className="px-3 py-3 text-right">

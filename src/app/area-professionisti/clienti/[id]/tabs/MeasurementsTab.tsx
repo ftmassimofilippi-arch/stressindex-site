@@ -7,7 +7,7 @@ import { DataTable, type Column } from '@/components/dashboard/DataTable'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
 import { DownloadMeasurementPdfButton } from '@/components/dashboard/DownloadMeasurementPdfButton'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
-import { formatDateTime, formatDate } from '@/lib/format'
+import { formatMeasuredAt, formatDate } from '@/lib/format'
 import type { Client, MeasurementAnalytics } from '@/lib/types'
 
 const DURATION_FILTERS = [
@@ -39,7 +39,7 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
   function exportCsv() {
     const headers = ['Data','Durata (s)','Stress','Recupero','Equilibrio','Energia','Mod. Infiamm.','BPM','SDNN','RMSSD','Artifact %']
     const rows = filtered.map((m) => [
-      formatDateTime(m.measured_at),
+      formatMeasuredAt(m.measured_at),
       m.duration_seconds ?? '',
       m.score_stress ?? '',
       m.score_recupero ?? '',
@@ -62,7 +62,7 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
   }
 
   const columns: Column<MeasurementAnalytics>[] = [
-    { key: 'measured_at', header: 'Data', accessor: (m) => m.measured_at, sortable: true, render: (m) => formatDateTime(m.measured_at) },
+    { key: 'measured_at', header: 'Data', accessor: (m) => m.measured_at, sortable: true, render: (m) => formatMeasuredAt(m.measured_at) },
     { key: 'duration', header: 'Durata', accessor: (m) => m.duration_seconds ?? 0, sortable: true, render: (m) => m.duration_seconds ? `${Math.round(m.duration_seconds / 60)} min` : '—' },
     { key: 'stress', header: 'Stress', accessor: (m) => m.score_stress ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_stress} inverted /> },
     { key: 'recupero', header: 'Recupero', accessor: (m) => m.score_recupero ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_recupero} /> },

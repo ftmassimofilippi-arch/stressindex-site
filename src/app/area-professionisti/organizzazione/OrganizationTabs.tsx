@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Activity, Mail, Pencil, Save, Trash2, UserPlus, Users } from 'lucide-react'
-import { formatRelative, formatDateTime, initials } from '@/lib/format'
+import { formatRelative, formatMeasuredAt, initials } from '@/lib/format'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { ConfirmDialog } from '@/components/dashboard/ConfirmDialog'
@@ -364,7 +364,7 @@ function PanoramicaTab({ overview }: { overview: OrgOverview | null }) {
                   <tr key={r.session_id} className="border-t border-surface-border">
                     <td className="px-6 py-3 text-anthracite">{r.professional_name}</td>
                     <td className="px-3 py-3 font-medium text-anthracite">{r.client_name}</td>
-                    <td className="px-3 py-3 text-anthracite-lighter">{formatDateTime(r.measured_at)}</td>
+                    <td className="px-3 py-3 text-anthracite-lighter">{formatMeasuredAt(r.measured_at)}</td>
                     <td className="px-3 py-3 w-40"><ScoreBar value={r.score_stress} inverted /></td>
                     <td className="px-3 py-3 text-right">
                       <Link

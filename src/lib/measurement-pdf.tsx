@@ -182,10 +182,14 @@ function fmtPercent(v?: number | null): string {
   return v.toFixed(1)
 }
 
+// measured_at è ora locale salvata come UTC dall'app (vedi lib/format.ts):
+// la mostriamo verbatim leggendo i componenti UTC, senza riconvertire al fuso.
 function fmtDate(d?: string | null): string {
   if (!d) return '—'
   try {
-    return format(parseISO(d), "dd MMMM yyyy 'alle' HH:mm", { locale: it })
+    const t = new Date(d)
+    const wc = new Date(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate(), t.getUTCHours(), t.getUTCMinutes(), t.getUTCSeconds())
+    return format(wc, "dd MMMM yyyy 'alle' HH:mm", { locale: it })
   } catch {
     return d
   }

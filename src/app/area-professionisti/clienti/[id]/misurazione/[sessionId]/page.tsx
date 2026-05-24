@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { DownloadMeasurementPdfButton } from '@/components/dashboard/DownloadMeasurementPdfButton'
 import { ScoreGauge } from '@/components/dashboard/ScoreGauge'
 import { getClient, getMeasurementBySessionId, getProfessionalProfile, listAlerts } from '@/lib/dashboard-data'
-import { fullName, formatDateTime, num } from '@/lib/format'
+import { fullName, formatMeasuredAt, num } from '@/lib/format'
 import { PoincareScatter, Rhythmogram, PsdPlaceholder } from './HrvCharts'
 import { HrvParamsTable } from './HrvParamsTable'
 
@@ -45,7 +45,7 @@ export default async function SessionDetailPage({
       <header className="card p-6 mb-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="font-serif text-2xl text-anthracite">{formatDateTime(measurement.measured_at)}</h1>
+            <h1 className="font-serif text-2xl text-anthracite">{formatMeasuredAt(measurement.measured_at)}</h1>
             <p className="text-sm text-anthracite-lighter mt-1">
               {fullName(client)} · {duration} · Sensore: {sensorLabel}
               {measurement.artifact_percentage != null ? ` · Artifact: ${measurement.artifact_percentage.toFixed(1)}%` : ''}

@@ -17,6 +17,40 @@ export function formatTime(date: string | Date): string {
   return format(d, 'HH:mm', { locale: it })
 }
 
+// ── Timestamp delle misurazioni ──────────────────────────────────────────────
+// L'app Flutter salva `started_at` (→ `measured_at`) da `DateTime.now()` SENZA
+// `.toUtc()`: la stringa ISO non ha offset, quindi Postgres (timestamptz) la
+// memorizza come se i componenti wall-clock fossero UTC. In pratica il valore
+// salvato è l'ora LOCALE a cui è stata fatta la misurazione, etichettata `+00`.
+// Riconvertirla al fuso del browser la sposterebbe in avanti (8:07 → 10:07 in
+// estate): vogliamo invece mostrare verbatim l'orario a cui è avvenuta la
+// misurazione. `wallClock` ricostruisce una Date i cui componenti LOCALI
+// coincidono con i componenti UTC dell'istante salvato, così la formattazione
+// è identica sia lato server (UTC) sia lato browser (Europe/Rome).
+function wallClock(date: string | Date): Date {
+  const d = typeof date === 'string' ? new Date(date) : date
+  return new Date(
+    d.getUTCFullYear(),
+    d.getUTCMonth(),
+    d.getUTCDate(),
+    d.getUTCHours(),
+    d.getUTCMinutes(),
+    d.getUTCSeconds(),
+  )
+}
+
+export function formatMeasuredAt(date: string | Date): string {
+  return format(wallClock(date), "dd MMM yyyy 'alle' HH:mm", { locale: it })
+}
+
+export function formatMeasuredDate(date: string | Date, fmt = 'dd MMM yyyy'): string {
+  return format(wallClock(date), fmt, { locale: it })
+}
+
+export function formatMeasuredTime(date: string | Date): string {
+  return format(wallClock(date), 'HH:mm', { locale: it })
+}
+
 export function formatRelative(date: string | Date): string {
   const d = typeof date === 'string' ? parseISO(date) : date
   return formatDistanceToNow(d, { locale: it, addSuffix: true })

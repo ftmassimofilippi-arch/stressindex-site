@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
 import { AdvancedTrendChart, TREND_METRICS } from '@/components/dashboard/AdvancedTrendChart'
-import { formatDateTime } from '@/lib/format'
+import { formatMeasuredAt } from '@/lib/format'
 import type { MeasurementAnalytics } from '@/lib/types'
 
 function stats(values: number[]) {
@@ -120,7 +120,7 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
           <ul className="divide-y divide-surface-border">
             {topByStress.length === 0 ? <li className="p-5 text-sm text-anthracite-lighter">—</li> : topByStress.map((m) => (
               <li key={m.id} className="px-5 py-3 flex items-center justify-between text-sm">
-                <span className="text-anthracite-lighter">{formatDateTime(m.measured_at)}</span>
+                <span className="text-anthracite-lighter">{formatMeasuredAt(m.measured_at)}</span>
                 <span className="font-medium text-emerald-600">{m.score_stress?.toFixed(0)}</span>
               </li>
             ))}
@@ -134,7 +134,7 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
           <ul className="divide-y divide-surface-border">
             {bottomByStress.length === 0 ? <li className="p-5 text-sm text-anthracite-lighter">—</li> : bottomByStress.map((m) => (
               <li key={m.id} className="px-5 py-3 flex items-center justify-between text-sm">
-                <span className="text-anthracite-lighter">{formatDateTime(m.measured_at)}</span>
+                <span className="text-anthracite-lighter">{formatMeasuredAt(m.measured_at)}</span>
                 <span className="font-medium text-red-500">{m.score_stress?.toFixed(0)}</span>
               </li>
             ))}
