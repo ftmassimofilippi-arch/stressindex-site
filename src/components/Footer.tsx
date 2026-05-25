@@ -28,6 +28,9 @@ export function Footer() {
             <Link href="/guide" className="hover:text-teal transition-colors">
               Guide
             </Link>
+            <Link href="/supporto" className="hover:text-teal transition-colors">
+              Supporto
+            </Link>
             <Link href="/privacy" className="hover:text-teal transition-colors">
               Privacy
             </Link>
