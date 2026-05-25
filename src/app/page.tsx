@@ -792,12 +792,6 @@ const softwareApplicationJsonLd = {
   operatingSystem: 'Android, iOS',
   description:
     "Software HRV professionale per l'analisi del sistema nervoso autonomo",
-  offers: {
-    '@type': 'Offer',
-    price: '49.90',
-    priceCurrency: 'EUR',
-    priceValidUntil: '2027-01-01',
-  },
 }
 
 const faqJsonLd = {
