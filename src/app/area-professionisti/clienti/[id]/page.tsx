@@ -3,13 +3,12 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import {
   getClient,
   getClientSettings,
-  getOrganizationContext,
-  getOrgMembersStats,
   getProfessionalProfile,
   listAlerts,
   listMeasurementsForClient,
   listMessagesForClient,
   listNotesForClient,
+  resolveViewingProfessional,
 } from '@/lib/dashboard-data'
 import { ClientProfile } from './ClientProfile'
 
@@ -23,16 +22,9 @@ export default async function ClientPage({
   params: { id: string }
   searchParams?: { professionista?: string }
 }) {
-  let viewingMember: { user_id: string; full_name: string } | null = null
-  if (searchParams?.professionista) {
-    const ctx = await getOrganizationContext()
-    if (ctx.role === 'owner' || ctx.role === 'admin') {
-      const stats = await getOrgMembersStats()
-      const m = stats.find((s) => s.user_id === searchParams.professionista)
-      if (m) viewingMember = { user_id: m.user_id, full_name: m.full_name }
-    }
-  }
-  const readOnly = !!viewingMember
+  const { viewing, currentUserId } = await resolveViewingProfessional(searchParams?.professionista)
+  const readOnly = !!viewing
+  const superadminAccess = viewing?.access === 'superadmin'
 
   const [client, professional, measurements, alerts, notes, settings, messages, allAlerts] = await Promise.all([
     getClient(params.id),
@@ -58,8 +50,10 @@ export default async function ClientPage({
         messages={messages}
         professional={professional}
         readOnly={readOnly}
-        viewingMemberName={viewingMember?.full_name}
-        professionistaId={viewingMember?.user_id}
+        viewingMemberName={viewing?.full_name}
+        professionistaId={viewing?.user_id}
+        superadminAccess={superadminAccess}
+        adminId={currentUserId ?? undefined}
       />
     </DashboardLayout>
   )

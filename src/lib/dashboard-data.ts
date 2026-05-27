@@ -692,6 +692,140 @@ export async function getOrgOverview(): Promise<OrgOverview | null> {
   }
 }
 
+// ============================================================================
+// SUPERADMIN — accesso read-only ai dati di tutti i professionisti
+// ============================================================================
+
+// Flag del profilo corrente. Error-safe: se la colonna is_superadmin non esiste
+// ancora (migration 010 non applicata) il flag resta false e la feature è inattiva,
+// senza rompere le pagine che chiamano questa funzione (es. DashboardLayout).
+export async function getCurrentProfileFlags(): Promise<{ userId: string | null; isSuperadmin: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { userId: null, isSuperadmin: false }
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('is_superadmin')
+    .eq('id', user.id)
+    .maybeSingle()
+  if (error) return { userId: user.id, isSuperadmin: false }
+  return { userId: user.id, isSuperadmin: !!(data as { is_superadmin?: boolean } | null)?.is_superadmin }
+}
+
+async function getProfessionalDisplayName(userId: string): Promise<string> {
+  const supabase = await createClient()
+  const [{ data: pp }, { data: p }] = await Promise.all([
+    supabase.from('professional_profiles').select('nome, cognome').eq('id', userId).maybeSingle(),
+    supabase.from('profiles').select('nome, cognome, email').eq('id', userId).maybeSingle(),
+  ])
+  const ppr = pp as { nome: string | null; cognome: string | null } | null
+  const pr = p as { nome: string | null; cognome: string | null; email: string | null } | null
+  const nome = ppr?.nome ?? pr?.nome ?? ''
+  const cognome = ppr?.cognome ?? pr?.cognome ?? ''
+  const full = `${nome} ${cognome}`.trim()
+  return full || pr?.email || 'Professionista'
+}
+
+export type ViewingAccess = 'org' | 'superadmin'
+export interface ViewingProfessional {
+  user_id: string
+  full_name: string
+  access: ViewingAccess
+}
+
+// Risolve, in modo autorizzato, il professionista di cui si stanno visualizzando
+// i dati tramite ?professionista=UUID. Supporta due percorsi:
+//  - superadmin → può vedere QUALSIASI professionista (sola lettura)
+//  - org owner/admin → solo i membri attivi del proprio team (comportamento esistente)
+// Ritorna null se non autorizzato o se professionistaId è assente.
+export async function resolveViewingProfessional(professionistaId?: string | null): Promise<{
+  viewing: ViewingProfessional | null
+  currentUserId: string | null
+  isSuperadmin: boolean
+}> {
+  const { userId, isSuperadmin } = await getCurrentProfileFlags()
+  if (!professionistaId || !userId) return { viewing: null, currentUserId: userId, isSuperadmin }
+
+  if (isSuperadmin) {
+    const full_name = await getProfessionalDisplayName(professionistaId)
+    return { viewing: { user_id: professionistaId, full_name, access: 'superadmin' }, currentUserId: userId, isSuperadmin }
+  }
+
+  const ctx = await getOrganizationContext()
+  if (ctx.role === 'owner' || ctx.role === 'admin') {
+    const stats = await getOrgMembersStats()
+    const m = stats.find((s) => s.user_id === professionistaId)
+    if (m) return { viewing: { user_id: m.user_id, full_name: m.full_name, access: 'org' }, currentUserId: userId, isSuperadmin }
+  }
+  return { viewing: null, currentUserId: userId, isSuperadmin }
+}
+
+export interface ProfessionalStats {
+  user_id: string
+  full_name: string
+  email: string | null
+  clients_count: number
+  measurements_count: number
+  last_activity: string | null
+}
+
+// Elenco di tutti i professionisti con statistiche aggregate. Solo superadmin.
+// (Dipende dalle policy RLS della migration 010 per leggere dati altrui.)
+export async function listAllProfessionalsStats(): Promise<ProfessionalStats[]> {
+  const { isSuperadmin } = await getCurrentProfileFlags()
+  if (!isSuperadmin) return []
+  const supabase = await createClient()
+
+  const { data: profilesRows } = await supabase
+    .from('profiles')
+    .select('id, nome, cognome, email')
+    .eq('role', 'professional')
+  const profs = (profilesRows ?? []) as Array<{ id: string; nome: string | null; cognome: string | null; email: string | null }>
+  if (profs.length === 0) return []
+  const ids = profs.map((p) => p.id)
+
+  const [{ data: ppRows }, { data: clientsRows }, { data: maRows }] = await Promise.all([
+    supabase.from('professional_profiles').select('id, nome, cognome').in('id', ids),
+    supabase.from('clients').select('professionista_id').in('professionista_id', ids),
+    supabase.from('measurement_analytics').select('user_id, measured_at').in('user_id', ids),
+  ])
+
+  const ppMap = new Map<string, { nome: string | null; cognome: string | null }>()
+  for (const p of (ppRows ?? []) as Array<{ id: string; nome: string | null; cognome: string | null }>) {
+    ppMap.set(p.id, { nome: p.nome, cognome: p.cognome })
+  }
+  const clientsByUser = new Map<string, number>()
+  for (const c of (clientsRows ?? []) as Array<{ professionista_id: string }>) {
+    clientsByUser.set(c.professionista_id, (clientsByUser.get(c.professionista_id) ?? 0) + 1)
+  }
+  const measurementsByUser = new Map<string, number>()
+  const lastByUser = new Map<string, string>()
+  for (const m of (maRows ?? []) as Array<{ user_id: string; measured_at: string }>) {
+    measurementsByUser.set(m.user_id, (measurementsByUser.get(m.user_id) ?? 0) + 1)
+    const prev = lastByUser.get(m.user_id)
+    if (!prev || new Date(m.measured_at).getTime() > new Date(prev).getTime()) {
+      lastByUser.set(m.user_id, m.measured_at)
+    }
+  }
+
+  return profs
+    .map((p) => {
+      const pp = ppMap.get(p.id)
+      const nome = pp?.nome ?? p.nome ?? ''
+      const cognome = pp?.cognome ?? p.cognome ?? ''
+      const full = `${nome} ${cognome}`.trim() || p.email || 'Professionista'
+      return {
+        user_id: p.id,
+        full_name: full,
+        email: p.email ?? null,
+        clients_count: clientsByUser.get(p.id) ?? 0,
+        measurements_count: measurementsByUser.get(p.id) ?? 0,
+        last_activity: lastByUser.get(p.id) ?? null,
+      }
+    })
+    .sort((a, b) => a.full_name.localeCompare(b.full_name))
+}
+
 // Carica TUTTE le misurazioni dello studio (per pagina analytics)
 export async function listAllMeasurements(opts?: { from?: string; to?: string }): Promise<MeasurementAnalytics[]> {
   const supabase = await createClient()

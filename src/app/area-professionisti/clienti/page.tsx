@@ -2,13 +2,13 @@ import Link from 'next/link'
 import { ArrowLeft, Plus, Users } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { EmptyState } from '@/components/dashboard/EmptyState'
+import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
 import { ClientsTable } from './ClientsTable'
 import {
-  getOrganizationContext,
-  getOrgMembersStats,
   getProfessionalProfile,
   listAlerts,
   listClientsEnriched,
+  resolveViewingProfessional,
 } from '@/lib/dashboard-data'
 
 export const metadata = { title: 'Clienti' }
@@ -19,20 +19,9 @@ export default async function ClientiPage({
 }: {
   searchParams?: { professionista?: string }
 }) {
-  const professionistaId = searchParams?.professionista
-  let viewingMember: { user_id: string; full_name: string } | null = null
-
-  if (professionistaId) {
-    const ctx = await getOrganizationContext()
-    const isAuthorizedViewer = ctx.role === 'owner' || ctx.role === 'admin'
-    if (isAuthorizedViewer) {
-      const stats = await getOrgMembersStats()
-      const member = stats.find((s) => s.user_id === professionistaId)
-      if (member) viewingMember = { user_id: member.user_id, full_name: member.full_name }
-    }
-  }
-
-  const effectiveId = viewingMember?.user_id
+  const { viewing, currentUserId } = await resolveViewingProfessional(searchParams?.professionista)
+  const effectiveId = viewing?.user_id
+  const isSuperadminView = viewing?.access === 'superadmin'
 
   const [professional, clients, alerts] = await Promise.all([
     getProfessionalProfile(),
@@ -44,16 +33,20 @@ export default async function ClientiPage({
 
   return (
     <DashboardLayout professional={professional} alertCount={newAlertCount}>
-      {viewingMember && (
+      {viewing && currentUserId && isSuperadminView && (
+        <SuperadminAccessLog adminId={currentUserId} professionistaId={viewing.user_id} professionalName={viewing.full_name} />
+      )}
+      {viewing && (
         <div className="mb-6 flex items-center gap-3 flex-wrap px-5 py-3.5 rounded-2xl bg-amber-50 border border-amber-200">
           <div className="text-sm text-amber-800">
-            Stai visualizzando i dati di <strong>{viewingMember.full_name}</strong> in sola lettura
+            Stai visualizzando i dati di <strong>{viewing.full_name}</strong>
+            {isSuperadminView ? ' — Modalità supporto' : ' in sola lettura'}
           </div>
           <Link
-            href="/area-professionisti/organizzazione"
+            href={isSuperadminView ? '/area-professionisti/professionisti' : '/area-professionisti/organizzazione'}
             className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-amber-900 hover:underline"
           >
-            <ArrowLeft size={14} /> Torna al tuo team
+            <ArrowLeft size={14} /> {isSuperadminView ? 'Torna ai professionisti' : 'Torna al tuo team'}
           </Link>
         </div>
       )}
@@ -61,15 +54,15 @@ export default async function ClientiPage({
       <header className="mb-6 flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
-            {viewingMember ? (
-              <>Clienti di <em className="italic text-teal-dark">{viewingMember.full_name}</em></>
+            {viewing ? (
+              <>Clienti di <em className="italic text-teal-dark">{viewing.full_name}</em></>
             ) : (
               <>I miei <em className="italic text-teal-dark">clienti</em></>
             )}
           </h1>
           <p className="mt-1.5 text-sm text-anthracite-lighter">{clients.length} clienti</p>
         </div>
-        {!viewingMember && (
+        {!viewing && (
           <button type="button" className="btn-primary text-sm inline-flex items-center gap-2" disabled title="Aggiungi clienti dall'app mobile">
             <Plus size={16} /> Nuovo cliente
           </button>
@@ -80,12 +73,12 @@ export default async function ClientiPage({
         <div className="card">
           <EmptyState
             icon={Users}
-            title={viewingMember ? 'Nessun cliente per questo professionista' : 'Non hai ancora clienti registrati'}
+            title={viewing ? 'Nessun cliente per questo professionista' : 'Non hai ancora clienti registrati'}
             description="I clienti vengono sincronizzati dall'app mobile."
           />
         </div>
       ) : (
-        <ClientsTable clients={clients} professionistaId={viewingMember?.user_id} />
+        <ClientsTable clients={clients} professionistaId={viewing?.user_id} />
       )}
     </DashboardLayout>
   )

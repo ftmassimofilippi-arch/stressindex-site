@@ -14,6 +14,7 @@ import { ReportTab } from './tabs/ReportTab'
 import { ClientSettingsTab } from './tabs/ClientSettingsTab'
 import { PdfExportModal } from './PdfExportModal'
 import { MessageComposer } from './MessageComposer'
+import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
 import { formatDate } from '@/lib/format'
 
 const ALL_TABS = [
@@ -41,9 +42,11 @@ type Props = {
   readOnly?: boolean
   viewingMemberName?: string
   professionistaId?: string
+  superadminAccess?: boolean
+  adminId?: string
 }
 
-export function ClientProfile({ client, measurements, alerts, notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId }: Props) {
+export function ClientProfile({ client, measurements, alerts, notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId, superadminAccess, adminId }: Props) {
   const [tab, setTab] = useState<TabId>('panoramica')
   const TABS = readOnly ? READONLY_TABS : ALL_TABS
   const backHref = professionistaId
@@ -58,16 +61,20 @@ export function ClientProfile({ client, measurements, alerts, notes, settings, m
 
   return (
     <>
+      {superadminAccess && adminId && professionistaId && (
+        <SuperadminAccessLog adminId={adminId} professionistaId={professionistaId} professionalName={viewingMemberName} />
+      )}
       {readOnly && viewingMemberName && (
         <div className="mb-4 flex items-center gap-3 flex-wrap px-5 py-3 rounded-2xl bg-amber-50 border border-amber-200">
           <div className="text-sm text-amber-800">
-            Stai visualizzando i dati di <strong>{viewingMemberName}</strong> in sola lettura
+            Stai visualizzando i dati di <strong>{viewingMemberName}</strong>
+            {superadminAccess ? ' — Modalità supporto' : ' in sola lettura'}
           </div>
           <Link
-            href="/area-professionisti/organizzazione"
+            href={superadminAccess ? '/area-professionisti/professionisti' : '/area-professionisti/organizzazione'}
             className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-amber-900 hover:underline"
           >
-            <ArrowLeft size={14} /> Torna al tuo team
+            <ArrowLeft size={14} /> {superadminAccess ? 'Torna ai professionisti' : 'Torna al tuo team'}
           </Link>
         </div>
       )}

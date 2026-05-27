@@ -1,5 +1,6 @@
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
+import { getCurrentProfileFlags } from '@/lib/dashboard-data'
 
 type Props = {
   children: React.ReactNode
@@ -12,10 +13,11 @@ type Props = {
   alertCount?: number
 }
 
-export function DashboardLayout({ children, professional, alertCount }: Props) {
+export async function DashboardLayout({ children, professional, alertCount }: Props) {
+  const { isSuperadmin } = await getCurrentProfileFlags()
   return (
     <div className="min-h-screen bg-surface">
-      <Sidebar professional={professional} />
+      <Sidebar professional={professional} isSuperadmin={isSuperadmin} />
       <div className="lg:pl-[260px]">
         <TopBar alertCount={alertCount} />
         <main className="px-4 sm:px-8 py-6 sm:py-10 max-w-[1400px] mx-auto">

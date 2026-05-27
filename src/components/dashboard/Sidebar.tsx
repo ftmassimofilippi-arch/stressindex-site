@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, BarChart3, Settings, LogOut, Menu, X, Building2 } from 'lucide-react'
+import { Home, Users, BarChart3, Settings, LogOut, Menu, X, Building2, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
@@ -15,6 +15,7 @@ type SidebarProps = {
     professione?: string | null
     logo_url?: string | null
   } | null
+  isSuperadmin?: boolean
 }
 
 const NAV_ITEMS = [
@@ -25,10 +26,17 @@ const NAV_ITEMS = [
   { href: '/area-professionisti/organizzazione', label: 'Organizzazione', icon: Building2 },
 ]
 
-export function Sidebar({ professional }: SidebarProps) {
+const SUPERADMIN_ITEM = {
+  href: '/area-professionisti/professionisti',
+  label: 'Tutti i professionisti',
+  icon: ShieldCheck,
+}
+
+export function Sidebar({ professional, isSuperadmin }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const navItems = isSuperadmin ? [...NAV_ITEMS, SUPERADMIN_ITEM] : NAV_ITEMS
 
   async function handleLogout() {
     const supabase = createClient()
@@ -79,9 +87,9 @@ export function Sidebar({ professional }: SidebarProps) {
 
         <nav className="flex-1 p-4">
           <ul className="space-y-1">
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const Icon = item.icon
-              const active = isActive(item.href, item.exact)
+              const active = isActive(item.href, (item as { exact?: boolean }).exact)
               return (
                 <li key={item.href}>
                   <Link
