@@ -1,5 +1,5 @@
 /**
- * Knowledge base testuale derivata dalle 10 sezioni di app/guide/GuideClient.tsx.
+ * Knowledge base testuale derivata dalle 12 sezioni di app/guide/GuideClient.tsx.
  * Iniettata nel system prompt dell'assistente /api/guide-chat.
  * Mantenere allineata al contenuto della pagina /guide.
  */
@@ -321,4 +321,138 @@ SEZIONE 10 — CONTATTI E SUPPORTO (#supporto)
 - Canale Telegram: t.me/stressindex (domande, aggiornamenti,
   community professionisti)
 - Sito: stressindex.io
+
+================================================================
+SEZIONE 11 — GUIDA ALLA MISURAZIONE MATTUTINA (#misurazione-mattutina)
+================================================================
+A cosa serve: la misurazione HRV al mattino è il modo più
+semplice e affidabile per capire come stai. Bastano 5 minuti, da
+seduto o sdraiato, e ottieni una fotografia oggettiva del tuo
+sistema nervoso autonomo.
+
+Perché farla ogni giorno: un singolo dato dice poco. È il trend
+nel tempo a essere prezioso. Più sei costante, più i dati
+diventano utili.
+
+Quando farla:
+- Entro 30 minuti dal risveglio.
+- Prima di caffè, cibo, allenamento.
+- Idealmente dopo essere andato in bagno.
+- L'orario poco importa, l'importante è la costanza.
+
+Cosa evitare prima del test: caffè, tè, sigarette, allenamento
+intenso, doccia molto calda o fredda, discussioni stressanti.
+
+Come si fa passo per passo:
+1. Indossa la fascia: inumidisci gli elettrodi e indossala sotto
+   i pettorali.
+2. Mettiti seduto o sdraiato: scegli una posizione e mantienila
+   uguale ogni giorno.
+3. Apri l'app: vai su Nuova Misurazione, scegli Misurazione
+   Standard, durata 5 minuti.
+4. Aspetta la connessione: entro 10-20 secondi vedrai il segnale
+   stabilizzarsi.
+5. Rilassati e respira: siediti immobile, respira normalmente,
+   non parlare, non guardare il telefono.
+6. Aspetta i 5 minuti: l'app ti avvisa con un suono.
+
+Il segreto è la ripetibilità: stessa ora, stessa posizione,
+stesso ordine di azioni.
+
+I risultati (i 5 score):
+- Indice di Stress: quanto il corpo è sotto pressione.
+- Recupero: quanto il parasimpatico è attivo.
+- Equilibrio: bilanciamento simpatico-parasimpatico.
+- Energia: risorse autonomiche disponibili.
+- Modulazione Infiammatoria: capacità di controllare
+  l'infiammazione.
+
+Come interpretare:
+- 60-85: zona ottimale.
+- 40-60: valori normali, attenzione alle abitudini.
+- Sotto 40: possibile stress, sonno scarso, malattia.
+- Sotto 25: possibile sovrallenamento o esaurimento.
+Un singolo valore basso non è motivo di allarme. Quello che
+conta è il trend.
+
+Come trasformarla in abitudine:
+- Tieni la fascia accanto al letto.
+- Imposta un alert al mattino.
+- Crea una routine: dopo il bagno, prima del caffè.
+- Sfrutta i 5 minuti in modalità non disturbare.
+
+FAQ misurazione mattutina:
+- "Posso farla in piedi?" No, seduta o sdraiata.
+- "Posso farla dopo un sorso d'acqua?" Sì, l'acqua non
+  influenza. Caffè sì.
+- "Se salto un giorno?" Non recuperare, riprendi il giorno dopo.
+- "Posso farla la sera?" Sì ma non al posto di quella mattutina.
+- "Quanto tempo per un trend utile?" 2 settimane per iniziare,
+  4-6 per un trend solido.
+- "Anche nei giorni di riposo?" Soprattutto quelli.
+- "E se sono malato?" Falla lo stesso, è prezioso vedere come
+  cambia durante la malattia.
+
+================================================================
+SEZIONE 12 — GUIDA MODULO SPORT (#guida-sport)
+================================================================
+A cosa serve: il Modulo Sport analizza la tua attività
+attraverso la variabilità della frequenza cardiaca. Ti permette
+di sapere se stai allenando il sistema giusto, se stai
+esagerando o se sei pronto per spingere.
+
+Cosa ti serve: fascia Polar H10, smartphone con Stress Index,
+fascia ben aderente e leggermente inumidita.
+
+I 3 tipi di test:
+
+1. Sessione live durante l'allenamento:
+- Indossa la fascia, avvia la sessione Sport.
+- L'app registra in tempo reale e mostra la zona metabolica.
+- Puoi tenere il telefono in tasca, funziona con schermo spento.
+- Al termine: questionario soggettivo e riepilogo.
+
+2. Sessione offline con memoria Polar H10:
+- Avvia la registrazione offline dall'app.
+- Allenati senza telefono.
+- Al rientro il download parte in automatico.
+- Una sessione alla volta.
+
+3. Test progressivo per le soglie metaboliche:
+- Aumenti l'intensità gradualmente.
+- Il sistema trova le soglie aerobica e anaerobica.
+- Senza andare in laboratorio.
+
+Come si usa passo per passo:
+- Prima: inumidisci fascia, indossala, apri Sport, scegli tipo
+  di attività.
+- Durante: zona metabolica in tempo reale, puoi aggiungere tag
+  (sprint, pausa, ripresa), schermo bloccabile.
+- Dopo: termina, compila questionario RPE 1-10, energia, dolori,
+  umore.
+
+Le 4 zone metaboliche:
+- Verde Aerobica: molto sostenibile, fondo lungo.
+- Gialla Transizione: media, tra soglia aerobica e anaerobica.
+- Arancione Anaerobica: alta, sostenibile solo per tempi
+  limitati.
+- Rossa Massimale: estrema, pochi minuti.
+Vedere in tempo reale in quale zona stai lavorando ti permette
+di dosare l'allenamento.
+
+TRIMP: numero che riassume quanto è stato pesante l'allenamento
+(durata × intensità).
+
+ACWR e TSB: rapporto carico recente vs cronico, alert automatico
+se rischio infortuni.
+
+FAQ modulo sport:
+- "Devo guardare il telefono?" No, in tasca, l'app lavora in
+  background.
+- "Posso usare l'orologio?" No, serve la fascia Polar H10 per
+  gli intervalli RR.
+- "Durata minima?" 10 minuti per analisi affidabile.
+- "Sessioni molto lunghe?" Sì, fino a 2 ore.
+- "Se la fascia si scollega?" L'app avvisa, se torna entro pochi
+  secondi continua.
 `.trim()

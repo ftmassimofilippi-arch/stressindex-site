@@ -400,6 +400,62 @@ function AccordionItem({
   )
 }
 
+function StandaloneFaq({
+  items,
+}: {
+  items: { q: string; a: React.ReactNode }[]
+}) {
+  const [open, setOpen] = useState<Set<number>>(new Set())
+  const toggle = (i: number) =>
+    setOpen((prev) => {
+      const next = new Set(prev)
+      if (next.has(i)) next.delete(i)
+      else next.add(i)
+      return next
+    })
+  return (
+    <div className="space-y-0">
+      {items.map((it, i) => (
+        <AccordionItem
+          key={i}
+          item={{ q: it.q, a: it.a, searchText: '' }}
+          open={open.has(i)}
+          onToggle={() => toggle(i)}
+        />
+      ))}
+    </div>
+  )
+}
+
+function ZoneCard({
+  emoji,
+  title,
+  desc,
+  color,
+}: {
+  emoji: string
+  title: string
+  desc: string
+  color: string
+}) {
+  return (
+    <div
+      className="rounded-xl border bg-white p-5 border-l-4"
+      style={{ borderLeftColor: color }}
+    >
+      <div className="flex items-center gap-2.5 mb-1.5">
+        <span className="text-xl" aria-hidden="true">
+          {emoji}
+        </span>
+        <h4 className="font-semibold text-anthracite">{title}</h4>
+      </div>
+      <p className="text-[14.5px] text-anthracite-light leading-relaxed">
+        {desc}
+      </p>
+    </div>
+  )
+}
+
 export default function GuideClient() {
   const [query, setQuery] = useState('')
   const [activeId, setActiveId] = useState<string>('sensori')
@@ -1081,6 +1137,408 @@ export default function GuideClient() {
                 />
               ))}
             </div>
+          </>
+        ),
+      },
+      {
+        id: 'misurazione-mattutina',
+        title: 'Misurazione mattutina',
+        emoji: '📅',
+        searchText:
+          'guida misurazione mattutina HRV mattino 5 minuti seduto sdraiato sistema nervoso autonomo trend costanza entro 30 minuti risveglio prima caffè cibo allenamento bagno orario costanza cosa evitare tè sigarette doccia calda fredda discussioni passo per passo fascia elettrodi pettorali nuova misurazione standard connessione segnale rilassati respira ripetibilità score indice stress recupero equilibrio energia modulazione infiammatoria interpretare 60-85 ottimale 40-60 normali sotto 40 sonno scarso malattia sotto 25 sovrallenamento esaurimento abitudine alert routine non disturbare faq in piedi sorso acqua salto un giorno sera giorni riposo malato',
+        render: () => (
+          <>
+            <p className="text-[15.5px] text-anthracite-light leading-relaxed">
+              La misurazione HRV al mattino è il modo più semplice e affidabile
+              per capire come stai. Bastano 5 minuti, da seduto o sdraiato, e
+              ottieni una fotografia oggettiva del tuo sistema nervoso autonomo.
+            </p>
+
+            <div className="mt-6">
+              <Callout title="Perché farla ogni giorno">
+                Un singolo dato dice poco. È il trend nel tempo a essere
+                prezioso. Più sei costante, più i dati diventano utili.
+              </Callout>
+            </div>
+
+            <h3 className="text-lg font-semibold text-anthracite mt-8 mb-4">
+              Quando farla
+            </h3>
+            <Checklist
+              items={[
+                'Entro 30 minuti dal risveglio.',
+                'Prima di caffè, cibo, allenamento.',
+                'Idealmente dopo essere andato in bagno.',
+                "L'orario poco importa, l'importante è la costanza.",
+              ]}
+            />
+
+            <div className="mt-6">
+              <Callout variant="warn" title="Cosa evitare prima del test">
+                Caffè, tè, sigarette, allenamento intenso, doccia molto calda o
+                fredda, discussioni stressanti.
+              </Callout>
+            </div>
+
+            <h3 className="text-lg font-semibold text-anthracite mt-8 mb-4">
+              Come si fa passo per passo
+            </h3>
+            <ol className="space-y-3">
+              <Step n={1}>
+                Indossa la fascia: inumidisci gli elettrodi e indossala sotto i
+                pettorali.
+              </Step>
+              <Step n={2}>
+                Mettiti seduto o sdraiato: scegli una posizione e mantienila
+                uguale ogni giorno.
+              </Step>
+              <Step n={3}>
+                Apri l&apos;app: vai su Nuova Misurazione, scegli Misurazione
+                Standard, durata 5 minuti.
+              </Step>
+              <Step n={4}>
+                Aspetta la connessione: entro 10-20 secondi vedrai il segnale
+                stabilizzarsi.
+              </Step>
+              <Step n={5}>
+                Rilassati e respira: siediti immobile, respira normalmente, non
+                parlare, non guardare il telefono.
+              </Step>
+              <Step n={6}>
+                Aspetta i 5 minuti: l&apos;app ti avvisa con un suono.
+              </Step>
+            </ol>
+
+            <div className="mt-6">
+              <Callout title="Il segreto è la ripetibilità">
+                Stessa ora, stessa posizione, stesso ordine di azioni.
+              </Callout>
+            </div>
+
+            <h3 className="text-lg font-semibold text-anthracite mt-8 mb-4">
+              I risultati
+            </h3>
+            <div className="rounded-lg border border-gray-200 overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 text-[13px] uppercase tracking-wider text-anthracite-lighter font-semibold">
+                  <tr>
+                    <th className="px-4 py-3">Score</th>
+                    <th className="px-4 py-3">Cosa misura</th>
+                  </tr>
+                </thead>
+                <tbody className="text-[14.5px]">
+                  {[
+                    {
+                      s: 'Indice di Stress',
+                      d: 'quanto il corpo è sotto pressione',
+                    },
+                    { s: 'Recupero', d: 'quanto il parasimpatico è attivo' },
+                    {
+                      s: 'Equilibrio',
+                      d: 'bilanciamento simpatico-parasimpatico',
+                    },
+                    { s: 'Energia', d: 'risorse autonomiche disponibili' },
+                    {
+                      s: 'Modulazione Infiammatoria',
+                      d: "capacità di controllare l'infiammazione",
+                    },
+                  ].map((row) => (
+                    <tr
+                      key={row.s}
+                      className="bg-white border-t border-gray-100"
+                    >
+                      <td className="px-4 py-3 align-top font-medium text-anthracite">
+                        {row.s}
+                      </td>
+                      <td className="px-4 py-3 align-top text-anthracite-light">
+                        {row.d}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="text-lg font-semibold text-anthracite mt-8 mb-4">
+              Come interpretare
+            </h3>
+            <ul className="list-disc pl-5 space-y-1.5 text-[15px] text-anthracite-light leading-relaxed">
+              <li>
+                <span className="font-medium text-anthracite">60-85</span>: zona
+                ottimale.
+              </li>
+              <li>
+                <span className="font-medium text-anthracite">40-60</span>:
+                valori normali, attenzione alle abitudini.
+              </li>
+              <li>
+                <span className="font-medium text-anthracite">Sotto 40</span>:
+                possibile stress, sonno scarso, malattia.
+              </li>
+              <li>
+                <span className="font-medium text-anthracite">Sotto 25</span>:
+                possibile sovrallenamento o esaurimento.
+              </li>
+            </ul>
+
+            <div className="mt-6">
+              <Callout>
+                Un singolo valore basso non è motivo di allarme. Quello che
+                conta è il trend.
+              </Callout>
+            </div>
+
+            <h3 className="text-lg font-semibold text-anthracite mt-8 mb-4">
+              Come trasformarla in abitudine
+            </h3>
+            <ul className="list-disc pl-5 space-y-1.5 text-[15px] text-anthracite-light leading-relaxed">
+              <li>Tieni la fascia accanto al letto.</li>
+              <li>Imposta un alert al mattino.</li>
+              <li>Crea una routine: dopo il bagno, prima del caffè.</li>
+              <li>Sfrutta i 5 minuti in modalità non disturbare.</li>
+            </ul>
+
+            <h3 className="text-lg font-semibold text-anthracite mt-8 mb-4">
+              Domande frequenti
+            </h3>
+            <StandaloneFaq
+              items={[
+                {
+                  q: 'Posso farla in piedi?',
+                  a: <p>No, seduta o sdraiata.</p>,
+                },
+                {
+                  q: "Posso farla dopo un sorso d'acqua?",
+                  a: <p>Sì, l&apos;acqua non influenza. Caffè sì.</p>,
+                },
+                {
+                  q: 'Se salto un giorno?',
+                  a: <p>Non recuperare, riprendi il giorno dopo.</p>,
+                },
+                {
+                  q: 'Posso farla la sera?',
+                  a: <p>Sì ma non al posto di quella mattutina.</p>,
+                },
+                {
+                  q: 'Quanto tempo per un trend utile?',
+                  a: (
+                    <p>
+                      2 settimane per iniziare, 4-6 per un trend solido.
+                    </p>
+                  ),
+                },
+                {
+                  q: 'Anche nei giorni di riposo?',
+                  a: <p>Soprattutto quelli.</p>,
+                },
+                {
+                  q: 'E se sono malato?',
+                  a: (
+                    <p>
+                      Falla lo stesso, è prezioso vedere come cambia durante la
+                      malattia.
+                    </p>
+                  ),
+                },
+              ]}
+            />
+          </>
+        ),
+      },
+      {
+        id: 'guida-sport',
+        title: 'Modulo Sport',
+        emoji: '🏋️',
+        searchText:
+          'guida modulo sport allenamento variabilità frequenza cardiaca sistema giusto esagerando pronto spingere fascia Polar H10 smartphone aderente inumidita 3 tipi test sessione live tempo reale zona metabolica telefono tasca schermo spento questionario soggettivo riepilogo offline memoria download automatico una alla volta test progressivo soglie metaboliche aerobica anaerobica laboratorio passo per passo prima durante dopo RPE 1-10 energia dolori umore tag sprint pausa ripresa schermo bloccabile 4 zone verde aerobica gialla transizione arancione anaerobica rossa massimale TRIMP durata intensità ACWR TSB carico recente cronico infortuni faq telefono background orologio intervalli RR durata minima 10 minuti sessioni lunghe 2 ore scollega avvisa',
+        render: () => (
+          <>
+            <p className="text-[15.5px] text-anthracite-light leading-relaxed">
+              Il Modulo Sport analizza la tua attività attraverso la
+              variabilità della frequenza cardiaca. Ti permette di sapere se
+              stai allenando il sistema giusto, se stai esagerando o se sei
+              pronto per spingere.
+            </p>
+
+            <div className="mt-6">
+              <Callout title="Cosa ti serve">
+                Fascia Polar H10, smartphone con Stress Index, fascia ben
+                aderente e leggermente inumidita.
+              </Callout>
+            </div>
+
+            <h3 className="text-lg font-semibold text-anthracite mt-8 mb-4">
+              I 3 tipi di test
+            </h3>
+            <div className="space-y-4">
+              <div className="rounded-xl border border-gray-200 bg-white p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-teal" />
+                  <h4 className="font-semibold text-anthracite">
+                    1. Sessione live durante l&apos;allenamento
+                  </h4>
+                </div>
+                <ul className="list-disc pl-5 space-y-1.5 text-[14.5px] text-anthracite-light leading-relaxed">
+                  <li>Indossa la fascia, avvia la sessione Sport.</li>
+                  <li>
+                    L&apos;app registra in tempo reale e mostra la zona
+                    metabolica.
+                  </li>
+                  <li>
+                    Puoi tenere il telefono in tasca, funziona con schermo
+                    spento.
+                  </li>
+                  <li>Al termine: questionario soggettivo e riepilogo.</li>
+                </ul>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-white p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500" />
+                  <h4 className="font-semibold text-anthracite">
+                    2. Sessione offline con memoria Polar H10
+                  </h4>
+                </div>
+                <ul className="list-disc pl-5 space-y-1.5 text-[14.5px] text-anthracite-light leading-relaxed">
+                  <li>Avvia la registrazione offline dall&apos;app.</li>
+                  <li>Allenati senza telefono.</li>
+                  <li>Al rientro il download parte in automatico.</li>
+                  <li>Una sessione alla volta.</li>
+                </ul>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-white p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                  <h4 className="font-semibold text-anthracite">
+                    3. Test progressivo per le soglie metaboliche
+                  </h4>
+                </div>
+                <ul className="list-disc pl-5 space-y-1.5 text-[14.5px] text-anthracite-light leading-relaxed">
+                  <li>Aumenti l&apos;intensità gradualmente.</li>
+                  <li>
+                    Il sistema trova le soglie aerobica e anaerobica.
+                  </li>
+                  <li>Senza andare in laboratorio.</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3 className="text-lg font-semibold text-anthracite mt-8 mb-4">
+              Come si usa passo per passo
+            </h3>
+            <ul className="space-y-3 text-[15px] text-anthracite-light leading-relaxed">
+              <li>
+                <span className="font-medium text-anthracite">Prima</span>
+                <br />
+                Inumidisci fascia, indossala, apri Sport, scegli tipo di
+                attività.
+              </li>
+              <li>
+                <span className="font-medium text-anthracite">Durante</span>
+                <br />
+                Zona metabolica in tempo reale, puoi aggiungere tag (sprint,
+                pausa, ripresa), schermo bloccabile.
+              </li>
+              <li>
+                <span className="font-medium text-anthracite">Dopo</span>
+                <br />
+                Termina, compila questionario RPE 1-10, energia, dolori, umore.
+              </li>
+            </ul>
+
+            <h3 className="text-lg font-semibold text-anthracite mt-8 mb-4">
+              Le 4 zone metaboliche
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <ZoneCard
+                emoji="🟢"
+                title="Verde — Aerobica"
+                desc="Molto sostenibile, fondo lungo."
+                color="#22C55E"
+              />
+              <ZoneCard
+                emoji="🟡"
+                title="Gialla — Transizione"
+                desc="Media, tra soglia aerobica e anaerobica."
+                color="#EAB308"
+              />
+              <ZoneCard
+                emoji="🟠"
+                title="Arancione — Anaerobica"
+                desc="Alta, sostenibile solo per tempi limitati."
+                color="#F97316"
+              />
+              <ZoneCard
+                emoji="🔴"
+                title="Rossa — Massimale"
+                desc="Estrema, pochi minuti."
+                color="#EF4444"
+              />
+            </div>
+
+            <div className="mt-6">
+              <Callout>
+                Vedere in tempo reale in quale zona stai lavorando ti permette
+                di dosare l&apos;allenamento.
+              </Callout>
+            </div>
+
+            <h3 className="text-lg font-semibold text-anthracite mt-8 mb-3">
+              TRIMP, ACWR e TSB
+            </h3>
+            <ul className="space-y-3 text-[15px] text-anthracite-light leading-relaxed">
+              <li>
+                <span className="font-medium text-anthracite">TRIMP</span>
+                <br />
+                Numero che riassume quanto è stato pesante l&apos;allenamento
+                (durata × intensità).
+              </li>
+              <li>
+                <span className="font-medium text-anthracite">ACWR e TSB</span>
+                <br />
+                Rapporto carico recente vs cronico, alert automatico se rischio
+                infortuni.
+              </li>
+            </ul>
+
+            <h3 className="text-lg font-semibold text-anthracite mt-8 mb-4">
+              Domande frequenti
+            </h3>
+            <StandaloneFaq
+              items={[
+                {
+                  q: 'Devo guardare il telefono?',
+                  a: (
+                    <p>
+                      No, in tasca, l&apos;app lavora in background.
+                    </p>
+                  ),
+                },
+                {
+                  q: "Posso usare l'orologio?",
+                  a: (
+                    <p>
+                      No, serve la fascia Polar H10 per gli intervalli RR.
+                    </p>
+                  ),
+                },
+                {
+                  q: 'Durata minima?',
+                  a: <p>10 minuti per analisi affidabile.</p>,
+                },
+                {
+                  q: 'Sessioni molto lunghe?',
+                  a: <p>Sì, fino a 2 ore.</p>,
+                },
+                {
+                  q: 'Se la fascia si scollega?',
+                  a: (
+                    <p>
+                      L&apos;app avvisa, se torna entro pochi secondi continua.
+                    </p>
+                  ),
+                },
+              ]}
+            />
           </>
         ),
       },
