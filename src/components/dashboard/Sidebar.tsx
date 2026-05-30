@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, BarChart3, Settings, LogOut, Menu, X, Building2, ShieldCheck } from 'lucide-react'
+import { Home, Users, BarChart3, Settings, LogOut, Menu, X, Building2, ShieldCheck, Dumbbell } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
@@ -16,9 +16,18 @@ type SidebarProps = {
     logo_url?: string | null
   } | null
   isSuperadmin?: boolean
+  isPro?: boolean
 }
 
-const NAV_ITEMS = [
+type NavItem = {
+  href: string
+  label: string
+  icon: typeof Home
+  exact?: boolean
+  badge?: string
+}
+
+const NAV_ITEMS: NavItem[] = [
   { href: '/area-professionisti', label: 'Oggi', icon: Home, exact: true },
   { href: '/area-professionisti/clienti', label: 'Clienti', icon: Users },
   { href: '/area-professionisti/analytics', label: 'Analytics', icon: BarChart3 },
@@ -26,17 +35,30 @@ const NAV_ITEMS = [
   { href: '/area-professionisti/organizzazione', label: 'Organizzazione', icon: Building2 },
 ]
 
-const SUPERADMIN_ITEM = {
+// Voce Sport: visibile solo ai professionisti Pro (o superadmin). Inserita
+// dopo "Analytics" e prima di "Impostazioni".
+const SPORT_ITEM: NavItem = {
+  href: '/area-professionisti/sport',
+  label: 'Sport',
+  icon: Dumbbell,
+  badge: 'Pro',
+}
+
+const SUPERADMIN_ITEM: NavItem = {
   href: '/area-professionisti/professionisti',
   label: 'Tutti i professionisti',
   icon: ShieldCheck,
 }
 
-export function Sidebar({ professional, isSuperadmin }: SidebarProps) {
+export function Sidebar({ professional, isSuperadmin, isPro }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const navItems = isSuperadmin ? [...NAV_ITEMS, SUPERADMIN_ITEM] : NAV_ITEMS
+  // Sport va dopo Analytics (indice 3, prima di Impostazioni).
+  const baseItems = isPro
+    ? [...NAV_ITEMS.slice(0, 3), SPORT_ITEM, ...NAV_ITEMS.slice(3)]
+    : NAV_ITEMS
+  const navItems = isSuperadmin ? [...baseItems, SUPERADMIN_ITEM] : baseItems
 
   async function handleLogout() {
     const supabase = createClient()
@@ -101,7 +123,12 @@ export function Sidebar({ professional, isSuperadmin }: SidebarProps) {
                         : 'text-anthracite hover:bg-surface'}`}
                   >
                     <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
-                    {item.label}
+                    <span className="flex-1">{item.label}</span>
+                    {item.badge && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-teal text-white leading-none">
+                        {item.badge}
+                      </span>
+                    )}
                   </Link>
                 </li>
               )
