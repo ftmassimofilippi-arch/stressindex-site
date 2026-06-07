@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, BarChart3, Settings, LogOut, Menu, X, Building2, ShieldCheck, Dumbbell } from 'lucide-react'
-import { useState } from 'react'
+import { Home, Users, BarChart3, Settings, LogOut, Menu, X, Building2, ShieldCheck, Dumbbell, Radio } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import { initials } from '@/lib/format'
@@ -25,6 +25,7 @@ type NavItem = {
   icon: typeof Home
   exact?: boolean
   badge?: string
+  live?: boolean // mostra il pallino "live" quando ci sono sessioni attive
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -44,6 +45,14 @@ const SPORT_ITEM: NavItem = {
   badge: 'Pro',
 }
 
+// Team Live: monitoraggio real-time degli atleti in sessione (subito sotto Sport).
+const TEAM_LIVE_ITEM: NavItem = {
+  href: '/area-professionisti/sport/team-live',
+  label: 'Team Live',
+  icon: Radio,
+  live: true,
+}
+
 const SUPERADMIN_ITEM: NavItem = {
   href: '/area-professionisti/professionisti',
   label: 'Tutti i professionisti',
@@ -54,11 +63,38 @@ export function Sidebar({ professional, isSuperadmin, isPro }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  // Sport va dopo Analytics (indice 3, prima di Impostazioni).
+  const [liveActive, setLiveActive] = useState(false)
+  // Sport + Team Live vanno dopo Analytics (indice 3, prima di Impostazioni).
   const baseItems = isPro
-    ? [...NAV_ITEMS.slice(0, 3), SPORT_ITEM, ...NAV_ITEMS.slice(3)]
+    ? [...NAV_ITEMS.slice(0, 3), SPORT_ITEM, TEAM_LIVE_ITEM, ...NAV_ITEMS.slice(3)]
     : NAV_ITEMS
   const navItems = isSuperadmin ? [...baseItems, SUPERADMIN_ITEM] : baseItems
+
+  // Pallino "live": conta gli atleti in sessione (connessi e aggiornati negli
+  // ultimi 30s) e fa pulsare la voce Team Live. Poll leggero ogni 20s.
+  useEffect(() => {
+    if (!isPro) return
+    let cancelled = false
+    const supabase = createClient()
+    async function check() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (cancelled || !user) return
+      const since = new Date(Date.now() - 30_000).toISOString()
+      const { count } = await supabase
+        .from('sport_live_data')
+        .select('id', { count: 'exact', head: true })
+        .eq('professional_id', user.id)
+        .eq('is_connected', true)
+        .gte('updated_at', since)
+      if (!cancelled) setLiveActive((count ?? 0) > 0)
+    }
+    check()
+    const id = setInterval(check, 20_000)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
+  }, [isPro])
 
   async function handleLogout() {
     const supabase = createClient()
@@ -124,6 +160,12 @@ export function Sidebar({ professional, isSuperadmin, isPro }: SidebarProps) {
                   >
                     <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
                     <span className="flex-1">{item.label}</span>
+                    {item.live && liveActive && (
+                      <span className="relative inline-flex h-2.5 w-2.5" aria-label="Sessioni attive">
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
+                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                      </span>
+                    )}
                     {item.badge && (
                       <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-teal text-white leading-none">
                         {item.badge}

@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { createClient } from './supabase-server'
 import { resolveViewingProfessional, type ViewingProfessional } from './dashboard-data'
+import { SPORT_LIVE_COLUMNS, type AthleteMeta, type SportLiveRow } from './sport-live'
 
 // ============================================================================
 // MODULO SPORT — data layer
@@ -460,6 +461,48 @@ function lnRmssdTrend(sessions: Array<{ start_time: string; rmssd_avg: number | 
   if (delta > 0.03) return 'up'
   if (delta < -0.03) return 'down'
   return 'stable'
+}
+
+// ── Team Live — snapshot iniziale ────────────────────────────────────────────
+
+export interface SportLiveSnapshot {
+  // righe live (sessioni connesse o aggiornate negli ultimi 5 minuti)
+  rows: SportLiveRow[]
+  // anagrafica di TUTTI i clients del professionista: id → { nome, hr_max }.
+  // Serve ad arricchire le righe che arrivano via Realtime (che non hanno il nome).
+  athletes: Record<string, AthleteMeta>
+}
+
+// Legge lo stato live corrente per il professionista. Error-safe: se la tabella
+// sport_live_data non esiste ancora (migration 012 non applicata) ritorna vuoto
+// e la pagina mostra l'empty state.
+export async function getSportLiveSnapshot(professionalId: string | null): Promise<SportLiveSnapshot> {
+  if (!professionalId) return { rows: [], athletes: {} }
+  const supabase = await createClient()
+
+  const since = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+  const { data, error } = await supabase
+    .from('sport_live_data')
+    .select(SPORT_LIVE_COLUMNS)
+    .eq('professional_id', professionalId)
+    .or(`is_connected.eq.true,updated_at.gte.${since}`)
+    .order('updated_at', { ascending: false })
+  if (error) console.error('[getSportLiveSnapshot] error', { professionalId, error: error.message })
+  const rows = (error ? [] : (data ?? [])) as SportLiveRow[]
+
+  // Anagrafica clients del professionista (per nome + hr_max anagrafico).
+  const { data: clientRows } = await supabase
+    .from('clients')
+    .select('id, nome, cognome, hr_max')
+    .eq('professionista_id', professionalId)
+  const athletes: Record<string, AthleteMeta> = {}
+  for (const c of (clientRows ?? []) as Array<{ id: string; nome: string | null; cognome: string | null; hr_max: number | null }>) {
+    athletes[c.id] = {
+      name: `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || 'Atleta',
+      hr_max: c.hr_max ?? null,
+    }
+  }
+  return { rows, athletes }
 }
 
 // ── Statistiche per la TAB Dashboard ─────────────────────────────────────────
