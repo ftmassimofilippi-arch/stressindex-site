@@ -767,6 +767,41 @@ export interface ProfessionalStats {
   clients_count: number
   measurements_count: number
   last_activity: string | null
+  plan: string
+  created_at: string | null
+}
+
+// Legge plan + created_at dei profili in modo error-safe: se la colonna plan
+// o created_at non esiste ancora (migration 013 non applicata) la query fallisce
+// e si ricade su valori di default senza rompere l'elenco professionisti.
+async function getPlansAndCreatedAt(
+  ids: string[],
+): Promise<Map<string, { plan: string; created_at: string | null }>> {
+  const map = new Map<string, { plan: string; created_at: string | null }>()
+  if (ids.length === 0) return map
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, plan, created_at')
+    .in('id', ids)
+  if (error) return map
+  for (const r of (data ?? []) as Array<{ id: string; plan: string | null; created_at: string | null }>) {
+    map.set(r.id, { plan: r.plan ?? 'base', created_at: r.created_at ?? null })
+  }
+  return map
+}
+
+// Piano corrente di un singolo professionista (per la vista dettaglio superadmin).
+// Error-safe: ritorna 'base' se la colonna plan non esiste ancora.
+export async function getProfessionalPlan(userId: string): Promise<string> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('plan')
+    .eq('id', userId)
+    .maybeSingle()
+  if (error) return 'base'
+  return (data as { plan?: string | null } | null)?.plan ?? 'base'
 }
 
 // Elenco di tutti i professionisti con statistiche aggregate. Solo superadmin.
@@ -784,10 +819,11 @@ export async function listAllProfessionalsStats(): Promise<ProfessionalStats[]> 
   if (profs.length === 0) return []
   const ids = profs.map((p) => p.id)
 
-  const [{ data: ppRows }, { data: clientsRows }, { data: maRows }] = await Promise.all([
+  const [{ data: ppRows }, { data: clientsRows }, { data: maRows }, planMap] = await Promise.all([
     supabase.from('professional_profiles').select('id, nome, cognome').in('id', ids),
     supabase.from('clients').select('professionista_id').in('professionista_id', ids),
     supabase.from('measurement_analytics').select('user_id, measured_at').in('user_id', ids),
+    getPlansAndCreatedAt(ids),
   ])
 
   const ppMap = new Map<string, { nome: string | null; cognome: string | null }>()
@@ -814,6 +850,7 @@ export async function listAllProfessionalsStats(): Promise<ProfessionalStats[]> 
       const nome = pp?.nome ?? p.nome ?? ''
       const cognome = pp?.cognome ?? p.cognome ?? ''
       const full = `${nome} ${cognome}`.trim() || p.email || 'Professionista'
+      const planInfo = planMap.get(p.id)
       return {
         user_id: p.id,
         full_name: full,
@@ -821,6 +858,8 @@ export async function listAllProfessionalsStats(): Promise<ProfessionalStats[]> 
         clients_count: clientsByUser.get(p.id) ?? 0,
         measurements_count: measurementsByUser.get(p.id) ?? 0,
         last_activity: lastByUser.get(p.id) ?? null,
+        plan: planInfo?.plan ?? 'base',
+        created_at: planInfo?.created_at ?? null,
       }
     })
     .sort((a, b) => a.full_name.localeCompare(b.full_name))

@@ -8,7 +8,8 @@ import {
   getProfessionalProfile,
   listAllProfessionalsStats,
 } from '@/lib/dashboard-data'
-import { formatRelative } from '@/lib/format'
+import { formatRelative, formatDate } from '@/lib/format'
+import { PlanToggle } from '@/components/dashboard/PlanToggle'
 
 export const metadata = { title: 'Tutti i professionisti' }
 export const dynamic = 'force-dynamic'
@@ -51,9 +52,11 @@ export default async function ProfessionistiPage() {
             <thead>
               <tr className="text-left text-anthracite-lighter border-b border-surface-border">
                 <th className="px-6 py-3 font-medium">Professionista</th>
+                <th className="px-3 py-3 font-medium">Piano</th>
                 <th className="px-3 py-3 font-medium text-right">Clienti</th>
                 <th className="px-3 py-3 font-medium text-right">Misurazioni</th>
                 <th className="px-3 py-3 font-medium">Ultima attività</th>
+                <th className="px-3 py-3 font-medium">Registrazione</th>
                 <th className="px-6 py-3 font-medium text-right" />
               </tr>
             </thead>
@@ -69,10 +72,16 @@ export default async function ProfessionistiPage() {
                       {p.email && <div className="text-xs text-anthracite-lighter">{p.email}</div>}
                     </Link>
                   </td>
+                  <td className="px-3 py-3">
+                    <PlanToggle userId={p.user_id} name={p.full_name} plan={p.plan} />
+                  </td>
                   <td className="px-3 py-3 text-right text-anthracite">{p.clients_count}</td>
                   <td className="px-3 py-3 text-right text-anthracite">{p.measurements_count}</td>
                   <td className="px-3 py-3 text-anthracite-lighter">
                     {p.last_activity ? formatRelative(p.last_activity) : '—'}
+                  </td>
+                  <td className="px-3 py-3 text-anthracite-lighter">
+                    {p.created_at ? formatDate(p.created_at) : '—'}
                   </td>
                   <td className="px-6 py-3 text-right">
                     <Link
