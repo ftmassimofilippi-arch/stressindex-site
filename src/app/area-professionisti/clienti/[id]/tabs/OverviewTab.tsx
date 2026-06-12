@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { AlertTriangle, Sparkles } from 'lucide-react'
-import { ScoreGauge } from '@/components/dashboard/ScoreGauge'
+import { GaugeScore } from '@/components/dashboard/GaugeScore'
 import { AdvancedTrendChart, TREND_METRICS } from '@/components/dashboard/AdvancedTrendChart'
 import { AlertBadge } from '@/components/dashboard/AlertBadge'
 import type { Alert, Client, MeasurementAnalytics } from '@/lib/types'
@@ -26,10 +26,10 @@ export function OverviewTab({ client, measurements, alerts, professionistaId }: 
     <div className="space-y-6">
       <section>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <ScoreGauge label="Stress" value={latest?.score_stress} inverted />
-          <ScoreGauge label="Recupero" value={latest?.score_recupero} />
-          <ScoreGauge label="Equilibrio" value={latest?.score_equilibrio} />
-          <ScoreGauge label="Energia" value={latest?.score_energia} />
+          <GaugeScore label="STRESS" value={latest?.score_stress} colorScheme="stress" />
+          <GaugeScore label="RECUPERO" value={latest?.score_recupero} colorScheme="recovery" />
+          <GaugeScore label="EQUILIBRIO" value={latest?.score_equilibrio} colorScheme="balance" />
+          <GaugeScore label="ENERGIA" value={latest?.score_energia} colorScheme="energy" />
         </div>
         {latest && <p className="mt-3 text-xs text-anthracite-lighter">Ultimo aggiornamento: {formatMeasuredAt(latest.measured_at)}</p>}
       </section>

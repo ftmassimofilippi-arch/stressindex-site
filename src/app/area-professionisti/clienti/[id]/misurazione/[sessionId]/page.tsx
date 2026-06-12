@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { DownloadMeasurementPdfButton } from '@/components/dashboard/DownloadMeasurementPdfButton'
-import { ScoreGauge } from '@/components/dashboard/ScoreGauge'
+import { GaugeScore } from '@/components/dashboard/GaugeScore'
 import { getClient, getMeasurementBySessionId, getProfessionalProfile, listAlerts } from '@/lib/dashboard-data'
 import { fullName, formatMeasuredAt, num } from '@/lib/format'
 import { PoincareScatter, Rhythmogram, PsdPlaceholder } from './HrvCharts'
@@ -56,10 +56,10 @@ export default async function SessionDetailPage({
       </header>
 
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <ScoreGauge label="Stress" value={measurement.score_stress} inverted />
-        <ScoreGauge label="Recupero" value={measurement.score_recupero} />
-        <ScoreGauge label="Equilibrio" value={measurement.score_equilibrio} />
-        <ScoreGauge label="Energia" value={measurement.score_energia} />
+        <GaugeScore label="STRESS" value={measurement.score_stress} colorScheme="stress" />
+        <GaugeScore label="RECUPERO" value={measurement.score_recupero} colorScheme="recovery" />
+        <GaugeScore label="EQUILIBRIO" value={measurement.score_equilibrio} colorScheme="balance" />
+        <GaugeScore label="ENERGIA" value={measurement.score_energia} colorScheme="energy" />
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
