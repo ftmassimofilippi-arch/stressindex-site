@@ -1,9 +1,10 @@
 'use client'
 
-import { Bell, Search } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useMemo } from 'react'
+import { GlobalSearch } from './GlobalSearch'
 
 const SEGMENT_LABEL: Record<string, string> = {
   'area-professionisti': 'Area Professionisti',
@@ -27,8 +28,9 @@ export function TopBar({ alertCount = 0 }: { alertCount?: number }) {
 
   return (
     <div className="sticky top-0 z-20 bg-white/85 backdrop-blur-md border-b border-surface-border">
-      <div className="h-16 px-4 sm:px-8 flex items-center justify-between gap-4">
-        <nav className="hidden sm:flex items-center gap-1.5 text-sm text-anthracite-lighter min-w-0">
+      {/* pl-16 su mobile lascia spazio al pulsante hamburger (fixed top-left) */}
+      <div className="h-16 pl-16 pr-4 lg:pl-8 sm:pr-8 flex items-center justify-between gap-3">
+        <nav className="hidden lg:flex items-center gap-1.5 text-sm text-anthracite-lighter min-w-0">
           {breadcrumbs.map((b, i) => (
             <span key={b.href} className="flex items-center gap-1.5 min-w-0">
               {i > 0 && <span className="opacity-50">/</span>}
@@ -43,21 +45,13 @@ export function TopBar({ alertCount = 0 }: { alertCount?: number }) {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2 ml-auto">
-          <div className="relative hidden md:block">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-anthracite-lighter" />
-            <input
-              type="search"
-              placeholder="Cerca clienti, misurazioni..."
-              disabled
-              className="w-72 pl-9 pr-3 py-2 text-sm bg-surface border border-surface-border rounded-xl placeholder:text-anthracite-lighter disabled:cursor-not-allowed disabled:opacity-70"
-            />
-          </div>
+        <div className="flex items-center gap-2 ml-auto min-w-0 flex-1 lg:flex-initial justify-end">
+          <GlobalSearch className="w-full max-w-xs sm:w-72" />
 
           <button
             type="button"
             aria-label={`Notifiche${alertCount ? ` (${alertCount} nuove)` : ''}`}
-            className="relative w-10 h-10 rounded-xl hover:bg-surface flex items-center justify-center text-anthracite-lighter hover:text-anthracite transition-colors"
+            className="relative w-10 h-10 rounded-xl hover:bg-surface flex items-center justify-center text-anthracite-lighter hover:text-anthracite transition-colors flex-shrink-0"
           >
             <Bell size={18} />
             {alertCount > 0 && (
