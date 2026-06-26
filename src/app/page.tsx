@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { HomeNavbar } from './HomeNavbar'
 
 export const metadata: Metadata = {
   title: 'Stress Index | Software HRV Professionale per Fisioterapisti',
@@ -46,41 +47,6 @@ function Logo({ light = false }: { light?: boolean }) {
   )
 }
 
-function Navbar() {
-  return (
-    <header className="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Logo />
-        <nav className="hidden md:flex items-center gap-1 text-[14px] text-anthracite-light">
-          <a href="#come-funziona" className="px-3 py-2 rounded-md hover:text-teal transition-colors">
-            Come funziona
-          </a>
-          <a href="#benefici" className="px-3 py-2 rounded-md hover:text-teal transition-colors">
-            Funzionalità
-          </a>
-          <a href="#prezzi" className="px-3 py-2 rounded-md hover:text-teal transition-colors">
-            Prezzi
-          </a>
-          <a href="#faq" className="px-3 py-2 rounded-md hover:text-teal transition-colors">
-            FAQ
-          </a>
-          <Link href="/guide" className="px-3 py-2 rounded-md hover:text-teal transition-colors">
-            Guide
-          </Link>
-          <Link href="/area-professionisti/login" className="px-3 py-2 rounded-md hover:text-teal transition-colors">
-            Area Professionisti
-          </Link>
-        </nav>
-        <Link
-          href="/registrazione"
-          className="inline-flex items-center justify-center px-4 py-2 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal-dark transition-colors"
-        >
-          Inizia gratis
-        </Link>
-      </div>
-    </header>
-  )
-}
 
 function HeroMockup() {
   const scores = [
@@ -815,7 +781,7 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      <Navbar />
+      <HomeNavbar />
       <Hero />
       <TrustBar />
       <Problem />
