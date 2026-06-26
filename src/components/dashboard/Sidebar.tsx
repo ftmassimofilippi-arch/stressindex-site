@@ -55,7 +55,7 @@ const TEAM_LIVE_ITEM: NavItem = {
 
 const SUPERADMIN_ITEM: NavItem = {
   href: '/area-professionisti/professionisti',
-  label: 'Tutti i professionisti',
+  label: 'Super Admin',
   icon: ShieldCheck,
 }
 
