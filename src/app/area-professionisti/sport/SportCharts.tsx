@@ -64,7 +64,7 @@ export function WeeklySessionsBar({ data }: { data: Array<{ label: string; count
 }
 
 // ============================================================================
-// DFA ALPHA1 nel tempo — LineChart con 4 bande colorate + marker tag
+// DFA ALPHA1 nel tempo — LineChart con 5 bande colorate + marker tag
 // ============================================================================
 
 export function DfaAlpha1Chart({ windows, tags = [] }: { windows: DfaWindow[]; tags?: SportTag[] }) {
@@ -73,7 +73,12 @@ export function DfaAlpha1Chart({ windows, tags = [] }: { windows: DfaWindow[]; t
     .map((w) => ({ t: w.window_start_ms / 1000, alpha1: w.alpha1 as number }))
   if (data.length === 0) return <Placeholder text="Dati DFA Alpha1 non disponibili" />
 
-  const maxT = data[data.length - 1]?.t ?? 0
+  // Asse Y dinamico (come l'app): 1.5 di default, esteso a step di 0.5 se i
+  // valori superano 1.5, così la zona Recupero (>1.0) resta sempre visibile.
+  const maxAlpha = data.reduce((m, d) => Math.max(m, d.alpha1), 0)
+  const yMax = maxAlpha > 1.5 ? Math.ceil(maxAlpha / 0.5) * 0.5 : 1.5
+  const yTicks: number[] = []
+  for (let t = 0; t <= yMax + 1e-9; t += 0.25) yTicks.push(+t.toFixed(2))
 
   return (
     <ResponsiveContainer width="100%" height={300}>
@@ -82,9 +87,9 @@ export function DfaAlpha1Chart({ windows, tags = [] }: { windows: DfaWindow[]; t
           <ReferenceArea
             key={z.id}
             y1={z.min}
-            y2={Math.min(z.max, 1.5)}
+            y2={Math.min(z.max, yMax)}
             fill={z.color}
-            fillOpacity={0.1}
+            fillOpacity={0.12}
             ifOverflow="hidden"
           />
         ))}
@@ -99,8 +104,8 @@ export function DfaAlpha1Chart({ windows, tags = [] }: { windows: DfaWindow[]; t
           label={{ value: 'Tempo (mm:ss)', position: 'insideBottom', offset: -6, fontSize: 11, fill: '#6B7280' }}
         />
         <YAxis
-          domain={[0, 1.5]}
-          ticks={[0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5]}
+          domain={[0, yMax]}
+          ticks={yTicks}
           stroke="#6B7280"
           fontSize={10}
           width={34}
@@ -140,9 +145,11 @@ export function DfaZoneBar({ windows }: { windows: DfaWindow[] }) {
   for (let i = 1; i < sorted.length; i++) steps.push(sorted[i].window_start_ms - sorted[i - 1].window_start_ms)
   const stepMs = steps.length ? median(steps) : 5000
 
+  // La zona viene ricalcolata dall'alpha1 con le soglie a 5 zone dell'app,
+  // ignorando il campo `zone` salvato (che può seguire la vecchia scala a 4).
   const perZone = new Map<number, number>()
   for (const w of sorted) {
-    const z = w.zone ?? zoneForAlpha1(w.alpha1)?.id ?? null
+    const z = zoneForAlpha1(w.alpha1)?.id ?? null
     if (z == null) continue
     perZone.set(z, (perZone.get(z) ?? 0) + stepMs)
   }
@@ -170,7 +177,7 @@ export function DfaZoneBar({ windows }: { windows: DfaWindow[] }) {
             )
           })}
       </div>
-      <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {DFA_ZONES.slice()
           .sort((a, b) => a.id - b.id)
           .map((z) => {

@@ -24,8 +24,10 @@ export function formatClock(ms: number): string {
 }
 
 // ── Zone DFA Alpha1 ──────────────────────────────────────────────────────────
-// 1=verde (bassa intensità, aerobico), 2=giallo (soglia aerobica),
-// 3=arancio (soglia anaerobica), 4=rosso (alta intensità).
+// 5 zone identiche all'app (fonte di verità: dfa_zones.dart).
+// Z1=blu Recupero (α1 > 1.0) · Z2=verde Aerobica (0.75-1.0) · Z3=giallo
+// Transizione (0.50-0.75) · Z4=arancio Anaerobica (0.30-0.50) · Z5=rosso
+// Massimale (< 0.30). Gli `id` coincidono con il numero di zona dell'app.
 
 export interface DfaZone {
   id: number
@@ -34,15 +36,17 @@ export interface DfaZone {
   color: string
   bg: string
   // intervallo alpha1 [min, max) usato per le bande di sfondo del grafico
+  // (max = Infinity per la zona Recupero, senza limite superiore)
   min: number
   max: number
 }
 
 export const DFA_ZONES: DfaZone[] = [
-  { id: 4, label: 'Alta intensità', short: 'Z4', color: '#EF4444', bg: '#FEE2E2', min: 0.0, max: 0.25 },
-  { id: 3, label: 'Soglia anaerobica', short: 'Z3', color: '#F97316', bg: '#FFEDD5', min: 0.25, max: 0.5 },
-  { id: 2, label: 'Soglia aerobica', short: 'Z2', color: '#F59E0B', bg: '#FEF3C7', min: 0.5, max: 0.75 },
-  { id: 1, label: 'Bassa intensità', short: 'Z1', color: '#10B981', bg: '#D1FAE5', min: 0.75, max: 1.5 },
+  { id: 1, label: 'Recupero', short: 'Z1', color: '#4F86C6', bg: '#E4EDF7', min: 1.0, max: Infinity },
+  { id: 2, label: 'Aerobica', short: 'Z2', color: '#2F8F6B', bg: '#DCEFE6', min: 0.75, max: 1.0 },
+  { id: 3, label: 'Transizione', short: 'Z3', color: '#D6B23A', bg: '#F8EFD3', min: 0.5, max: 0.75 },
+  { id: 4, label: 'Anaerobica', short: 'Z4', color: '#E67E22', bg: '#FBE7D5', min: 0.3, max: 0.5 },
+  { id: 5, label: 'Massimale', short: 'Z5', color: '#C44E4E', bg: '#F6E0E0', min: 0.0, max: 0.3 },
 ]
 
 export function zoneById(id: number | null | undefined): DfaZone | null {
@@ -50,13 +54,14 @@ export function zoneById(id: number | null | undefined): DfaZone | null {
   return DFA_ZONES.find((z) => z.id === id) ?? null
 }
 
-// Deriva la zona da un valore alpha1 quando il campo `zone` non è valorizzato.
+// Deriva la zona dal valore alpha1 (stesse soglie dell'app). Le 5 zone coprono
+// l'intero dominio [0, +∞), quindi qualsiasi alpha1 finito ricade in una zona.
 export function zoneForAlpha1(alpha1: number | null | undefined): DfaZone | null {
   if (alpha1 == null || !Number.isFinite(alpha1)) return null
   for (const z of DFA_ZONES) {
     if (alpha1 >= z.min && alpha1 < z.max) return z
   }
-  return alpha1 >= 0.75 ? DFA_ZONES[DFA_ZONES.length - 1] : null
+  return null
 }
 
 // ── Livello competitivo ──────────────────────────────────────────────────────

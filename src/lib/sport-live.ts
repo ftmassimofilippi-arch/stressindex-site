@@ -81,13 +81,15 @@ export function isVisible(row: SportLiveRow, nowMs: number): boolean {
 }
 
 // ── Zone DFA (etichette "live" + colori vividi riusati da DFA_ZONES) ─────────
-// 1=verde Aerobica · 2=giallo Transizione · 3=arancio Anaerobica · 4=rosso Massimale.
+// 5 zone allineate all'app: 1=blu Recupero · 2=verde Aerobica · 3=giallo
+// Transizione · 4=arancio Anaerobica · 5=rosso Massimale.
 
 const LIVE_ZONE_LABEL: Record<number, string> = {
-  1: 'Aerobica',
-  2: 'Transizione',
-  3: 'Anaerobica',
-  4: 'Massimale',
+  1: 'Recupero',
+  2: 'Aerobica',
+  3: 'Transizione',
+  4: 'Anaerobica',
+  5: 'Massimale',
 }
 
 export interface LiveZone {
