@@ -37,6 +37,8 @@ const GROUPS: { title: string; fields: Array<{ key: keyof MeasurementAnalytics; 
       { key: 'hf_power_ls', label: 'HF LS', unit: 'ms²' },
       { key: 'lf_hf_ratio_ls', label: 'LF/HF LS', digits: 2 },
       { key: 'total_power_ls', label: 'Total LS', unit: 'ms²' },
+      { key: 'lf_nu_ls', label: 'LFnu LS', unit: 'n.u.' },
+      { key: 'hf_nu_ls', label: 'HFnu LS', unit: 'n.u.' },
     ],
   },
   {
@@ -57,6 +59,15 @@ const GROUPS: { title: string; fields: Array<{ key: keyof MeasurementAnalytics; 
       { key: 'triangular_index', label: 'Triangular Index', digits: 2 },
       { key: 'tinn', label: 'TINN', unit: 'ms' },
       { key: 'stress_index_baevsky', label: 'Baevsky SI', digits: 1 },
+    ],
+  },
+  {
+    title: 'Qualità del segnale',
+    fields: [
+      { key: 'artifact_percentage', label: 'Artefatti', unit: '%' },
+      { key: 'ectopic_count', label: 'Battiti ectopici', digits: 0 },
+      { key: 'signal_quality', label: 'Qualità segnale', digits: 0 },
+      { key: 'rr_count', label: 'Intervalli RR', digits: 0 },
     ],
   },
 ]

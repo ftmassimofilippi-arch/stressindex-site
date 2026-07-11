@@ -280,7 +280,7 @@ function gauss(f: number, mu: number, sigma: number) {
   return Math.exp(-((f - mu) ** 2) / (2 * sigma * sigma)) / (sigma * Math.sqrt(2 * Math.PI))
 }
 
-export function PsdPlaceholder({ vlf, lf, hf, lfHfRatio }: { vlf: number | null; lf: number | null; hf: number | null; lfHfRatio?: number | null }) {
+export function PsdPlaceholder({ vlf, lf, hf, lfHfRatio, resonanceHz }: { vlf: number | null; lf: number | null; hf: number | null; lfHfRatio?: number | null; resonanceHz?: number | null }) {
   if (vlf == null && lf == null && hf == null) return <Placeholder text="Dati spettro non disponibili" />
 
   const fMax = 0.4
@@ -326,6 +326,14 @@ export function PsdPlaceholder({ vlf, lf, hf, lfHfRatio }: { vlf: number | null;
           <ReferenceArea x1={0} x2={0.04} fill="#DC2626" fillOpacity={0.18} label={{ value: 'VLF', position: 'insideTop', fill: '#991B1B', fontSize: 11, fontWeight: 600 }} />
           <ReferenceArea x1={0.04} x2={0.15} fill="#F59E0B" fillOpacity={0.18} label={{ value: 'LF', position: 'insideTop', fill: '#92400E', fontSize: 11, fontWeight: 600 }} />
           <ReferenceArea x1={0.15} x2={0.4} fill="#4FA39A" fillOpacity={0.18} label={{ value: 'HF', position: 'insideTop', fill: '#115E59', fontSize: 11, fontWeight: 600 }} />
+          {resonanceHz != null && resonanceHz > 0 && resonanceHz <= fMax && (
+            <ReferenceLine
+              x={+resonanceHz.toFixed(4)}
+              stroke="#8B5CF6"
+              strokeWidth={2}
+              label={{ value: `risonanza ${resonanceHz.toFixed(3)} Hz`, position: 'top', fill: '#6D28D9', fontSize: 10, fontWeight: 700 }}
+            />
+          )}
           <Tooltip
             contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 11 }}
             labelFormatter={(v) => `f = ${Number(v).toFixed(3)} Hz`}

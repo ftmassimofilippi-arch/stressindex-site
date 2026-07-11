@@ -5,6 +5,7 @@ import { AlertTriangle, Sparkles } from 'lucide-react'
 import { GaugeScore } from '@/components/dashboard/GaugeScore'
 import { AdvancedTrendChart, TREND_METRICS } from '@/components/dashboard/AdvancedTrendChart'
 import { AlertBadge } from '@/components/dashboard/AlertBadge'
+import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
 import type { Alert, Client, MeasurementAnalytics } from '@/lib/types'
 import { ALERT_TYPE_LABEL } from '@/lib/types'
 import { formatDateTime, formatMeasuredAt } from '@/lib/format'
@@ -86,7 +87,10 @@ export function OverviewTab({ client, measurements, alerts, professionistaId }: 
               {measurements.slice(0, 3).map((m) => (
                 <li key={m.id} className="px-5 py-3 flex items-center gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-anthracite">{formatMeasuredAt(m.measured_at)}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-anthracite">{formatMeasuredAt(m.measured_at)}</span>
+                      <MeasurementTypeBadge testType={m.test_type} size="sm" />
+                    </div>
                     <div className="text-xs text-anthracite-lighter mt-0.5">
                       Stress {m.score_stress?.toFixed(0) ?? '—'} · Recupero {m.score_recupero?.toFixed(0) ?? '—'}
                     </div>

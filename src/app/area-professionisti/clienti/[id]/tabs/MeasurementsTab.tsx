@@ -6,8 +6,10 @@ import { Download } from 'lucide-react'
 import { DataTable, type Column } from '@/components/dashboard/DataTable'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
 import { DownloadMeasurementPdfButton } from '@/components/dashboard/DownloadMeasurementPdfButton'
+import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { formatMeasuredAt, formatDate } from '@/lib/format'
+import { normalizeTestType, measurementTypeMeta, type MeasurementTypeKey } from '@/lib/measurement-type'
 import type { Client, MeasurementAnalytics } from '@/lib/types'
 
 const DURATION_FILTERS = [
@@ -20,6 +22,14 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
   const qs = professionistaId ? `?professionista=${professionistaId}` : ''
   const [range, setRange] = useState<DateRange>(defaultRange(90))
   const [duration, setDuration] = useState<typeof DURATION_FILTERS[number]['value']>('all')
+  const [typeFilter, setTypeFilter] = useState<'all' | MeasurementTypeKey>('all')
+
+  // Tipi effettivamente presenti tra le misurazioni del cliente (per popolare il filtro).
+  const availableTypes = useMemo(() => {
+    const keys = new Set<MeasurementTypeKey>()
+    for (const m of measurements) keys.add(normalizeTestType(m.test_type))
+    return Array.from(keys)
+  }, [measurements])
 
   const filtered = useMemo(() => {
     const fromMs = new Date(range.from).getTime()
@@ -27,6 +37,7 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
     return measurements.filter((m) => {
       const t = new Date(m.measured_at).getTime()
       if (t < fromMs || t > toMs) return false
+      if (typeFilter !== 'all' && normalizeTestType(m.test_type) !== typeFilter) return false
       if (duration !== 'all') {
         const d = (m.duration_seconds ?? 0) / 60
         const target = Number(duration)
@@ -34,12 +45,13 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
       }
       return true
     })
-  }, [measurements, range, duration])
+  }, [measurements, range, duration, typeFilter])
 
   function exportCsv() {
-    const headers = ['Data','Durata (s)','Stress','Recupero','Equilibrio','Energia','Mod. Infiamm.','BPM','SDNN','RMSSD','Artifact %']
+    const headers = ['Data','Tipo','Durata (s)','Stress','Recupero','Equilibrio','Energia','Mod. Infiamm.','BPM','SDNN','RMSSD','Artifact %']
     const rows = filtered.map((m) => [
       formatMeasuredAt(m.measured_at),
+      measurementTypeMeta(m.test_type).label,
       m.duration_seconds ?? '',
       m.score_stress ?? '',
       m.score_recupero ?? '',
@@ -63,6 +75,7 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
 
   const columns: Column<MeasurementAnalytics>[] = [
     { key: 'measured_at', header: 'Data', accessor: (m) => m.measured_at, sortable: true, render: (m) => formatMeasuredAt(m.measured_at) },
+    { key: 'type', header: 'Tipo', accessor: (m) => measurementTypeMeta(m.test_type).label, sortable: true, render: (m) => <MeasurementTypeBadge testType={m.test_type} size="sm" /> },
     { key: 'duration', header: 'Durata', accessor: (m) => m.duration_seconds ?? 0, sortable: true, render: (m) => m.duration_seconds ? `${Math.round(m.duration_seconds / 60)} min` : '—' },
     { key: 'stress', header: 'Stress', accessor: (m) => m.score_stress ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_stress} inverted /> },
     { key: 'recupero', header: 'Recupero', accessor: (m) => m.score_recupero ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_recupero} /> },
@@ -85,6 +98,18 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
       <div className="flex flex-wrap items-center gap-3 justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <DateRangePicker value={range} onChange={setRange} />
+          {availableTypes.length > 1 && (
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
+              className="px-3 py-2 text-sm bg-white border border-surface-border rounded-xl"
+            >
+              <option value="all">Tutti i tipi</option>
+              {availableTypes.map((k) => (
+                <option key={k} value={k}>{measurementTypeMeta(k).label}</option>
+              ))}
+            </select>
+          )}
           <select
             value={duration}
             onChange={(e) => setDuration(e.target.value as typeof duration)}

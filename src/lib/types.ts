@@ -134,16 +134,106 @@ export interface MeasurementAnalytics {
   score_modulazione_infiammatoria: number | null
   score_composito: number | null
 
+  // Normalized units Lomb-Scargle
+  lf_nu_ls: number | null
+  hf_nu_ls: number | null
+
+  // Qualità segnale
+  ectopic_count: number | null
+  signal_quality: number | null
+
   // Meta
   algorithm_version: string | null
   score_weights: unknown | null
   tags: string[] | null
   created_at: string
   test_type: string | null
+  duration_type: string | null // 'timed' | 'free'
+  live_tags: unknown | null
+  tag_comparison: unknown | null
 
-  // Future features
-  orthostatic_data: unknown | null
-  coherence_data: unknown | null
+  // Analisi specifiche per tipo (JSONB)
+  orthostatic_data: OrthostaticData | null
+  coherence_data: CoherenceData | null
+
+  // Analisi misurazioni lunghe (JSONB)
+  segments: MeasurementSegment[] | null
+  rolling_series: RollingSeriesPoint[] | null
+}
+
+// ── JSONB: orthostatic_data ──────────────────────────────────────────────────
+// Analisi ortostatica: confronto tra fase supina e fase in piedi.
+// Chiavi camelCase come salvate dall'app Flutter.
+export interface OrthostaticPhaseMetrics {
+  meanBpm: number | null
+  sdnn: number | null
+  rmssd: number | null
+  pnn50: number | null
+  pnn20: number | null
+  cv: number | null
+  sd1: number | null
+  sd2: number | null
+  sd1Sd2Ratio: number | null
+  lfPower: number | null
+  hfPower: number | null
+  lfHfRatio: number | null
+  lfNorm: number | null
+  hfNorm: number | null
+  totalPower: number | null
+  vlfPower: number | null
+  dfaAlpha1: number | null
+  dfaAlpha2: number | null
+  sampEn: number | null
+  apEn: number | null
+  tinn: number | null
+  hrvTriangularIndex: number | null
+  stressIndex: number | null
+  rmssdSdnnRatio: number | null
+  sampleCount: number | null
+  rrIntervals: number[] | null
+  // varianti Lomb-Scargle e altri campi opzionali
+  [key: string]: number | number[] | boolean | null | undefined
+}
+
+export interface OrthostaticData {
+  supine: OrthostaticPhaseMetrics | null
+  standing: OrthostaticPhaseMetrics | null
+  reactivityIndex: number | null
+}
+
+// ── JSONB: coherence_data ────────────────────────────────────────────────────
+export interface CoherenceData {
+  coherenceScore: number | null
+  breathingRate: number | null // respiri/min
+  peakFrequencyHz: number | null // frequenza di risonanza rilevata
+  inhaleRatio: number | null
+  coherenceSeries: number[] | null // andamento dello score di coerenza nel tempo
+}
+
+// ── JSONB: segments (analisi segmentata misurazioni lunghe) ──────────────────
+export interface MeasurementSegmentScores {
+  stress: number | null
+  recovery: number | null
+  balance: number | null
+  energy: number | null
+  inflammation: number | null
+}
+
+export interface MeasurementSegment {
+  index: number
+  start_ms: number
+  end_ms: number
+  duration_s: number
+  hrv: Record<string, number | boolean | number[] | null> | null
+  scores: MeasurementSegmentScores | null
+}
+
+// ── JSONB: rolling_series (serie temporali continue) ─────────────────────────
+// Ogni punto: metrica `k`, tempo `t` (ms dall'inizio), valore `v`.
+export interface RollingSeriesPoint {
+  k: string
+  t: number
+  v: number
 }
 
 // Tipo arricchito con i campi di sessions utili per il dettaglio misurazione

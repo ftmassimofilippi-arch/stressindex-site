@@ -64,7 +64,7 @@ export async function listMeasurementsForClient(clientId: string, opts?: { limit
   //    measurement_analytics è scritta in fire-and-forget e può mancare di righe.
   let sq = supabase
     .from('sessions')
-    .select('id, client_id, professionista_id, started_at, created_at, duration_seconds, hrv_data, test_type, tags')
+    .select('id, client_id, professionista_id, started_at, created_at, duration_seconds, hrv_data, test_type, duration_type, segments, rolling_series, tags')
     .eq('client_id', clientId)
     .order('started_at', { ascending: false, nullsFirst: false })
   if (opts?.from) sq = sq.gte('started_at', opts.from)
@@ -112,6 +112,11 @@ type SessionRow = {
   duration_seconds: number | null
   hrv_data: Record<string, unknown> | null
   test_type: string | null
+  duration_type?: string | null
+  segments?: MeasurementAnalytics['segments']
+  rolling_series?: MeasurementAnalytics['rolling_series']
+  orthostatic_data?: MeasurementAnalytics['orthostatic_data']
+  coherence_data?: MeasurementAnalytics['coherence_data']
   tags: string[] | null
 }
 
@@ -157,6 +162,10 @@ function sessionToMeasurementAnalytics(s: SessionRow): MeasurementAnalytics {
     lf_hf_ratio: num('lfHfRatio'),
     lf_nu: num('lfNorm'),
     hf_nu: num('hfNorm'),
+    lf_nu_ls: num('lfNormLs'),
+    hf_nu_ls: num('hfNormLs'),
+    ectopic_count: num('ectopicCount'),
+    signal_quality: num('signalQuality'),
     lf_vlf_ratio: null,
     vlf_power_ls: num('vlfPowerLs'),
     lf_power_ls: num('lfPowerLs'),
@@ -184,8 +193,13 @@ function sessionToMeasurementAnalytics(s: SessionRow): MeasurementAnalytics {
     tags: s.tags ?? null,
     created_at: (s.created_at ?? s.started_at ?? new Date().toISOString()) as string,
     test_type: s.test_type,
-    orthostatic_data: null,
-    coherence_data: null,
+    duration_type: s.duration_type ?? null,
+    live_tags: null,
+    tag_comparison: null,
+    orthostatic_data: s.orthostatic_data ?? null,
+    coherence_data: s.coherence_data ?? null,
+    segments: s.segments ?? null,
+    rolling_series: s.rolling_series ?? null,
   }
 }
 

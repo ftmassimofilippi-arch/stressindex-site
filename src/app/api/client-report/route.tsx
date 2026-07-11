@@ -63,6 +63,10 @@ function sessionToMeasurement(s: SessionRow): MeasurementAnalytics {
     lf_hf_ratio: n('lfHfRatio'),
     lf_nu: n('lfNorm'),
     hf_nu: n('hfNorm'),
+    lf_nu_ls: n('lfNormLs'),
+    hf_nu_ls: n('hfNormLs'),
+    ectopic_count: n('ectopicCount'),
+    signal_quality: n('signalQuality'),
     lf_vlf_ratio: null,
     vlf_power_ls: n('vlfPowerLs'),
     lf_power_ls: n('lfPowerLs'),
@@ -90,8 +94,13 @@ function sessionToMeasurement(s: SessionRow): MeasurementAnalytics {
     tags: s.tags ?? null,
     created_at: (s.created_at ?? s.started_at ?? new Date().toISOString()) as string,
     test_type: s.test_type,
+    duration_type: null,
+    live_tags: null,
+    tag_comparison: null,
     orthostatic_data: null,
     coherence_data: null,
+    segments: null,
+    rolling_series: null,
   }
 }
 

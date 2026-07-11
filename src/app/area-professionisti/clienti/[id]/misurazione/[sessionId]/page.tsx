@@ -6,8 +6,13 @@ import { DownloadMeasurementPdfButton } from '@/components/dashboard/DownloadMea
 import { GaugeScore } from '@/components/dashboard/GaugeScore'
 import { getClient, getMeasurementBySessionId, getProfessionalProfile, listAlerts } from '@/lib/dashboard-data'
 import { fullName, formatMeasuredAt, num } from '@/lib/format'
+import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
+import { normalizeTestType, isLongMeasurement, formatDurationHuman } from '@/lib/measurement-type'
 import { PoincareScatter, Rhythmogram, PsdPlaceholder } from './HrvCharts'
 import { HrvParamsTable } from './HrvParamsTable'
+import { OrthostaticView } from './OrthostaticView'
+import { CoherenceView } from './CoherenceView'
+import { LongMeasurementView } from './LongMeasurementView'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Dettaglio misurazione' }
@@ -31,8 +36,15 @@ export default async function SessionDetailPage({
   const qs = searchParams?.professionista ? `?professionista=${searchParams.professionista}` : ''
   const backHref = `/area-professionisti/clienti/${client.id}${qs}${qs ? '&' : '?'}tab=misurazioni`
 
-  const duration = measurement.duration_seconds ? `${Math.round(measurement.duration_seconds / 60)} min` : '—'
+  const duration = formatDurationHuman(measurement.duration_seconds)
   const sensorLabel = measurement.sensor_name ?? measurement.sensor_type ?? 'Polar H10'
+
+  const typeKey = normalizeTestType(measurement.test_type)
+  const hasSegments = Array.isArray(measurement.segments) && measurement.segments.length > 1
+  const hasRolling = Array.isArray(measurement.rolling_series) && measurement.rolling_series.length > 0
+  // Blocco misurazioni lunghe: mostrato solo quando ci sono dati temporali reali
+  // (serie continua o segmenti), oppure la sessione è lunga per durata/tipo.
+  const showLong = hasSegments || hasRolling || (isLongMeasurement(measurement) && (typeKey === 'standard' || typeKey === 'unknown'))
 
   return (
     <DashboardLayout professional={professional} alertCount={alerts.length}>
@@ -45,7 +57,10 @@ export default async function SessionDetailPage({
       <header className="card p-6 mb-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="font-serif text-2xl text-anthracite">{formatMeasuredAt(measurement.measured_at)}</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="font-serif text-2xl text-anthracite">{formatMeasuredAt(measurement.measured_at)}</h1>
+              <MeasurementTypeBadge testType={measurement.test_type} />
+            </div>
             <p className="text-sm text-anthracite-lighter mt-1">
               {fullName(client)} · {duration} · Sensore: {sensorLabel}
               {measurement.artifact_percentage != null ? ` · Artifact: ${measurement.artifact_percentage.toFixed(1)}%` : ''}
@@ -81,6 +96,18 @@ export default async function SessionDetailPage({
         </div>
       </section>
 
+      {/* Analisi specifica per tipo di misurazione */}
+      {typeKey === 'orthostatic' && (
+        <section className="mb-6">
+          <OrthostaticView data={measurement.orthostatic_data} />
+        </section>
+      )}
+      {typeKey === 'coherence' && (
+        <section className="mb-6">
+          <CoherenceView data={measurement.coherence_data} measurement={measurement} />
+        </section>
+      )}
+
       <section className="card p-6 mb-6">
         <details>
           <summary className="font-serif text-lg text-anthracite cursor-pointer">Parametri HRV completi</summary>
@@ -90,29 +117,41 @@ export default async function SessionDetailPage({
         </details>
       </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="card p-6">
-          <h3 className="font-serif text-base text-anthracite mb-1">Diagramma di Poincaré</h3>
-          <p className="text-xs text-anthracite-lighter mb-3">SD1 vs SD2 — variabilità a breve / lungo termine</p>
-          <PoincareScatter rr={measurement.rr_intervals ?? null} sd1={measurement.sd1} sd2={measurement.sd2} />
-        </div>
-        <div className="card p-6">
-          <h3 className="font-serif text-base text-anthracite mb-1">Spettro frequenze (PSD)</h3>
-          <p className="text-xs text-anthracite-lighter mb-3">Densità spettrale di potenza — bande VLF / LF / HF</p>
-          <PsdPlaceholder
-            vlf={measurement.vlf_power}
-            lf={measurement.lf_power}
-            hf={measurement.hf_power}
-            lfHfRatio={measurement.lf_hf_ratio}
-          />
-        </div>
-      </section>
+      {/* Grafici HRV base: per ortostatica sono già mostrati per fase nella vista dedicata */}
+      {typeKey !== 'orthostatic' && (
+        <>
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="card p-6">
+              <h3 className="font-serif text-base text-anthracite mb-1">Diagramma di Poincaré</h3>
+              <p className="text-xs text-anthracite-lighter mb-3">SD1 vs SD2 — variabilità a breve / lungo termine</p>
+              <PoincareScatter rr={measurement.rr_intervals ?? null} sd1={measurement.sd1} sd2={measurement.sd2} />
+            </div>
+            <div className="card p-6">
+              <h3 className="font-serif text-base text-anthracite mb-1">Spettro frequenze (PSD)</h3>
+              <p className="text-xs text-anthracite-lighter mb-3">Densità spettrale di potenza — bande VLF / LF / HF</p>
+              <PsdPlaceholder
+                vlf={measurement.vlf_power}
+                lf={measurement.lf_power}
+                hf={measurement.hf_power}
+                lfHfRatio={measurement.lf_hf_ratio}
+              />
+            </div>
+          </section>
 
-      <section className="card p-6 mb-6">
-        <h3 className="font-serif text-base text-anthracite mb-1">Ritmogramma RR</h3>
-        <p className="text-xs text-anthracite-lighter mb-3">Intervalli RR nel tempo · usa il selettore inferiore per zoom temporale</p>
-        <Rhythmogram rr={measurement.rr_intervals ?? null} />
-      </section>
+          <section className="card p-6 mb-6">
+            <h3 className="font-serif text-base text-anthracite mb-1">Ritmogramma RR</h3>
+            <p className="text-xs text-anthracite-lighter mb-3">Intervalli RR nel tempo · usa il selettore inferiore per zoom temporale</p>
+            <Rhythmogram rr={measurement.rr_intervals ?? null} />
+          </section>
+        </>
+      )}
+
+      {/* Analisi misurazioni lunghe */}
+      {showLong && (
+        <section className="mb-6">
+          <LongMeasurementView measurement={measurement} />
+        </section>
+      )}
 
       <section className="card p-6">
         <h3 className="font-serif text-base text-anthracite mb-3">Note legate alla misurazione</h3>
