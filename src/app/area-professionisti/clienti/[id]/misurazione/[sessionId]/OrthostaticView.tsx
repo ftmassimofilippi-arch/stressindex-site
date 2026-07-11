@@ -7,7 +7,7 @@ import { PoincareScatter, Rhythmogram } from './HrvCharts'
 // Vista dedicata alla misurazione ortostatica: confronto supino vs in piedi
 // (stessa analisi della pagina risultati dell'app) + indice di reattività.
 
-type Row = { key: keyof OrthostaticPhaseMetrics; label: string; unit?: string; digits?: number; higherIsUp?: boolean }
+type Row = { key: keyof OrthostaticPhaseMetrics; label: string; unit?: string; digits?: number }
 
 const ROWS: Row[] = [
   { key: 'meanBpm', label: 'Frequenza cardiaca', unit: 'bpm', digits: 0 },
