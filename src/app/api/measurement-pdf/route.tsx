@@ -132,7 +132,7 @@ export async function POST(req: Request) {
 
   // 1. Carica sessione + verifica proprietà professionista.
   //    RLS filtra già su professionista_id = auth.uid(), quindi una riga = ownership ok.
-  const { data: session, error: sessErr } = await supabase
+  let { data: session, error: sessErr } = await supabase
     .from('sessions')
     .select('id, client_id, professionista_id, started_at, created_at, duration_seconds, hrv_data, test_type, tags, notes_professionista, indicazioni')
     .eq('id', sessionId)
@@ -142,14 +142,30 @@ export async function POST(req: Request) {
     console.error('[measurement-pdf] sessions query error', sessErr)
     return NextResponse.json({ error: 'Errore lettura sessione' }, { status: 500 })
   }
-  if (!session) {
-    return NextResponse.json({ error: 'Sessione non trovata' }, { status: 404 })
-  }
-  if (session.professionista_id !== user.id) {
-    return NextResponse.json({ error: 'Accesso negato' }, { status: 403 })
-  }
-  if (session.client_id !== clientId) {
-    return NextResponse.json({ error: 'clientId non corrispondente alla sessione' }, { status: 400 })
+
+  if (session) {
+    if (session.professionista_id !== user.id) {
+      return NextResponse.json({ error: 'Accesso negato' }, { status: 403 })
+    }
+    if (session.client_id !== clientId) {
+      return NextResponse.json({ error: 'clientId non corrispondente alla sessione' }, { status: 400 })
+    }
+  } else {
+    // Fallback sessioni remote (auto-misurate dal cliente, client_id null):
+    // la RLS le nasconde al professionista. La RPC SECURITY DEFINER ri-verifica
+    // internamente riga CRM + link active, quindi una riga trovata = autorizzato.
+    const { data: remoteRows, error: rpcErr } = await supabase.rpc(
+      'get_linked_client_sessions_by_client_id',
+      { p_client_id: clientId },
+    )
+    if (rpcErr) {
+      console.error('[measurement-pdf] rpc error', rpcErr)
+    }
+    session = ((remoteRows ?? []) as SessionRow[]).find((r) => r.id === sessionId) ?? null
+    if (!session) {
+      return NextResponse.json({ error: 'Sessione non trovata' }, { status: 404 })
+    }
+    session = { ...session, client_id: session.client_id ?? clientId }
   }
 
   // 2. Carica measurement_analytics (preferito, contiene gli score proprietari).

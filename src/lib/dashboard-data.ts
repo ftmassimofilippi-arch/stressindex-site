@@ -57,27 +57,71 @@ export async function getClient(id: string): Promise<Client | null> {
 // MEASUREMENT ANALYTICS — fonte autoritativa per score / HRV calcolati
 // ============================================================================
 
+// Sessioni remote (auto-misurate dal cliente dal proprio account): hanno
+// professionista_id = uid del CLIENTE e client_id null, quindi la RLS su
+// `sessions` le nasconde al professionista. La RPC SECURITY DEFINER
+// get_linked_client_sessions_by_client_id (stessa usata dall'app Flutter)
+// le restituisce solo se esiste un link `active` in client_professional_links.
+// Error-safe: se la RPC non è esposta o fallisce, ritorna [] senza rompere
+// la scheda cliente (restano visibili le sole misurazioni dirette).
+async function fetchRemoteSessionsForClient(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  clientId: string,
+): Promise<SessionRow[]> {
+  const { data, error } = await supabase.rpc('get_linked_client_sessions_by_client_id', {
+    p_client_id: clientId,
+  })
+  if (error) {
+    console.error('[fetchRemoteSessionsForClient] rpc error', { clientId, error })
+    return []
+  }
+  // La RPC ritorna righe `sessions` complete; client_id è null per definizione:
+  // lo valorizziamo col clientId richiesto così la UI resta coerente.
+  return ((data ?? []) as SessionRow[]).map((s) => ({ ...s, client_id: s.client_id ?? clientId }))
+}
+
 export async function listMeasurementsForClient(clientId: string, opts?: { limit?: number; from?: string; to?: string }): Promise<MeasurementAnalytics[]> {
   const supabase = await createClient()
 
   // 1. Source of truth: sessions (sempre popolato dall'app Flutter via sync_service).
   //    measurement_analytics è scritta in fire-and-forget e può mancare di righe.
-  let sq = supabase
+  //    Due sorgenti in parallelo (stesso pattern dell'app):
+  //    - dirette: client_id = clientId (misurazioni "in studio", via RLS)
+  //    - remote:  RPC get_linked_client_sessions_by_client_id (client_id null)
+  const dq = supabase
     .from('sessions')
     .select('id, client_id, professionista_id, started_at, created_at, duration_seconds, hrv_data, test_type, duration_type, segments, rolling_series, tags')
     .eq('client_id', clientId)
     .order('started_at', { ascending: false, nullsFirst: false })
-  if (opts?.from) sq = sq.gte('started_at', opts.from)
-  if (opts?.to) sq = sq.lte('started_at', opts.to)
-  if (opts?.limit) sq = sq.limit(opts.limit)
 
-  const { data: sessions, error: sessErr } = await sq
+  const [{ data: direct, error: sessErr }, remote] = await Promise.all([
+    dq,
+    fetchRemoteSessionsForClient(supabase, clientId),
+  ])
   if (sessErr) {
     console.error('[listMeasurementsForClient] sessions query error', { clientId, error: sessErr })
-    return []
   }
-  console.log('[listMeasurementsForClient] sessions found', { clientId, count: sessions?.length ?? 0 })
-  if (!sessions || sessions.length === 0) return []
+
+  // Merge + dedup per id (le dirette vincono), poi filtri from/to/limit sul
+  // set unito — i filtri vanno applicati DOPO il merge perché la RPC non li supporta.
+  const byId = new Map<string, SessionRow>()
+  for (const s of (direct ?? []) as SessionRow[]) byId.set(s.id, s)
+  for (const s of remote) if (!byId.has(s.id)) byId.set(s.id, s)
+
+  const ts = (s: SessionRow) => new Date(s.started_at ?? s.created_at ?? 0).getTime()
+  let sessions = Array.from(byId.values()).sort((a, b) => ts(b) - ts(a))
+  if (opts?.from) {
+    const from = new Date(opts.from).getTime()
+    sessions = sessions.filter((s) => ts(s) >= from)
+  }
+  if (opts?.to) {
+    const to = new Date(opts.to).getTime()
+    sessions = sessions.filter((s) => ts(s) <= to)
+  }
+  if (opts?.limit) sessions = sessions.slice(0, opts.limit)
+
+  console.log('[listMeasurementsForClient] sessions found', { clientId, direct: direct?.length ?? 0, remote: remote.length, merged: sessions.length })
+  if (sessions.length === 0) return []
 
   // 2. Enrichment: measurement_analytics (score proprietari calcolati dal trigger SQL).
   const sessionIds = sessions.map((s) => s.id as string)
@@ -206,18 +250,25 @@ function sessionToMeasurementAnalytics(s: SessionRow): MeasurementAnalytics {
 // Carica la singola misurazione. Preferisce measurement_analytics (con score),
 // altrimenti sintetizza da sessions.hrv_data come fallback. In entrambi i casi
 // fa join con sessions per notes_professionista / indicazioni.
-export async function getMeasurementBySessionId(sessionId: string): Promise<MeasurementWithSession | null> {
+export async function getMeasurementBySessionId(sessionId: string, clientId?: string): Promise<MeasurementWithSession | null> {
   const supabase = await createClient()
   const { data: ma } = await supabase
     .from('measurement_analytics')
     .select('*')
     .eq('session_id', sessionId)
     .maybeSingle()
-  const { data: s } = await supabase
+  let { data: s } = await supabase
     .from('sessions')
     .select('*')
     .eq('id', sessionId)
     .maybeSingle()
+  // Fallback sessioni remote: la RLS nasconde al professionista le sessioni
+  // auto-misurate dal cliente (client_id null). Se la lettura diretta non trova
+  // nulla e conosciamo il cliente, recuperiamo la riga via RPC SECURITY DEFINER.
+  if (!ma && !s && clientId) {
+    const remote = await fetchRemoteSessionsForClient(supabase, clientId)
+    s = remote.find((r) => r.id === sessionId) ?? null
+  }
   if (!ma && !s) return null
   const base = ma
     ? (ma as MeasurementAnalytics)
@@ -321,6 +372,34 @@ export type ClientWithLastMeasurement = Client & {
   settings?: ClientSettings | null
 }
 
+// Mappa client_id → ultima sessione remota (auto-misurata dal cliente).
+// Fonte: RPC get_linked_clients_last_remote_session (migration 016) — un solo
+// round-trip per tutti i clienti collegati del pro loggato, niente N+1.
+// Error-safe: se la migration non è ancora applicata la RPC non esiste (42883)
+// e si ritorna una mappa vuota senza rompere lista clienti / dashboard.
+async function getLastRemoteSessionMap(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<Map<string, string>> {
+  const map = new Map<string, string>()
+  const { data, error } = await supabase.rpc('get_linked_clients_last_remote_session')
+  if (error) {
+    console.error('[getLastRemoteSessionMap] rpc error', error)
+    return map
+  }
+  for (const r of (data ?? []) as Array<{ client_id: string; last_remote_at: string | null }>) {
+    if (r.client_id && r.last_remote_at) map.set(r.client_id, r.last_remote_at)
+  }
+  return map
+}
+
+// Ultima misurazione "effettiva": max tra la colonna clients.last_measurement_at
+// (aggiornata solo dalle misurazioni in studio) e l'ultima sessione remota.
+function effectiveLastMeasurementAt(direct: string | null | undefined, remote: string | undefined): string | null {
+  if (!remote) return direct ?? null
+  if (!direct) return remote
+  return new Date(remote).getTime() > new Date(direct).getTime() ? remote : direct
+}
+
 export async function listClientsEnriched(opts?: { professionistaId?: string }): Promise<ClientWithLastMeasurement[]> {
   const supabase = await createClient()
   const clientsQ = opts?.professionistaId
@@ -329,11 +408,18 @@ export async function listClientsEnriched(opts?: { professionistaId?: string }):
   const measurementsQ = opts?.professionistaId
     ? supabase.from('measurement_analytics').select('*').eq('user_id', opts.professionistaId).order('measured_at', { ascending: false })
     : supabase.from('measurement_analytics').select('*').order('measured_at', { ascending: false })
-  const [clientsRes, measurementsRes, alertsRes, settingsRes] = await Promise.all([
+  // Sessioni remote: solo per la vista "propria" (senza professionistaId).
+  // Nella vista superadmin/org la RPC gira come utente loggato e restituirebbe
+  // i SUOI clienti collegati, non quelli del professionista visualizzato.
+  const remoteMapQ = opts?.professionistaId
+    ? Promise.resolve(new Map<string, string>())
+    : getLastRemoteSessionMap(supabase)
+  const [clientsRes, measurementsRes, alertsRes, settingsRes, remoteMap] = await Promise.all([
     clientsQ,
     measurementsQ,
     supabase.from('alerts').select('client_id,status').in('status', ['new', 'seen']),
     supabase.from('client_settings').select('*'),
+    remoteMapQ,
   ])
   const clients = (clientsRes.data ?? []) as Client[]
   const measurements = (measurementsRes.data ?? []) as MeasurementAnalytics[]
@@ -351,6 +437,9 @@ export async function listClientsEnriched(opts?: { professionistaId?: string }):
 
   return clients.map((c) => ({
     ...c,
+    // "Ultima misurazione" considera anche le sessioni remote del cliente,
+    // che non aggiornano clients.last_measurement_at.
+    last_measurement_at: effectiveLastMeasurementAt(c.last_measurement_at, remoteMap.get(c.id)),
     lastMeasurement: lastByClient.get(c.id) ?? null,
     activeAlerts: alertCountBy.get(c.id) ?? 0,
     settings: settingsBy.get(c.id) ?? null,
@@ -424,9 +513,10 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
 
 export async function clientsToContact(): Promise<Array<{ client: Client; settings: ClientSettings | null; daysSinceLast: number }>> {
   const supabase = await createClient()
-  const [{ data: clients }, { data: settings }] = await Promise.all([
+  const [{ data: clients }, { data: settings }, remoteMap] = await Promise.all([
     supabase.from('clients').select('*'),
     supabase.from('client_settings').select('*'),
+    getLastRemoteSessionMap(supabase),
   ])
   const settingsMap = new Map<string, ClientSettings>()
   for (const s of (settings ?? []) as ClientSettings[]) settingsMap.set(s.client_id, s)
@@ -434,8 +524,12 @@ export async function clientsToContact(): Promise<Array<{ client: Client; settin
   const now = Date.now()
   const out: Array<{ client: Client; settings: ClientSettings | null; daysSinceLast: number }> = []
   for (const c of (clients ?? []) as Client[]) {
-    if (!c.last_measurement_at) continue
-    const days = Math.floor((now - new Date(c.last_measurement_at).getTime()) / (1000 * 60 * 60 * 24))
+    // Considera anche le sessioni remote: un cliente che si auto-misura ogni
+    // giorno non deve finire tra i "da contattare" solo perché
+    // clients.last_measurement_at non viene aggiornata dalle remote.
+    const lastAt = effectiveLastMeasurementAt(c.last_measurement_at, remoteMap.get(c.id))
+    if (!lastAt) continue
+    const days = Math.floor((now - new Date(lastAt).getTime()) / (1000 * 60 * 60 * 24))
     const cs = settingsMap.get(c.id)
     const expected = cs?.expected_frequency_per_week ?? 0
     if (expected > 0) {

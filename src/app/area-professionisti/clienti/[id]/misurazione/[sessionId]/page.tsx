@@ -25,7 +25,7 @@ export default async function SessionDetailPage({
   searchParams?: { professionista?: string }
 }) {
   const [measurement, client, professional, alerts] = await Promise.all([
-    getMeasurementBySessionId(params.sessionId),
+    getMeasurementBySessionId(params.sessionId, params.id),
     getClient(params.id),
     getProfessionalProfile(),
     listAlerts({ status: ['new'] }),
