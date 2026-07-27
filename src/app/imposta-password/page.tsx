@@ -1,17 +1,19 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { RecoverForm } from './RecoverForm'
-import { RecoveryLinkRedirect } from '@/components/RecoveryLinkRedirect'
+import { SetPasswordForm } from './SetPasswordForm'
 
 export const metadata: Metadata = {
-  title: 'Recupera password',
+  title: 'Imposta password',
   robots: { index: false, follow: false },
 }
 
-export default function RecuperaPasswordPage() {
+// Pagina di atterraggio dei link email Supabase (reset password e invito).
+// Volutamente FUORI da /area-professionisti: il middleware di quell'area
+// rimanda al login chi non ha sessione e rimanda alla dashboard chi ce l'ha —
+// entrambi i comportamenti romperebbero il flusso di recovery.
+export default function ImpostaPasswordPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <RecoveryLinkRedirect />
       <header className="border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
           <Link href="/" className="flex items-center gap-2.5">
@@ -27,26 +29,7 @@ export default function RecuperaPasswordPage() {
 
       <main className="flex-1 flex items-center justify-center px-6 py-16">
         <div className="w-full max-w-sm">
-          <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider mb-4">
-            <span aria-hidden="true">🔑</span>
-            <span>Recupera accesso</span>
-          </div>
-          <h1 className="font-serif text-4xl text-anthracite tracking-tight">
-            Password dimenticata
-          </h1>
-          <p className="mt-3 text-anthracite-light">
-            Inserisci la tua email e ti invieremo un link per reimpostare la password.
-          </p>
-
-          <div className="mt-8">
-            <RecoverForm />
-          </div>
-
-          <p className="mt-8 text-sm text-anthracite-lighter text-center">
-            <Link href="/area-professionisti/login" className="text-teal-dark font-medium hover:underline">
-              ← Torna al login
-            </Link>
-          </p>
+          <SetPasswordForm />
         </div>
       </main>
     </div>

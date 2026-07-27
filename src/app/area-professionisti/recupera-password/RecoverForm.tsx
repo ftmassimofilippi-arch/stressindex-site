@@ -16,8 +16,12 @@ export function RecoverForm() {
     setLoading(true)
     const supabase = createClient()
     const siteUrl = typeof window !== 'undefined' ? window.location.origin : ''
+    // /imposta-password è l'unica pagina che sa raccogliere il token del link
+    // email. Perché venga rispettata, l'URL deve essere in Authentication →
+    // URL Configuration → Redirect URLs del progetto Supabase: altrimenti
+    // GoTrue lo ignora e usa la Site URL (vedi docs/reset-password.md).
     const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${siteUrl}/area-professionisti/login`,
+      redirectTo: `${siteUrl}/imposta-password`,
     })
     setLoading(false)
     if (authError) { setError(authError.message); return }
