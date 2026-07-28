@@ -1,13 +1,4 @@
 import { createClient } from './supabase-server'
-import { hasServiceRole } from './supabase-admin'
-import {
-  lastRemoteAtByClient,
-  remoteMeasurementsForClient,
-  remoteMeasurementsForProfessional,
-  remoteSessionsViaRpc,
-  sessionToMeasurementAnalytics,
-  type SessionRow,
-} from './remote-sessions'
 import type {
   Alert,
   Client,
@@ -66,58 +57,27 @@ export async function getClient(id: string): Promise<Client | null> {
 // MEASUREMENT ANALYTICS — fonte autoritativa per score / HRV calcolati
 // ============================================================================
 
-// Colonne di `sessions` necessarie a ricostruire una misurazione completa.
-const SESSION_SELECT =
-  'id, client_id, professionista_id, started_at, created_at, duration_seconds, hrv_data, test_type, duration_type, segments, rolling_series, orthostatic_data, coherence_data, tags, notes_professionista, indicazioni'
-
-const measuredAtMs = (m: MeasurementAnalytics) => new Date(m.measured_at ?? 0).getTime()
-const byMeasuredAtDesc = (a: MeasurementAnalytics, b: MeasurementAnalytics) => measuredAtMs(b) - measuredAtMs(a)
-
-// Perimetro autorizzato di lettura per le sessioni remote di UN cliente.
-// La riga `clients` è letta con la RLS attiva: se torna, l'utente loggato è
-// autorizzato a vedere quel cliente (professionista proprietario, membro org o
-// superadmin), e il suo professionista_id è il perimetro dentro cui cercare le
-// sessioni remote con la service_role. Se non torna, non si legge nulla.
-async function authorizedClientOwner(
+// Sessioni remote (auto-misurate dal cliente dal proprio account): hanno
+// professionista_id = uid del CLIENTE e client_id null, quindi la RLS su
+// `sessions` le nasconde al professionista. La RPC SECURITY DEFINER
+// get_linked_client_sessions_by_client_id (stessa usata dall'app Flutter)
+// le restituisce solo se esiste un link `active` in client_professional_links.
+// Error-safe: se la RPC non è esposta o fallisce, ritorna [] senza rompere
+// la scheda cliente (restano visibili le sole misurazioni dirette).
+async function fetchRemoteSessionsForClient(
   supabase: Awaited<ReturnType<typeof createClient>>,
   clientId: string,
-): Promise<{ professionistaId: string; email: string | null } | null> {
-  const { data, error } = await supabase
-    .from('clients')
-    .select('id, professionista_id, email')
-    .eq('id', clientId)
-    .maybeSingle()
+): Promise<SessionRow[]> {
+  const { data, error } = await supabase.rpc('get_linked_client_sessions_by_client_id', {
+    p_client_id: clientId,
+  })
   if (error) {
-    console.error('[remote] lettura clients non autorizzata o fallita', { clientId, error })
-    return null
+    console.error('[fetchRemoteSessionsForClient] rpc error', { clientId, error })
+    return []
   }
-  if (!data) {
-    console.warn('[remote] cliente non leggibile con la sessione corrente', { clientId })
-    return null
-  }
-  const row = data as { professionista_id: string; email: string | null }
-  return { professionistaId: row.professionista_id, email: row.email }
-}
-
-// Misurazioni remote (client_id null) di un singolo cliente collegato.
-// Percorso primario: service_role (vede anche measurement_analytics, quindi gli
-// score). Fallback senza service_role: RPC SECURITY DEFINER dell'app Flutter.
-async function remoteForClient(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  clientId: string,
-): Promise<MeasurementAnalytics[]> {
-  const owner = await authorizedClientOwner(supabase, clientId)
-  if (!owner) return []
-  if (hasServiceRole()) return remoteMeasurementsForClient(owner.professionistaId, clientId)
-  return remoteSessionsViaRpc(supabase, owner.email, clientId)
-}
-
-// Misurazioni remote di TUTTI i clienti collegati di un professionista.
-// professionistaId esplicito = vista superadmin/org su un altro studio.
-async function remoteForProfessional(professionistaId?: string): Promise<MeasurementAnalytics[]> {
-  const targetId = professionistaId ?? (await getCurrentUser())?.id
-  if (!targetId) return []
-  return remoteMeasurementsForProfessional(targetId)
+  // La RPC ritorna righe `sessions` complete; client_id è null per definizione:
+  // lo valorizziamo col clientId richiesto così la UI resta coerente.
+  return ((data ?? []) as SessionRow[]).map((s) => ({ ...s, client_id: s.client_id ?? clientId }))
 }
 
 export async function listMeasurementsForClient(clientId: string, opts?: { limit?: number; from?: string; to?: string }): Promise<MeasurementAnalytics[]> {
@@ -127,64 +87,164 @@ export async function listMeasurementsForClient(clientId: string, opts?: { limit
   //    measurement_analytics è scritta in fire-and-forget e può mancare di righe.
   //    Due sorgenti in parallelo (stesso pattern dell'app):
   //    - dirette: client_id = clientId (misurazioni "in studio", via RLS)
-  //    - remote:  auto-misurate dal cliente (client_id null), vedi remote-sessions.ts
+  //    - remote:  RPC get_linked_client_sessions_by_client_id (client_id null)
   const dq = supabase
     .from('sessions')
-    .select(SESSION_SELECT)
+    .select('id, client_id, professionista_id, started_at, created_at, duration_seconds, hrv_data, test_type, duration_type, segments, rolling_series, tags')
     .eq('client_id', clientId)
     .order('started_at', { ascending: false, nullsFirst: false })
 
   const [{ data: direct, error: sessErr }, remote] = await Promise.all([
     dq,
-    remoteForClient(supabase, clientId),
+    fetchRemoteSessionsForClient(supabase, clientId),
   ])
   if (sessErr) {
     console.error('[listMeasurementsForClient] sessions query error', { clientId, error: sessErr })
   }
 
-  // 2. Enrichment delle dirette con measurement_analytics (score proprietari).
-  const directRows = (direct ?? []) as unknown as SessionRow[]
-  let directMeasurements: MeasurementAnalytics[] = []
-  if (directRows.length > 0) {
-    const { data: maRows, error: maErr } = await supabase
-      .from('measurement_analytics')
-      .select('*')
-      .in('session_id', directRows.map((s) => s.id))
-    if (maErr) {
-      console.error('[listMeasurementsForClient] measurement_analytics query error', { clientId, error: maErr })
-    }
-    const maBySession = new Map<string, MeasurementAnalytics>()
-    for (const row of (maRows ?? []) as MeasurementAnalytics[]) {
-      if (row.session_id) maBySession.set(row.session_id, row)
-    }
-    // Se manca la riga analytics, sintetizza da sessions.hrv_data così la
-    // misurazione appare comunque (score "—", parametri HRV presenti).
-    directMeasurements = directRows.map((s) => maBySession.get(s.id) ?? sessionToMeasurementAnalytics(s))
-  }
+  // Merge + dedup per id (le dirette vincono), poi filtri from/to/limit sul
+  // set unito — i filtri vanno applicati DOPO il merge perché la RPC non li supporta.
+  const byId = new Map<string, SessionRow>()
+  for (const s of (direct ?? []) as SessionRow[]) byId.set(s.id, s)
+  for (const s of remote) if (!byId.has(s.id)) byId.set(s.id, s)
 
-  // 3. Merge + dedup per session_id (le dirette vincono), poi filtri sul set unito.
-  const bySession = new Map<string, MeasurementAnalytics>()
-  for (const m of directMeasurements) bySession.set(m.session_id, m)
-  for (const m of remote) if (!bySession.has(m.session_id)) bySession.set(m.session_id, m)
-
-  let out = Array.from(bySession.values()).sort(byMeasuredAtDesc)
+  const ts = (s: SessionRow) => new Date(s.started_at ?? s.created_at ?? 0).getTime()
+  let sessions = Array.from(byId.values()).sort((a, b) => ts(b) - ts(a))
   if (opts?.from) {
     const from = new Date(opts.from).getTime()
-    out = out.filter((m) => measuredAtMs(m) >= from)
+    sessions = sessions.filter((s) => ts(s) >= from)
   }
   if (opts?.to) {
     const to = new Date(opts.to).getTime()
-    out = out.filter((m) => measuredAtMs(m) <= to)
+    sessions = sessions.filter((s) => ts(s) <= to)
   }
-  if (opts?.limit) out = out.slice(0, opts.limit)
+  if (opts?.limit) sessions = sessions.slice(0, opts.limit)
 
-  console.log('[listMeasurementsForClient] misurazioni', {
-    clientId,
-    dirette: directMeasurements.length,
-    remote: remote.length,
-    totale: out.length,
-  })
-  return out
+  console.log('[listMeasurementsForClient] sessions found', { clientId, direct: direct?.length ?? 0, remote: remote.length, merged: sessions.length })
+  if (sessions.length === 0) return []
+
+  // 2. Enrichment: measurement_analytics (score proprietari calcolati dal trigger SQL).
+  const sessionIds = sessions.map((s) => s.id as string)
+  const { data: maRows, error: maErr } = await supabase
+    .from('measurement_analytics')
+    .select('*')
+    .in('session_id', sessionIds)
+  if (maErr) {
+    console.error('[listMeasurementsForClient] measurement_analytics query error', { clientId, error: maErr })
+  }
+  const maBySession = new Map<string, MeasurementAnalytics>()
+  for (const row of (maRows ?? []) as MeasurementAnalytics[]) {
+    if (row.session_id) maBySession.set(row.session_id, row)
+  }
+  console.log('[listMeasurementsForClient] measurement_analytics rows', { clientId, total: maRows?.length ?? 0, missing: sessionIds.length - (maRows?.length ?? 0) })
+
+  // 3. Merge: preferisci la riga measurement_analytics (con score); altrimenti
+  //    sintetizza da sessions.hrv_data così la misurazione appare comunque.
+  return sessions.map((s) => maBySession.get(s.id as string) ?? sessionToMeasurementAnalytics(s))
+}
+
+// Costruisce una MeasurementAnalytics minimale a partire da una riga `sessions`.
+// Usato come fallback quando measurement_analytics non contiene la riga per quel
+// session_id (es. fire-and-forget Flutter fallito, sync queue non drenata).
+// I campi score_* restano null: la dashboard mostra "—" per le metriche calcolate.
+type SessionRow = {
+  id: string
+  client_id: string
+  professionista_id: string
+  started_at: string | null
+  created_at: string | null
+  duration_seconds: number | null
+  hrv_data: Record<string, unknown> | null
+  test_type: string | null
+  duration_type?: string | null
+  segments?: MeasurementAnalytics['segments']
+  rolling_series?: MeasurementAnalytics['rolling_series']
+  orthostatic_data?: MeasurementAnalytics['orthostatic_data']
+  coherence_data?: MeasurementAnalytics['coherence_data']
+  tags: string[] | null
+}
+
+function sessionToMeasurementAnalytics(s: SessionRow): MeasurementAnalytics {
+  const h = (s.hrv_data ?? {}) as Record<string, unknown>
+  const num = (k: string): number | null => {
+    const v = h[k]
+    if (v === null || v === undefined) return null
+    const n = typeof v === 'number' ? v : Number(v)
+    return Number.isFinite(n) ? n : null
+  }
+  const meanBpm = num('meanBpm')
+  return {
+    id: s.id,
+    session_id: s.id,
+    user_id: s.professionista_id,
+    client_id: s.client_id,
+    measured_at: (s.started_at ?? s.created_at ?? new Date().toISOString()) as string,
+    duration_seconds: s.duration_seconds ?? 0,
+    sensor_type: null,
+    sensor_name: null,
+    age: null,
+    sex: null,
+    is_smoker: null,
+    is_athlete: null,
+    activity_level: null,
+    rr_intervals: null,
+    rr_count: num('sampleCount'),
+    artifact_percentage: null,
+    mean_rr: meanBpm && meanBpm > 0 ? 60000 / meanBpm : null,
+    sdnn: num('sdnn'),
+    rmssd: num('rmssd'),
+    pnn50: num('pnn50'),
+    pnn20: num('pnn20'),
+    mean_hr: meanBpm,
+    sdnn_index: null,
+    cv: num('cv'),
+    rmssd_sdnn_ratio: num('rmssdSdnnRatio'),
+    vlf_power: num('vlfPower'),
+    lf_power: num('lfPower'),
+    hf_power: num('hfPower'),
+    total_power: num('totalPower'),
+    lf_hf_ratio: num('lfHfRatio'),
+    lf_nu: num('lfNorm'),
+    hf_nu: num('hfNorm'),
+    lf_nu_ls: num('lfNormLs'),
+    hf_nu_ls: num('hfNormLs'),
+    ectopic_count: num('ectopicCount'),
+    signal_quality: num('signalQuality'),
+    lf_vlf_ratio: null,
+    vlf_power_ls: num('vlfPowerLs'),
+    lf_power_ls: num('lfPowerLs'),
+    hf_power_ls: num('hfPowerLs'),
+    total_power_ls: num('totalPowerLs'),
+    lf_hf_ratio_ls: num('lfHfRatioLs'),
+    sd1: num('sd1'),
+    sd2: num('sd2'),
+    sd1_sd2_ratio: num('sd1Sd2Ratio'),
+    dfa_alpha1: num('dfaAlpha1'),
+    dfa_alpha2: num('dfaAlpha2'),
+    sample_entropy: num('sampEn'),
+    approximate_entropy: num('apEn'),
+    triangular_index: num('hrvTriangularIndex'),
+    tinn: num('tinn'),
+    stress_index_baevsky: num('stressIndex'),
+    score_stress: null,
+    score_recupero: null,
+    score_equilibrio: null,
+    score_energia: null,
+    score_modulazione_infiammatoria: null,
+    score_composito: null,
+    algorithm_version: null,
+    score_weights: null,
+    tags: s.tags ?? null,
+    created_at: (s.created_at ?? s.started_at ?? new Date().toISOString()) as string,
+    test_type: s.test_type,
+    duration_type: s.duration_type ?? null,
+    live_tags: null,
+    tag_comparison: null,
+    orthostatic_data: s.orthostatic_data ?? null,
+    coherence_data: s.coherence_data ?? null,
+    segments: s.segments ?? null,
+    rolling_series: s.rolling_series ?? null,
+  }
 }
 
 // Carica la singola misurazione. Preferisce measurement_analytics (con score),
@@ -197,27 +257,22 @@ export async function getMeasurementBySessionId(sessionId: string, clientId?: st
     .select('*')
     .eq('session_id', sessionId)
     .maybeSingle()
-  const { data: s } = await supabase
+  let { data: s } = await supabase
     .from('sessions')
     .select('*')
     .eq('id', sessionId)
     .maybeSingle()
-  // Fallback sessioni remote: la RLS nasconde al professionista sia la sessione
-  // (client_id null) sia la sua riga analytics. Se la lettura diretta non trova
-  // nulla e conosciamo il cliente, la recuperiamo dal percorso autorizzato.
-  if (!ma && !s) {
-    if (!clientId) return null
-    const remote = await remoteForClient(supabase, clientId)
-    const found = remote.find((m) => m.session_id === sessionId)
-    if (!found) {
-      console.warn('[getMeasurementBySessionId] sessione non trovata né diretta né remota', { sessionId, clientId })
-      return null
-    }
-    return { ...found, notes_professionista: null, indicazioni: null }
+  // Fallback sessioni remote: la RLS nasconde al professionista le sessioni
+  // auto-misurate dal cliente (client_id null). Se la lettura diretta non trova
+  // nulla e conosciamo il cliente, recuperiamo la riga via RPC SECURITY DEFINER.
+  if (!ma && !s && clientId) {
+    const remote = await fetchRemoteSessionsForClient(supabase, clientId)
+    s = remote.find((r) => r.id === sessionId) ?? null
   }
+  if (!ma && !s) return null
   const base = ma
     ? (ma as MeasurementAnalytics)
-    : sessionToMeasurementAnalytics(s as unknown as SessionRow)
+    : sessionToMeasurementAnalytics(s as SessionRow)
   return {
     ...base,
     notes_professionista: (s?.notes_professionista as string | null) ?? null,
@@ -229,21 +284,12 @@ export async function todaysMeasurements(): Promise<MeasurementAnalytics[]> {
   const supabase = await createClient()
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const todayMs = today.getTime()
-  const [{ data }, remote] = await Promise.all([
-    supabase
-      .from('measurement_analytics')
-      .select('*')
-      .gte('measured_at', today.toISOString())
-      .order('measured_at', { ascending: false }),
-    remoteForProfessional(),
-  ])
-  const bySession = new Map<string, MeasurementAnalytics>()
-  for (const m of (data ?? []) as MeasurementAnalytics[]) bySession.set(m.session_id, m)
-  for (const m of remote) {
-    if (measuredAtMs(m) >= todayMs && !bySession.has(m.session_id)) bySession.set(m.session_id, m)
-  }
-  return Array.from(bySession.values()).sort(byMeasuredAtDesc)
+  const { data } = await supabase
+    .from('measurement_analytics')
+    .select('*')
+    .gte('measured_at', today.toISOString())
+    .order('measured_at', { ascending: false })
+  return (data ?? []) as MeasurementAnalytics[]
 }
 
 // ============================================================================
@@ -327,14 +373,13 @@ export type ClientWithLastMeasurement = Client & {
 }
 
 // Mappa client_id → ultima sessione remota (auto-misurata dal cliente).
-// Percorso primario: le misurazioni remote già caricate (service_role).
-// Fallback senza service_role: RPC get_linked_clients_last_remote_session
-// (migration 016), che dà il solo timestamp e vale solo per il pro loggato.
+// Fonte: RPC get_linked_clients_last_remote_session (migration 016) — un solo
+// round-trip per tutti i clienti collegati del pro loggato, niente N+1.
+// Error-safe: se la migration non è ancora applicata la RPC non esiste (42883)
+// e si ritorna una mappa vuota senza rompere lista clienti / dashboard.
 async function getLastRemoteSessionMap(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  remote: MeasurementAnalytics[],
 ): Promise<Map<string, string>> {
-  if (remote.length > 0 || hasServiceRole()) return lastRemoteAtByClient(remote)
   const map = new Map<string, string>()
   const { data, error } = await supabase.rpc('get_linked_clients_last_remote_session')
   if (error) {
@@ -363,28 +408,27 @@ export async function listClientsEnriched(opts?: { professionistaId?: string }):
   const measurementsQ = opts?.professionistaId
     ? supabase.from('measurement_analytics').select('*').eq('user_id', opts.professionistaId).order('measured_at', { ascending: false })
     : supabase.from('measurement_analytics').select('*').order('measured_at', { ascending: false })
-  // Sessioni remote: funzionano anche nella vista superadmin/org, perché il
-  // perimetro è il professionista visualizzato (opts.professionistaId) e non
-  // l'utente loggato.
-  const [clientsRes, measurementsRes, alertsRes, settingsRes, remote] = await Promise.all([
+  // Sessioni remote: solo per la vista "propria" (senza professionistaId).
+  // Nella vista superadmin/org la RPC gira come utente loggato e restituirebbe
+  // i SUOI clienti collegati, non quelli del professionista visualizzato.
+  const remoteMapQ = opts?.professionistaId
+    ? Promise.resolve(new Map<string, string>())
+    : getLastRemoteSessionMap(supabase)
+  const [clientsRes, measurementsRes, alertsRes, settingsRes, remoteMap] = await Promise.all([
     clientsQ,
     measurementsQ,
     supabase.from('alerts').select('client_id,status').in('status', ['new', 'seen']),
     supabase.from('client_settings').select('*'),
-    remoteForProfessional(opts?.professionistaId),
+    remoteMapQ,
   ])
   const clients = (clientsRes.data ?? []) as Client[]
   const measurements = (measurementsRes.data ?? []) as MeasurementAnalytics[]
   const alerts = alertsRes.data ?? []
   const settings = (settingsRes.data ?? []) as ClientSettings[]
-  const remoteMap = await getLastRemoteSessionMap(supabase, remote)
 
-  // Ultima misurazione per cliente: dirette + remote, vince la più recente.
   const lastByClient = new Map<string, MeasurementAnalytics>()
-  for (const m of [...measurements, ...remote]) {
-    if (!m.client_id) continue
-    const prev = lastByClient.get(m.client_id)
-    if (!prev || measuredAtMs(m) > measuredAtMs(prev)) lastByClient.set(m.client_id, m)
+  for (const m of measurements) {
+    if (!lastByClient.has(m.client_id)) lastByClient.set(m.client_id, m)
   }
   const alertCountBy = new Map<string, number>()
   for (const a of alerts) alertCountBy.set(a.client_id, (alertCountBy.get(a.client_id) ?? 0) + 1)
@@ -424,24 +468,15 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
   from.setHours(0, 0, 0, 0)
 
   const select = ['measured_at', ...TREND_COLUMNS].join(',')
-  const [{ data }, remote] = await Promise.all([
-    supabase
-      .from('measurement_analytics')
-      .select(select)
-      .gte('measured_at', from.toISOString())
-      .order('measured_at', { ascending: true }),
-    remoteForProfessional(),
-  ])
+  const { data } = await supabase
+    .from('measurement_analytics')
+    .select(select)
+    .gte('measured_at', from.toISOString())
+    .order('measured_at', { ascending: true })
 
   type Row = { measured_at: string } & { [K in TrendColumn]: number | null }
-  const fromMs = from.getTime()
-  // Le misurazioni remote non sono leggibili via RLS: entrano nel trend qui.
-  const rows = [
-    ...((data ?? []) as unknown as Row[]),
-    ...(remote.filter((m) => measuredAtMs(m) >= fromMs) as unknown as Row[]),
-  ]
   const buckets = new Map<string, Map<TrendColumn, number[]>>()
-  for (const row of rows) {
+  for (const row of (data ?? []) as unknown as Row[]) {
     const day = row.measured_at.slice(0, 10)
     let bucket = buckets.get(day)
     if (!bucket) {
@@ -478,12 +513,11 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
 
 export async function clientsToContact(): Promise<Array<{ client: Client; settings: ClientSettings | null; daysSinceLast: number }>> {
   const supabase = await createClient()
-  const [{ data: clients }, { data: settings }, remote] = await Promise.all([
+  const [{ data: clients }, { data: settings }, remoteMap] = await Promise.all([
     supabase.from('clients').select('*'),
     supabase.from('client_settings').select('*'),
-    remoteForProfessional(),
+    getLastRemoteSessionMap(supabase),
   ])
-  const remoteMap = await getLastRemoteSessionMap(supabase, remote)
   const settingsMap = new Map<string, ClientSettings>()
   for (const s of (settings ?? []) as ClientSettings[]) settingsMap.set(s.client_id, s)
 
@@ -939,8 +973,7 @@ export async function listAllProfessionalsStats(): Promise<ProfessionalStats[]> 
     .sort((a, b) => a.full_name.localeCompare(b.full_name))
 }
 
-// Carica TUTTE le misurazioni dello studio (per pagina analytics),
-// incluse quelle auto-misurate dai clienti collegati (invisibili via RLS).
+// Carica TUTTE le misurazioni dello studio (per pagina analytics)
 export async function listAllMeasurements(opts?: { from?: string; to?: string }): Promise<MeasurementAnalytics[]> {
   const supabase = await createClient()
   let q = supabase
@@ -949,16 +982,6 @@ export async function listAllMeasurements(opts?: { from?: string; to?: string })
     .order('measured_at', { ascending: true })
   if (opts?.from) q = q.gte('measured_at', opts.from)
   if (opts?.to) q = q.lte('measured_at', opts.to)
-  const [{ data }, remote] = await Promise.all([q, remoteForProfessional()])
-
-  const bySession = new Map<string, MeasurementAnalytics>()
-  for (const m of (data ?? []) as MeasurementAnalytics[]) bySession.set(m.session_id, m)
-  const fromMs = opts?.from ? new Date(opts.from).getTime() : null
-  const toMs = opts?.to ? new Date(opts.to).getTime() : null
-  for (const m of remote) {
-    if (fromMs != null && measuredAtMs(m) < fromMs) continue
-    if (toMs != null && measuredAtMs(m) > toMs) continue
-    if (!bySession.has(m.session_id)) bySession.set(m.session_id, m)
-  }
-  return Array.from(bySession.values()).sort((a, b) => measuredAtMs(a) - measuredAtMs(b))
+  const { data } = await q
+  return (data ?? []) as MeasurementAnalytics[]
 }

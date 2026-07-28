@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { format, parseISO } from 'date-fns'
 import { createClient } from '@/lib/supabase-server'
-import { getMeasurementBySessionId } from '@/lib/dashboard-data'
 import { MeasurementPdfDocument } from '@/lib/measurement-pdf'
 import type { Client, MeasurementAnalytics, MeasurementWithSession, ProfessionalProfile } from '@/lib/types'
 
@@ -133,7 +132,7 @@ export async function POST(req: Request) {
 
   // 1. Carica sessione + verifica proprietà professionista.
   //    RLS filtra già su professionista_id = auth.uid(), quindi una riga = ownership ok.
-  const { data: session, error: sessErr } = await supabase
+  let { data: session, error: sessErr } = await supabase
     .from('sessions')
     .select('id, client_id, professionista_id, started_at, created_at, duration_seconds, hrv_data, test_type, tags, notes_professionista, indicazioni')
     .eq('id', sessionId)
@@ -144,8 +143,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Errore lettura sessione' }, { status: 500 })
   }
 
-  let measurement: MeasurementWithSession
-
   if (session) {
     if (session.professionista_id !== user.id) {
       return NextResponse.json({ error: 'Accesso negato' }, { status: 403 })
@@ -153,30 +150,39 @@ export async function POST(req: Request) {
     if (session.client_id !== clientId) {
       return NextResponse.json({ error: 'clientId non corrispondente alla sessione' }, { status: 400 })
     }
-
-    // 2. Carica measurement_analytics (preferito, contiene gli score proprietari).
-    const { data: ma } = await supabase
-      .from('measurement_analytics')
-      .select('*')
-      .eq('session_id', sessionId)
-      .maybeSingle()
-
-    const base: MeasurementAnalytics = ma ? (ma as MeasurementAnalytics) : sessionToMeasurement(session)
-    measurement = {
-      ...base,
-      notes_professionista: session.notes_professionista ?? null,
-      indicazioni: session.indicazioni ?? null,
-    }
   } else {
-    // Fallback sessioni remote (auto-misurate dal cliente, client_id null): la
-    // RLS nasconde al professionista sia la sessione sia la sua riga analytics.
-    // getMeasurementBySessionId ri-verifica l'anagrafica CRM (lettura RLS) e il
-    // link active prima di leggerle col percorso privilegiato.
-    const remote = await getMeasurementBySessionId(sessionId, clientId)
-    if (!remote) {
+    // Fallback sessioni remote (auto-misurate dal cliente, client_id null):
+    // la RLS le nasconde al professionista. La RPC SECURITY DEFINER ri-verifica
+    // internamente riga CRM + link active, quindi una riga trovata = autorizzato.
+    const { data: remoteRows, error: rpcErr } = await supabase.rpc(
+      'get_linked_client_sessions_by_client_id',
+      { p_client_id: clientId },
+    )
+    if (rpcErr) {
+      console.error('[measurement-pdf] rpc error', rpcErr)
+    }
+    session = ((remoteRows ?? []) as SessionRow[]).find((r) => r.id === sessionId) ?? null
+    if (!session) {
       return NextResponse.json({ error: 'Sessione non trovata' }, { status: 404 })
     }
-    measurement = remote
+    session = { ...session, client_id: session.client_id ?? clientId }
+  }
+
+  // 2. Carica measurement_analytics (preferito, contiene gli score proprietari).
+  const { data: ma } = await supabase
+    .from('measurement_analytics')
+    .select('*')
+    .eq('session_id', sessionId)
+    .maybeSingle()
+
+  const base: MeasurementAnalytics = ma
+    ? (ma as MeasurementAnalytics)
+    : sessionToMeasurement(session)
+
+  const measurement: MeasurementWithSession = {
+    ...base,
+    notes_professionista: session.notes_professionista ?? null,
+    indicazioni: session.indicazioni ?? null,
   }
 
   // 3. Cliente e profilo professionista.

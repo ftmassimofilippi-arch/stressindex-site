@@ -3,15 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Users, UserCog, Link2, Search, Loader2, AlertTriangle, Plus, Crown, ShieldCheck,
-  Mail, KeyRound, Trash2, ArrowRightLeft, Activity, RefreshCw, X, CheckCircle2, Ban, Merge,
+  Mail, KeyRound, Trash2, ArrowRightLeft, Activity, RefreshCw, X, CheckCircle2, Ban,
 } from 'lucide-react'
 import { Modal } from '@/components/dashboard/Modal'
 import { ConfirmDialog } from '@/components/dashboard/ConfirmDialog'
 import { formatDate, formatRelative } from '@/lib/format'
 import type { AdminUser, AdminClientRow, AdminLink } from '@/lib/admin-data'
-import { api, type Toast } from './adminApi'
-import { MergeClientsModal } from './MergeClientsModal'
-import { ManualLinkModal } from './ManualLinkModal'
 
 // ============================================================================
 // Pannello Super Admin — gestione utenti, clienti e collegamenti.
@@ -20,6 +17,18 @@ import { ManualLinkModal } from './ManualLinkModal'
 // ============================================================================
 
 type Tab = 'users' | 'clients' | 'links'
+
+type Toast = { kind: 'ok' | 'err'; text: string } | null
+
+async function api(method: string, url: string, body?: unknown) {
+  const res = await fetch(url, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  const json = await res.json().catch(() => ({}))
+  return { ok: res.ok, status: res.status, json }
+}
 
 export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: boolean }) {
   const [tab, setTab] = useState<Tab>('users')
@@ -309,14 +318,7 @@ function UserDetailModal({ user, onClose, onChanged, showToast }: { user: AdminU
     sesso: user.sesso ?? '',
   })
   const [busy, setBusy] = useState<string | null>(null)
-  const [confirm, setConfirm] = useState<null | 'delete' | 'setpw'>(null)
-  const [rolePreview, setRolePreview] = useState<{
-    target_role: 'client' | 'professional'
-    will_create_professional_profile: boolean
-    owned_clients_count: number
-    active_links_as_professional: number
-    warnings: string[]
-  } | null>(null)
+  const [confirm, setConfirm] = useState<null | 'delete' | 'role' | 'setpw'>(null)
   const [newPassword, setNewPassword] = useState('')
   const [cascade, setCascade] = useState(false)
   const [sessions, setSessions] = useState<Array<{ id: string; measured_at: string | null; client_name: string; professional_name: string; test_type: string | null }> | null>(null)
@@ -342,23 +344,12 @@ function UserDetailModal({ user, onClose, onChanged, showToast }: { user: AdminU
     else showToast({ kind: 'err', text: json?.error ?? 'Errore' })
   }
 
-  // Cambio ruolo in due passi: prima l'anteprima (cosa succederà, con warning
-  // espliciti), poi la conferma esegue davvero. Route dedicata con audit log.
-  async function requestRoleChange() {
+  async function changeRole() {
     const next = user.role === 'professional' ? 'client' : 'professional'
     setBusy('role')
-    const { ok, json } = await api('POST', `/api/admin/users/${user.id}/role`, { role: next })
-    setBusy(null)
-    if (ok && json?.preview) setRolePreview(json.preview)
-    else showToast({ kind: 'err', text: json?.error === 'already_in_role' ? 'L’utente ha già questo ruolo' : json?.error ?? 'Errore anteprima' })
-  }
-
-  async function confirmRoleChange() {
-    if (!rolePreview) return
-    setBusy('role')
-    const { ok, json } = await api('POST', `/api/admin/users/${user.id}/role`, { role: rolePreview.target_role, confirm: true })
-    setBusy(null); setRolePreview(null)
-    if (ok) { showToast({ kind: 'ok', text: `Ruolo cambiato in ${rolePreview.target_role}` }); onChanged() }
+    const { ok, json } = await api('PATCH', `/api/admin/users/${user.id}`, { role: next })
+    setBusy(null); setConfirm(null)
+    if (ok) { showToast({ kind: 'ok', text: `Ruolo cambiato in ${next}` }); onChanged() }
     else showToast({ kind: 'err', text: json?.error ?? 'Errore' })
   }
 
@@ -431,8 +422,8 @@ function UserDetailModal({ user, onClose, onChanged, showToast }: { user: AdminU
           </div>
           <div className="rounded-xl border border-surface-border p-4">
             <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-anthracite">Ruolo</span><RoleBadge role={user.role} /></div>
-            <button type="button" onClick={requestRoleChange} disabled={busy === 'role'} className="w-full text-sm px-3 py-2 rounded-lg border border-surface-border text-anthracite hover:bg-surface disabled:opacity-50 inline-flex items-center justify-center gap-1.5">
-              {busy === 'role' ? <Loader2 size={14} className="animate-spin" /> : <ArrowRightLeft size={14} />} {user.role === 'professional' ? 'Rendi cliente' : 'Rendi professionista'}
+            <button type="button" onClick={() => setConfirm('role')} disabled={busy === 'role'} className="w-full text-sm px-3 py-2 rounded-lg border border-surface-border text-anthracite hover:bg-surface disabled:opacity-50 inline-flex items-center justify-center gap-1.5">
+              <ArrowRightLeft size={14} /> {user.role === 'professional' ? 'Rendi cliente' : 'Rendi professionista'}
             </button>
           </div>
         </section>
@@ -500,46 +491,15 @@ function UserDetailModal({ user, onClose, onChanged, showToast }: { user: AdminU
       </div>
 
       {/* Conferme */}
-      <Modal
-        open={!!rolePreview}
-        onClose={() => setRolePreview(null)}
-        title="Riepilogo cambio ruolo"
-        description={`${user.full_name} — cosa succederà confermando:`}
-        size="sm"
-        footer={
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setRolePreview(null)} className="btn-secondary text-sm py-2">Annulla</button>
-            <button
-              type="button"
-              onClick={confirmRoleChange}
-              disabled={busy === 'role'}
-              className={`text-sm px-5 py-2 rounded-xl font-medium text-white disabled:opacity-50 ${rolePreview?.warnings.length ? 'bg-amber-500 hover:bg-amber-600' : 'bg-teal hover:bg-teal-dark'}`}
-            >
-              {busy === 'role' ? 'Attendere…' : 'Conferma cambio ruolo'}
-            </button>
-          </div>
-        }
-      >
-        {rolePreview && (
-          <div className="space-y-3 text-sm">
-            <ul className="space-y-1.5 text-anthracite">
-              <li>• Il ruolo passa da <b>{user.role ?? '—'}</b> a <b>{rolePreview.target_role}</b>.</li>
-              {rolePreview.will_create_professional_profile && (
-                <li>• Verrà creata la riga <code className="px-1 bg-surface rounded">professional_profiles</code> mancante.</li>
-              )}
-              {rolePreview.target_role === 'client' && rolePreview.owned_clients_count === 0 && (
-                <li>• L&apos;utente non ha clienti in anagrafica: nessun dato resta orfano.</li>
-              )}
-            </ul>
-            {rolePreview.warnings.map((w) => (
-              <div key={w} className="callout-amber text-xs">
-                <AlertTriangle size={14} className="text-amber-500 flex-shrink-0" />
-                <span>{w}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </Modal>
+      <ConfirmDialog
+        open={confirm === 'role'}
+        onClose={() => setConfirm(null)}
+        onConfirm={changeRole}
+        title="Cambiare ruolo?"
+        description={`L'utente diventerà ${user.role === 'professional' ? 'un cliente' : 'un professionista'}. Verifica che non perda accesso ai suoi dati.`}
+        confirmText="Cambia ruolo"
+        destructive
+      />
       <ConfirmDialog
         open={confirm === 'delete'}
         onClose={() => setConfirm(null)}
@@ -573,7 +533,6 @@ function UserDetailModal({ user, onClose, onChanged, showToast }: { user: AdminU
 function ClientsTab({ clients, professionals, onChanged, showToast }: { clients: AdminClientRow[]; professionals: Array<{ id: string; name: string; email: string | null }>; onChanged: () => void; showToast: (t: Toast) => void }) {
   const [search, setSearch] = useState('')
   const [showNew, setShowNew] = useState(false)
-  const [showMerge, setShowMerge] = useState(false)
   const [moveClient, setMoveClient] = useState<AdminClientRow | null>(null)
 
   const filtered = useMemo(() => {
@@ -588,7 +547,6 @@ function ClientsTab({ clients, professionals, onChanged, showToast }: { clients:
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-anthracite-lighter" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca cliente o professionista…" className="w-full pl-9 pr-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal" />
         </div>
-        <button type="button" onClick={() => setShowMerge(true)} className="inline-flex items-center gap-2 px-4 py-2.5 text-sm rounded-xl border border-surface-border hover:bg-surface text-anthracite"><Merge size={15} /> Unisci doppioni</button>
         <button type="button" onClick={() => setShowNew(true)} className="btn-primary text-sm py-2.5 px-4"><Plus size={16} /> Nuovo cliente</button>
       </div>
 
@@ -632,7 +590,6 @@ function ClientsTab({ clients, professionals, onChanged, showToast }: { clients:
       </div>
 
       {showNew && <NewClientModal professionals={professionals} onClose={() => setShowNew(false)} onChanged={() => { onChanged(); setShowNew(false) }} showToast={showToast} />}
-      {showMerge && <MergeClientsModal clients={clients} onClose={() => setShowMerge(false)} onChanged={() => { onChanged(); setShowMerge(false) }} showToast={showToast} />}
       {moveClient && <MoveClientModal client={moveClient} professionals={professionals} onClose={() => setMoveClient(null)} onChanged={() => { onChanged(); setMoveClient(null) }} showToast={showToast} />}
     </div>
   )
@@ -726,7 +683,6 @@ function MoveClientModal({ client, professionals, onClose, onChanged, showToast 
 function LinksTab({ links, professionals, onChanged, showToast }: { links: AdminLink[]; professionals: Array<{ id: string; name: string; email: string | null }>; onChanged: () => void; showToast: (t: Toast) => void }) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending' | 'revoked'>('all')
-  const [showManual, setShowManual] = useState(false)
   const [moveLink, setMoveLink] = useState<AdminLink | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<AdminLink | null>(null)
 
@@ -762,7 +718,6 @@ function LinksTab({ links, professionals, onChanged, showToast }: { links: Admin
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)} className="px-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30">
           <option value="all">Tutti gli stati</option><option value="active">Attivi</option><option value="pending">In attesa</option><option value="revoked">Revocati</option>
         </select>
-        <button type="button" onClick={() => setShowManual(true)} className="btn-primary text-sm py-2.5 px-4"><Plus size={16} /> Nuovo collegamento</button>
       </div>
 
       <div className="card overflow-hidden">
@@ -804,15 +759,6 @@ function LinksTab({ links, professionals, onChanged, showToast }: { links: Admin
           </table>
         </div>
       </div>
-
-      {showManual && (
-        <ManualLinkModal
-          professionals={professionals}
-          onClose={() => setShowManual(false)}
-          onChanged={onChanged}
-          showToast={showToast}
-        />
-      )}
 
       {moveLink && (
         <Modal open onClose={() => setMoveLink(null)} title="Ricollega a un altro professionista" description={`Cliente: ${moveLink.client_name}`} size="sm"

@@ -39,9 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     )
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://stressindex.io'
     const { error } = await anon.auth.resetPasswordForEmail(data.user.email, {
-      // Vedi docs/reset-password.md: l'URL deve essere fra i Redirect URLs
-      // del progetto Supabase, altrimenti GoTrue usa la Site URL.
-      redirectTo: `${siteUrl}/imposta-password`,
+      redirectTo: `${siteUrl}/area-professionisti/recupera-password`,
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true, email: data.user.email })
