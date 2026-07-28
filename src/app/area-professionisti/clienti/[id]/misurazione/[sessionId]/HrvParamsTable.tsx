@@ -1,5 +1,20 @@
-import { num } from '@/lib/format'
+import { num, toStr } from '@/lib/format'
 import type { MeasurementAnalytics } from '@/lib/types'
+
+// signal_quality è un'etichetta testuale ("good"|"fair"|"poor"), non un numero:
+// va mostrata come tale, non passata a un formatter numerico.
+const SIGNAL_QUALITY_LABEL: Record<string, string> = {
+  excellent: 'Ottima',
+  good: 'Buona',
+  fair: 'Discreta',
+  poor: 'Scarsa',
+}
+
+function signalQualityLabel(value: unknown): string {
+  const raw = toStr(value)
+  if (!raw) return '—'
+  return SIGNAL_QUALITY_LABEL[raw.toLowerCase()] ?? raw
+}
 
 const GROUPS: { title: string; fields: Array<{ key: keyof MeasurementAnalytics; label: string; unit?: string; digits?: number }> }[] = [
   {
@@ -66,7 +81,6 @@ const GROUPS: { title: string; fields: Array<{ key: keyof MeasurementAnalytics; 
     fields: [
       { key: 'artifact_percentage', label: 'Artefatti', unit: '%' },
       { key: 'ectopic_count', label: 'Battiti ectopici', digits: 0 },
-      { key: 'signal_quality', label: 'Qualità segnale', digits: 0 },
       { key: 'rr_count', label: 'Intervalli RR', digits: 0 },
     ],
   },
@@ -90,6 +104,12 @@ export function HrvParamsTable({ measurement }: { measurement: MeasurementAnalyt
                 </div>
               )
             })}
+            {g.title === 'Qualità del segnale' && (
+              <div className="flex items-center justify-between py-2 text-sm">
+                <dt className="text-anthracite-lighter">Qualità segnale</dt>
+                <dd className="font-medium text-anthracite">{signalQualityLabel(measurement.signal_quality)}</dd>
+              </div>
+            )}
           </dl>
         </div>
       ))}

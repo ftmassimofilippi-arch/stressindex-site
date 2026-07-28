@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 import { renderToBuffer } from '@react-pdf/renderer'
+import type { PostgrestError } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase-server'
 import { ClientReportPdfDocument } from '@/lib/client-report-pdf'
+import { selectWithMissingColumnFallback } from '@/lib/safe-select'
+import { toStr } from '@/lib/format'
 import type { Client, MeasurementAnalytics, ProfessionalProfile } from '@/lib/types'
 
 export const runtime = 'nodejs'
@@ -66,7 +69,8 @@ function sessionToMeasurement(s: SessionRow): MeasurementAnalytics {
     lf_nu_ls: n('lfNormLs'),
     hf_nu_ls: n('hfNormLs'),
     ectopic_count: n('ectopicCount'),
-    signal_quality: n('signalQuality'),
+    // signal_quality è un'etichetta testuale ('good'|'fair'|'poor'), non un numero.
+    signal_quality: toStr(h['signalQuality']),
     lf_vlf_ratio: null,
     vlf_power_ls: n('vlfPowerLs'),
     lf_power_ls: n('lfPowerLs'),
@@ -153,13 +157,23 @@ export async function POST(req: Request) {
   const toIso = `${dateTo}T23:59:59.999Z`
 
   // 1. Sessioni nel periodo (fonte autoritativa).
-  const { data: sessions, error: sErr } = await supabase
-    .from('sessions')
-    .select('id, client_id, professionista_id, started_at, created_at, duration_seconds, hrv_data, test_type, tags')
-    .eq('client_id', clientId)
-    .gte('started_at', fromIso)
-    .lte('started_at', toIso)
-    .order('started_at', { ascending: false, nullsFirst: false })
+  //    Resiliente alle colonne mancanti: una colonna non ancora presente nel
+  //    database non deve svuotare l'intero report.
+  const { data: sessions, error: sErr } = await selectWithMissingColumnFallback<SessionRow>(
+    ['id', 'client_id', 'professionista_id', 'started_at', 'created_at', 'duration_seconds', 'hrv_data', 'test_type', 'tags'],
+    (cols) =>
+      supabase
+        .from('sessions')
+        .select(cols)
+        .eq('client_id', clientId)
+        .gte('started_at', fromIso)
+        .lte('started_at', toIso)
+        .order('started_at', { ascending: false, nullsFirst: false }) as unknown as PromiseLike<{
+        data: SessionRow[] | null
+        error: PostgrestError | null
+      }>,
+    { label: 'sessions (report periodico)', required: ['id'] },
+  )
   if (sErr) {
     console.error('[client-report] sessions query error', sErr)
     return NextResponse.json({ error: 'Errore lettura sessioni' }, { status: 500 })

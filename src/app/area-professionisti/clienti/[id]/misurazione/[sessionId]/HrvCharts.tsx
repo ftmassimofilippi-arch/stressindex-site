@@ -18,14 +18,32 @@ import {
   YAxis,
   ZAxis,
 } from 'recharts'
-import { num } from '@/lib/format'
+import { num, toNum } from '@/lib/format'
+
+// I valori arrivano dal database (colonne numeriche, array e campi jsonb) e i
+// tipi dichiarati non sono garantiti a runtime: si coercizzano una volta sola
+// al confine dei componenti, così ogni .toFixed() interno è sicuro.
+function toNumArray(values: unknown[] | null | undefined): number[] {
+  if (!Array.isArray(values)) return []
+  const out: number[] = []
+  for (const v of values) {
+    const n = toNum(v)
+    if (n != null) out.push(n)
+  }
+  return out
+}
 
 // ============================================================================
 // POINCARÉ — scatter quadrato 1:1 con linea identità, centroide ed ellisse SD1/SD2
 // ============================================================================
 
-export function PoincareScatter({ rr, sd1, sd2 }: { rr: number[] | null; sd1: number | null; sd2: number | null }) {
-  if (!rr || rr.length < 2) {
+export function PoincareScatter({ rr: rawRr, sd1: rawSd1, sd2: rawSd2 }: { rr: unknown[] | null; sd1: unknown; sd2: unknown }) {
+  // Coercizione al confine del componente: da qui in giù i valori sono number
+  // garantiti, quindi tutti i .toFixed() a valle sono sicuri.
+  const rr = toNumArray(rawRr)
+  const sd1 = toNum(rawSd1)
+  const sd2 = toNum(rawSd2)
+  if (rr.length < 2) {
     return <Placeholder text="Dati RR non disponibili" />
   }
   const allPoints = rr.slice(0, -1).map((v, i) => ({ x: v, y: rr[i + 1] }))
@@ -221,8 +239,9 @@ function PoincareOverlay({ chart, meanRr, sd1, sd2 }: { chart: ChartInternals; m
 // RITMOGRAMMA — full-width con Brush per zoom temporale + linea media
 // ============================================================================
 
-export function Rhythmogram({ rr }: { rr: number[] | null }) {
-  if (!rr || rr.length === 0) {
+export function Rhythmogram({ rr: rawRr }: { rr: unknown[] | null }) {
+  const rr = toNumArray(rawRr)
+  if (rr.length === 0) {
     return <Placeholder text="Dati RR non disponibili" />
   }
   let acc = 0
@@ -280,7 +299,18 @@ function gauss(f: number, mu: number, sigma: number) {
   return Math.exp(-((f - mu) ** 2) / (2 * sigma * sigma)) / (sigma * Math.sqrt(2 * Math.PI))
 }
 
-export function PsdPlaceholder({ vlf, lf, hf, lfHfRatio, resonanceHz }: { vlf: number | null; lf: number | null; hf: number | null; lfHfRatio?: number | null; resonanceHz?: number | null }) {
+export function PsdPlaceholder({
+  vlf: rawVlf,
+  lf: rawLf,
+  hf: rawHf,
+  lfHfRatio: rawLfHfRatio,
+  resonanceHz: rawResonanceHz,
+}: { vlf: unknown; lf: unknown; hf: unknown; lfHfRatio?: unknown; resonanceHz?: unknown }) {
+  const vlf = toNum(rawVlf)
+  const lf = toNum(rawLf)
+  const hf = toNum(rawHf)
+  const lfHfRatio = toNum(rawLfHfRatio)
+  const resonanceHz = toNum(rawResonanceHz)
   if (vlf == null && lf == null && hf == null) return <Placeholder text="Dati spettro non disponibili" />
 
   const fMax = 0.4

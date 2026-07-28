@@ -140,7 +140,9 @@ export interface MeasurementAnalytics {
 
   // Qualità segnale
   ectopic_count: number | null
-  signal_quality: number | null
+  // ⚠️ Colonna `text`, NON numerica: contiene etichette ("good" | "fair" |
+  // "poor"). Era dichiarata number e finiva in un formatter numerico → TypeError.
+  signal_quality: string | null
 
   // Meta
   algorithm_version: string | null

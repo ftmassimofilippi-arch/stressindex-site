@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Calendar, ChevronDown, ChevronUp, RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react'
 import { format as fmtDate, parseISO, subDays } from 'date-fns'
+import { toNum } from '@/lib/format'
 import { it } from 'date-fns/locale'
 import {
   Brush,
@@ -91,9 +92,12 @@ const GROUPS: Array<{ key: Group; label: string }> = [
   { key: 'geometric', label: 'Geometrici' },
 ]
 
-function formatMetricValue(value: number, m: MetricDef | undefined): string {
+function formatMetricValue(value: unknown, m: MetricDef | undefined): string {
   const decimals = m?.decimals ?? 1
-  const formatted = value.toFixed(decimals)
+  // I punti del grafico arrivano dal database: coercizione prima di formattare.
+  const n = toNum(value)
+  if (n == null) return '—'
+  const formatted = n.toFixed(decimals)
   if (!m?.unit) return formatted
   if (m.unit === '/100') return `${formatted} / 100`
   if (m.unit === '%') return `${formatted}%`

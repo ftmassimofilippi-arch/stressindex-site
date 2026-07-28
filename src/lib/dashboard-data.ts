@@ -1,4 +1,7 @@
+import type { PostgrestError } from '@supabase/supabase-js'
 import { createClient } from './supabase-server'
+import { selectWithMissingColumnFallback } from './safe-select'
+import { toStr } from './format'
 import type {
   Alert,
   Client,
@@ -57,6 +60,24 @@ export async function getClient(id: string): Promise<Client | null> {
 // MEASUREMENT ANALYTICS — fonte autoritativa per score / HRV calcolati
 // ============================================================================
 
+// Colonne di `sessions` lette per ricostruire una misurazione. Le ultime della
+// lista sono opzionali di fatto: arrivano da migration più recenti e possono
+// mancare su database non ancora allineati (vedi selectWithMissingColumnFallback).
+const SESSION_COLUMNS = [
+  'id',
+  'client_id',
+  'professionista_id',
+  'started_at',
+  'created_at',
+  'duration_seconds',
+  'hrv_data',
+  'test_type',
+  'duration_type',
+  'segments',
+  'rolling_series',
+  'tags',
+] as const
+
 // Sessioni remote (auto-misurate dal cliente dal proprio account): hanno
 // professionista_id = uid del CLIENTE e client_id null, quindi la RLS su
 // `sessions` le nasconde al professionista. La RPC SECURITY DEFINER
@@ -88,14 +109,24 @@ export async function listMeasurementsForClient(clientId: string, opts?: { limit
   //    Due sorgenti in parallelo (stesso pattern dell'app):
   //    - dirette: client_id = clientId (misurazioni "in studio", via RLS)
   //    - remote:  RPC get_linked_client_sessions_by_client_id (client_id null)
-  const dq = supabase
-    .from('sessions')
-    .select('id, client_id, professionista_id, started_at, created_at, duration_seconds, hrv_data, test_type, duration_type, segments, rolling_series, tags')
-    .eq('client_id', clientId)
-    .order('started_at', { ascending: false, nullsFirst: false })
-
+  // Colonne richieste una per una (non select('*')) per non trasferire i BLOB
+  // inutili. Lettura resiliente: se una colonna non esiste ancora nel database
+  // viene esclusa e la query riprova, invece di restituire ZERO misurazioni per
+  // tutti i clienti (è successo con sessions.orthostatic_data).
   const [{ data: direct, error: sessErr }, remote] = await Promise.all([
-    dq,
+    selectWithMissingColumnFallback<SessionRow>(
+      SESSION_COLUMNS,
+      (cols) =>
+        supabase
+          .from('sessions')
+          .select(cols)
+          .eq('client_id', clientId)
+          .order('started_at', { ascending: false, nullsFirst: false }) as unknown as PromiseLike<{
+          data: SessionRow[] | null
+          error: PostgrestError | null
+        }>,
+      { label: 'sessions (scheda cliente)', required: ['id'] },
+    ),
     fetchRemoteSessionsForClient(supabase, clientId),
   ])
   if (sessErr) {
@@ -209,7 +240,8 @@ function sessionToMeasurementAnalytics(s: SessionRow): MeasurementAnalytics {
     lf_nu_ls: num('lfNormLs'),
     hf_nu_ls: num('hfNormLs'),
     ectopic_count: num('ectopicCount'),
-    signal_quality: num('signalQuality'),
+    // signal_quality è un'etichetta testuale ('good'|'fair'|'poor'), non un numero.
+    signal_quality: toStr(h['signalQuality']),
     lf_vlf_ratio: null,
     vlf_power_ls: num('vlfPowerLs'),
     lf_power_ls: num('lfPowerLs'),
@@ -467,14 +499,23 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
   from.setDate(from.getDate() - daysBack)
   from.setHours(0, 0, 0, 0)
 
-  const select = ['measured_at', ...TREND_COLUMNS].join(',')
-  const { data } = await supabase
-    .from('measurement_analytics')
-    .select(select)
-    .gte('measured_at', from.toISOString())
-    .order('measured_at', { ascending: true })
-
   type Row = { measured_at: string } & { [K in TrendColumn]: number | null }
+
+  // Resiliente alle colonne mancanti: già successo con lf_nu_ls/hf_nu_ls, che
+  // facevano fallire tutto il grafico di andamento invece di una sola metrica.
+  const { data } = await selectWithMissingColumnFallback<Row>(
+    ['measured_at', ...TREND_COLUMNS],
+    (cols) =>
+      supabase
+        .from('measurement_analytics')
+        .select(cols)
+        .gte('measured_at', from.toISOString())
+        .order('measured_at', { ascending: true }) as unknown as PromiseLike<{
+        data: Row[] | null
+        error: PostgrestError | null
+      }>,
+    { label: 'measurement_analytics (trend)', required: ['measured_at'] },
+  )
   const buckets = new Map<string, Map<TrendColumn, number[]>>()
   for (const row of (data ?? []) as unknown as Row[]) {
     const day = row.measured_at.slice(0, 10)

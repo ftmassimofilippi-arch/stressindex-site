@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { format, parseISO } from 'date-fns'
+import type { PostgrestError } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase-server'
 import { MeasurementPdfDocument } from '@/lib/measurement-pdf'
+import { selectWithMissingColumnFallback } from '@/lib/safe-select'
+import { toStr } from '@/lib/format'
 import type { Client, MeasurementAnalytics, MeasurementWithSession, ProfessionalProfile } from '@/lib/types'
 
 export const runtime = 'nodejs'
@@ -69,7 +72,8 @@ function sessionToMeasurement(s: SessionRow): MeasurementAnalytics {
     lf_nu_ls: n('lfNormLs'),
     hf_nu_ls: n('hfNormLs'),
     ectopic_count: n('ectopicCount'),
-    signal_quality: n('signalQuality'),
+    // signal_quality è un'etichetta testuale ('good'|'fair'|'poor'), non un numero.
+    signal_quality: toStr(h['signalQuality']),
     lf_vlf_ratio: null,
     vlf_power_ls: n('vlfPowerLs'),
     lf_power_ls: n('lfPowerLs'),
@@ -132,11 +136,18 @@ export async function POST(req: Request) {
 
   // 1. Carica sessione + verifica proprietà professionista.
   //    RLS filtra già su professionista_id = auth.uid(), quindi una riga = ownership ok.
-  let { data: session, error: sessErr } = await supabase
-    .from('sessions')
-    .select('id, client_id, professionista_id, started_at, created_at, duration_seconds, hrv_data, test_type, tags, notes_professionista, indicazioni')
-    .eq('id', sessionId)
-    .maybeSingle<SessionRow>()
+  //    Resiliente alle colonne mancanti: una colonna assente nel database non
+  //    deve impedire la generazione del PDF.
+  const { data: sessionRows, error: sessErr } = await selectWithMissingColumnFallback<SessionRow>(
+    ['id', 'client_id', 'professionista_id', 'started_at', 'created_at', 'duration_seconds', 'hrv_data', 'test_type', 'tags', 'notes_professionista', 'indicazioni'],
+    (cols) =>
+      supabase.from('sessions').select(cols).eq('id', sessionId).limit(1) as unknown as PromiseLike<{
+        data: SessionRow[] | null
+        error: PostgrestError | null
+      }>,
+    { label: 'sessions (PDF misurazione)', required: ['id'] },
+  )
+  let session: SessionRow | null = sessionRows?.[0] ?? null
 
   if (sessErr) {
     console.error('[measurement-pdf] sessions query error', sessErr)

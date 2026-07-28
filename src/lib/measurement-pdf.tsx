@@ -4,6 +4,7 @@ import React from 'react'
 import { Document, Page, Text, View, StyleSheet, Svg, Rect } from '@react-pdf/renderer'
 import { format, parseISO } from 'date-fns'
 import { it } from 'date-fns/locale'
+import { toNum } from './format'
 import type { Client, MeasurementWithSession, ProfessionalProfile } from './types'
 
 const COLORS = {
@@ -165,21 +166,25 @@ function fmtScore(v?: number | null): string {
   return Math.round(v).toString()
 }
 
-function fmtNum(v?: number | null, digits = 1): string {
-  if (v == null || Number.isNaN(v)) return '—'
-  return v.toFixed(digits)
+// toNum: i valori dal database non sono garantiti number a runtime (colonne
+// text/numeric e campi jsonb) e un .toFixed() diretto farebbe fallire l'intera
+// generazione del PDF con un TypeError.
+function fmtNum(value?: unknown, digits = 1): string {
+  const v = toNum(value)
+  return v == null ? '—' : v.toFixed(digits)
 }
 
-function fmtPower(v?: number | null): string {
-  if (v == null || Number.isNaN(v)) return '—'
+function fmtPower(value?: unknown): string {
+  const v = toNum(value)
+  if (v == null) return '—'
   if (v >= 10000) return `${(v / 1000).toFixed(1)}k`
   if (v >= 1000) return Math.round(v).toString()
   return v.toFixed(1)
 }
 
-function fmtPercent(v?: number | null): string {
-  if (v == null || Number.isNaN(v)) return '—'
-  return v.toFixed(1)
+function fmtPercent(value?: unknown): string {
+  const v = toNum(value)
+  return v == null ? '—' : v.toFixed(1)
 }
 
 // measured_at è ora locale salvata come UTC dall'app (vedi lib/format.ts):

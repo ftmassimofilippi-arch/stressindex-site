@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { num } from '@/lib/format'
+import { num, toNum } from '@/lib/format'
 import { formatClock } from '@/lib/measurement-type'
 import type { CoherenceData, MeasurementAnalytics } from '@/lib/types'
 import { PsdPlaceholder } from './HrvCharts'
@@ -34,12 +34,16 @@ export function CoherenceView({
     )
   }
 
-  const score = data.coherenceScore
-  const breathing = data.breathingRate
-  const resonanceHz = data.peakFrequencyHz
+  // coherence_data è jsonb scritto dall'app: i valori vanno coercizzati prima
+  // di qualsiasi formattazione numerica, non sono garantiti number.
+  const score = toNum(data.coherenceScore)
+  const breathing = toNum(data.breathingRate)
+  const resonanceHz = toNum(data.peakFrequencyHz)
   const resonanceBpm = resonanceHz != null ? resonanceHz * 60 : null
-  const inhaleRatio = data.inhaleRatio
-  const series = Array.isArray(data.coherenceSeries) ? data.coherenceSeries : []
+  const inhaleRatio = toNum(data.inhaleRatio)
+  const series = (Array.isArray(data.coherenceSeries) ? data.coherenceSeries : [])
+    .map((v) => toNum(v))
+    .filter((v): v is number => v != null)
 
   const scoreLevel =
     score == null ? null
@@ -48,7 +52,7 @@ export function CoherenceView({
       : { label: 'Coerenza bassa', tone: 'text-red-700' }
 
   // Distribuisce i punti della serie sul tempo della sessione (finestre uniformi).
-  const dur = measurement.duration_seconds ?? 0
+  const dur = toNum(measurement.duration_seconds) ?? 0
   const seriesData = series.map((v, i) => ({
     idx: i + 1,
     t: series.length > 1 && dur > 0 ? (dur * (i + 1)) / series.length : i + 1,

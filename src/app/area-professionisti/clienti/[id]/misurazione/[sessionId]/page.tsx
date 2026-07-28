@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { DownloadMeasurementPdfButton } from '@/components/dashboard/DownloadMeasurementPdfButton'
 import { GaugeScore } from '@/components/dashboard/GaugeScore'
 import { getClient, getMeasurementBySessionId, getProfessionalProfile, listAlerts } from '@/lib/dashboard-data'
-import { fullName, formatMeasuredAt, num } from '@/lib/format'
+import { fullName, formatMeasuredAt, num, toNum } from '@/lib/format'
 import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
 import { normalizeTestType, isLongMeasurement, formatDurationHuman } from '@/lib/measurement-type'
 import { PoincareScatter, Rhythmogram, PsdPlaceholder } from './HrvCharts'
@@ -63,7 +63,7 @@ export default async function SessionDetailPage({
             </div>
             <p className="text-sm text-anthracite-lighter mt-1">
               {fullName(client)} · {duration} · Sensore: {sensorLabel}
-              {measurement.artifact_percentage != null ? ` · Artifact: ${measurement.artifact_percentage.toFixed(1)}%` : ''}
+              {toNum(measurement.artifact_percentage) != null ? ` · Artifact: ${num(measurement.artifact_percentage, 1)}%` : ''}
             </p>
           </div>
           <DownloadMeasurementPdfButton sessionId={measurement.session_id} clientId={client.id} />

@@ -1,6 +1,8 @@
 import { cache } from 'react'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js'
 import { createAdminClient, hasServiceRole } from './supabase-admin'
+import { selectWithMissingColumnFallback } from './safe-select'
+import { toStr } from './format'
 import type { MeasurementAnalytics } from './types'
 
 // =============================================================================
@@ -49,8 +51,29 @@ export type SessionRow = {
   indicazioni?: string | null
 }
 
-const SESSION_COLUMNS =
-  'id, client_id, professionista_id, started_at, created_at, duration_seconds, hrv_data, test_type, duration_type, segments, rolling_series, orthostatic_data, coherence_data, tags, notes_professionista, indicazioni'
+// ⚠️ Non tutte queste colonne esistono su ogni database: `coherence_data` oggi
+// NON esiste su `sessions`, e `orthostatic_data` è stata aggiunta solo il
+// 2026-07-28 — selezionarle senza rete di sicurezza fa fallire l'intera query
+// con 42703 e azzera le misurazioni di tutti i clienti (già successo in
+// produzione). La lettura passa da selectWithMissingColumnFallback.
+const SESSION_COLUMNS = [
+  'id',
+  'client_id',
+  'professionista_id',
+  'started_at',
+  'created_at',
+  'duration_seconds',
+  'hrv_data',
+  'test_type',
+  'duration_type',
+  'segments',
+  'rolling_series',
+  'orthostatic_data',
+  'coherence_data',
+  'tags',
+  'notes_professionista',
+  'indicazioni',
+] as const
 
 // Costruisce una MeasurementAnalytics minimale a partire da una riga `sessions`.
 // Usato quando measurement_analytics non contiene la riga per quel session_id
@@ -101,7 +124,8 @@ export function sessionToMeasurementAnalytics(s: SessionRow): MeasurementAnalyti
     lf_nu_ls: num('lfNormLs'),
     hf_nu_ls: num('hfNormLs'),
     ectopic_count: num('ectopicCount'),
-    signal_quality: num('signalQuality'),
+    // signal_quality è un'etichetta testuale ('good'|'fair'|'poor'), non un numero.
+    signal_quality: toStr(h['signalQuality']),
     lf_vlf_ratio: null,
     vlf_power_ls: num('vlfPowerLs'),
     lf_power_ls: num('lfPowerLs'),
@@ -240,11 +264,15 @@ async function loadRemoteMeasurements(
   const userIds = Array.from(clientIdByUser.keys())
 
   const admin = createAdminClient()
-  const { data: sessionRows, error: sErr } = await admin
-    .from('sessions')
-    .select(SESSION_COLUMNS)
-    .in('professionista_id', userIds)
-    .is('client_id', null)
+  const { data: sessionRows, error: sErr } = await selectWithMissingColumnFallback<SessionRow>(
+    SESSION_COLUMNS,
+    (cols) =>
+      admin.from('sessions').select(cols).in('professionista_id', userIds).is('client_id', null) as unknown as PromiseLike<{
+        data: SessionRow[] | null
+        error: PostgrestError | null
+      }>,
+    { label: 'sessions (remote)', required: ['id', 'professionista_id'] },
+  )
   if (sErr) {
     console.error('[remote-sessions] lettura sessions fallita', { professionistaId, error: sErr })
     return []

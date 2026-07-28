@@ -92,14 +92,42 @@ export function age(birthDate?: string | null): number | null {
   return years
 }
 
-export function num(value?: number | null, digits = 1): string {
-  if (value === null || value === undefined || Number.isNaN(value)) return '—'
-  return value.toFixed(digits)
+// Coercizione numerica sicura per i valori che arrivano dal database.
+// I tipi TypeScript dichiarano `number | null`, ma a runtime può arrivare altro:
+// le colonne Postgres `text`/`numeric` sono serializzate come STRINGA da
+// PostgREST, e i campi dentro le colonne jsonb hanno il tipo che ci ha scritto
+// l'app Flutter. Un `.toFixed()` diretto su quei valori è un TypeError che
+// abbatte l'intera pagina — caso reale in produzione:
+// measurement_analytics.signal_quality è `text` e contiene "good".
+// Accetta solo number e string: booleani, array e oggetti danno null (Number([])
+// varrebbe 0, che sarebbe peggio di "nessun dato").
+export function toNum(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (trimmed === '') return null
+    const n = Number(trimmed)
+    return Number.isFinite(n) ? n : null
+  }
+  return null
 }
 
-export function pct(value?: number | null): string {
-  if (value === null || value === undefined) return '—'
-  return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`
+// Valore testuale non numerico (es. signal_quality): normalizza a string | null.
+export function toStr(value: unknown): string | null {
+  if (typeof value === 'string') return value.trim() === '' ? null : value
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  return null
+}
+
+export function num(value?: unknown, digits = 1): string {
+  const n = toNum(value)
+  return n === null ? '—' : n.toFixed(digits)
+}
+
+export function pct(value?: unknown): string {
+  const n = toNum(value)
+  if (n === null) return '—'
+  return `${n > 0 ? '+' : ''}${n.toFixed(1)}%`
 }
 
 export function todayLongIt(): string {
