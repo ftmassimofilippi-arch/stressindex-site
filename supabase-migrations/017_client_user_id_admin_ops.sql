@@ -48,6 +48,10 @@ create index if not exists idx_clients_client_user_id
 
 -- Backfill A — via client_professional_links (fonte più autoritativa: il link
 -- porta già client_user_id; il match è su l.client_id = c.id).
+-- ⚠️ CAST: client_professional_links.client_id è UUID mentre clients.id è TEXT,
+-- quindi il confronto richiede lc.client_id::text. Il cast va SEMPRE in questa
+-- direzione (uuid → text): c.id::uuid fallirebbe a runtime, perché clients.id
+-- contiene anche id epoch tipo '1784607069220', non convertibili a uuid.
 -- Idempotente (solo righe con client_user_id null). Due DISTINCT ON:
 --   • un solo candidato utente per riga clients (preferisci link active, poi recente)
 --   • una sola riga clients per coppia (professionista, utente) → mai lo stesso
@@ -64,7 +68,7 @@ cand as (
   select distinct on (c.professionista_id, lc.client_user_id)
          c.id as crm_id, lc.client_user_id
   from public.clients c
-  join link_cand lc on lc.client_id = c.id
+  join link_cand lc on lc.client_id::text = c.id
   where c.client_user_id is null
   order by c.professionista_id, lc.client_user_id, c.created_at asc nulls last
 )
@@ -423,6 +427,7 @@ declare
   v_m_email   text;
   v_m_tel     text;
   v_actor     uuid;
+  v_coltype   text;
 begin
   if p_keep_id is null or p_merge_ids is null or array_length(p_merge_ids, 1) is null then
     raise exception 'parametri mancanti (keep_id / merge_ids)';
@@ -465,7 +470,23 @@ begin
     )
     select * from fk union all select * from extra
   loop
-    execute format('select count(*) from public.%I where %I = any($1)', r.ref_table, r.ref_column)
+    -- ⚠️ CAST: p_merge_ids/p_keep_id sono TEXT (come clients.id), ma non tutte
+    -- le colonne che referenziano il cliente sono text: in particolare
+    -- client_professional_links.client_id è UUID. Senza cast esplicito ogni
+    -- confronto su quella tabella fallisce con
+    -- "operator does not exist: uuid = text". Nei confronti si casta sempre la
+    -- COLONNA a text (mai il contrario: gli id epoch non sono uuid validi);
+    -- nell'UPDATE si casta il VALORE al tipo reale della colonna, letto qui.
+    select c.udt_name into v_coltype
+      from information_schema.columns c
+     where c.table_schema = 'public'
+       and c.table_name   = r.ref_table
+       and c.column_name  = r.ref_column;
+    if v_coltype is null then
+      raise exception 'colonna %.% non trovata', r.ref_table, r.ref_column;
+    end if;
+
+    execute format('select count(*) from public.%I where %I::text = any($1)', r.ref_table, r.ref_column)
       into v_cnt using p_merge_ids;
 
     -- Predicato di conflitto: OR degli indici UNIQUE che includono la colonna
@@ -494,7 +515,7 @@ begin
         if u.other_cols is null then
           -- unique sulla sola colonna cliente (una riga per cliente, es. settings)
           v_preds := coalesce(v_preds, '{}'::text[]) || format(
-            'exists (select 1 from public.%I k where k.%I = $1)',
+            'exists (select 1 from public.%I k where k.%I::text = $1)',
             r.ref_table, r.ref_column
           );
         else
@@ -502,7 +523,7 @@ begin
             into v_match
             from unnest(u.other_cols) as col;
           v_preds := coalesce(v_preds, '{}'::text[]) || format(
-            'exists (select 1 from public.%I k where k.%I = $1 and %s)',
+            'exists (select 1 from public.%I k where k.%I::text = $1 and %s)',
             r.ref_table, r.ref_column, v_match
           );
         end if;
@@ -513,7 +534,7 @@ begin
     v_conf_cnt := 0;
     if v_cnt > 0 and v_preds is not null then
       execute format(
-        'select count(*) from public.%I m where m.%I = any($2) and (%s)',
+        'select count(*) from public.%I m where m.%I::text = any($2) and (%s)',
         r.ref_table, r.ref_column, array_to_string(v_preds, ' or ')
       ) into v_conf_cnt using p_keep_id, p_merge_ids;
     end if;
@@ -530,11 +551,11 @@ begin
     -- eliminarle (→ audit, ricostruibili), poi delete e spostamento.
     if v_conf_cnt > 0 then
       execute format(
-        'select jsonb_agg(to_jsonb(m)) from public.%I m where m.%I = any($2) and (%s)',
+        'select jsonb_agg(to_jsonb(m)) from public.%I m where m.%I::text = any($2) and (%s)',
         r.ref_table, r.ref_column, array_to_string(v_preds, ' or ')
       ) into v_rows using p_keep_id, p_merge_ids;
       execute format(
-        'delete from public.%I m where m.%I = any($2) and (%s)',
+        'delete from public.%I m where m.%I::text = any($2) and (%s)',
         r.ref_table, r.ref_column, array_to_string(v_preds, ' or ')
       ) using p_keep_id, p_merge_ids;
       v_conflicts := v_conflicts || jsonb_build_object(
@@ -545,8 +566,9 @@ begin
       );
     end if;
 
-    execute format('update public.%I set %I = $1 where %I = any($2)',
-                   r.ref_table, r.ref_column, r.ref_column)
+    -- $1::%I riporta l'id da tenere al tipo REALE della colonna (uuid o text).
+    execute format('update public.%I set %I = $1::%I where %I::text = any($2)',
+                   r.ref_table, r.ref_column, v_coltype, r.ref_column)
       using p_keep_id, p_merge_ids;
     get diagnostics v_moved = row_count;
 
