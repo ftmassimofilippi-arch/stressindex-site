@@ -38,7 +38,7 @@ export const TREND_METRICS: MetricDef[] = [
   { key: 'score_recupero', label: 'Recupero', color: '#4FA39A', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
   { key: 'score_equilibrio', label: 'Equilibrio', color: '#F59E0B', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
   { key: 'score_energia', label: 'Energia', color: '#6366F1', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
-  { key: 'score_modulazione_infiammatoria', label: 'Modulazione infiammatoria', color: '#8B5CF6', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
+  { key: 'score_modulazione_infiammatoria', label: 'Adattamento', color: '#8B5CF6', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
   { key: 'score_composito', label: 'Indice composito', color: '#2E746C', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
 
   // Time domain (blu)

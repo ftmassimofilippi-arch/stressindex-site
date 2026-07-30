@@ -26,7 +26,7 @@ const SCORE_COLORS = {
   recovery: COLORS.emerald,
   balance: '#3B82F6',
   energy: COLORS.amber,
-  inflammation: '#A855F7',
+  adaptation: '#A855F7',
 } as const
 
 const styles = StyleSheet.create({
@@ -482,16 +482,18 @@ export function MeasurementPdfDocument({
         <ScoreBar label="Recupero" value={measurement.score_recupero} color={SCORE_COLORS.recovery} />
         <ScoreBar label="Equilibrio" value={measurement.score_equilibrio} color={SCORE_COLORS.balance} />
         <ScoreBar label="Energia" value={measurement.score_energia} color={SCORE_COLORS.energy} />
+        {/* Colonna DB: score_modulazione_infiammatoria. Etichetta mostrata:
+            "Adattamento", identica all'app Flutter. */}
         <ScoreBar
-          label="Modulazione Infiammatoria"
+          label="Adattamento"
           value={measurement.score_modulazione_infiammatoria}
-          color={SCORE_COLORS.inflammation}
+          color={SCORE_COLORS.adaptation}
         />
 
         <View style={styles.compositeBox}>
           <View>
             <Text style={styles.compositeLabel}>Stress Index Composito</Text>
-            <Text style={styles.muted}>Sintesi dei 4 score proprietari</Text>
+            <Text style={styles.muted}>Sintesi di Stress, Recupero, Equilibrio ed Energia</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
             <Text style={styles.compositeValue}>{fmtScore(measurement.score_composito)}</Text>

@@ -9,7 +9,7 @@
 //  Sotto l'arco: numero grande, "/ 100", badge della zona
 //  (soglie e label da proprietary_scores.dart).
 
-export type GaugeColorScheme = 'stress' | 'recovery' | 'balance' | 'energy' | 'inflammation'
+export type GaugeColorScheme = 'stress' | 'recovery' | 'balance' | 'energy' | 'adaptation'
 
 type Props = {
   value?: number | null // 0–100
@@ -57,7 +57,7 @@ const ZONES: Record<GaugeColorScheme, Zone[]> = {
     { max: 85, label: 'Buona', color: GREEN },
     { max: Infinity, label: 'Piena', color: GREEN },
   ],
-  inflammation: [
+  adaptation: [
     { max: 20, label: 'Fragile', color: RED },
     { max: 40, label: 'Compromessa', color: ORANGE },
     { max: 60, label: 'Ridotta', color: YELLOW },

@@ -48,7 +48,7 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
   }, [measurements, range, duration, typeFilter])
 
   function exportCsv() {
-    const headers = ['Data','Tipo','Durata (s)','Stress','Recupero','Equilibrio','Energia','Mod. Infiamm.','BPM','SDNN','RMSSD','Artifact %']
+    const headers = ['Data','Tipo','Durata (s)','Stress','Recupero','Equilibrio','Energia','Adattamento','BPM','SDNN','RMSSD','Artifact %']
     const rows = filtered.map((m) => [
       formatMeasuredAt(m.measured_at),
       measurementTypeMeta(m.test_type).label,
@@ -81,7 +81,8 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
     { key: 'recupero', header: 'Recupero', accessor: (m) => m.score_recupero ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_recupero} /> },
     { key: 'equilibrio', header: 'Equilibrio', accessor: (m) => m.score_equilibrio ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_equilibrio} /> },
     { key: 'energia', header: 'Energia', accessor: (m) => m.score_energia ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_energia} /> },
-    { key: 'infl', header: 'Infiamm.', accessor: (m) => m.score_modulazione_infiammatoria ?? -1, sortable: true, render: (m) => m.score_modulazione_infiammatoria != null ? m.score_modulazione_infiammatoria.toFixed(1) : '—' },
+    // Colonna DB score_modulazione_infiammatoria, mostrata come "Adattamento".
+    { key: 'adattamento', header: 'Adattamento', accessor: (m) => m.score_modulazione_infiammatoria ?? -1, sortable: true, render: (m) => m.score_modulazione_infiammatoria != null ? m.score_modulazione_infiammatoria.toFixed(1) : '—' },
     { key: 'quality', header: 'Artifact', accessor: (m) => m.artifact_percentage ?? -1, sortable: true, render: (m) => m.artifact_percentage != null ? `${m.artifact_percentage.toFixed(1)}%` : '—' },
     {
       key: 'actions', header: '', render: (m) => (

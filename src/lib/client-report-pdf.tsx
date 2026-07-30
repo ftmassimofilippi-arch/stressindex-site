@@ -33,7 +33,8 @@ const SCORE_LABELS: Record<ScoreKey, string> = {
   score_recupero: 'Recupero',
   score_equilibrio: 'Equilibrio',
   score_energia: 'Energia',
-  score_modulazione_infiammatoria: 'Modulazione Infiammatoria',
+  // Colonna DB score_modulazione_infiammatoria: nel report si chiama "Adattamento".
+  score_modulazione_infiammatoria: 'Adattamento',
 }
 
 export type ScoreKey =

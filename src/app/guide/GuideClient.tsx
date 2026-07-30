@@ -869,7 +869,7 @@ export default function GuideClient() {
         title: 'Leggere i risultati',
         emoji: '📊',
         searchText:
-          'risultati 5 score Indice Stress Recupero Equilibrio Energia Modulazione Infiammatoria Tracey 2002 riflesso antinfiammatorio colinergico Stress Index Composito tachimetro parametri avanzati Time Domain Frequency Domain Non-linear Geometric semaforo verde giallo rosso range normativi età sesso',
+          'risultati 5 score Indice Stress Recupero Equilibrio Energia Adattamento Stress Index Composito tachimetro parametri avanzati Time Domain Frequency Domain Non-linear Geometric semaforo verde giallo rosso range normativi età sesso',
         render: () => (
           <>
             <p className="text-[15.5px] text-anthracite-light leading-relaxed">
@@ -923,8 +923,8 @@ export default function GuideClient() {
               />
               <ScoreCard
                 emoji="🟣"
-                title="Modulazione Infiammatoria (0-100)"
-                desc="Capacità del sistema vagale di modulare l'infiammazione. Basato sul riflesso antinfiammatorio colinergico (Tracey 2002). Più è alto, migliore è la capacità del corpo di tenere sotto controllo l'infiammazione."
+                title="Adattamento (0-100)"
+                desc="Capacità di recupero e adattamento del sistema nervoso autonomo. Più è alto, più il corpo assorbe bene i carichi della giornata e torna rapidamente all'equilibrio."
                 color="#A855F7"
               />
             </div>
@@ -933,10 +933,10 @@ export default function GuideClient() {
               Stress Index Composito
             </h3>
             <p className="text-[15.5px] text-anthracite-light leading-relaxed">
-              Valore unico 0-100 che sintetizza tutti e 5 gli score. Si vede
-              nel tachimetro in cima ai risultati. È il numero da monitorare
-              nel tempo, soprattutto se confronti più sessioni dello stesso
-              cliente.
+              Valore unico 0-100 che sintetizza Stress, Recupero, Equilibrio ed
+              Energia. Si vede nel tachimetro in cima ai risultati. È il numero
+              da monitorare nel tempo, soprattutto se confronti più sessioni
+              dello stesso cliente.
             </p>
 
             <h3 className="text-lg font-semibold text-anthracite mt-7 mb-3">
@@ -1145,7 +1145,7 @@ export default function GuideClient() {
         title: 'Misurazione mattutina',
         emoji: '📅',
         searchText:
-          'guida misurazione mattutina HRV mattino 5 minuti seduto sdraiato sistema nervoso autonomo trend costanza entro 30 minuti risveglio prima caffè cibo allenamento bagno orario costanza cosa evitare tè sigarette doccia calda fredda discussioni passo per passo fascia elettrodi pettorali nuova misurazione standard connessione segnale rilassati respira ripetibilità score indice stress recupero equilibrio energia modulazione infiammatoria interpretare 60-85 ottimale 40-60 normali sotto 40 sonno scarso malattia sotto 25 sovrallenamento esaurimento abitudine alert routine non disturbare faq in piedi sorso acqua salto un giorno sera giorni riposo malato',
+          'guida misurazione mattutina HRV mattino 5 minuti seduto sdraiato sistema nervoso autonomo trend costanza entro 30 minuti risveglio prima caffè cibo allenamento bagno orario costanza cosa evitare tè sigarette doccia calda fredda discussioni passo per passo fascia elettrodi pettorali nuova misurazione standard connessione segnale rilassati respira ripetibilità score indice stress recupero equilibrio energia adattamento interpretare 60-85 ottimale 40-60 normali sotto 40 sonno scarso malattia sotto 25 sovrallenamento esaurimento abitudine alert routine non disturbare faq in piedi sorso acqua salto un giorno sera giorni riposo malato',
         render: () => (
           <>
             <p className="text-[15.5px] text-anthracite-light leading-relaxed">
@@ -1239,8 +1239,8 @@ export default function GuideClient() {
                     },
                     { s: 'Energia', d: 'risorse autonomiche disponibili' },
                     {
-                      s: 'Modulazione Infiammatoria',
-                      d: "capacità di controllare l'infiammazione",
+                      s: 'Adattamento',
+                      d: 'capacità di recupero e adattamento',
                     },
                   ].map((row) => (
                     <tr

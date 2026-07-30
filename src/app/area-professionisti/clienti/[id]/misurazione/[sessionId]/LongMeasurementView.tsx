@@ -145,7 +145,8 @@ const COMPARE_ROWS: Array<{ group: 'score' | 'hrv'; key: string; label: string; 
   { group: 'score', key: 'recovery', label: 'Recupero', direction: 1 },
   { group: 'score', key: 'balance', label: 'Equilibrio', direction: 1 },
   { group: 'score', key: 'energy', label: 'Energia', direction: 1 },
-  { group: 'score', key: 'inflammation', label: 'Mod. infiammatoria', direction: 1 },
+  // `key` è la chiave JSONB scritta dall'app in segments[].scores: non rinominabile.
+  { group: 'score', key: 'inflammation', label: 'Adattamento', direction: 1 },
   { group: 'hrv', key: 'meanBpm', label: 'Frequenza cardiaca', unit: 'bpm', digits: 0, direction: -1 },
   { group: 'hrv', key: 'rmssd', label: 'RMSSD', unit: 'ms', direction: 1 },
   { group: 'hrv', key: 'sdnn', label: 'SDNN', unit: 'ms', direction: 1 },

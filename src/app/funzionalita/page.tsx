@@ -62,11 +62,11 @@ const SCORES = [
   },
   {
     emoji: '🟣',
-    name: 'Modulazione Infiammatoria',
+    name: 'Adattamento',
     range: '0-100',
     accent: '#A855F7',
     description:
-      'La capacità del nervo vago di modulare l\'infiammazione. Basato sul riflesso antinfiammatorio colinergico (Tracey 2002). Unico nel mercato.',
+      'La capacità di recupero e adattamento del sistema nervoso autonomo alle sollecitazioni quotidiane. Unico nel mercato.',
   },
 ]
 

@@ -131,6 +131,7 @@ export interface MeasurementAnalytics {
   score_recupero: number | null
   score_equilibrio: number | null
   score_energia: number | null
+  // Nome storico della colonna: nella UI e nei PDF si chiama "Adattamento".
   score_modulazione_infiammatoria: number | null
   score_composito: number | null
 
@@ -218,6 +219,7 @@ export interface MeasurementSegmentScores {
   recovery: number | null
   balance: number | null
   energy: number | null
+  // Chiave JSONB scritta dall'app: corrisponde ad "Adattamento" nella UI.
   inflammation: number | null
 }
 

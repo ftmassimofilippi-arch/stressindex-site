@@ -307,11 +307,11 @@ function Solution() {
             </div>
             <div className="mt-5 rounded-lg border-l-4 border-teal bg-teal-light/50 px-4 py-3.5">
               <div className="text-[11px] uppercase tracking-wider text-teal-dark font-semibold">
-                💡 Modulazione Infiammatoria
+                💡 Adattamento
               </div>
               <div className="mt-1 text-[14px] text-anthracite leading-relaxed">
-                <span className="font-semibold">58/100</span> · Attività vagale nella norma per fascia demografica.
-                Consigliato monitoraggio settimanale.
+                <span className="font-semibold">58/100</span> · Capacità di recupero e adattamento nella norma
+                per fascia demografica. Consigliato monitoraggio settimanale.
               </div>
             </div>
           </div>

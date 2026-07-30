@@ -79,8 +79,10 @@ export default async function SessionDetailPage({
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="card p-6">
-          <h2 className="font-serif text-lg text-anthracite mb-1">Modulazione <em className="italic">infiammatoria</em></h2>
-          <p className="text-sm text-anthracite-lighter mb-3">Indice proprietario derivato dall&apos;analisi spettrale</p>
+          {/* Colonna DB: score_modulazione_infiammatoria (non rinominabile senza migration).
+              Testo mostrato: "Adattamento", allineato all'app Flutter e ai PDF. */}
+          <h2 className="font-serif text-lg text-anthracite mb-1"><em className="italic">Adattamento</em></h2>
+          <p className="text-sm text-anthracite-lighter mb-3">Capacità di recupero e adattamento</p>
           <div className="flex items-baseline gap-2">
             <span className="font-serif text-5xl text-anthracite">{num(measurement.score_modulazione_infiammatoria, 1)}</span>
             <span className="text-sm text-anthracite-lighter">/ 100</span>
@@ -88,7 +90,10 @@ export default async function SessionDetailPage({
         </div>
         <div className="card p-6">
           <h2 className="font-serif text-lg text-anthracite mb-1">Indice <em className="italic">composito</em></h2>
-          <p className="text-sm text-anthracite-lighter mb-3">Sintesi dei 4 score proprietari</p>
+          {/* Il composito è calcolato dall'app su 4 dei 5 score: Recupero 30%,
+              Equilibrio 25%, Stress invertito 25%, Energia 20%. Adattamento NON
+              entra nella formula, quindi il sottotitolo elenca le voci reali. */}
+          <p className="text-sm text-anthracite-lighter mb-3">Sintesi di Stress, Recupero, Equilibrio ed Energia</p>
           <div className="flex items-baseline gap-2">
             <span className="font-serif text-5xl text-anthracite">{num(measurement.score_composito, 1)}</span>
             <span className="text-sm text-anthracite-lighter">/ 100</span>

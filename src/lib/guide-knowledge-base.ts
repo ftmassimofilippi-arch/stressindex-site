@@ -203,16 +203,14 @@ direzioni è problematico.
 Energia (0-100): risorse energetiche complessive del sistema
 nervoso. Basato sulla potenza totale dello spettro HRV.
 
-Modulazione Infiammatoria (0-100): capacità del sistema vagale
-di modulare l'infiammazione. Basato sul riflesso
-antinfiammatorio colinergico (Tracey 2002). Più è alto,
-migliore è la capacità del corpo di tenere sotto controllo
-l'infiammazione.
+Adattamento (0-100): capacità di recupero e adattamento del
+sistema nervoso autonomo. Più è alto, più il corpo assorbe bene
+i carichi della giornata e torna rapidamente all'equilibrio.
 
-Stress Index Composito: valore unico 0-100 che sintetizza tutti
-e 5 gli score. Si vede nel tachimetro in cima ai risultati. È
-il numero da monitorare nel tempo, soprattutto se confronti più
-sessioni dello stesso cliente.
+Stress Index Composito: valore unico 0-100 che sintetizza
+Stress, Recupero, Equilibrio ed Energia. Si vede nel tachimetro
+in cima ai risultati. È il numero da monitorare nel tempo,
+soprattutto se confronti più sessioni dello stesso cliente.
 
 I parametri avanzati: sotto gli score trovi i dettagli per
 dominio (Time Domain, Frequency Domain, Non-linear, Geometric).
@@ -364,8 +362,7 @@ I risultati (i 5 score):
 - Recupero: quanto il parasimpatico è attivo.
 - Equilibrio: bilanciamento simpatico-parasimpatico.
 - Energia: risorse autonomiche disponibili.
-- Modulazione Infiammatoria: capacità di controllare
-  l'infiammazione.
+- Adattamento: capacità di recupero e adattamento.
 
 Come interpretare:
 - 60-85: zona ottimale.
