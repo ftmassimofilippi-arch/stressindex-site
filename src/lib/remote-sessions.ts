@@ -330,6 +330,57 @@ export async function remoteMeasurementsForClient(
   return loadRemoteMeasurements(professionistaId, [clientId])
 }
 
+// UNA sola sessione remota, cercata per id. Usata dalle route PDF: prima di
+// generare il documento devono poter dire "questa sessione appartiene davvero a
+// questo cliente" anche quando la RLS non la mostra.
+//
+// SICUREZZA: la query admin è vincolata ai soli professionista_id ottenuti dal
+// ponte per QUEL cliente di QUEL professionista, quindi un id di sessione
+// indovinato non restituisce nulla se non è del cliente richiesto.
+export async function findRemoteMeasurement(
+  professionistaId: string,
+  clientId: string,
+  sessionId: string,
+): Promise<{ session: SessionRow; analytics: MeasurementAnalytics | null } | null> {
+  if (!hasServiceRole()) {
+    console.warn('[remote-sessions] SUPABASE_SERVICE_ROLE_KEY assente: sessione remota non verificabile', { clientId, sessionId })
+    return null
+  }
+  const pairs = await buildBridge(professionistaId, [clientId])
+  const userIds = Array.from(new Set(pairs.map((p) => p.userId)))
+  if (userIds.length === 0) return null
+
+  const admin = createAdminClient()
+  const { data: rows, error } = await selectWithMissingColumnFallback<SessionRow>(
+    SESSION_COLUMNS,
+    (cols) =>
+      admin
+        .from('sessions')
+        .select(cols)
+        .eq('id', sessionId)
+        .in('professionista_id', userIds)
+        .limit(1) as unknown as PromiseLike<{ data: SessionRow[] | null; error: PostgrestError | null }>,
+    { label: 'sessions (remota singola)', required: ['id', 'professionista_id'] },
+  )
+  if (error) {
+    console.error('[remote-sessions] lettura sessione remota fallita', { clientId, sessionId, error })
+    return null
+  }
+  const session = (rows ?? [])[0]
+  if (!session) return null
+
+  const { data: ma } = await admin
+    .from('measurement_analytics')
+    .select('*')
+    .eq('session_id', sessionId)
+    .maybeSingle()
+
+  return {
+    session: { ...session, client_id: session.client_id ?? clientId },
+    analytics: ma ? ({ ...(ma as MeasurementAnalytics), client_id: clientId }) : null,
+  }
+}
+
 // Fallback senza service_role: RPC SECURITY DEFINER dell'app Flutter, che
 // verifica internamente link `active` + email. Copre solo i clienti con email
 // coincidente, ma non richiede la chiave service_role.

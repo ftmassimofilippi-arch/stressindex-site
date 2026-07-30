@@ -3,9 +3,10 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import type { PostgrestError } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase-server'
 import { ClientReportPdfDocument } from '@/lib/client-report-pdf'
+import { loadAuthorizedClient } from '@/lib/measurement-access'
 import { selectWithMissingColumnFallback } from '@/lib/safe-select'
 import { toStr } from '@/lib/format'
-import type { Client, MeasurementAnalytics, ProfessionalProfile } from '@/lib/types'
+import type { MeasurementAnalytics, ProfessionalProfile } from '@/lib/types'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -136,21 +137,18 @@ export async function POST(req: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })
+    return NextResponse.json({ error: 'Sessione scaduta: ricarica la pagina e accedi di nuovo.' }, { status: 401 })
   }
 
-  // Verifica ownership cliente (RLS filtra già su professionista_id).
-  const { data: client } = await supabase
-    .from('clients')
-    .select('*')
-    .eq('id', clientId)
-    .maybeSingle<Client>()
-  if (!client) {
-    return NextResponse.json({ error: 'Cliente non trovato' }, { status: 404 })
+  // Autorizzazione: la RLS di `clients` è l'unico giudice. Il confronto
+  // applicativo `client.professionista_id !== user.id` che stava qui negava il
+  // report a superadmin e owner/admin di organizzazione, che la RLS autorizza
+  // esplicitamente a leggere in sola lettura. Vedi lib/measurement-access.ts.
+  const access = await loadAuthorizedClient(supabase, clientId)
+  if ('denied' in access) {
+    return NextResponse.json({ error: access.denied.error }, { status: access.denied.status })
   }
-  if (client.professionista_id !== user.id) {
-    return NextResponse.json({ error: 'Accesso negato' }, { status: 403 })
-  }
+  const { client } = access
 
   // Intervallo: dateFrom 00:00 → dateTo 23:59:59.999
   const fromIso = `${dateFrom}T00:00:00.000Z`
@@ -176,7 +174,7 @@ export async function POST(req: Request) {
   )
   if (sErr) {
     console.error('[client-report] sessions query error', sErr)
-    return NextResponse.json({ error: 'Errore lettura sessioni' }, { status: 500 })
+    return NextResponse.json({ error: 'Non è stato possibile leggere le misurazioni del periodo. Riprova tra qualche istante.' }, { status: 500 })
   }
 
   let measurements: MeasurementAnalytics[] = []
@@ -196,11 +194,13 @@ export async function POST(req: Request) {
     )
   }
 
-  // 3. Profilo professionista.
+  // 3. Profilo professionista: quello TITOLARE del cliente, non l'utente
+  //    loggato — nella vista in sola lettura il report deve restare intestato
+  //    allo studio del cliente.
   const { data: professional } = await supabase
     .from('professional_profiles')
     .select('*')
-    .eq('id', user.id)
+    .eq('id', client.professionista_id)
     .maybeSingle<ProfessionalProfile>()
 
   // 4. Renderizza PDF.
@@ -217,7 +217,7 @@ export async function POST(req: Request) {
     )
   } catch (err) {
     console.error('[client-report] render error', err)
-    return NextResponse.json({ error: 'Errore generazione PDF' }, { status: 500 })
+    return NextResponse.json({ error: 'I dati sono stati letti ma il documento non è stato generato. Riprova; se persiste, segnalacelo.' }, { status: 500 })
   }
 
   const cognome = sanitizeFilename(client.cognome ?? 'cliente')

@@ -4,9 +4,11 @@ import { format, parseISO } from 'date-fns'
 import type { PostgrestError } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase-server'
 import { MeasurementPdfDocument } from '@/lib/measurement-pdf'
+import { loadAuthorizedClient, sameId } from '@/lib/measurement-access'
+import { findRemoteMeasurement } from '@/lib/remote-sessions'
 import { selectWithMissingColumnFallback } from '@/lib/safe-select'
 import { toStr } from '@/lib/format'
-import type { Client, MeasurementAnalytics, MeasurementWithSession, ProfessionalProfile } from '@/lib/types'
+import type { MeasurementAnalytics, MeasurementWithSession, ProfessionalProfile } from '@/lib/types'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -131,13 +133,19 @@ export async function POST(req: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })
+    return NextResponse.json({ error: 'Sessione scaduta: ricarica la pagina e accedi di nuovo.' }, { status: 401 })
   }
 
-  // 1. Carica sessione + verifica proprietà professionista.
-  //    RLS filtra già su professionista_id = auth.uid(), quindi una riga = ownership ok.
-  //    Resiliente alle colonne mancanti: una colonna assente nel database non
-  //    deve impedire la generazione del PDF.
+  // 1. Cliente: la RLS decide chi può vederlo (proprietario, team, superadmin
+  //    in sola lettura). Riga restituita = lettore autorizzato su questi dati.
+  const access = await loadAuthorizedClient(supabase, clientId)
+  if ('denied' in access) {
+    return NextResponse.json({ error: access.denied.error }, { status: access.denied.status })
+  }
+  const { client } = access
+
+  // 2. Sessione. Lettura resiliente alle colonne mancanti: una colonna assente
+  //    nel database non deve impedire la generazione del PDF.
   const { data: sessionRows, error: sessErr } = await selectWithMissingColumnFallback<SessionRow>(
     ['id', 'client_id', 'professionista_id', 'started_at', 'created_at', 'duration_seconds', 'hrv_data', 'test_type', 'tags', 'notes_professionista', 'indicazioni'],
     (cols) =>
@@ -147,48 +155,66 @@ export async function POST(req: Request) {
       }>,
     { label: 'sessions (PDF misurazione)', required: ['id'] },
   )
-  let session: SessionRow | null = sessionRows?.[0] ?? null
-
   if (sessErr) {
     console.error('[measurement-pdf] sessions query error', sessErr)
-    return NextResponse.json({ error: 'Errore lettura sessione' }, { status: 500 })
+    return NextResponse.json({ error: 'Non è stato possibile leggere la misurazione. Riprova tra qualche istante.' }, { status: 500 })
   }
 
-  if (session) {
-    if (session.professionista_id !== user.id) {
-      return NextResponse.json({ error: 'Accesso negato' }, { status: 403 })
-    }
-    if (session.client_id !== clientId) {
-      return NextResponse.json({ error: 'clientId non corrispondente alla sessione' }, { status: 400 })
-    }
+  const visible: SessionRow | null = sessionRows?.[0] ?? null
+  let session: SessionRow | null = null
+  let remoteAnalytics: MeasurementAnalytics | null = null
+
+  if (visible && sameId(visible.client_id, client.id)) {
+    // Misurazione fatta in studio: la sessione porta già l'id anagrafica.
+    session = visible
   } else {
-    // Fallback sessioni remote (auto-misurate dal cliente, client_id null):
-    // la RLS le nasconde al professionista. La RPC SECURITY DEFINER ri-verifica
-    // internamente riga CRM + link active, quindi una riga trovata = autorizzato.
-    const { data: remoteRows, error: rpcErr } = await supabase.rpc(
-      'get_linked_client_sessions_by_client_id',
-      { p_client_id: clientId },
-    )
-    if (rpcErr) {
-      console.error('[measurement-pdf] rpc error', rpcErr)
+    // Due casi finiscono qui:
+    //  • misurazione remota (client_id NULL, professionista_id = uid del
+    //    CLIENTE): la RLS la nasconde, oppure la mostra al superadmin ma senza
+    //    alcun aggancio all'anagrafica;
+    //  • sessione di un ALTRO cliente: il ponte non la restituisce, quindi
+    //    l'accesso resta negato.
+    const remote = await findRemoteMeasurement(client.professionista_id, client.id, sessionId)
+    if (remote) {
+      // Le note sono opzionali sulla riga remota (colonne assenti su alcuni DB).
+      session = {
+        ...remote.session,
+        notes_professionista: remote.session.notes_professionista ?? null,
+        indicazioni: remote.session.indicazioni ?? null,
+      }
+      remoteAnalytics = remote.analytics
     }
-    session = ((remoteRows ?? []) as SessionRow[]).find((r) => r.id === sessionId) ?? null
-    if (!session) {
-      return NextResponse.json({ error: 'Sessione non trovata' }, { status: 404 })
-    }
-    session = { ...session, client_id: session.client_id ?? clientId }
   }
 
-  // 2. Carica measurement_analytics (preferito, contiene gli score proprietari).
+  if (!session) {
+    if (visible) {
+      console.warn('[measurement-pdf] sessione non appartenente al cliente richiesto', {
+        sessionId,
+        clientId,
+        sessionClientId: visible.client_id,
+      })
+      return NextResponse.json(
+        { error: 'Questa misurazione non risulta collegata al cliente selezionato: non è possibile generare un PDF a suo nome.' },
+        { status: 403 },
+      )
+    }
+    return NextResponse.json(
+      { error: 'Misurazione non trovata. Se è stata registrata dal cliente dalla sua app, verifica che il collegamento con lo studio sia ancora attivo.' },
+      { status: 404 },
+    )
+  }
+
+  // 3. measurement_analytics (preferito: contiene gli score proprietari).
+  //    Per le sessioni remote la RLS la nasconde come la sessione, quindi
+  //    riusiamo la riga già letta dal ponte.
   const { data: ma } = await supabase
     .from('measurement_analytics')
     .select('*')
     .eq('session_id', sessionId)
     .maybeSingle()
 
-  const base: MeasurementAnalytics = ma
-    ? (ma as MeasurementAnalytics)
-    : sessionToMeasurement(session)
+  const base: MeasurementAnalytics =
+    (ma as MeasurementAnalytics | null) ?? remoteAnalytics ?? sessionToMeasurement(session)
 
   const measurement: MeasurementWithSession = {
     ...base,
@@ -196,17 +222,16 @@ export async function POST(req: Request) {
     indicazioni: session.indicazioni ?? null,
   }
 
-  // 3. Cliente e profilo professionista.
-  const [{ data: client }, { data: professional }] = await Promise.all([
-    supabase.from('clients').select('*').eq('id', clientId).maybeSingle<Client>(),
-    supabase.from('professional_profiles').select('*').eq('id', user.id).maybeSingle<ProfessionalProfile>(),
-  ])
+  // 4. Intestazione del PDF: lo studio è quello del cliente, non l'utente
+  //    loggato — altrimenti nella vista superadmin il documento uscirebbe
+  //    firmato dall'osservatore invece che dal professionista titolare.
+  const { data: professional } = await supabase
+    .from('professional_profiles')
+    .select('*')
+    .eq('id', client.professionista_id)
+    .maybeSingle<ProfessionalProfile>()
 
-  if (!client) {
-    return NextResponse.json({ error: 'Cliente non trovato' }, { status: 404 })
-  }
-
-  // 4. Renderizza PDF.
+  // 5. Renderizza PDF.
   let pdfBuffer: Buffer
   try {
     pdfBuffer = await renderToBuffer(
@@ -218,7 +243,7 @@ export async function POST(req: Request) {
     )
   } catch (err) {
     console.error('[measurement-pdf] render error', err)
-    return NextResponse.json({ error: 'Errore generazione PDF' }, { status: 500 })
+    return NextResponse.json({ error: 'La misurazione è stata trovata ma il documento non è stato generato. Riprova; se persiste, segnalacelo.' }, { status: 500 })
   }
 
   const dateStr = (() => {
