@@ -16,8 +16,12 @@ export function RecoverForm() {
     setLoading(true)
     const supabase = createClient()
     const siteUrl = typeof window !== 'undefined' ? window.location.origin : ''
+    // Destinazione diretta: /imposta-password è l'unica pagina che sa
+    // scambiare il token. Perché sia rispettata deve stare nella Redirect URL
+    // allowlist del progetto Supabase, altrimenti si ripiega sulla Site URL —
+    // per quel caso resta RecoveryLinkRedirect come rete di sicurezza.
     const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${siteUrl}/area-professionisti/login`,
+      redirectTo: `${siteUrl}/imposta-password`,
     })
     setLoading(false)
     if (authError) { setError(authError.message); return }

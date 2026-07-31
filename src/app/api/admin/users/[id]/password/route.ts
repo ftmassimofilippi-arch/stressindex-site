@@ -39,7 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     )
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://stressindex.io'
     const { error } = await anon.auth.resetPasswordForEmail(data.user.email, {
-      redirectTo: `${siteUrl}/area-professionisti/recupera-password`,
+      redirectTo: `${siteUrl}/imposta-password`,
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true, email: data.user.email })

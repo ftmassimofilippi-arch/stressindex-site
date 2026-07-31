@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { HomeNavbar } from './HomeNavbar'
+import { RecoveryLinkRedirect } from '@/components/RecoveryLinkRedirect'
 
 export const metadata: Metadata = {
   title: 'Stress Index | Software HRV Professionale per Fisioterapisti',
@@ -781,6 +782,11 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
+      {/* La home è la Site URL del progetto Supabase: i link email che non
+          passano l'allowlist dei redirect atterrano qui. Montato prima di
+          tutto il resto, e comunque nessun componente della home crea un
+          client Supabase, quindi il token nell'URL è ancora intatto. */}
+      <RecoveryLinkRedirect />
       <HomeNavbar />
       <Hero />
       <TrustBar />
