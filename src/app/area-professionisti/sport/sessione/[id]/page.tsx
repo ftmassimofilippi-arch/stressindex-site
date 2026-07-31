@@ -53,7 +53,7 @@ export default async function SportSessionPage({
         <div>
           <h1 className="font-serif text-2xl sm:text-3xl text-anthracite">{session.athlete_name}</h1>
           <p className="mt-1.5 text-sm text-anthracite-lighter">
-            {formatMeasuredAt(session.start_time)} · {formatDuration(session.duration_s)}
+            {formatMeasuredAt(session)} · {formatDuration(session.duration_s)}
             {session.sport ? ` · ${session.sport}` : ''}
           </p>
         </div>

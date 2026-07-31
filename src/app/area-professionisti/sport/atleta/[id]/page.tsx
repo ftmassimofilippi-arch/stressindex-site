@@ -175,7 +175,7 @@ export default async function SportAthletePage({
               <tbody>
                 {recent.map((s) => (
                   <tr key={s.id} className="border-t border-surface-border hover:bg-surface transition-colors">
-                    <td className="px-6 py-3 text-anthracite font-medium">{formatMeasuredDate(s.start_time)}</td>
+                    <td className="px-6 py-3 text-anthracite font-medium">{formatMeasuredDate(s)}</td>
                     <td className="px-3 py-3">{formatDuration(s.duration_s)}</td>
                     <td className="px-3 py-3">{s.trimp == null ? '—' : Math.round(s.trimp)}</td>
                     <td className="px-3 py-3">{s.hr_avg == null ? '—' : `${s.hr_avg} bpm`}</td>

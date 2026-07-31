@@ -8,6 +8,7 @@ import { fullName } from '@/lib/format'
 import type { MeasurementAnalytics } from '@/lib/types'
 import type { ClientWithLastMeasurement } from '@/lib/dashboard-data'
 import Link from 'next/link'
+import { measuredInstant } from '@/lib/format'
 
 type Props = { clients: ClientWithLastMeasurement[]; measurements: MeasurementAnalytics[] }
 
@@ -24,7 +25,7 @@ export function AnalyticsClient({ clients, measurements }: Props) {
     const f = new Date(range.from).getTime()
     const t = new Date(range.to).getTime() + 24 * 3600 * 1000
     return measurements.filter((m) => {
-      const v = new Date(m.measured_at).getTime()
+      const v = measuredInstant(m)?.getTime() ?? 0
       return v >= f && v <= t
     })
   }, [measurements, range])

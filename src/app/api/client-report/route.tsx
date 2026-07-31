@@ -164,9 +164,9 @@ export async function POST(req: Request) {
         .from('sessions')
         .select(cols)
         .eq('client_id', clientId)
-        .gte('started_at', fromIso)
-        .lte('started_at', toIso)
-        .order('started_at', { ascending: false, nullsFirst: false }) as unknown as PromiseLike<{
+        .gte('started_at_utc', fromIso)
+        .lte('started_at_utc', toIso)
+        .order('started_at_utc', { ascending: false, nullsFirst: false }) as unknown as PromiseLike<{
         data: SessionRow[] | null
         error: PostgrestError | null
       }>,

@@ -6,7 +6,7 @@ import { Activity, ArrowRight, ChevronLeft, ChevronRight, Dumbbell, TrendingDown
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { EmptyState } from '@/components/dashboard/EmptyState'
 import { WeeklySessionsBar } from './SportCharts'
-import { formatMeasuredAt, formatMeasuredDate, num } from '@/lib/format'
+import { formatIstante, formatMeasuredAt, formatMeasuredDate, num } from '@/lib/format'
 import { competitiveLevelLabel, formatDuration } from '@/lib/sport-format'
 import type {
   SportAthleteCard,
@@ -286,7 +286,7 @@ function AtletiTab({ athletes, baseQuery }: { athletes: SportAthleteCard[]; base
 
           <div className="mt-4 pt-3 border-t border-surface-border flex items-center justify-between text-xs">
             <span className="text-anthracite-lighter">
-              {a.last_session_at ? `Ultima sessione ${formatMeasuredDate(a.last_session_at)}` : 'Nessuna sessione'}
+              {a.last_session_at ? `Ultima sessione ${formatIstante(a.last_session_at)}` : 'Nessuna sessione'}
             </span>
             <ArrowRight size={14} className="text-teal-dark" />
           </div>
@@ -318,7 +318,7 @@ function SessionRow({ s, baseQuery, variant = 'recent' }: { s: SportSessionWithA
       {variant === 'recent' ? (
         <>
           <Td className="font-medium text-anthracite">{s.athlete_name}</Td>
-          <Td className="text-anthracite-lighter">{formatMeasuredDate(s.start_time)}</Td>
+          <Td className="text-anthracite-lighter">{formatMeasuredDate(s)}</Td>
           <Td>{s.sport ?? '—'}</Td>
           <Td>{formatDuration(s.duration_s)}</Td>
           <Td>{s.trimp == null ? '—' : Math.round(s.trimp)}</Td>
@@ -327,7 +327,7 @@ function SessionRow({ s, baseQuery, variant = 'recent' }: { s: SportSessionWithA
         </>
       ) : (
         <>
-          <Td className="text-anthracite-lighter whitespace-nowrap">{formatMeasuredAt(s.start_time)}</Td>
+          <Td className="text-anthracite-lighter whitespace-nowrap">{formatMeasuredAt(s)}</Td>
           <Td className="font-medium text-anthracite">{s.athlete_name}</Td>
           <Td>{s.sport ?? '—'}</Td>
           <Td>{formatDuration(s.duration_s)}</Td>

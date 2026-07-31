@@ -9,6 +9,7 @@ import { findRemoteMeasurement } from '@/lib/remote-sessions'
 import { selectWithMissingColumnFallback } from '@/lib/safe-select'
 import { toStr } from '@/lib/format'
 import type { MeasurementAnalytics, MeasurementWithSession, ProfessionalProfile } from '@/lib/types'
+import { measuredDayKey } from '@/lib/format'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -248,7 +249,7 @@ export async function POST(req: Request) {
 
   const dateStr = (() => {
     try {
-      return format(parseISO(measurement.measured_at), 'yyyy-MM-dd')
+      return (measuredDayKey(measurement) ?? 'data-ignota')
     } catch {
       return format(new Date(), 'yyyy-MM-dd')
     }

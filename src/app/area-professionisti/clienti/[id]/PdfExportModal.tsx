@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { Modal } from '@/components/dashboard/Modal'
 import type { Client, ClientNote, MeasurementAnalytics, ProfessionalProfile } from '@/lib/types'
 import { fullName, formatDate, formatMeasuredAt } from '@/lib/format'
+import { measuredInstant } from '@/lib/format'
 
 type Props = {
   open: boolean
@@ -36,7 +37,7 @@ export function PdfExportModal({ open, onClose, client, measurements, notes, pro
     const fMs = new Date(from).getTime()
     const tMs = new Date(to).getTime() + 24 * 3600 * 1000
     return measurements.filter((m) => {
-      const t = new Date(m.measured_at).getTime()
+      const t = measuredInstant(m)?.getTime() ?? 0
       return t >= fMs && t <= tMs
     })
   }, [measurements, from, to])
@@ -94,7 +95,7 @@ export function PdfExportModal({ open, onClose, client, measurements, notes, pro
               </View>
               {filteredMeasurements.map((m) => (
                 <View key={m.id} style={styles.row}>
-                  <Text style={styles.col}>{formatMeasuredAt(m.measured_at)}</Text>
+                  <Text style={styles.col}>{formatMeasuredAt(m)}</Text>
                   {SCORE_OPTIONS.filter(o => scores[o.key]).map((o) => {
                     const v = m[o.key as keyof MeasurementAnalytics] as number | null
                     return <Text key={o.key} style={styles.col}>{v != null ? v.toFixed(0) : '—'}</Text>

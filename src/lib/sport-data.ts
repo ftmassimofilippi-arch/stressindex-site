@@ -2,6 +2,7 @@ import { cache } from 'react'
 import { createClient } from './supabase-server'
 import { resolveViewingProfessional, type ViewingProfessional } from './dashboard-data'
 import { SPORT_LIVE_COLUMNS, type AthleteMeta, type SportLiveRow } from './sport-live'
+import { measuredInstant, type ConIstante } from './format'
 
 // ============================================================================
 // MODULO SPORT — data layer
@@ -383,7 +384,7 @@ export async function listSportAthletes(professionalId: string | null): Promise<
   // Tutte le sessioni del professionista (servono per stats per-atleta).
   const { data: sessRows } = await supabase
     .from('sport_sessions')
-    .select('athlete_id, start_time, trimp, rmssd_avg')
+    .select('athlete_id, start_time, start_time_utc, tz_offset_minutes, trimp, rmssd_avg')
     .eq('professional_id', professionalId)
     .order('start_time', { ascending: false })
   const sessions = (sessRows ?? []) as Array<{
@@ -418,17 +419,20 @@ export async function listSportAthletes(professionalId: string | null): Promise<
     const list = byAthlete.get(id) ?? []
     // list è già ordinata desc per start_time
     const last = list[0] ?? null
-    const sessions30d = list.filter((s) => now - new Date(s.start_time).getTime() <= 30 * DAY).length
+    const ist = (s: ConIstante) => measuredInstant(s)?.getTime() ?? 0
+    const sessions30d = list.filter((s) => now - ist(s) <= 30 * DAY).length
     const trimp7d = list
-      .filter((s) => now - new Date(s.start_time).getTime() <= 7 * DAY)
+      .filter((s) => now - ist(s) <= 7 * DAY)
       .reduce((acc, s) => acc + (s.trimp ?? 0), 0)
     cards.push({
       ...profile,
       full_name: `${profile.nome ?? ''} ${profile.cognome ?? ''}`.trim() || 'Atleta',
       sessions_30d: sessions30d,
-      last_session_at: last?.start_time ?? null,
+      // Istante NORMALIZZATO, non il grezzo: viene confrontato con Date.now()
+      // nell'ordinamento qui sotto e formattato con formatIstante nella UI.
+      last_session_at: measuredInstant(last)?.toISOString() ?? null,
       last_session_trimp: last?.trimp ?? null,
-      trimp_7d: trimp7d > 0 ? trimp7d : list.some((s) => now - new Date(s.start_time).getTime() <= 7 * DAY) ? 0 : null,
+      trimp_7d: trimp7d > 0 ? trimp7d : list.some((s) => now - ist(s) <= 7 * DAY) ? 0 : null,
       ln_rmssd_trend: lnRmssdTrend(list),
     })
   }

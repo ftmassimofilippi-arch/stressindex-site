@@ -2,7 +2,7 @@ import { cache } from 'react'
 import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js'
 import { createAdminClient, hasServiceRole } from './supabase-admin'
 import { selectWithMissingColumnFallback } from './safe-select'
-import { toStr } from './format'
+import { measuredInstant, toStr } from './format'
 import type { MeasurementAnalytics } from './types'
 
 // =============================================================================
@@ -408,8 +408,9 @@ export function lastRemoteAtByClient(remote: MeasurementAnalytics[]): Map<string
   for (const m of remote) {
     if (!m.client_id || !m.measured_at) continue
     const prev = map.get(m.client_id)
-    if (!prev || new Date(m.measured_at).getTime() > new Date(prev).getTime()) {
-      map.set(m.client_id, m.measured_at)
+    const i = measuredInstant(m)
+    if (i && (!prev || i.getTime() > new Date(prev).getTime())) {
+      map.set(m.client_id, i.toISOString())   // istante normalizzato, non il grezzo
     }
   }
   return map

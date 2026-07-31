@@ -9,6 +9,7 @@ import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadg
 import type { Alert, Client, MeasurementAnalytics } from '@/lib/types'
 import { ALERT_TYPE_LABEL } from '@/lib/types'
 import { formatDateTime, formatMeasuredAt } from '@/lib/format'
+import { measuredDayKey } from '@/lib/format'
 
 export function OverviewTab({ client, measurements, alerts, professionistaId }: { client: Client; measurements: MeasurementAnalytics[]; alerts: Alert[]; professionistaId?: string }) {
   const latest = measurements[0]
@@ -16,7 +17,7 @@ export function OverviewTab({ client, measurements, alerts, professionistaId }: 
 
   // Trend completo: tutte le 24+ metriche disponibili; il chart filtra internamente per periodo e selezione.
   const trendData = measurements.slice().reverse().map((m) => {
-    const point = { date: m.measured_at.slice(0, 10) } as { date: string } & Record<string, number | string | null>
+    const point = { date: measuredDayKey(m) ?? '' } as { date: string } & Record<string, number | string | null>
     for (const def of TREND_METRICS) {
       point[def.key] = (m as unknown as Record<string, number | null>)[def.key] ?? null
     }
@@ -32,7 +33,7 @@ export function OverviewTab({ client, measurements, alerts, professionistaId }: 
           <GaugeScore label="EQUILIBRIO" value={latest?.score_equilibrio} colorScheme="balance" />
           <GaugeScore label="ENERGIA" value={latest?.score_energia} colorScheme="energy" />
         </div>
-        {latest && <p className="mt-3 text-xs text-anthracite-lighter">Ultimo aggiornamento: {formatMeasuredAt(latest.measured_at)}</p>}
+        {latest && <p className="mt-3 text-xs text-anthracite-lighter">Ultimo aggiornamento: {formatMeasuredAt(latest)}</p>}
       </section>
 
       <section className="card p-6">
@@ -88,7 +89,7 @@ export function OverviewTab({ client, measurements, alerts, professionistaId }: 
                 <li key={m.id} className="px-5 py-3 flex items-center gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-anthracite">{formatMeasuredAt(m.measured_at)}</span>
+                      <span className="text-sm font-medium text-anthracite">{formatMeasuredAt(m)}</span>
                       <MeasurementTypeBadge testType={m.test_type} size="sm" />
                     </div>
                     <div className="text-xs text-anthracite-lighter mt-0.5">

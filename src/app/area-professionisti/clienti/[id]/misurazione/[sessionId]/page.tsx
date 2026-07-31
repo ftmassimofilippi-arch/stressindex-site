@@ -58,7 +58,7 @@ export default async function SessionDetailPage({
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="font-serif text-2xl text-anthracite">{formatMeasuredAt(measurement.measured_at)}</h1>
+              <h1 className="font-serif text-2xl text-anthracite">{formatMeasuredAt(measurement)}</h1>
               <MeasurementTypeBadge testType={measurement.test_type} />
             </div>
             <p className="text-sm text-anthracite-lighter mt-1">

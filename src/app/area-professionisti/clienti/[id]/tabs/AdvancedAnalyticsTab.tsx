@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
 import { AdvancedTrendChart, TREND_METRICS } from '@/components/dashboard/AdvancedTrendChart'
-import { formatMeasuredAt } from '@/lib/format'
+import { formatMeasuredAt, measuredDayKey, measuredHour, measuredInstant, measuredWeekday } from '@/lib/format'
 import type { MeasurementAnalytics } from '@/lib/types'
 
 function stats(values: number[]) {
@@ -37,7 +37,7 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
   // Punti trend su tutto lo storico — il chart filtra internamente con i propri controlli.
   // Mappa tutte le metriche supportate (24+ parametri HRV) dal record di measurement_analytics.
   const allTrendData = useMemo(() => measurements.slice().reverse().map((m) => {
-    const point = { date: m.measured_at.slice(0, 10) } as { date: string } & Record<string, number | string | null>
+    const point = { date: measuredDayKey(m) ?? '' } as { date: string } & Record<string, number | string | null>
     for (const def of TREND_METRICS) {
       point[def.key] = (m as unknown as Record<string, number | null>)[def.key] ?? null
     }
@@ -120,7 +120,7 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
           <ul className="divide-y divide-surface-border">
             {topByStress.length === 0 ? <li className="p-5 text-sm text-anthracite-lighter">—</li> : topByStress.map((m) => (
               <li key={m.id} className="px-5 py-3 flex items-center justify-between text-sm">
-                <span className="text-anthracite-lighter">{formatMeasuredAt(m.measured_at)}</span>
+                <span className="text-anthracite-lighter">{formatMeasuredAt(m)}</span>
                 <span className="font-medium text-emerald-600">{m.score_stress?.toFixed(0)}</span>
               </li>
             ))}
@@ -134,7 +134,7 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
           <ul className="divide-y divide-surface-border">
             {bottomByStress.length === 0 ? <li className="p-5 text-sm text-anthracite-lighter">—</li> : bottomByStress.map((m) => (
               <li key={m.id} className="px-5 py-3 flex items-center justify-between text-sm">
-                <span className="text-anthracite-lighter">{formatMeasuredAt(m.measured_at)}</span>
+                <span className="text-anthracite-lighter">{formatMeasuredAt(m)}</span>
                 <span className="font-medium text-red-500">{m.score_stress?.toFixed(0)}</span>
               </li>
             ))}
@@ -151,7 +151,7 @@ function filterRange(measurements: MeasurementAnalytics[], r: DateRange): Measur
   const fromMs = new Date(r.from).getTime()
   const toMs = new Date(r.to).getTime() + 24 * 3600 * 1000
   return measurements.filter((m) => {
-    const t = new Date(m.measured_at).getTime()
+    const t = measuredInstant(m)?.getTime() ?? 0
     return t >= fromMs && t <= toMs
   })
 }
@@ -161,9 +161,12 @@ function HourlyHeatmap({ measurements }: { measurements: MeasurementAnalytics[] 
     Array.from({ length: 24 }, () => ({ sum: 0, n: 0 })))
   for (const m of measurements) {
     if (m.score_stress == null) continue
-    const d = new Date(m.measured_at)
-    const dow = (d.getDay() + 6) % 7
-    const h = d.getHours()
+    // Giorno e ora ITALIANI dell'istante reale. Con `new Date().getHours()`
+    // si otteneva l'ora del browser applicata a un timestamp gia' spostato:
+    // la heatmap risultava traslata di due ore.
+    const dow = measuredWeekday(m)
+    const h = measuredHour(m)
+    if (dow == null || h == null) continue
     grid[dow][h].sum += m.score_stress
     grid[dow][h].n += 1
   }

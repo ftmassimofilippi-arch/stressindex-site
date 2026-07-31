@@ -1,7 +1,7 @@
 import type { PostgrestError } from '@supabase/supabase-js'
 import { createClient } from './supabase-server'
 import { selectWithMissingColumnFallback } from './safe-select'
-import { toStr } from './format'
+import { measuredDayKey, measuredInstant, toStr } from './format'
 import type {
   Alert,
   Client,
@@ -121,7 +121,7 @@ export async function listMeasurementsForClient(clientId: string, opts?: { limit
           .from('sessions')
           .select(cols)
           .eq('client_id', clientId)
-          .order('started_at', { ascending: false, nullsFirst: false }) as unknown as PromiseLike<{
+          .order('started_at_utc', { ascending: false, nullsFirst: false }) as unknown as PromiseLike<{
           data: SessionRow[] | null
           error: PostgrestError | null
         }>,
@@ -139,7 +139,10 @@ export async function listMeasurementsForClient(clientId: string, opts?: { limit
   for (const s of (direct ?? []) as SessionRow[]) byId.set(s.id, s)
   for (const s of remote) if (!byId.has(s.id)) byId.set(s.id, s)
 
-  const ts = (s: SessionRow) => new Date(s.started_at ?? s.created_at ?? 0).getTime()
+  // Istante normalizzato: `started_at` grezzo e `created_at` (scritto dal
+  // server, gia' corretto) seguono convenzioni diverse e non sono
+  // confrontabili direttamente.
+  const ts = (s: SessionRow) => measuredInstant(s)?.getTime() ?? new Date(s.created_at ?? 0).getTime()
   let sessions = Array.from(byId.values()).sort((a, b) => ts(b) - ts(a))
   if (opts?.from) {
     const from = new Date(opts.from).getTime()
@@ -319,8 +322,8 @@ export async function todaysMeasurements(): Promise<MeasurementAnalytics[]> {
   const { data } = await supabase
     .from('measurement_analytics')
     .select('*')
-    .gte('measured_at', today.toISOString())
-    .order('measured_at', { ascending: false })
+    .gte('measured_at_utc', today.toISOString())
+    .order('measured_at_utc', { ascending: false })
   return (data ?? []) as MeasurementAnalytics[]
 }
 
@@ -427,6 +430,11 @@ async function getLastRemoteSessionMap(
 // Ultima misurazione "effettiva": max tra la colonna clients.last_measurement_at
 // (aggiornata solo dalle misurazioni in studio) e l'ultima sessione remota.
 function effectiveLastMeasurementAt(direct: string | null | undefined, remote: string | undefined): string | null {
+  // `direct` viene da clients.last_measurement_at, che il trigger
+  // update_client_last_measurement scrive da sessions.created_at: timestamp del
+  // SERVER, gia' corretto. `remote` e' un istante normalizzato da chi lo calcola.
+  // Prima della normalizzazione le due grandezze seguivano convenzioni diverse e
+  // il massimo sbagliava di ~2h su 355 clienti su 388.
   if (!remote) return direct ?? null
   if (!direct) return remote
   return new Date(remote).getTime() > new Date(direct).getTime() ? remote : direct
@@ -438,8 +446,8 @@ export async function listClientsEnriched(opts?: { professionistaId?: string }):
     ? supabase.from('clients').select('*').eq('professionista_id', opts.professionistaId).order('cognome', { ascending: true })
     : supabase.from('clients').select('*').order('cognome', { ascending: true })
   const measurementsQ = opts?.professionistaId
-    ? supabase.from('measurement_analytics').select('*').eq('user_id', opts.professionistaId).order('measured_at', { ascending: false })
-    : supabase.from('measurement_analytics').select('*').order('measured_at', { ascending: false })
+    ? supabase.from('measurement_analytics').select('*').eq('user_id', opts.professionistaId).order('measured_at_utc', { ascending: false })
+    : supabase.from('measurement_analytics').select('*').order('measured_at_utc', { ascending: false })
   // Sessioni remote: solo per la vista "propria" (senza professionistaId).
   // Nella vista superadmin/org la RPC gira come utente loggato e restituirebbe
   // i SUOI clienti collegati, non quelli del professionista visualizzato.
@@ -509,8 +517,8 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
       supabase
         .from('measurement_analytics')
         .select(cols)
-        .gte('measured_at', from.toISOString())
-        .order('measured_at', { ascending: true }) as unknown as PromiseLike<{
+        .gte('measured_at_utc', from.toISOString())
+        .order('measured_at_utc', { ascending: true }) as unknown as PromiseLike<{
         data: Row[] | null
         error: PostgrestError | null
       }>,
@@ -518,7 +526,7 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
   )
   const buckets = new Map<string, Map<TrendColumn, number[]>>()
   for (const row of (data ?? []) as unknown as Row[]) {
-    const day = row.measured_at.slice(0, 10)
+    const day = measuredDayKey(row) ?? ''
     let bucket = buckets.get(day)
     if (!bucket) {
       bucket = new Map()
@@ -697,7 +705,7 @@ export async function getOrgMembersStats(): Promise<OrgMemberStats[]> {
     supabase.from('profiles').select('id, nome, cognome, email').in('id', userIds),
     supabase.from('professional_profiles').select('id, nome, cognome').in('id', userIds),
     supabase.from('clients').select('id, professionista_id').in('professionista_id', userIds),
-    supabase.from('measurement_analytics').select('user_id, measured_at').in('user_id', userIds),
+    supabase.from('measurement_analytics').select('user_id, measured_at, measured_at_utc, tz_offset_minutes').in('user_id', userIds),
   ])
 
   const profileMap = new Map<string, { nome: string | null; cognome: string | null; email: string | null }>()
@@ -718,8 +726,11 @@ export async function getOrgMembersStats(): Promise<OrgMemberStats[]> {
   for (const m of (measurementsRows ?? []) as Array<{ user_id: string; measured_at: string }>) {
     measurementsByUser.set(m.user_id, (measurementsByUser.get(m.user_id) ?? 0) + 1)
     const prev = lastByUser.get(m.user_id)
-    if (!prev || new Date(m.measured_at).getTime() > new Date(prev).getTime()) {
-      lastByUser.set(m.user_id, m.measured_at)
+    // Istante normalizzato: `prev` conserva gia' un ISO normalizzato, quindi il
+    // confronto e' fra grandezze omogenee anche con le due convenzioni miste.
+    const i = measuredInstant(m)
+    if (i && (!prev || i.getTime() > new Date(prev).getTime())) {
+      lastByUser.set(m.user_id, i.toISOString())
     }
   }
 
@@ -782,13 +793,13 @@ export async function getOrgOverview(): Promise<OrgOverview | null> {
     .from('measurement_analytics')
     .select('*', { count: 'exact', head: true })
     .in('user_id', activeUserIds.length ? activeUserIds : ['00000000-0000-0000-0000-000000000000'])
-    .gte('measured_at', weekAgo.toISOString())
+    .gte('measured_at_utc', weekAgo.toISOString())
 
   const { data: recentRows } = await supabase
     .from('measurement_analytics')
-    .select('session_id, client_id, user_id, measured_at, score_stress')
+    .select('session_id, client_id, user_id, measured_at, measured_at_utc, tz_offset_minutes, score_stress')
     .in('user_id', activeUserIds.length ? activeUserIds : ['00000000-0000-0000-0000-000000000000'])
-    .order('measured_at', { ascending: false })
+    .order('measured_at_utc', { ascending: false })
     .limit(20)
 
   const recent = (recentRows ?? []) as Array<{
@@ -971,7 +982,7 @@ export async function listAllProfessionalsStats(): Promise<ProfessionalStats[]> 
   const [{ data: ppRows }, { data: clientsRows }, { data: maRows }, planMap] = await Promise.all([
     supabase.from('professional_profiles').select('id, nome, cognome').in('id', ids),
     supabase.from('clients').select('professionista_id').in('professionista_id', ids),
-    supabase.from('measurement_analytics').select('user_id, measured_at').in('user_id', ids),
+    supabase.from('measurement_analytics').select('user_id, measured_at, measured_at_utc, tz_offset_minutes').in('user_id', ids),
     getPlansAndCreatedAt(ids),
   ])
 
@@ -988,8 +999,11 @@ export async function listAllProfessionalsStats(): Promise<ProfessionalStats[]> 
   for (const m of (maRows ?? []) as Array<{ user_id: string; measured_at: string }>) {
     measurementsByUser.set(m.user_id, (measurementsByUser.get(m.user_id) ?? 0) + 1)
     const prev = lastByUser.get(m.user_id)
-    if (!prev || new Date(m.measured_at).getTime() > new Date(prev).getTime()) {
-      lastByUser.set(m.user_id, m.measured_at)
+    // Istante normalizzato: `prev` conserva gia' un ISO normalizzato, quindi il
+    // confronto e' fra grandezze omogenee anche con le due convenzioni miste.
+    const i = measuredInstant(m)
+    if (i && (!prev || i.getTime() > new Date(prev).getTime())) {
+      lastByUser.set(m.user_id, i.toISOString())
     }
   }
 
@@ -1020,9 +1034,9 @@ export async function listAllMeasurements(opts?: { from?: string; to?: string })
   let q = supabase
     .from('measurement_analytics')
     .select('*')
-    .order('measured_at', { ascending: true })
-  if (opts?.from) q = q.gte('measured_at', opts.from)
-  if (opts?.to) q = q.lte('measured_at', opts.to)
+    .order('measured_at_utc', { ascending: true })
+  if (opts?.from) q = q.gte('measured_at_utc', opts.from)
+  if (opts?.to) q = q.lte('measured_at_utc', opts.to)
   const { data } = await q
   return (data ?? []) as MeasurementAnalytics[]
 }

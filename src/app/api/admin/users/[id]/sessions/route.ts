@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   let query = admin
     .from('sessions')
     .select('id, client_id, professionista_id, started_at, created_at, test_type, duration_seconds')
-    .order('started_at', { ascending: false, nullsFirst: false })
+    .order('started_at_utc', { ascending: false, nullsFirst: false })
     .limit(50)
 
   if (role === 'client') {

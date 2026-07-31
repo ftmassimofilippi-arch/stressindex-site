@@ -6,6 +6,7 @@ import { format, parseISO } from 'date-fns'
 import { it } from 'date-fns/locale'
 import { toNum } from './format'
 import type { Client, MeasurementWithSession, ProfessionalProfile } from './types'
+import { measuredDayKey } from './format'
 
 const COLORS = {
   teal: '#4FA39A',
@@ -427,7 +428,7 @@ export function MeasurementPdfDocument({
 
   return (
     <Document
-      title={`Stress Index - ${clientName} - ${format(parseISO(measurement.measured_at), 'yyyy-MM-dd')}`}
+      title={`Stress Index - ${clientName} - ${(measuredDayKey(measurement) ?? 'data-ignota')}`}
       author={proName || 'Stress Index'}
       subject="Report misurazione HRV"
       creator="Stress Index"

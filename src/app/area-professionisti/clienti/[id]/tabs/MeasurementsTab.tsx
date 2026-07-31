@@ -11,6 +11,7 @@ import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { formatMeasuredAt, formatDate } from '@/lib/format'
 import { normalizeTestType, measurementTypeMeta, type MeasurementTypeKey } from '@/lib/measurement-type'
 import type { Client, MeasurementAnalytics } from '@/lib/types'
+import { measuredInstant } from '@/lib/format'
 
 const DURATION_FILTERS = [
   { value: 'all', label: 'Tutte le durate' },
@@ -35,7 +36,7 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
     const fromMs = new Date(range.from).getTime()
     const toMs = new Date(range.to).getTime() + 24 * 3600 * 1000
     return measurements.filter((m) => {
-      const t = new Date(m.measured_at).getTime()
+      const t = measuredInstant(m)?.getTime() ?? 0
       if (t < fromMs || t > toMs) return false
       if (typeFilter !== 'all' && normalizeTestType(m.test_type) !== typeFilter) return false
       if (duration !== 'all') {
@@ -50,7 +51,7 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
   function exportCsv() {
     const headers = ['Data','Tipo','Durata (s)','Stress','Recupero','Equilibrio','Energia','Adattamento','BPM','SDNN','RMSSD','Artifact %']
     const rows = filtered.map((m) => [
-      formatMeasuredAt(m.measured_at),
+      formatMeasuredAt(m),
       measurementTypeMeta(m.test_type).label,
       m.duration_seconds ?? '',
       m.score_stress ?? '',
@@ -74,7 +75,7 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
   }
 
   const columns: Column<MeasurementAnalytics>[] = [
-    { key: 'measured_at', header: 'Data', accessor: (m) => m.measured_at, sortable: true, render: (m) => formatMeasuredAt(m.measured_at) },
+    { key: 'measured_at', header: 'Data', accessor: (m) => m.measured_at, sortable: true, render: (m) => formatMeasuredAt(m) },
     { key: 'type', header: 'Tipo', accessor: (m) => measurementTypeMeta(m.test_type).label, sortable: true, render: (m) => <MeasurementTypeBadge testType={m.test_type} size="sm" /> },
     { key: 'duration', header: 'Durata', accessor: (m) => m.duration_seconds ?? 0, sortable: true, render: (m) => m.duration_seconds ? `${Math.round(m.duration_seconds / 60)} min` : '—' },
     { key: 'stress', header: 'Stress', accessor: (m) => m.score_stress ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_stress} inverted /> },
