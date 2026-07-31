@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { LoginForm } from './LoginForm'
 import Link from 'next/link'
+import { RecoveryLinkRedirect } from '@/components/RecoveryLinkRedirect'
 
 export const metadata: Metadata = {
   title: 'Accedi',
@@ -11,7 +12,10 @@ export default function LoginPage({ searchParams }: { searchParams: { redirect?:
   const redirectTo = searchParams.redirect ?? '/area-professionisti'
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <>
+      {/* Inoltra i token dei link email a /imposta-password */}
+      <RecoveryLinkRedirect />
+      <div className="min-h-screen bg-white flex flex-col">
       {/* Top bar minimale */}
       <header className="border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
@@ -52,5 +56,6 @@ export default function LoginPage({ searchParams }: { searchParams: { redirect?:
         </div>
       </main>
     </div>
+    </>
   )
 }

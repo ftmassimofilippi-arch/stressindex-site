@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { RecoverForm } from './RecoverForm'
+import { RecoveryLinkRedirect } from '@/components/RecoveryLinkRedirect'
 
 export const metadata: Metadata = {
   title: 'Recupera password',
@@ -9,7 +10,10 @@ export const metadata: Metadata = {
 
 export default function RecuperaPasswordPage() {
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <>
+      {/* Inoltra i token dei link email a /imposta-password */}
+      <RecoveryLinkRedirect />
+      <div className="min-h-screen bg-white flex flex-col">
       <header className="border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
           <Link href="/" className="flex items-center gap-2.5">
@@ -48,5 +52,6 @@ export default function RecuperaPasswordPage() {
         </div>
       </main>
     </div>
+    </>
   )
 }
