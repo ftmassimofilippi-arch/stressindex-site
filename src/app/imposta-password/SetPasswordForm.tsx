@@ -18,9 +18,17 @@ import { createClient } from '@/lib/supabase-browser'
 // e gli errori, che Supabase mette nel fragment o nella query:
 //   #error=access_denied&error_code=otp_expired&error_description=…
 //
-// Nota: il client browser di @supabase/ssr ha detectSessionInUrl attivo, quindi
-// può aver già consumato il fragment prima che questo effetto giri. Per questo
-// l'ultimo controllo è getSession(): se una sessione c'è, il link era valido.
+// IMPORTANTE — il client browser di @supabase/ssr forza `flowType: 'pkce'` e
+// `detectSessionInUrl: true`, e `initialize()` parte già dal costruttore. Se
+// nell'URL c'è `?code=` e il verifier è in storage, il client scambia il codice
+// DA SOLO e subito dopo cancella il verifier. Il codice è monouso: un secondo
+// `exchangeCodeForSession` sullo stesso codice fallisce sempre, anche quando il
+// primo è andato a buon fine e la sessione esiste già.
+//
+// Perciò l'ordine qui è: prima si aspetta l'init e si guarda la sessione, e solo
+// se non c'è si tenta lo scambio a mano. E nessun errore viene mostrato senza
+// aver ricontrollato la sessione.
+//
 // In nessun caso la pagina resta bianca: o form, o messaggio d'errore chiaro.
 
 type Mode = 'recovery' | 'invite'
@@ -68,6 +76,33 @@ export function SetPasswordForm() {
   useEffect(() => {
     let cancelled = false
 
+    // Il verifier PKCE è un cookie host-only scritto dal browser che ha chiesto
+    // il recupero: se il link viene aperto altrove non c'è, e lo scambio non può
+    // riuscire. È un errore diverso da "link scaduto" e va detto all'utente,
+    // perché la soluzione è riaprire il link nel browser giusto.
+    function isVerifierMissing(error: unknown): boolean {
+      const e = error as { code?: string; name?: string } | null
+      return e?.code === 'pkce_code_verifier_not_found' || e?.name === 'AuthPKCECodeVerifierMissingError'
+    }
+
+    function exchangeFailure(error: unknown): State {
+      if (isVerifierMissing(error)) {
+        return {
+          step: 'error',
+          title: 'Apri il link nello stesso browser',
+          detail:
+            'Per sicurezza il recupero può essere completato solo dal browser e dal dispositivo da cui l’hai richiesto. Se hai chiesto il reset dal computer e stai aprendo l’email dal telefono (o viceversa), riapri questo link da lì. Se non è possibile, richiedi un nuovo link da questo dispositivo.',
+          canRetry: true,
+        }
+      }
+      return {
+        step: 'error',
+        title: 'Link scaduto o già utilizzato',
+        detail: 'Non è stato possibile completare il recupero con questo link. Richiedine uno nuovo.',
+        canRetry: true,
+      }
+    }
+
     async function run() {
       const supabase = createClient()
       const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
@@ -76,6 +111,18 @@ export function SetPasswordForm() {
 
       const rawType = get('type')
       const mode: Mode = rawType === 'invite' || rawType === 'signup' ? 'invite' : 'recovery'
+
+      // Mostra un errore solo se davvero non c'è sessione: lo scambio può
+      // essere già riuscito e il fallimento essere solo il secondo tentativo.
+      async function failWith(next: State) {
+        const { data } = await supabase.auth.getSession()
+        if (cancelled) return
+        if (data.session) {
+          await finish(mode)
+          return
+        }
+        setState(next)
+      }
 
       // 1. Errori restituiti da Supabase (link scaduto, già usato, revocato).
       const errorCode = get('error_code')
@@ -96,7 +143,22 @@ export function SetPasswordForm() {
         return
       }
 
-      // 2. Implicit flow: token già pronti nel fragment.
+      // 2. Scambio automatico: `initialize()` è già partito dal costruttore e,
+      //    se l'URL è un callback riconoscibile, ha già consumato il token.
+      //    Aspettarlo qui evita di riscambiare un codice monouso già speso.
+      const { error: initError } = await supabase.auth.initialize()
+      if (cancelled) return
+      const { data: initial } = await supabase.auth.getSession()
+      if (cancelled) return
+      if (initial.session) {
+        await finish(mode)
+        return
+      }
+      if (initError) {
+        console.error('[imposta-password] initialize ha fallito lo scambio', initError)
+      }
+
+      // 3. Implicit flow: token già pronti nel fragment.
       const accessToken = hash.get('access_token')
       const refreshToken = hash.get('refresh_token')
       if (accessToken && refreshToken) {
@@ -107,7 +169,7 @@ export function SetPasswordForm() {
         if (cancelled) return
         if (error) {
           console.error('[imposta-password] setSession fallita', error)
-          setState({
+          await failWith({
             step: 'error',
             title: 'Sessione di recupero non valida',
             detail: 'Il token del link non è più utilizzabile. Richiedi un nuovo link di recupero.',
@@ -119,26 +181,23 @@ export function SetPasswordForm() {
         return
       }
 
-      // 3. PKCE: codice da scambiare per una sessione.
+      // 4. PKCE a mano: solo se lo scambio automatico non è scattato (verifier
+      //    assente, oppure `code` arrivato in una forma che il client non
+      //    riconosce come callback).
       const code = query.get('code')
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code)
         if (cancelled) return
         if (error) {
           console.error('[imposta-password] exchangeCodeForSession fallita', error)
-          setState({
-            step: 'error',
-            title: 'Link scaduto o già utilizzato',
-            detail: 'Non è stato possibile completare il recupero con questo link. Richiedine uno nuovo.',
-            canRetry: true,
-          })
+          await failWith(exchangeFailure(error))
           return
         }
         await finish(mode)
         return
       }
 
-      // 4. token_hash: verifica OTP lato client.
+      // 5. token_hash: verifica OTP lato client.
       const tokenHash = query.get('token_hash') ?? query.get('token')
       if (tokenHash) {
         const { error } = await supabase.auth.verifyOtp({
@@ -148,7 +207,7 @@ export function SetPasswordForm() {
         if (cancelled) return
         if (error) {
           console.error('[imposta-password] verifyOtp fallita', error)
-          setState({
+          await failWith({
             step: 'error',
             title: 'Link scaduto o già utilizzato',
             detail: 'Il token non è più valido. Richiedi un nuovo link di recupero.',
@@ -160,12 +219,9 @@ export function SetPasswordForm() {
         return
       }
 
-      // 5. Nessun token nell'URL: può essere già stato consumato da
-      //    detectSessionInUrl. Se una sessione esiste, si procede lo stesso.
-      const { data } = await supabase.auth.getSession()
-      if (cancelled) return
-      if (data.session) {
-        await finish(mode)
+      // 6. Nessun token nell'URL e nessuna sessione: link incompleto.
+      if (initError && isVerifierMissing(initError)) {
+        setState(exchangeFailure(initError))
         return
       }
       setState({
