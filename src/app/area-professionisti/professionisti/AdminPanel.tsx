@@ -3,12 +3,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Users, UserCog, Link2, Search, Loader2, AlertTriangle, Plus, Crown, ShieldCheck,
-  Mail, KeyRound, Trash2, ArrowRightLeft, Activity, RefreshCw, X, CheckCircle2, Ban,
+  Mail, KeyRound, Trash2, ArrowRightLeft, Activity, RefreshCw, X, CheckCircle2, Ban, Clock,
 } from 'lucide-react'
 import { Modal } from '@/components/dashboard/Modal'
 import { ConfirmDialog } from '@/components/dashboard/ConfirmDialog'
 import { formatDate, formatRelative } from '@/lib/format'
 import type { AdminUser, AdminClientRow, AdminLink } from '@/lib/admin-data'
+import { type AdminIssue, ADMIN_ISSUE_HINTS, ADMIN_ISSUE_LABELS, ADMIN_ISSUE_ORDER, ADMIN_ISSUE_TONE, clientLinkStatusLabel } from '@/lib/admin-issues'
+import { api, type Toast } from './adminApi'
+import { ManualLinkModal } from './ManualLinkModal'
 
 // ============================================================================
 // Pannello Super Admin — gestione utenti, clienti e collegamenti.
@@ -18,16 +21,12 @@ import type { AdminUser, AdminClientRow, AdminLink } from '@/lib/admin-data'
 
 type Tab = 'users' | 'clients' | 'links'
 
-type Toast = { kind: 'ok' | 'err'; text: string } | null
+type ProfessionalOption = { id: string; name: string; email: string | null }
 
-async function api(method: string, url: string, body?: unknown) {
-  const res = await fetch(url, {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
-  })
-  const json = await res.json().catch(() => ({}))
-  return { ok: res.ok, status: res.status, json }
+// Messaggio d'errore leggibile da una risposta API: `message` (testo per
+// l'utente) batte `error` (codice).
+function apiError(json: { message?: string; error?: string } | null | undefined, fallback: string): string {
+  return json?.message ?? json?.error ?? fallback
 }
 
 export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: boolean }) {
@@ -142,7 +141,7 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
           <Loader2 className="animate-spin mr-2" size={18} /> Caricamento…
         </div>
       ) : tab === 'users' ? (
-        <UsersTab users={users} onChanged={reload} showToast={showToast} />
+        <UsersTab users={users} professionals={professionals} onChanged={reload} showToast={showToast} />
       ) : tab === 'clients' ? (
         <ClientsTab clients={clients} professionals={professionals} onChanged={reload} showToast={showToast} />
       ) : (
@@ -177,25 +176,56 @@ function PlanBadge({ plan }: { plan: 'base' | 'pro' }) {
   )
 }
 
-function StatusPill({ status }: { status: string }) {
+// Pill di stato: `tone` esplicito, altrimenti dedotto dal testo.
+function StatusPill({ status, tone }: { status: string; tone?: 'green' | 'red' | 'amber' | 'neutral' }) {
   const s = status.toLowerCase()
-  const cls = s.includes('attiv')
-    ? 'bg-green-50 text-green-600'
-    : s.includes('scadut') || s.includes('revoc') || s.includes('nessun')
-      ? 'bg-red-50 text-red-500'
-      : s.includes('pending')
-        ? 'bg-amber-50 text-amber-600'
-        : 'bg-surface text-anthracite-lighter'
+  const t =
+    tone ??
+    (s === 'active' || s.includes('attiv')
+      ? 'green'
+      : s === 'pending' || s.includes('attesa')
+        ? 'amber'
+        : s === 'revoked' || s.includes('scadut') || s.includes('revoc') || s.includes('nessun')
+          ? 'red'
+          : 'neutral')
+  const cls = { green: 'bg-green-50 text-green-600', red: 'bg-red-50 text-red-500', amber: 'bg-amber-50 text-amber-600', neutral: 'bg-surface text-anthracite-lighter' }[t]
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${cls}`}>{status}</span>
+}
+
+// Stato di un collegamento (tab Collegamenti / Clienti) in italiano.
+function LinkStatusPill({ status }: { status: string }) {
+  const label = status === 'active' ? 'Attivo' : status === 'pending' ? 'In attesa' : status === 'revoked' ? 'Revocato' : status
+  return <StatusPill status={label} tone={status === 'active' ? 'green' : status === 'pending' ? 'amber' : status === 'revoked' ? 'red' : 'neutral'} />
+}
+
+// Badge di segnalazione accanto al nome (tab Utenti): un'etichetta diversa per
+// ogni situazione, con la spiegazione nel tooltip.
+function IssueBadge({ issue }: { issue: AdminIssue }) {
+  const tone = ADMIN_ISSUE_TONE[issue]
+  const cls = tone === 'red' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600'
+  const Icon = issue === 'pending_link' ? Clock : AlertTriangle
+  return (
+    <span title={ADMIN_ISSUE_HINTS[issue]} className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md whitespace-nowrap ${cls}`}>
+      <Icon size={10} /> {ADMIN_ISSUE_LABELS[issue]}
+    </span>
+  )
 }
 
 // ── TAB UTENTI ────────────────────────────────────────────────────────────────
 
-function UsersTab({ users, onChanged, showToast }: { users: AdminUser[]; onChanged: () => void; showToast: (t: Toast) => void }) {
+function UsersTab({ users, professionals, onChanged, showToast }: { users: AdminUser[]; professionals: ProfessionalOption[]; onChanged: () => void; showToast: (t: Toast) => void }) {
   const [search, setSearch] = useState('')
-  const [roleFilter, setRoleFilter] = useState<'all' | 'professional' | 'client' | 'orphan'>('all')
+  const [roleFilter, setRoleFilter] = useState<'all' | 'professional' | 'client'>('all')
+  const [issueFilter, setIssueFilter] = useState<'all' | 'any' | AdminIssue>('all')
   const [planFilter, setPlanFilter] = useState<'all' | 'pro' | 'base'>('all')
   const [selected, setSelected] = useState<AdminUser | null>(null)
+  const [linkUser, setLinkUser] = useState<AdminUser | null>(null)
+
+  const issueCounts = useMemo(() => {
+    const counts = new Map<AdminIssue, number>()
+    for (const u of users) if (u.issue) counts.set(u.issue, (counts.get(u.issue) ?? 0) + 1)
+    return counts
+  }, [users])
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
@@ -204,13 +234,15 @@ function UsersTab({ users, onChanged, showToast }: { users: AdminUser[]; onChang
         const hay = `${u.full_name} ${u.email ?? ''}`.toLowerCase()
         if (!hay.includes(s)) return false
       }
-      if (roleFilter === 'orphan' && !u.is_orphan) return false
-      if (roleFilter === 'professional' && u.role !== 'professional') return false
-      if (roleFilter === 'client' && u.role !== 'client') return false
+      if (roleFilter !== 'all' && u.role !== roleFilter) return false
+      if (issueFilter === 'any' && !u.issue) return false
+      if (issueFilter !== 'all' && issueFilter !== 'any' && u.issue !== issueFilter) return false
       if (planFilter !== 'all' && u.plan !== planFilter) return false
       return true
     })
-  }, [users, search, roleFilter, planFilter])
+  }, [users, search, roleFilter, issueFilter, planFilter])
+
+  const selectCls = 'px-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30'
 
   return (
     <div className="space-y-4">
@@ -224,13 +256,19 @@ function UsersTab({ users, onChanged, showToast }: { users: AdminUser[]; onChang
             className="w-full pl-9 pr-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal"
           />
         </div>
-        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as typeof roleFilter)} className="px-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30">
+        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as typeof roleFilter)} className={selectCls}>
           <option value="all">Tutti i ruoli</option>
           <option value="professional">Professionisti</option>
           <option value="client">Clienti</option>
-          <option value="orphan">Solo orfani</option>
         </select>
-        <select value={planFilter} onChange={(e) => setPlanFilter(e.target.value as typeof planFilter)} className="px-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30">
+        <select value={issueFilter} onChange={(e) => setIssueFilter(e.target.value as typeof issueFilter)} className={selectCls}>
+          <option value="all">Tutte le situazioni</option>
+          <option value="any">Solo da sistemare</option>
+          {ADMIN_ISSUE_ORDER.map((k) => (
+            <option key={k} value={k}>{ADMIN_ISSUE_LABELS[k]} ({issueCounts.get(k) ?? 0})</option>
+          ))}
+        </select>
+        <select value={planFilter} onChange={(e) => setPlanFilter(e.target.value as typeof planFilter)} className={selectCls}>
           <option value="all">Tutti i piani</option>
           <option value="pro">Pro</option>
           <option value="base">Base</option>
@@ -261,15 +299,15 @@ function UsersTab({ users, onChanged, showToast }: { users: AdminUser[]; onChang
                         <div className="font-medium text-anthracite flex items-center gap-1.5">
                           {u.full_name}
                           {u.is_superadmin && <ShieldCheck size={13} className="text-teal-dark" aria-label="Superadmin" />}
-                          {u.is_orphan && (
-                            <span title={u.orphan_reason ?? 'Orfano'} className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-600">
-                              <AlertTriangle size={10} /> Orfano
-                            </span>
-                          )}
+                          {u.issue && <IssueBadge issue={u.issue} />}
                         </div>
                         <div className="text-xs text-anthracite-lighter">{u.email ?? '—'}</div>
                         {u.role === 'client' && u.linked_professional_name && (
-                          <div className="text-[11px] text-anthracite-lighter mt-0.5">↳ {u.linked_professional_name}</div>
+                          <div className="text-[11px] text-anthracite-lighter mt-0.5">
+                            ↳ {u.linked_professional_name}
+                            {u.link_status === 'pending' && <span className="ml-1 text-amber-600">(in attesa di accettazione)</span>}
+                            {u.link_status === 'revoked' && <span className="ml-1 text-red-500">(revocato)</span>}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -281,9 +319,16 @@ function UsersTab({ users, onChanged, showToast }: { users: AdminUser[]; onChang
                   <td className="px-3 py-3 text-anthracite-lighter whitespace-nowrap">{u.last_sign_in_at ? formatRelative(u.last_sign_in_at) : 'Mai'}</td>
                   <td className="px-3 py-3 text-right text-anthracite">{u.measurements_count}</td>
                   <td className="px-4 py-3 text-right">
-                    <button type="button" onClick={() => setSelected(u)} className="inline-flex items-center gap-1 text-teal-dark hover:underline text-sm font-medium">
-                      <UserCog size={14} /> Gestisci
-                    </button>
+                    <div className="inline-flex items-center gap-3">
+                      {u.role === 'client' && (u.issue === 'no_link' || u.issue === 'revoked_link') && (
+                        <button type="button" onClick={() => setLinkUser(u)} className="inline-flex items-center gap-1 text-teal-dark hover:underline text-sm font-medium whitespace-nowrap">
+                          <Link2 size={14} /> Collega
+                        </button>
+                      )}
+                      <button type="button" onClick={() => setSelected(u)} className="inline-flex items-center gap-1 text-teal-dark hover:underline text-sm font-medium">
+                        <UserCog size={14} /> Gestisci
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -300,6 +345,16 @@ function UsersTab({ users, onChanged, showToast }: { users: AdminUser[]; onChang
           user={selected}
           onClose={() => setSelected(null)}
           onChanged={() => { onChanged(); setSelected(null) }}
+          showToast={showToast}
+        />
+      )}
+      {linkUser && (
+        <ManualLinkModal
+          professionals={professionals}
+          initialEmail={linkUser.email ?? ''}
+          initialProfessionalId={linkUser.linked_professional_id ?? ''}
+          onClose={() => setLinkUser(null)}
+          onChanged={onChanged}
           showToast={showToast}
         />
       )}
@@ -530,15 +585,22 @@ function UserDetailModal({ user, onClose, onChanged, showToast }: { user: AdminU
 
 // ── TAB CLIENTI ─────────────────────────────────────────────────────────────
 
-function ClientsTab({ clients, professionals, onChanged, showToast }: { clients: AdminClientRow[]; professionals: Array<{ id: string; name: string; email: string | null }>; onChanged: () => void; showToast: (t: Toast) => void }) {
+function ClientsTab({ clients, professionals, onChanged, showToast }: { clients: AdminClientRow[]; professionals: ProfessionalOption[]; onChanged: () => void; showToast: (t: Toast) => void }) {
   const [search, setSearch] = useState('')
+  const [accessFilter, setAccessFilter] = useState<'all' | 'active' | 'pending' | 'revoked' | 'none'>('all')
   const [showNew, setShowNew] = useState(false)
   const [moveClient, setMoveClient] = useState<AdminClientRow | null>(null)
+  const [linkClient, setLinkClient] = useState<AdminClientRow | null>(null)
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
-    return clients.filter((c) => !s || `${c.full_name} ${c.email ?? ''} ${c.professional_name ?? ''}`.toLowerCase().includes(s))
-  }, [clients, search])
+    return clients.filter((c) => {
+      if (s && !`${c.full_name} ${c.email ?? ''} ${c.professional_name ?? ''}`.toLowerCase().includes(s)) return false
+      if (accessFilter === 'none') return !c.link_status
+      if (accessFilter !== 'all') return c.link_status === accessFilter
+      return true
+    })
+  }, [clients, search, accessFilter])
 
   return (
     <div className="space-y-4">
@@ -547,6 +609,13 @@ function ClientsTab({ clients, professionals, onChanged, showToast }: { clients:
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-anthracite-lighter" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca cliente o professionista…" className="w-full pl-9 pr-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal" />
         </div>
+        <select value={accessFilter} onChange={(e) => setAccessFilter(e.target.value as typeof accessFilter)} className="px-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30">
+          <option value="all">Tutti gli accessi</option>
+          <option value="active">Collegamento attivo</option>
+          <option value="pending">Invito in attesa</option>
+          <option value="revoked">Collegamento revocato</option>
+          <option value="none">Senza account app</option>
+        </select>
         <button type="button" onClick={() => setShowNew(true)} className="btn-primary text-sm py-2.5 px-4"><Plus size={16} /> Nuovo cliente</button>
       </div>
 
@@ -573,13 +642,26 @@ function ClientsTab({ clients, professionals, onChanged, showToast }: { clients:
                   <td className="px-3 py-3">
                     {c.professional_name ?? <span className="inline-flex items-center gap-1 text-amber-600 text-xs"><AlertTriangle size={12} /> Nessuno</span>}
                   </td>
-                  <td className="px-3 py-3">{c.has_access ? <StatusPill status="Attivo" /> : c.link_status ? <StatusPill status={c.link_status} /> : <span className="text-anthracite-lighter text-xs">No login</span>}</td>
+                  <td className="px-3 py-3">
+                    {c.link_status ? (
+                      <StatusPill status={clientLinkStatusLabel(c.link_status)} />
+                    ) : (
+                      <span className="text-anthracite-lighter text-xs" title="Nessun collegamento a un account: cliente seguito senza app, oppure account non ancora collegato">Senza account app</span>
+                    )}
+                  </td>
                   <td className="px-3 py-3 text-right text-anthracite">{c.measurements_count}</td>
                   <td className="px-3 py-3 text-anthracite-lighter whitespace-nowrap">{c.created_at ? formatDate(c.created_at) : '—'}</td>
                   <td className="px-4 py-3 text-right">
-                    <button type="button" onClick={() => setMoveClient(c)} className="inline-flex items-center gap-1 text-teal-dark hover:underline text-sm font-medium">
-                      <ArrowRightLeft size={14} /> Sposta
-                    </button>
+                    <div className="inline-flex items-center gap-3">
+                      {!c.has_access && c.email && (
+                        <button type="button" onClick={() => setLinkClient(c)} title="Collega l'account app del cliente (per email) a questo professionista" className="inline-flex items-center gap-1 text-teal-dark hover:underline text-sm font-medium whitespace-nowrap">
+                          <Link2 size={14} /> Collega
+                        </button>
+                      )}
+                      <button type="button" onClick={() => setMoveClient(c)} className="inline-flex items-center gap-1 text-teal-dark hover:underline text-sm font-medium">
+                        <ArrowRightLeft size={14} /> Sposta
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -591,6 +673,16 @@ function ClientsTab({ clients, professionals, onChanged, showToast }: { clients:
 
       {showNew && <NewClientModal professionals={professionals} onClose={() => setShowNew(false)} onChanged={() => { onChanged(); setShowNew(false) }} showToast={showToast} />}
       {moveClient && <MoveClientModal client={moveClient} professionals={professionals} onClose={() => setMoveClient(null)} onChanged={() => { onChanged(); setMoveClient(null) }} showToast={showToast} />}
+      {linkClient && (
+        <ManualLinkModal
+          professionals={professionals}
+          initialEmail={linkClient.email ?? ''}
+          initialProfessionalId={linkClient.professionista_id ?? ''}
+          onClose={() => setLinkClient(null)}
+          onChanged={onChanged}
+          showToast={showToast}
+        />
+      )}
     </div>
   )
 }
@@ -607,9 +699,18 @@ function NewClientModal({ professionals, onClose, onChanged, showToast }: { prof
     const { ok, json } = await api('POST', '/api/admin/clients', form)
     setBusy(false)
     if (ok) {
-      showToast({ kind: 'ok', text: json?.accessError ? `Cliente creato (accesso non creato: ${json.accessError})` : 'Cliente creato' })
+      const text = json?.accessError
+        ? `Scheda creata, ma accesso non creato: ${json.accessError}`
+        : json?.warning
+          ? `Scheda creata, ma collegamento non creato: ${json.warning}`
+          : json?.account_created
+            ? 'Cliente creato con account e collegamento attivo'
+            : json?.linked
+              ? 'Scheda creata e collegata all’account già registrato'
+              : 'Scheda cliente creata (senza account app)'
+      showToast({ kind: 'ok', text })
       onChanged()
-    } else showToast({ kind: 'err', text: json?.error ?? 'Errore creazione' })
+    } else showToast({ kind: 'err', text: apiError(json, 'Errore creazione') })
   }
 
   return (
@@ -646,7 +747,7 @@ function NewClientModal({ professionals, onClose, onChanged, showToast }: { prof
   )
 }
 
-function MoveClientModal({ client, professionals, onClose, onChanged, showToast }: { client: AdminClientRow; professionals: Array<{ id: string; name: string; email: string | null }>; onClose: () => void; onChanged: () => void; showToast: (t: Toast) => void }) {
+function MoveClientModal({ client, professionals, onClose, onChanged, showToast }: { client: AdminClientRow; professionals: ProfessionalOption[]; onClose: () => void; onChanged: () => void; showToast: (t: Toast) => void }) {
   const [target, setTarget] = useState('')
   const [busy, setBusy] = useState(false)
   const inputCls = 'w-full px-3 py-2 text-sm bg-white border border-surface-border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal'
@@ -654,15 +755,11 @@ function MoveClientModal({ client, professionals, onClose, onChanged, showToast 
   async function submit() {
     if (!target) return
     setBusy(true)
-    // Crea/aggiorna il collegamento al nuovo professionista + cambia proprietario.
-    const { ok, json } = await api('POST', '/api/admin/links', { client_id: client.id, professional_id: target, status: 'active' })
-    if (ok) {
-      // aggiorna anche clients.professionista_id via PATCH sul link appena creato
-      const linkId = json?.id
-      if (linkId) await api('PATCH', `/api/admin/links/${linkId}`, { professional_id: target })
-      showToast({ kind: 'ok', text: 'Cliente spostato' }); onChanged()
-    } else showToast({ kind: 'err', text: json?.error ?? 'Errore' })
+    // Un'unica route server-side sposta scheda CRM + collegamento dell'account.
+    const { ok, json } = await api('POST', `/api/admin/clients/${client.id}/move`, { professional_id: target })
     setBusy(false)
+    if (ok) { showToast({ kind: 'ok', text: json?.link_id ? 'Cliente e collegamento spostati' : 'Scheda cliente spostata' }); onChanged() }
+    else showToast({ kind: 'err', text: apiError(json, 'Errore spostamento') })
   }
 
   return (
@@ -674,38 +771,50 @@ function MoveClientModal({ client, professionals, onClose, onChanged, showToast 
         <option value="">Seleziona…</option>
         {professionals.filter((p) => p.id !== client.professionista_id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
       </select>
+      <p className="text-xs text-anthracite-lighter mt-3">
+        Vengono spostati sia la scheda (con misurazioni e note) sia il collegamento dell&apos;account app, che mantiene lo stato attuale
+        {client.link_status ? ` (${clientLinkStatusLabel(client.link_status).toLowerCase()})` : ''}.
+        Se il nuovo professionista ha già una scheda per questo cliente, lo spostamento viene bloccato.
+      </p>
     </Modal>
   )
 }
 
 // ── TAB COLLEGAMENTI ──────────────────────────────────────────────────────────
 
-function LinksTab({ links, professionals, onChanged, showToast }: { links: AdminLink[]; professionals: Array<{ id: string; name: string; email: string | null }>; onChanged: () => void; showToast: (t: Toast) => void }) {
+function LinksTab({ links, professionals, onChanged, showToast }: { links: AdminLink[]; professionals: ProfessionalOption[]; onChanged: () => void; showToast: (t: Toast) => void }) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending' | 'revoked'>('all')
+  const [showManual, setShowManual] = useState(false)
   const [moveLink, setMoveLink] = useState<AdminLink | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<AdminLink | null>(null)
+  const [busyId, setBusyId] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
     return links.filter((l) => {
       if (statusFilter !== 'all' && l.status !== statusFilter) return false
-      if (s && !`${l.client_name} ${l.professional_name} ${l.client_user_email ?? ''}`.toLowerCase().includes(s)) return false
+      if (s && !`${l.client_name} ${l.professional_name} ${l.client_user_email ?? ''} ${l.client_email ?? ''}`.toLowerCase().includes(s)) return false
       return true
     })
   }, [links, search, statusFilter])
 
-  async function setStatus(l: AdminLink, status: string) {
+  async function setStatus(l: AdminLink, status: 'active' | 'revoked') {
+    setBusyId(l.id)
     const { ok, json } = await api('PATCH', `/api/admin/links/${l.id}`, { status })
-    if (ok) { showToast({ kind: 'ok', text: `Collegamento ${status === 'active' ? 'riattivato' : 'revocato'}` }); onChanged() }
-    else showToast({ kind: 'err', text: json?.error ?? 'Errore' })
+    setBusyId(null)
+    if (ok) {
+      const verb = status === 'revoked' ? 'revocato' : l.status === 'pending' ? 'attivato: invito accettato' : 'riattivato'
+      showToast({ kind: 'ok', text: `Collegamento ${verb}` })
+      onChanged()
+    } else showToast({ kind: 'err', text: apiError(json, 'Errore') })
   }
 
   async function remove(l: AdminLink) {
     const { ok, json } = await api('DELETE', `/api/admin/links/${l.id}`)
     setConfirmDelete(null)
     if (ok) { showToast({ kind: 'ok', text: 'Collegamento eliminato' }); onChanged() }
-    else showToast({ kind: 'err', text: json?.error ?? 'Errore' })
+    else showToast({ kind: 'err', text: apiError(json, 'Errore') })
   }
 
   return (
@@ -718,16 +827,18 @@ function LinksTab({ links, professionals, onChanged, showToast }: { links: Admin
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)} className="px-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30">
           <option value="all">Tutti gli stati</option><option value="active">Attivi</option><option value="pending">In attesa</option><option value="revoked">Revocati</option>
         </select>
+        <button type="button" onClick={() => setShowManual(true)} className="btn-primary text-sm py-2.5 px-4"><Plus size={16} /> Nuovo collegamento</button>
       </div>
 
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[800px]">
+          <table className="w-full text-sm min-w-[860px]">
             <thead>
               <tr className="text-left text-anthracite-lighter border-b border-surface-border bg-surface">
                 <th className="px-4 py-3 font-medium">Cliente</th>
                 <th className="px-3 py-3 font-medium">Professionista</th>
-                <th className="px-3 py-3 font-medium">Accesso utente</th>
+                <th className="px-3 py-3 font-medium">Account app</th>
+                <th className="px-3 py-3 font-medium">Scheda CRM</th>
                 <th className="px-3 py-3 font-medium">Stato</th>
                 <th className="px-3 py-3 font-medium">Creato</th>
                 <th className="px-4 py-3 font-medium text-right">Azioni</th>
@@ -736,29 +847,52 @@ function LinksTab({ links, professionals, onChanged, showToast }: { links: Admin
             <tbody>
               {filtered.map((l) => (
                 <tr key={l.id} className="border-t border-surface-border hover:bg-surface/60 transition-colors">
-                  <td className="px-4 py-3 font-medium text-anthracite">{l.client_name}</td>
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-anthracite">{l.client_name}</div>
+                    {l.client_email && l.client_email !== l.client_user_email && <div className="text-xs text-anthracite-lighter">{l.client_email}</div>}
+                  </td>
                   <td className="px-3 py-3 text-anthracite">{l.professional_name}</td>
-                  <td className="px-3 py-3 text-anthracite-lighter text-xs">{l.client_user_email ?? '—'}</td>
-                  <td className="px-3 py-3"><StatusPill status={l.status} /></td>
+                  <td className="px-3 py-3 text-anthracite-lighter text-xs">{l.client_user_email ?? <span title="Il collegamento non è associato a nessun account">—</span>}</td>
+                  <td className="px-3 py-3 text-xs">
+                    {l.crm_client_id ? (
+                      <span className="text-green-600 inline-flex items-center gap-1"><CheckCircle2 size={12} /> Presente</span>
+                    ) : (
+                      <span className="text-anthracite-lighter" title={l.status === 'active' ? 'Nessuna scheda trovata per questo professionista: il cliente non compare nella sua dashboard' : 'La scheda viene creata o agganciata automaticamente quando il collegamento diventa attivo'}>Assente</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-3"><LinkStatusPill status={l.status} /></td>
                   <td className="px-3 py-3 text-anthracite-lighter whitespace-nowrap">{l.created_at ? formatDate(l.created_at) : '—'}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1.5">
-                      {l.status === 'active' ? (
+                      {busyId === l.id ? (
+                        <Loader2 size={15} className="animate-spin text-anthracite-lighter mx-2" />
+                      ) : l.status === 'active' ? (
                         <button type="button" onClick={() => setStatus(l, 'revoked')} title="Revoca" className="w-8 h-8 rounded-lg hover:bg-red-50 text-red-500 flex items-center justify-center"><Ban size={15} /></button>
+                      ) : l.status === 'pending' ? (
+                        <button type="button" onClick={() => setStatus(l, 'active')} title="Attiva (accetta l'invito al posto del professionista)" className="inline-flex items-center gap-1 h-8 px-2 rounded-lg hover:bg-green-50 text-green-600 text-xs font-medium"><CheckCircle2 size={15} /> Attiva</button>
                       ) : (
-                        <button type="button" onClick={() => setStatus(l, 'active')} title="Riattiva" className="w-8 h-8 rounded-lg hover:bg-green-50 text-green-600 flex items-center justify-center"><CheckCircle2 size={15} /></button>
+                        <button type="button" onClick={() => setStatus(l, 'active')} title="Riattiva" className="inline-flex items-center gap-1 h-8 px-2 rounded-lg hover:bg-green-50 text-green-600 text-xs font-medium"><CheckCircle2 size={15} /> Riattiva</button>
                       )}
-                      <button type="button" onClick={() => setMoveLink(l)} title="Sposta professionista" className="w-8 h-8 rounded-lg hover:bg-surface text-anthracite-lighter flex items-center justify-center"><ArrowRightLeft size={15} /></button>
+                      <button type="button" onClick={() => setMoveLink(l)} title="Sposta a un altro professionista" className="w-8 h-8 rounded-lg hover:bg-surface text-anthracite-lighter flex items-center justify-center"><ArrowRightLeft size={15} /></button>
                       <button type="button" onClick={() => setConfirmDelete(l)} title="Elimina" className="w-8 h-8 rounded-lg hover:bg-red-50 text-red-500 flex items-center justify-center"><Trash2 size={15} /></button>
                     </div>
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-anthracite-lighter">Nessun collegamento.</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={7} className="px-4 py-10 text-center text-anthracite-lighter">Nessun collegamento.</td></tr>}
             </tbody>
           </table>
         </div>
       </div>
+
+      {showManual && (
+        <ManualLinkModal
+          professionals={professionals}
+          onClose={() => setShowManual(false)}
+          onChanged={onChanged}
+          showToast={showToast}
+        />
+      )}
 
       {moveLink && (
         <Modal open onClose={() => setMoveLink(null)} title="Ricollega a un altro professionista" description={`Cliente: ${moveLink.client_name}`} size="sm"
@@ -781,7 +915,7 @@ function LinksTab({ links, professionals, onChanged, showToast }: { links: Admin
   )
 }
 
-function LinkMoveBody({ link, professionals, onClose, onChanged, showToast }: { link: AdminLink; professionals: Array<{ id: string; name: string; email: string | null }>; onClose: () => void; onChanged: () => void; showToast: (t: Toast) => void }) {
+function LinkMoveBody({ link, professionals, onClose, onChanged, showToast }: { link: AdminLink; professionals: ProfessionalOption[]; onClose: () => void; onChanged: () => void; showToast: (t: Toast) => void }) {
   const [target, setTarget] = useState('')
   const [busy, setBusy] = useState(false)
   const inputCls = 'w-full px-3 py-2 text-sm bg-white border border-surface-border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal'
@@ -790,8 +924,8 @@ function LinkMoveBody({ link, professionals, onClose, onChanged, showToast }: { 
     setBusy(true)
     const { ok, json } = await api('PATCH', `/api/admin/links/${link.id}`, { professional_id: target })
     setBusy(false)
-    if (ok) { showToast({ kind: 'ok', text: 'Cliente ricollegato' }); onChanged() }
-    else showToast({ kind: 'err', text: json?.error ?? 'Errore' })
+    if (ok) { showToast({ kind: 'ok', text: 'Cliente e scheda spostati al nuovo professionista' }); onChanged() }
+    else showToast({ kind: 'err', text: apiError(json, 'Errore spostamento') })
   }
   return (
     <div>
@@ -800,6 +934,9 @@ function LinkMoveBody({ link, professionals, onClose, onChanged, showToast }: { 
         <option value="">Seleziona…</option>
         {professionals.filter((p) => p.id !== link.professional_id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
       </select>
+      <p className="text-xs text-anthracite-lighter mt-3">
+        Il collegamento mantiene lo stato attuale; la scheda CRM {link.crm_client_id ? 'viene spostata con lui' : 'viene creata sotto il nuovo professionista'}.
+      </p>
       <div className="flex justify-end gap-2 mt-4">
         <button type="button" onClick={onClose} className="btn-secondary text-sm py-2">Annulla</button>
         <button type="button" onClick={submit} disabled={!target || busy} className="text-sm px-5 py-2 rounded-xl bg-teal hover:bg-teal-dark text-white font-medium disabled:opacity-50">{busy ? 'Attendere…' : 'Ricollega'}</button>

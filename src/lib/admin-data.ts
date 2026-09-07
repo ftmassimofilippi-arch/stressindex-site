@@ -1,11 +1,20 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { createAdminClient } from './supabase-admin'
+import { type AdminIssue, ADMIN_ISSUE_LABELS, clientLinkStatusLabel, linkStatusRank, pickBestLink } from './admin-issues'
 
 // ============================================================================
 // SUPER ADMIN — data layer (service_role)
 // ----------------------------------------------------------------------------
 // Tutte le funzioni qui usano il client service_role e DEVONO essere chiamate
 // solo da route già protette da requireSuperadmin(). Bypassano le RLS.
+//
+// PONTE LINK ↔ SCHEDA CRM. Nel database reale quasi tutti i collegamenti in
+// client_professional_links hanno client_id NULL e solo client_user_id (l'uid
+// dell'account del cliente): la scheda `clients` del professionista si trova
+// tramite clients.client_user_id (migration 017) o, per le righe storiche,
+// tramite l'email. Tutte le liste qui sotto usano lo stesso resolver
+// (buildLinkBridge) così Utenti, Clienti e Collegamenti raccontano la stessa
+// storia.
 // ============================================================================
 
 export type UserRole = 'professional' | 'client' | null
@@ -34,16 +43,18 @@ export interface AdminUser {
   linked_professional_id: string | null
   linked_professional_name: string | null
   link_status: string | null
-  // diagnostica
-  is_orphan: boolean
-  orphan_reason: string | null
+  link_id: string | null
+  // diagnostica: al più una segnalazione, con etichetta leggibile
+  issue: AdminIssue | null
+  issue_label: string | null
   // stato piano/abbonamento testuale
   subscription_status: string
 }
 
 export interface AdminLink {
   id: string
-  client_id: string
+  client_id: string | null // client_id grezzo del link (spesso NULL)
+  crm_client_id: string | null // scheda CRM risolta via ponte
   client_name: string
   client_email: string | null
   professional_id: string
@@ -65,8 +76,10 @@ export interface AdminClientRow {
   professional_name: string | null
   created_at: string | null
   measurements_count: number
-  has_access: boolean // ha un collegamento (login) attivo
-  link_status: string | null
+  client_user_id: string | null // account del cliente (dalla scheda o dal link risolto)
+  has_access: boolean // collegamento attivo
+  link_status: string | null // stato del miglior collegamento risolto
+  link_id: string | null
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -93,6 +106,77 @@ function planOf(p: string | null | undefined): 'base' | 'pro' {
   return p === 'pro' ? 'pro' : 'base'
 }
 
+function normEmail(e: string | null | undefined): string | null {
+  const n = (e ?? '').trim().toLowerCase()
+  return n || null
+}
+
+export type LinkRow = {
+  id: string
+  client_id: string | null
+  professional_id: string
+  client_user_id: string | null
+  status: string
+  created_at: string | null
+  updated_at: string | null
+}
+
+export type ClientRow = {
+  id: string
+  professionista_id: string | null
+  nome: string | null
+  cognome: string | null
+  email: string | null
+  client_user_id: string | null
+  created_at: string | null
+}
+
+// Risolve, per ogni link, la scheda CRM corrispondente e viceversa.
+//   1. link.client_id → clients.id                       (ponte esplicito legacy)
+//   2. (professional_id, client_user_id) → clients        (ponte esplicito 017)
+//   3. (professional_id, email dell'account cliente)      (fallback storico)
+export function buildLinkBridge(
+  links: LinkRow[],
+  clients: ClientRow[],
+  emailOfUser: (userId: string) => string | null,
+): { crmByLink: Map<string, ClientRow>; linksByClient: Map<string, LinkRow[]> } {
+  const byId = new Map<string, ClientRow>()
+  const byProfUser = new Map<string, ClientRow>()
+  const byProfEmail = new Map<string, ClientRow>()
+  for (const c of clients) {
+    byId.set(c.id, c)
+    if (c.professionista_id && c.client_user_id) byProfUser.set(`${c.professionista_id}|${c.client_user_id}`, c)
+    const e = normEmail(c.email)
+    if (c.professionista_id && e) {
+      const k = `${c.professionista_id}|${e}`
+      // a parità di email tieni la scheda più vecchia (quella "originale")
+      const prev = byProfEmail.get(k)
+      if (!prev || (c.created_at ?? '') < (prev.created_at ?? '')) byProfEmail.set(k, c)
+    }
+  }
+
+  const crmByLink = new Map<string, ClientRow>()
+  const linksByClient = new Map<string, LinkRow[]>()
+  for (const l of links) {
+    let c: ClientRow | undefined
+    if (l.client_id) c = byId.get(l.client_id)
+    if (!c && l.client_user_id) c = byProfUser.get(`${l.professional_id}|${l.client_user_id}`)
+    if (!c && l.client_user_id) {
+      const e = normEmail(emailOfUser(l.client_user_id))
+      if (e) c = byProfEmail.get(`${l.professional_id}|${e}`)
+    }
+    if (!c) continue
+    crmByLink.set(l.id, c)
+    const arr = linksByClient.get(c.id)
+    if (arr) arr.push(l)
+    else linksByClient.set(c.id, [l])
+  }
+  return { crmByLink, linksByClient }
+}
+
+const LINK_COLUMNS = 'id, client_id, professional_id, client_user_id, status, created_at, updated_at'
+const CLIENT_COLUMNS = 'id, professionista_id, nome, cognome, email, client_user_id, created_at'
+
 // ── Lista utenti completa ─────────────────────────────────────────────────────
 
 export async function getAdminUsers(): Promise<AdminUser[]> {
@@ -102,9 +186,9 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
     listAllAuthUsers(admin),
     admin.from('profiles').select('id, nome, cognome, email, role, plan, is_superadmin, organization_id, data_nascita, sesso'),
     admin.from('professional_profiles').select('id, nome, cognome, trial_expires_at'),
-    admin.from('clients').select('id, professionista_id'),
+    admin.from('clients').select(CLIENT_COLUMNS),
     admin.from('measurement_analytics').select('user_id, client_id'),
-    admin.from('client_professional_links').select('client_id, professional_id, client_user_id, status'),
+    admin.from('client_professional_links').select(LINK_COLUMNS),
   ])
 
   type ProfileRow = {
@@ -126,13 +210,21 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
   const profProfiles = new Map<string, PP>()
   for (const p of (profProfilesRes.data ?? []) as PP[]) profProfiles.set(p.id, p)
 
+  const authEmail = new Map<string, string | null>()
+  for (const u of authUsers) authEmail.set(u.id, u.email ?? null)
+  const emailOfUser = (id: string) => authEmail.get(id) ?? profiles.get(id)?.email ?? null
+
+  const clients = (clientsRes.data ?? []) as ClientRow[]
+  const links = (linksRes.data ?? []) as LinkRow[]
+  const { crmByLink } = buildLinkBridge(links, clients, emailOfUser)
+
   // conteggio clienti per professionista
   const clientsByProf = new Map<string, number>()
-  for (const c of (clientsRes.data ?? []) as Array<{ id: string; professionista_id: string | null }>) {
+  for (const c of clients) {
     if (c.professionista_id) clientsByProf.set(c.professionista_id, (clientsByProf.get(c.professionista_id) ?? 0) + 1)
   }
 
-  // misurazioni per professionista (user_id) e per cliente (client_id)
+  // misurazioni per utente (user_id: professionista o cliente auto-misurato) e per scheda CRM
   const measByUser = new Map<string, number>()
   const measByClient = new Map<string, number>()
   for (const m of (measurementsRes.data ?? []) as Array<{ user_id: string | null; client_id: string | null }>) {
@@ -140,24 +232,28 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
     if (m.client_id) measByClient.set(m.client_id, (measByClient.get(m.client_id) ?? 0) + 1)
   }
 
-  // collegamenti per utente-cliente (client_user_id → link)
-  type LinkRow = { client_id: string; professional_id: string; client_user_id: string | null; status: string }
-  const linkByClientUser = new Map<string, LinkRow>()
-  for (const l of (linksRes.data ?? []) as LinkRow[]) {
-    if (l.client_user_id) {
-      const prev = linkByClientUser.get(l.client_user_id)
-      // preferisci un link attivo a uno revocato
-      if (!prev || (prev.status !== 'active' && l.status === 'active')) linkByClientUser.set(l.client_user_id, l)
-    }
+  // collegamenti per account cliente (client_user_id → tutti i link)
+  const linksByUser = new Map<string, LinkRow[]>()
+  for (const l of links) {
+    if (!l.client_user_id) continue
+    const arr = linksByUser.get(l.client_user_id)
+    if (arr) arr.push(l)
+    else linksByUser.set(l.client_user_id, [l])
+  }
+  // schede CRM agganciate esplicitamente all'account (clients.client_user_id)
+  const crmIdsByUser = new Map<string, Set<string>>()
+  for (const c of clients) {
+    if (!c.client_user_id) continue
+    const set = crmIdsByUser.get(c.client_user_id) ?? new Set<string>()
+    set.add(c.id)
+    crmIdsByUser.set(c.client_user_id, set)
   }
 
-  // nome professionista (profiles → professional_profiles → email)
+  // nome professionista (professional_profiles → profiles → email)
   const profName = (id: string): string => {
     const p = profiles.get(id)
     const pp = profProfiles.get(id)
-    const nome = pp?.nome ?? p?.nome ?? null
-    const cognome = pp?.cognome ?? p?.cognome ?? null
-    return fullName(nome, cognome, p?.email ?? null)
+    return fullName(pp?.nome ?? p?.nome ?? null, pp?.cognome ?? p?.cognome ?? null, p?.email ?? null)
   }
 
   const now = Date.now()
@@ -172,37 +268,42 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
       const plan = planOf(p?.plan)
       const trial = pp?.trial_expires_at ?? null
 
-      const link = linkByClientUser.get(u.id) ?? null
-      const linkedProfId = role === 'client' ? link?.professional_id ?? null : null
+      const userLinks = role === 'client' ? linksByUser.get(u.id) ?? [] : []
+      const link = pickBestLink(userLinks)
+      const linkedProfId = link?.professional_id ?? null
 
-      // misurazioni: professionista = per user_id; cliente = somma misurazioni dei
-      // clients collegati a questo utente-cliente.
+      // misurazioni: professionista = per user_id; cliente = auto-misurate (user_id)
+      // + quelle registrate dal professionista sulle sue schede CRM (client_id).
       let measurements = measByUser.get(u.id) ?? 0
-      if (role === 'client' && link) measurements = measByClient.get(link.client_id) ?? 0
+      if (role === 'client') {
+        const crmIds = new Set<string>(crmIdsByUser.get(u.id) ?? [])
+        for (const l of userLinks) {
+          const c = crmByLink.get(l.id)
+          if (c) crmIds.add(c.id)
+        }
+        for (const id of crmIds) measurements += measByClient.get(id) ?? 0
+      }
 
-      // stato abbonamento testuale
+      // stato abbonamento / collegamento testuale
       let subscription = 'Base'
       if (role === 'professional') {
         if (plan === 'pro') subscription = 'Pro attivo'
-        else if (trial) {
-          subscription = new Date(trial).getTime() > now ? 'Trial attivo' : 'Trial scaduto'
-        } else subscription = 'Base'
+        else if (trial) subscription = new Date(trial).getTime() > now ? 'Trial attivo' : 'Trial scaduto'
+        else subscription = 'Base'
       } else if (role === 'client') {
-        subscription = link?.status === 'active' ? 'Accesso attivo' : link ? `Accesso ${link.status}` : 'Nessun accesso'
+        subscription = clientLinkStatusLabel(link?.status ?? null)
       }
 
-      // orfano?
-      let isOrphan = false
-      let orphanReason: string | null = null
-      if (role === 'client' && (!link || link.status !== 'active')) {
-        isOrphan = true
-        orphanReason = 'Cliente senza professionista collegato'
+      // segnalazione (una sola, la più rilevante)
+      let issue: AdminIssue | null = null
+      if (role === 'client') {
+        if (!link) issue = 'no_link'
+        else if (link.status === 'pending') issue = 'pending_link'
+        else if (link.status !== 'active') issue = 'revoked_link'
       } else if (role === 'professional' && !pp) {
-        isOrphan = true
-        orphanReason = 'Profilo professionista incompleto'
+        issue = 'incomplete_profile'
       } else if (!role && !p) {
-        isOrphan = true
-        orphanReason = 'Utente senza profilo'
+        issue = 'no_profile'
       }
 
       return {
@@ -226,9 +327,10 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
         measurements_count: measurements,
         linked_professional_id: linkedProfId,
         linked_professional_name: linkedProfId ? profName(linkedProfId) : null,
-        link_status: role === 'client' ? link?.status ?? null : null,
-        is_orphan: isOrphan,
-        orphan_reason: orphanReason,
+        link_status: link?.status ?? null,
+        link_id: link?.id ?? null,
+        issue,
+        issue_label: issue ? ADMIN_ISSUE_LABELS[issue] : null,
         subscription_status: subscription,
       }
     })
@@ -247,16 +349,12 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
 export async function getAdminLinks(): Promise<AdminLink[]> {
   const admin = createAdminClient()
   const [linksRes, clientsRes, profilesRes, profProfilesRes, authUsers] = await Promise.all([
-    admin.from('client_professional_links').select('id, client_id, professional_id, client_user_id, status, created_at, updated_at'),
-    admin.from('clients').select('id, nome, cognome, email'),
+    admin.from('client_professional_links').select(LINK_COLUMNS),
+    admin.from('clients').select(CLIENT_COLUMNS),
     admin.from('profiles').select('id, nome, cognome, email'),
     admin.from('professional_profiles').select('id, nome, cognome'),
-    listAllAuthUsers(createAdminClient()),
+    listAllAuthUsers(admin),
   ])
-
-  type ClientRow = { id: string; nome: string | null; cognome: string | null; email: string | null }
-  const clients = new Map<string, ClientRow>()
-  for (const c of (clientsRes.data ?? []) as ClientRow[]) clients.set(c.id, c)
 
   type ProfileRow = { id: string; nome: string | null; cognome: string | null; email: string | null }
   const profiles = new Map<string, ProfileRow>()
@@ -267,6 +365,7 @@ export async function getAdminLinks(): Promise<AdminLink[]> {
   }
   const authEmail = new Map<string, string | null>()
   for (const u of authUsers) authEmail.set(u.id, u.email ?? null)
+  const emailOfUser = (id: string) => authEmail.get(id) ?? profiles.get(id)?.email ?? null
 
   const profName = (id: string): string => {
     const p = profiles.get(id)
@@ -274,27 +373,29 @@ export async function getAdminLinks(): Promise<AdminLink[]> {
     return fullName(pp?.nome ?? p?.nome ?? null, pp?.cognome ?? p?.cognome ?? null, p?.email ?? null)
   }
 
-  type LinkRow = {
-    id: string
-    client_id: string
-    professional_id: string
-    client_user_id: string | null
-    status: string
-    created_at: string | null
-    updated_at: string | null
-  }
-  return ((linksRes.data ?? []) as LinkRow[])
+  const links = (linksRes.data ?? []) as LinkRow[]
+  const clients = (clientsRes.data ?? []) as ClientRow[]
+  const { crmByLink } = buildLinkBridge(links, clients, emailOfUser)
+
+  return links
     .map((l): AdminLink => {
-      const c = clients.get(l.client_id)
+      const c = crmByLink.get(l.id) ?? null
+      const up = l.client_user_id ? profiles.get(l.client_user_id) : undefined
+      const userEmail = l.client_user_id ? emailOfUser(l.client_user_id) : null
+      // nome: scheda CRM → profilo dell'account → email
+      const name = c
+        ? fullName(c.nome, c.cognome, c.email ?? userEmail)
+        : fullName(up?.nome ?? null, up?.cognome ?? null, userEmail)
       return {
         id: l.id,
         client_id: l.client_id,
-        client_name: fullName(c?.nome ?? null, c?.cognome ?? null, c?.email ?? null),
-        client_email: c?.email ?? null,
+        crm_client_id: c?.id ?? null,
+        client_name: name,
+        client_email: c?.email ?? userEmail,
         professional_id: l.professional_id,
         professional_name: profName(l.professional_id),
         client_user_id: l.client_user_id,
-        client_user_email: l.client_user_id ? authEmail.get(l.client_user_id) ?? null : null,
+        client_user_email: userEmail,
         status: l.status,
         created_at: l.created_at,
         updated_at: l.updated_at,
@@ -307,12 +408,13 @@ export async function getAdminLinks(): Promise<AdminLink[]> {
 
 export async function getAdminClients(): Promise<AdminClientRow[]> {
   const admin = createAdminClient()
-  const [clientsRes, profilesRes, profProfilesRes, measurementsRes, linksRes] = await Promise.all([
-    admin.from('clients').select('id, nome, cognome, email, professionista_id, created_at'),
+  const [clientsRes, profilesRes, profProfilesRes, measurementsRes, linksRes, authUsers] = await Promise.all([
+    admin.from('clients').select(CLIENT_COLUMNS),
     admin.from('profiles').select('id, nome, cognome, email'),
     admin.from('professional_profiles').select('id, nome, cognome'),
     admin.from('measurement_analytics').select('client_id'),
-    admin.from('client_professional_links').select('client_id, status'),
+    admin.from('client_professional_links').select(LINK_COLUMNS),
+    listAllAuthUsers(admin),
   ])
 
   type ProfileRow = { id: string; nome: string | null; cognome: string | null; email: string | null }
@@ -322,15 +424,18 @@ export async function getAdminClients(): Promise<AdminClientRow[]> {
   for (const p of (profProfilesRes.data ?? []) as Array<{ id: string; nome: string | null; cognome: string | null }>) {
     profProfiles.set(p.id, { nome: p.nome, cognome: p.cognome })
   }
+  const authEmail = new Map<string, string | null>()
+  for (const u of authUsers) authEmail.set(u.id, u.email ?? null)
+  const emailOfUser = (id: string) => authEmail.get(id) ?? profiles.get(id)?.email ?? null
+
   const measByClient = new Map<string, number>()
   for (const m of (measurementsRes.data ?? []) as Array<{ client_id: string | null }>) {
     if (m.client_id) measByClient.set(m.client_id, (measByClient.get(m.client_id) ?? 0) + 1)
   }
-  const linkStatus = new Map<string, string>()
-  for (const l of (linksRes.data ?? []) as Array<{ client_id: string; status: string }>) {
-    const prev = linkStatus.get(l.client_id)
-    if (!prev || (prev !== 'active' && l.status === 'active')) linkStatus.set(l.client_id, l.status)
-  }
+
+  const clients = (clientsRes.data ?? []) as ClientRow[]
+  const links = (linksRes.data ?? []) as LinkRow[]
+  const { linksByClient } = buildLinkBridge(links, clients, emailOfUser)
 
   const profName = (id: string | null): string | null => {
     if (!id) return null
@@ -339,28 +444,25 @@ export async function getAdminClients(): Promise<AdminClientRow[]> {
     return fullName(pp?.nome ?? p?.nome ?? null, pp?.cognome ?? p?.cognome ?? null, p?.email ?? null)
   }
 
-  type ClientRow = {
-    id: string
-    nome: string | null
-    cognome: string | null
-    email: string | null
-    professionista_id: string | null
-    created_at: string | null
-  }
-  return ((clientsRes.data ?? []) as ClientRow[])
-    .map((c): AdminClientRow => ({
-      id: c.id,
-      nome: c.nome,
-      cognome: c.cognome,
-      full_name: fullName(c.nome, c.cognome, c.email),
-      email: c.email,
-      professionista_id: c.professionista_id,
-      professional_name: profName(c.professionista_id),
-      created_at: c.created_at,
-      measurements_count: measByClient.get(c.id) ?? 0,
-      has_access: linkStatus.get(c.id) === 'active',
-      link_status: linkStatus.get(c.id) ?? null,
-    }))
+  return clients
+    .map((c): AdminClientRow => {
+      const best = pickBestLink(linksByClient.get(c.id) ?? [])
+      return {
+        id: c.id,
+        nome: c.nome,
+        cognome: c.cognome,
+        full_name: fullName(c.nome, c.cognome, c.email),
+        email: c.email,
+        professionista_id: c.professionista_id,
+        professional_name: profName(c.professionista_id),
+        created_at: c.created_at,
+        measurements_count: measByClient.get(c.id) ?? 0,
+        client_user_id: c.client_user_id ?? best?.client_user_id ?? null,
+        has_access: linkStatusRank(best?.status) === linkStatusRank('active'),
+        link_status: best?.status ?? null,
+        link_id: best?.id ?? null,
+      }
+    })
     .sort((a, b) => a.full_name.localeCompare(b.full_name))
 }
 

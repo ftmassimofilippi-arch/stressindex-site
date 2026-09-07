@@ -18,17 +18,21 @@ type Result = {
 
 export function ManualLinkModal({
   professionals,
+  initialEmail = '',
+  initialProfessionalId = '',
   onClose,
   onChanged,
   showToast,
 }: {
   professionals: Array<{ id: string; name: string; email: string | null }>
+  initialEmail?: string // precompilata quando si parte da un utente/scheda
+  initialProfessionalId?: string
   onClose: () => void
   onChanged: () => void
   showToast: (t: Toast) => void
 }) {
-  const [email, setEmail] = useState('')
-  const [professionalId, setProfessionalId] = useState('')
+  const [email, setEmail] = useState(initialEmail)
+  const [professionalId, setProfessionalId] = useState(initialProfessionalId)
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<Result | null>(null)
   const inputCls = 'w-full px-3 py-2 text-sm bg-white border border-surface-border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal'
@@ -117,8 +121,8 @@ export function ManualLinkModal({
             </select>
           </div>
           <p className="text-xs text-anthracite-lighter">
-            Il link viene creato con <code className="px-1 bg-surface rounded">client_user_id</code> (mai <code className="px-1 bg-surface rounded">client_id</code>).
-            Se esiste un link revocato o in attesa per la stessa coppia, viene riattivato.
+            Il collegamento viene creato sull&apos;account del cliente e diventa subito attivo: la scheda CRM del professionista viene
+            agganciata (per email) o creata in automatico. Se per la stessa coppia esiste già un collegamento revocato o in attesa, viene attivato.
           </p>
         </div>
       )}
