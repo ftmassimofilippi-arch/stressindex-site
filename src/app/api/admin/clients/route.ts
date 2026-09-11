@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { randomUUID } from 'crypto'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getAdminClients } from '@/lib/admin-data'
 import { logAdminAction } from '@/lib/admin-audit'
+import { linkViaRpc, nextClientCardId } from '@/lib/collegamenti'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -25,12 +25,14 @@ export async function GET() {
 // Body: { professional_id, nome, cognome, email?, telefono?, data_nascita?, sesso?,
 //         createAccess?: boolean, password? }
 //
-// Collegamento dell'account:
-//  • se l'email corrisponde a un utente già registrato → link attivo con quell'account
-//    (e clients.client_user_id valorizzato: ponte esplicito)
-//  • se createAccess && email e l'utente non esiste → crea auth user + profilo + link attivo
-//  • altrimenti → solo la scheda CRM, nessun link (un link senza account non serve a nulla:
-//    è la situazione normale di un cliente seguito in studio senza app)
+// Regole (flusso unico, migration 019):
+//  • l'id della scheda è nel formato dell'app (epoch ms in TEXT): i vecchi id
+//    uuid creati qui erano invisibili all'app, che carica le schede per id numerico;
+//  • se l'email corrisponde a un utente registrato (o se createAccess crea
+//    l'account) il collegamento passa da link_client_to_professional, che
+//    scrive il ponte clients.client_user_id, unisce doppioni e crea il link.
+//    Nessun insert diretto in client_professional_links, mai client_id uuid;
+//  • senza account: solo la scheda (nessun link possibile).
 export async function POST(req: NextRequest) {
   const guard = await requireSuperadmin()
   if (guard.error) return guard.error
@@ -52,9 +54,9 @@ export async function POST(req: NextRequest) {
   const { data: prof } = await admin.from('profiles').select('id').eq('id', professionalId).maybeSingle()
   if (!prof) return NextResponse.json({ error: 'professional_not_found' }, { status: 404 })
 
-  // Doppione sotto lo stesso professionista (stessa email)?
+  // Doppione sotto lo stesso professionista (stessa email, schede non archiviate)?
   if (email) {
-    const { data: dup } = await admin.from('clients').select('id').eq('professionista_id', professionalId).ilike('email', email).limit(1)
+    const { data: dup } = await admin.from('clients').select('id').eq('professionista_id', professionalId).ilike('email', email).is('merged_into_client_id', null).limit(1)
     if ((dup ?? []).length > 0) {
       return NextResponse.json({ error: 'duplicate_client', message: 'Questo professionista ha già una scheda con questa email.' }, { status: 409 })
     }
@@ -65,11 +67,12 @@ export async function POST(req: NextRequest) {
   let accessError: string | null = null
   let accountCreated = false
   if (email) {
-    const { data } = await admin.from('profiles').select('id').ilike('email', email).limit(1)
-    clientUserId = ((data ?? []) as Array<{ id: string }>)[0]?.id ?? null
+    const { data } = await admin.from('profiles').select('id, role').ilike('email', email).limit(5)
+    const rows = (data ?? []) as Array<{ id: string; role: string | null }>
+    clientUserId = (rows.find((r) => r.role === 'client') ?? (rows.length === 1 ? rows[0] : undefined))?.id ?? null
   }
   if (!clientUserId && body.createAccess && email) {
-    const password = typeof body.password === 'string' && body.password.length >= 8 ? body.password : randomUUID()
+    const password = typeof body.password === 'string' && body.password.length >= 8 ? body.password : crypto.randomUUID()
     const { data: created, error: authErr } = await admin.auth.admin.createUser({
       email,
       password,
@@ -81,18 +84,19 @@ export async function POST(req: NextRequest) {
     } else if (created.user) {
       clientUserId = created.user.id
       accountCreated = true
-      await admin.from('profiles').upsert({
+      const { error: profErr } = await admin.from('profiles').upsert({
         id: clientUserId,
         email,
         nome: nome || null,
         cognome: cognome || null,
         role: 'client',
       })
+      if (profErr) accessError = `profilo: ${profErr.message}`
     }
   }
 
-  // 2. Inserisci la scheda (clients.id è TEXT → UUID stringa), col ponte esplicito.
-  const clientId = randomUUID()
+  // 2. Scheda con id epoch (formato app) e ponte esplicito.
+  const clientId = await nextClientCardId(admin)
   const clientRow: Record<string, unknown> = {
     id: clientId,
     professionista_id: professionalId,
@@ -108,40 +112,21 @@ export async function POST(req: NextRequest) {
   const { error: clientErr } = await admin.from('clients').insert(clientRow)
   if (clientErr) return NextResponse.json({ error: `client: ${clientErr.message}` }, { status: 500 })
 
-  // 3. Collegamento account↔professionista (solo se c'è un account).
+  // 3. Collegamento account↔professionista (solo se c'è un account): la RPC
+  //    trova la scheda appena creata dal ponte e crea/riattiva il link.
   let linkId: string | null = null
   let linkWarning: string | null = null
   if (clientUserId) {
-    const { data: existing } = await admin
-      .from('client_professional_links')
-      .select('id')
-      .eq('professional_id', professionalId)
-      .eq('client_user_id', clientUserId)
-      .limit(1)
-    const ex = ((existing ?? []) as Array<{ id: string }>)[0]
-    if (ex) {
-      const { error } = await admin
-        .from('client_professional_links')
-        .update({ status: 'active', client_id: clientId, updated_at: new Date().toISOString() })
-        .eq('id', ex.id)
-      if (error) linkWarning = `link: ${error.message}`
-      else linkId = ex.id
-    } else {
-      const { data, error } = await admin
-        .from('client_professional_links')
-        .insert({ client_id: clientId, professional_id: professionalId, client_user_id: clientUserId, status: 'active' })
-        .select('id')
-        .single()
-      if (error) linkWarning = `link: ${error.message}`
-      else linkId = (data as { id: string }).id
-    }
+    const rpc = await linkViaRpc(admin, clientUserId, professionalId, 'admin:crea_scheda')
+    if (rpc.ok) linkId = rpc.result.link_id ?? null
+    else linkWarning = `link: ${rpc.error}`
   }
 
   await logAdminAction(admin, guard.user, {
     action: 'create_client',
     target_type: 'client',
     target_id: clientId,
-    details: { professional_id: professionalId, email, client_user_id: clientUserId, account_created: accountCreated, link_id: linkId },
+    details: { professional_id: professionalId, email, client_user_id: clientUserId, account_created: accountCreated, link_id: linkId, link_warning: linkWarning },
   })
 
   return NextResponse.json({
