@@ -179,7 +179,7 @@ type ClientRow = { id: string; email: string | null; client_user_id?: string | n
 
 export type ClientUserPair = { clientId: string; userId: string }
 
-async function buildBridge(
+export async function buildBridge(
   professionistaId: string,
   clientIds?: string[],
 ): Promise<ClientUserPair[]> {
