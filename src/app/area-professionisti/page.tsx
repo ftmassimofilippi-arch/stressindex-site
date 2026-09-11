@@ -1,5 +1,8 @@
 import Link from 'next/link'
-import { Activity, AlertTriangle, ArrowRight, Calendar, NotebookPen, TrendingUp, UserCheck } from 'lucide-react'
+import { Activity, AlertTriangle, ArrowRight, Calendar, NotebookPen, SunMoon, TrendingUp, UserCheck } from 'lucide-react'
+import { MonitoringTable } from '@/components/monitoring/MonitoringTable'
+import { listMonitoringSessionsForProfessional } from '@/lib/monitoring-data'
+import { MON } from '@/lib/monitoring-format'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { AdvancedTrendChart } from '@/components/dashboard/AdvancedTrendChart'
@@ -10,6 +13,7 @@ import { InviteBanner } from '@/components/dashboard/InviteBanner'
 import {
   aggregatedDailyAverages,
   clientsToContact,
+  getCurrentUser,
   getProfessionalProfile,
   listAlerts,
   listClients,
@@ -24,7 +28,8 @@ export const metadata = { title: 'Oggi' }
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardHome() {
-  const [professional, alerts, measurements, contacts, trend, allClients, notes, invites] = await Promise.all([
+  const user = await getCurrentUser()
+  const [professional, alerts, measurements, contacts, trend, allClients, notes, invites, monitoring] = await Promise.all([
     getProfessionalProfile(),
     listAlerts({ status: ['new', 'seen'], limit: 5 }),
     todaysMeasurements(),
@@ -33,7 +38,9 @@ export default async function DashboardHome() {
     listClients(),
     listRecentNotes(3),
     listPendingInvitesForCurrentUser(),
+    user ? listMonitoringSessionsForProfessional(user.id) : Promise.resolve([]),
   ])
+  const recentMonitoring = monitoring.slice(0, 5)
 
   const clientMap = new Map(allClients.map((c) => [c.id, c]))
   const newAlertCount = alerts.filter((a) => a.status === 'new').length
@@ -136,6 +143,18 @@ export default async function DashboardHome() {
                 </table>
               </div>
             )}
+          </section>
+
+          <section className="card overflow-hidden">
+            <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <SunMoon size={18} style={{ color: MON.accent }} />
+                <h2 className="font-serif text-lg text-anthracite">Monitoraggi recenti</h2>
+                <span className="text-sm text-anthracite-lighter">({recentMonitoring.length})</span>
+              </div>
+              <Link href="/area-professionisti/monitoraggio" className="text-sm hover:underline" style={{ color: MON.accentDark }}>Vedi tutti</Link>
+            </div>
+            <MonitoringTable sessions={recentMonitoring} compact emptyText="Nessun monitoraggio registrato" />
           </section>
 
           <section className="card overflow-hidden">

@@ -9,15 +9,18 @@ import type { MeasurementAnalytics } from '@/lib/types'
 import type { ClientWithLastMeasurement } from '@/lib/dashboard-data'
 import Link from 'next/link'
 import { measuredInstant } from '@/lib/format'
+import type { MonitoringSession } from '@/lib/monitoring-types'
+import { isSleepSession } from '@/lib/monitoring-types'
+import { PROFILE_LABEL, PROFILE_ORDER, effectiveProfile, wallDate } from '@/lib/monitoring-format'
 
-type Props = { clients: ClientWithLastMeasurement[]; measurements: MeasurementAnalytics[] }
+type Props = { clients: ClientWithLastMeasurement[]; measurements: MeasurementAnalytics[]; monitoring?: MonitoringSession[] }
 
 function avgOf(values: number[]) {
   if (!values.length) return null
   return values.reduce((a, b) => a + b, 0) / values.length
 }
 
-export function AnalyticsClient({ clients, measurements }: Props) {
+export function AnalyticsClient({ clients, measurements, monitoring = [] }: Props) {
   const [range, setRange] = useState<DateRange>(defaultRange(30))
   const [segmentDim, setSegmentDim] = useState<'tag' | 'sesso' | 'atleta' | 'fumatore'>('sesso')
 
@@ -74,6 +77,24 @@ export function AnalyticsClient({ clients, measurements }: Props) {
 
   const segments = useMemo(() => buildSegments(clients, filtered, segmentDim), [clients, filtered, segmentDim])
 
+  // Monitoraggi nel periodo, per tipo e per profilo (conteggi, nessun ricalcolo).
+  const monitoringStats = useMemo(() => {
+    const f = new Date(range.from + 'T00:00:00Z').getTime()
+    const t = new Date(range.to + 'T23:59:59Z').getTime()
+    const inRange = monitoring.filter((s) => {
+      const w = wallDate(s.start_time, s.tz_offset_minutes)?.getTime() ?? 0
+      return w >= f && w <= t
+    })
+    const byProfile = new Map<string, number>()
+    let sleep = 0
+    for (const s of inRange) {
+      if (isSleepSession(s)) { sleep++; continue }
+      const p = effectiveProfile(s).profile
+      byProfile.set(p, (byProfile.get(p) ?? 0) + 1)
+    }
+    return { total: inRange.length, h24: inRange.length - sleep, sleep, byProfile, clients: new Set(inRange.map((s) => s.client_id)).size }
+  }, [monitoring, range])
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
@@ -85,6 +106,26 @@ export function AnalyticsClient({ clients, measurements }: Props) {
         <MetricCard label="Misurazioni" value={totalMeasurements} hint="nel periodo" />
         <MetricCard label="Alert attivi" value={alertCount} />
         <MetricCard label="% aderenza" value={`${adherence.toFixed(0)}%`} hint="hanno misurato" />
+      </section>
+
+      <section className="card p-6">
+        <h2 className="font-serif text-lg mb-1" style={{ color: '#2B4160' }}>Monitoraggi nel periodo</h2>
+        <p className="text-sm text-anthracite-lighter mb-4">Registrazioni lunghe e notti analizzate dall&apos;app, per tipo e per profilo</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <MetricCard label="Monitoraggi" value={monitoringStats.total} hint="nel periodo" />
+          <MetricCard label="24h" value={monitoringStats.h24} />
+          <MetricCard label="Sonno" value={monitoringStats.sleep} />
+          <MetricCard label="Clienti" value={monitoringStats.clients} hint="con monitoraggi" />
+        </div>
+        {monitoringStats.h24 > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {PROFILE_ORDER.map((p) => (
+              <span key={p} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border border-surface-border bg-surface text-anthracite">
+                {PROFILE_LABEL[p]} <span className="font-semibold tabular-nums">{monitoringStats.byProfile.get(p) ?? 0}</span>
+              </span>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="card p-6">

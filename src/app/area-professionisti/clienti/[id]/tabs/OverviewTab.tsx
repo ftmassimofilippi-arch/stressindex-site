@@ -6,12 +6,14 @@ import { GaugeScore } from '@/components/dashboard/GaugeScore'
 import { AdvancedTrendChart, TREND_METRICS } from '@/components/dashboard/AdvancedTrendChart'
 import { AlertBadge } from '@/components/dashboard/AlertBadge'
 import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
+import { LastMonitoringCard } from '@/components/monitoring/LastMonitoringCard'
+import type { MonitoringSession } from '@/lib/monitoring-types'
 import type { Alert, Client, MeasurementAnalytics } from '@/lib/types'
 import { ALERT_TYPE_LABEL } from '@/lib/types'
 import { formatDateTime, formatMeasuredAt } from '@/lib/format'
 import { measuredDayKey } from '@/lib/format'
 
-export function OverviewTab({ client, measurements, alerts, professionistaId }: { client: Client; measurements: MeasurementAnalytics[]; alerts: Alert[]; professionistaId?: string }) {
+export function OverviewTab({ client, measurements, monitoring = [], alerts, professionistaId }: { client: Client; measurements: MeasurementAnalytics[]; monitoring?: MonitoringSession[]; alerts: Alert[]; professionistaId?: string }) {
   const latest = measurements[0]
   const qs = professionistaId ? `?professionista=${professionistaId}` : ''
 
@@ -105,6 +107,8 @@ export function OverviewTab({ client, measurements, alerts, professionistaId }: 
           )}
         </section>
       </div>
+
+      <LastMonitoringCard session={monitoring[0] ?? null} baseQuery={qs} />
 
       <section className="card p-6 border-dashed border-2 border-surface-border bg-surface/50">
         <div className="flex items-start gap-3">

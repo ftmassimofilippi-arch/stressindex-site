@@ -12,6 +12,8 @@ const SEGMENT_LABEL: Record<string, string> = {
   analytics: 'Analytics',
   impostazioni: 'Impostazioni',
   misurazione: 'Misurazione',
+  monitoraggio: 'Monitoraggio',
+  sport: 'Sport',
 }
 
 export function TopBar({ alertCount = 0 }: { alertCount?: number }) {

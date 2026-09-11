@@ -7,6 +7,8 @@ import type { Alert, Client, ClientNote, ClientSettings, MeasurementAnalytics, M
 import { age, fullName, initials } from '@/lib/format'
 import { OverviewTab } from './tabs/OverviewTab'
 import { MeasurementsTab } from './tabs/MeasurementsTab'
+import { MonitoringTab } from './tabs/MonitoringTab'
+import type { MonitoringSession } from '@/lib/monitoring-types'
 import { AdvancedAnalyticsTab } from './tabs/AdvancedAnalyticsTab'
 import { NotesTab } from './tabs/NotesTab'
 import { MessagesTab } from './tabs/MessagesTab'
@@ -20,6 +22,7 @@ import { formatDate } from '@/lib/format'
 const ALL_TABS = [
   { id: 'panoramica', label: 'Panoramica' },
   { id: 'misurazioni', label: 'Misurazioni' },
+  { id: 'monitoraggi', label: 'Monitoraggi' },
   { id: 'analytics', label: 'Analytics' },
   { id: 'report', label: 'Report' },
   { id: 'note', label: 'Note' },
@@ -34,6 +37,7 @@ type TabId = typeof ALL_TABS[number]['id']
 type Props = {
   client: Client
   measurements: MeasurementAnalytics[]
+  monitoring?: MonitoringSession[]
   alerts: Alert[]
   notes: ClientNote[]
   settings: ClientSettings | null
@@ -46,7 +50,7 @@ type Props = {
   adminId?: string
 }
 
-export function ClientProfile({ client, measurements, alerts, notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId, superadminAccess, adminId }: Props) {
+export function ClientProfile({ client, measurements, monitoring = [], alerts, notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId, superadminAccess, adminId }: Props) {
   const [tab, setTab] = useState<TabId>('panoramica')
   const TABS = readOnly ? READONLY_TABS : ALL_TABS
   const backHref = professionistaId
@@ -106,7 +110,7 @@ export function ClientProfile({ client, measurements, alerts, notes, settings, m
 
           <div className="hidden lg:block w-px bg-surface-border" />
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 flex-1">
             <div>
               <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter">Stress</div>
               <div className="font-serif text-2xl text-anthracite mt-0.5">{latest?.score_stress != null ? Math.round(latest.score_stress) : '—'}</div>
@@ -118,6 +122,10 @@ export function ClientProfile({ client, measurements, alerts, notes, settings, m
             <div>
               <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter">Misurazioni</div>
               <div className="font-serif text-2xl text-anthracite mt-0.5">{totalMeasurements}</div>
+            </div>
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter">Monitoraggi</div>
+              <div className="font-serif text-2xl text-anthracite mt-0.5">{monitoring.length}</div>
             </div>
             <div>
               <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter">In carico da</div>
@@ -158,8 +166,9 @@ export function ClientProfile({ client, measurements, alerts, notes, settings, m
         ))}
       </div>
 
-      {tab === 'panoramica' && <OverviewTab client={client} measurements={measurements} alerts={alerts} professionistaId={professionistaId} />}
+      {tab === 'panoramica' && <OverviewTab client={client} measurements={measurements} monitoring={monitoring} alerts={alerts} professionistaId={professionistaId} />}
       {tab === 'misurazioni' && <MeasurementsTab client={client} measurements={measurements} professionistaId={professionistaId} />}
+      {tab === 'monitoraggi' && <MonitoringTab sessions={monitoring} professionistaId={professionistaId} />}
       {tab === 'analytics' && <AdvancedAnalyticsTab measurements={measurements} />}
       {tab === 'report' && <ReportTab client={client} />}
       {!readOnly && tab === 'note' && <NotesTab client={client} initialNotes={notes} />}

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, BarChart3, Settings, LogOut, Menu, X, Building2, ShieldCheck, Dumbbell, Radio } from 'lucide-react'
+import { Home, Users, BarChart3, Settings, LogOut, Menu, X, Building2, ShieldCheck, Dumbbell, Radio, SunMoon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
@@ -26,6 +26,7 @@ type NavItem = {
   exact?: boolean
   badge?: string
   live?: boolean // mostra il pallino "live" quando ci sono sessioni attive
+  accent?: string // colore accento della voce (Monitoraggio: blu notte)
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -53,6 +54,15 @@ const TEAM_LIVE_ITEM: NavItem = {
   live: true,
 }
 
+// Monitoraggio (24h, notte, sonno): sotto Sport, con il colore accento del
+// modulo (blu notte #3D5A80). Visibile a tutti i professionisti.
+const MONITORING_ITEM: NavItem = {
+  href: '/area-professionisti/monitoraggio',
+  label: 'Monitoraggio',
+  icon: SunMoon,
+  accent: '#3D5A80',
+}
+
 const SUPERADMIN_ITEM: NavItem = {
   href: '/area-professionisti/professionisti',
   label: 'Super Admin',
@@ -66,8 +76,8 @@ export function Sidebar({ professional, isSuperadmin, isPro }: SidebarProps) {
   const [liveActive, setLiveActive] = useState(false)
   // Sport + Team Live vanno dopo Analytics (indice 3, prima di Impostazioni).
   const baseItems = isPro
-    ? [...NAV_ITEMS.slice(0, 3), SPORT_ITEM, TEAM_LIVE_ITEM, ...NAV_ITEMS.slice(3)]
-    : NAV_ITEMS
+    ? [...NAV_ITEMS.slice(0, 3), SPORT_ITEM, TEAM_LIVE_ITEM, MONITORING_ITEM, ...NAV_ITEMS.slice(3)]
+    : [...NAV_ITEMS.slice(0, 3), MONITORING_ITEM, ...NAV_ITEMS.slice(3)]
   const navItems = isSuperadmin ? [...baseItems, SUPERADMIN_ITEM] : baseItems
 
   // Pallino "live": conta gli atleti in sessione (connessi e aggiornati negli
@@ -155,10 +165,11 @@ export function Sidebar({ professional, isSuperadmin, isPro }: SidebarProps) {
                     onClick={() => setOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
                       ${active
-                        ? 'bg-teal-light text-teal-dark'
+                        ? (item.accent ? '' : 'bg-teal-light text-teal-dark')
                         : 'text-anthracite hover:bg-surface'}`}
+                    style={active && item.accent ? { backgroundColor: '#E4EBF3', color: item.accent } : undefined}
                   >
-                    <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
+                    <Icon size={18} strokeWidth={active ? 2.2 : 1.8} style={item.accent && !active ? { color: item.accent } : undefined} />
                     <span className="flex-1">{item.label}</span>
                     {item.live && liveActive && (
                       <span className="relative inline-flex h-2.5 w-2.5" aria-label="Sessioni attive">

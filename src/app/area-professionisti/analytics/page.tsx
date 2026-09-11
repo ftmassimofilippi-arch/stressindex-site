@@ -1,16 +1,19 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { getProfessionalProfile, listAlerts, listAllMeasurements, listClientsEnriched } from '@/lib/dashboard-data'
+import { getCurrentUser, getProfessionalProfile, listAlerts, listAllMeasurements, listClientsEnriched } from '@/lib/dashboard-data'
+import { listMonitoringSessionsForProfessional } from '@/lib/monitoring-data'
 import { AnalyticsClient } from './AnalyticsClient'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Analytics' }
 
 export default async function AnalyticsPage() {
-  const [professional, clients, alerts, measurements] = await Promise.all([
+  const user = await getCurrentUser()
+  const [professional, clients, alerts, measurements, monitoring] = await Promise.all([
     getProfessionalProfile(),
     listClientsEnriched(),
     listAlerts({ status: ['new'] }),
     listAllMeasurements(),
+    user ? listMonitoringSessionsForProfessional(user.id) : Promise.resolve([]),
   ])
 
   return (
@@ -20,7 +23,7 @@ export default async function AnalyticsPage() {
         <p className="mt-1.5 text-sm text-anthracite-lighter">Confronta i tuoi clienti, scopri pattern, ottimizza il tuo lavoro</p>
       </header>
 
-      <AnalyticsClient clients={clients} measurements={measurements} />
+      <AnalyticsClient clients={clients} measurements={measurements} monitoring={monitoring} />
     </DashboardLayout>
   )
 }
