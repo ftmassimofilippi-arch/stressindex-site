@@ -177,9 +177,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Non è stato possibile leggere le misurazioni del periodo. Riprova tra qualche istante.' }, { status: 500 })
   }
 
+  // 1b. Sessioni remote (auto-misurate dal cliente dalla sua app: client_id
+  //     NULL, professionista_id = uid del cliente). La RLS le nasconde: passano
+  //     dalla RPC SECURITY DEFINER get_linked_client_sessions_by_client_id, che
+  //     le restituisce solo se il link è active. Prima il report periodico le
+  //     ignorava e per un cliente "solo app" usciva vuoto.
+  const { data: remoteRows, error: rErr } = await supabase.rpc('get_linked_client_sessions_by_client_id', { p_client_id: clientId })
+  if (rErr) console.error('[client-report] remote sessions rpc error', rErr)
+  const fromMs = new Date(fromIso).getTime()
+  const toMs = new Date(toIso).getTime()
+  const remoteInRange = ((remoteRows ?? []) as SessionRow[])
+    .filter((s) => {
+      const t = new Date((s.started_at ?? s.created_at ?? '') as string).getTime()
+      return Number.isFinite(t) && t >= fromMs && t <= toMs
+    })
+    .map((s) => ({ ...s, client_id: s.client_id ?? clientId }))
+  const seen = new Set((sessions ?? []).map((s) => s.id as string))
+  const allSessions: SessionRow[] = [...((sessions ?? []) as SessionRow[]), ...remoteInRange.filter((s) => !seen.has(s.id))].sort(
+    (a, b) => new Date((b.started_at ?? b.created_at ?? '') as string).getTime() - new Date((a.started_at ?? a.created_at ?? '') as string).getTime(),
+  )
+
   let measurements: MeasurementAnalytics[] = []
-  if (sessions && sessions.length > 0) {
-    const ids = sessions.map((s) => s.id as string)
+  if (allSessions.length > 0) {
+    const ids = allSessions.map((s) => s.id as string)
     // 2. measurement_analytics (arricchimento con score proprietari).
     const { data: ma } = await supabase
       .from('measurement_analytics')
@@ -189,7 +209,7 @@ export async function POST(req: Request) {
     for (const row of (ma ?? []) as MeasurementAnalytics[]) {
       if (row.session_id) maBySession.set(row.session_id, row)
     }
-    measurements = (sessions as SessionRow[]).map(
+    measurements = allSessions.map(
       (s) => maBySession.get(s.id) ?? sessionToMeasurement(s),
     )
   }

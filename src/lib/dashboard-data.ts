@@ -427,6 +427,27 @@ async function getLastRemoteSessionMap(
   return map
 }
 
+// Ultima misurazione remota CON gli score (measurement_analytics della sessione
+// remota), per cliente collegato: RPC get_linked_clients_last_remote_analytics
+// (migration 019). Senza questa la colonna "Stress" della lista clienti
+// restava "—" per i clienti che misurano solo dall'app, perché la RLS su
+// measurement_analytics nasconde le righe con user_id = uid del cliente.
+async function getLastRemoteAnalyticsMap(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<Map<string, MeasurementAnalytics>> {
+  const map = new Map<string, MeasurementAnalytics>()
+  const { data, error } = await supabase.rpc('get_linked_clients_last_remote_analytics')
+  if (error) {
+    // RPC assente finché la 019 non è applicata: la lista resta quella di prima.
+    if (error.code !== 'PGRST202' && error.code !== '42883') console.error('[getLastRemoteAnalyticsMap] rpc error', error)
+    return map
+  }
+  for (const r of (data ?? []) as Array<{ client_id: string; analytics: MeasurementAnalytics | null }>) {
+    if (r.client_id && r.analytics) map.set(r.client_id, { ...r.analytics, client_id: r.analytics.client_id ?? r.client_id })
+  }
+  return map
+}
+
 // Ultima misurazione "effettiva": max tra la colonna clients.last_measurement_at
 // (aggiornata solo dalle misurazioni in studio) e l'ultima sessione remota.
 function effectiveLastMeasurementAt(direct: string | null | undefined, remote: string | undefined): string | null {
@@ -454,12 +475,16 @@ export async function listClientsEnriched(opts?: { professionistaId?: string }):
   const remoteMapQ = opts?.professionistaId
     ? Promise.resolve(new Map<string, string>())
     : getLastRemoteSessionMap(supabase)
-  const [clientsRes, measurementsRes, alertsRes, settingsRes, remoteMap] = await Promise.all([
+  const remoteAnalyticsQ = opts?.professionistaId
+    ? Promise.resolve(new Map<string, MeasurementAnalytics>())
+    : getLastRemoteAnalyticsMap(supabase)
+  const [clientsRes, measurementsRes, alertsRes, settingsRes, remoteMap, remoteAnalytics] = await Promise.all([
     clientsQ,
     measurementsQ,
     supabase.from('alerts').select('client_id,status').in('status', ['new', 'seen']),
     supabase.from('client_settings').select('*'),
     remoteMapQ,
+    remoteAnalyticsQ,
   ])
   const clients = (clientsRes.data ?? []) as Client[]
   const measurements = (measurementsRes.data ?? []) as MeasurementAnalytics[]
@@ -469,6 +494,12 @@ export async function listClientsEnriched(opts?: { professionistaId?: string }):
   const lastByClient = new Map<string, MeasurementAnalytics>()
   for (const m of measurements) {
     if (!lastByClient.has(m.client_id)) lastByClient.set(m.client_id, m)
+  }
+  // La misurazione remota vince se è più recente di quella in studio.
+  const measuredMs = (m: MeasurementAnalytics) => new Date(measuredInstant(m) ?? m.measured_at ?? 0).getTime() || 0
+  for (const [clientId, remote] of remoteAnalytics) {
+    const studio = lastByClient.get(clientId)
+    if (!studio || measuredMs(remote) > measuredMs(studio)) lastByClient.set(clientId, remote)
   }
   const alertCountBy = new Map<string, number>()
   for (const a of alerts) alertCountBy.set(a.client_id, (alertCountBy.get(a.client_id) ?? 0) + 1)
