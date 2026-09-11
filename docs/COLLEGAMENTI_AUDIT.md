@@ -1,8 +1,85 @@
 # Collegamenti cliente ↔ professionista — audit completo
 
-> Stato al 11 settembre 2026. Repo: sito (`stressindex-site`, questo), app (`hrv_app`, sola lettura), database Supabase `ivwmjwukpeldbqkxgvvf`. Sezioni: 1 mappa del modello (in corso di scrittura, vedi commit successivi), 2 stato dei dati, 3 script di riparazione, 4 flusso unico, 5 controllo permanente.
+> Stato al 11 settembre 2026. Repo: sito (`stressindex-site`, questo), app (`hrv_app`, sola lettura), database Supabase `ivwmjwukpeldbqkxgvvf`. Sezioni: 1 mappa del modello, 2 stato dei dati, 3 script di riparazione con anteprima dei conteggi, 4 flusso unico, 5 controllo permanente, 6 ordine di applicazione. **Nessuna scrittura è stata eseguita sul database.**
 
-## Stato dei dati (FASE 2)
+## 1. Mappa del modello (FASE 1)
+
+> Le sezioni 1.2, 1.3 e 1.4 sono ricostruite dal testo delle migrazioni nei due repo (app `supabase/migrations/`, sito `supabase-migrations/`): l'output delle quattro query di catalogo non è stato incollato, quindi il testo **reale** oggi in produzione non è stato verificato. Le query restano in fondo al documento; se in produzione c'è qualcosa di diverso da quanto descritto qui, prevale il catalogo.
+
+### 1.1 Tabelle e colonne
+
+| Tabella | Colonne che contano per il collegamento | Note |
+|---|---|---|
+| `profiles` | `id` (uuid = auth.users), `email`, `nome`, `cognome`, `role` (`client` / `professional`) | il ruolo è quello confermato al primo accesso; 18 profili `client` non hanno né link né scheda |
+| `clients` | `id` **TEXT** (epoch ms dall'app e dal trigger; uuid dalle vecchie route del sito), `professionista_id` uuid → profiles, `email`, `nome`, `cognome`, `client_user_id` uuid → profiles (ponte, migration 017), `created_at`, **`merged_into_client_id`** (nuova, 019) | una scheda per professionista; `uq_clients_prof_client_user (professionista_id, client_user_id)`; nessuna colonna `fonte_dato` |
+| `client_professional_links` | `id`, `client_user_id` uuid → profiles, `professional_id` uuid → profiles, `status` (`pending` / `active` / `revoked`), `client_id` **uuid** (mai valorizzabile con gli id epoch: colonna morta), `created_at`, `updated_at` | in produzione manca l'indice di unicità sulla coppia viva (4 coppie doppie); lo crea la 022 |
+| `sessions` | `id`, `professionista_id` uuid → profiles, `client_id` TEXT → clients, `client_nome`, `started_at`, `started_at_utc` | **convenzione remota**: misurazione fatta dal cliente sulla sua app = `professionista_id` **uid del cliente** e `client_id` NULL |
+| `measurement_analytics` | `session_id` (unique), `user_id` (= sessions.professionista_id), `client_id` (= sessions.client_id, copiato dal trigger e riscritto dall'app) | RLS `auth.uid() = user_id`: le righe remote sono invisibili al professionista |
+| `monitoring_sessions` | `user_id`, `client_id` | stessa convenzione; nessuna incoerenza trovata |
+| `client_email_aliases` | | esiste, vuota, non usata da nessun codice |
+
+### 1.2 Trigger
+
+- **`tg_create_client_on_active_link`** (after insert/update su `client_professional_links`, app `client_crm_autocreate_on_link.sql`, copia identica nel sito `017`). Quando il link diventa `active`: legge il profilo, cerca una scheda del professionista per `client_user_id`, altrimenti **`UPDATE clients SET client_user_id = … WHERE professionista_id = … AND lower(email) = lower(profilo.email)`**: se le schede con quella email sono due, l'update le colpisce entrambe e viola `uq_clients_prof_client_user`, l'inserimento del link fallisce e l'errore risale al chiamante. Questa è la **causa radice** del caso Sara (§2.12) e dei 4 link active senza scheda. Se non trova nulla crea la scheda con id epoch e `created_at = now()`.
+- **`update_client_last_measurement`** (after insert su `sessions`, sito `001`): aggiorna `clients.last_measurement_at` solo per le sessioni con `client_id`.
+- **`sync_session_to_measurement_analytics`** (sito `007`): copia `professionista_id` → `user_id` e `client_id` → `client_id`.
+- Nuovi con la 019: **`tg_profiles_ensure_client_bridge`** (after insert/update di `email, role` su `profiles`) e la riscrittura di `tg_create_client_on_active_link` (§4.3).
+
+### 1.3 RPC
+
+| Funzione | Chi la usa | Cosa fa |
+|---|---|---|
+| `get_linked_client_sessions_by_client_id(text)` | app (dettaglio cliente lato pro), sito (scheda cliente, report periodico da oggi) | sessioni remote della scheda, solo con link active; dalla 019 esclude le schede archiviate |
+| `get_linked_client_sessions_by_email(text)` | app (fallback) | idem per email |
+| `get_linked_clients_last_remote_session()` | sito (lista clienti, "ultima misurazione") | data dell'ultima remota per scheda |
+| `get_linked_clients_last_remote_analytics()` | sito (lista clienti, colonna Stress) — **nuova 019** | ultima riga `measurement_analytics` remota per scheda |
+| `find_linked_client_user_id_by_email`, `get_pending_link_requests`, `get_linked_client_profile`, `lookup_professional` | app | ricerca professionista, richieste pendenti, profilo del cliente collegato |
+| `client_can_assign_session(uuid, uuid)` / **`client_can_assign_session_text(uuid, text)`** (019) | policy RLS su `sessions` | il cliente può scrivere una sessione su una scheda: prima solo per `c.id = uid` o email del JWT, ora prima per `client_user_id` |
+| `is_superadmin`, `admin_data_health`, `admin_merge_clients`, `admin_client_fk_refs` | sito, pannello Super Admin | 010 / 017 |
+| **`link_client_to_professional(uuid, uuid, text)`**, **`link_client_to_professional_guarded`**, **`ensure_client_bridge(text)`**, **`collegamenti_merge_card`** | Edge Function, route admin, script di riparazione, app (proposta) | punto di verità, §4 |
+| **`collegamenti_salute_counts()`**, **`collegamenti_salute_check()`** | pannello, pg_cron | §5 |
+
+### 1.4 RLS
+
+- `clients`: `clients_owner_all` (il professionista vede e scrive solo le proprie schede) + lettura superadmin/organizzazione (010). Da oggi anche la policy **restrictive `clients_hide_merged`** (le schede archiviate spariscono da app e sito; la service role le vede).
+- `client_professional_links`: il cliente vede e scrive le righe con `client_user_id = uid`, il professionista quelle con `professional_id = uid`; il DELETE del pending è fisico.
+- `sessions`: proprietario per `professionista_id`; insert/update del cliente su una scheda tramite `client_can_assign_session` (ora variante `_text`).
+- `measurement_analytics`: `auth.uid() = user_id`.
+- Con la RLS di `clients`, la `SELECT clients WHERE email ILIKE …` fatta dall'app al login del cliente (`autoLinkOnClientLogin`) ritorna sempre vuoto: quel percorso non ha mai potuto funzionare.
+
+### 1.5 Edge Function `create-client-access`
+
+Versione in produzione (repo app): invito via `inviteUserByEmail` → upsert `profiles` (role client) → **INSERT diretto** del link `active` → il trigger prova ad agganciare la scheda. Se l'insert fallisce il rollback cancella profilo e utente **ignorando gli errori** e risponde con un messaggio generico; se l'email esiste già risponde `ok:false, code:email_exists` (200) e non collega nulla. Nuova versione: §4.4.
+
+### 1.6 Flussi dell'app (sola lettura, `hrv_app`)
+
+1. **Scheda CRM**: `client_form_screen.dart` crea l'id `DateTime.now().millisecondsSinceEpoch` e `dataCreazione = DateTime.now()`; `SyncService._clientToRow` fa `upsert clients` con `professionista_id = uid`. La versione **rilasciata** scrive `created_at` in ora locale senza fuso (509 schede con +2h); nel repo il fix (`toUtc()`, commit 968a039 del 31 luglio) è committato ma non rilasciato.
+2. **Invito**: switch "Invita il cliente ad accedere" → salvataggio + sync → `functions.invoke('create-client-access')`. Dopo l'invito l'app non riscarica le schede.
+3. **Richiesta dal cliente**: `lookup_professional` → `requestLink` INSERT `pending` (check-then-act non atomico); `cancelPendingRequest` DELETE fisico.
+4. **Accettazione lato pro**: `acceptRequest` UPDATE `active` (scatta il trigger) + `downloadClients`; `rejectRequest`/`disconnect` UPDATE `revoked`.
+5. **Auto-link al login del cliente**: `autoLinkOnClientLogin` SELECT clients per email (vuoto per RLS) → INSERT link active: percorso morto.
+6. **Sessioni del cliente**: target risolto una sola volta al login (`resolveClientSessionTarget`) per `c.id = uid` (mai vero) o per email; **mai per `client_user_id`**. Se risolto: `professionista_id = pro`, `client_id = scheda`; altrimenti convenzione remota.
+7. **Lista clienti**: solo cache locale; `downloadClients` (`select clients where professionista_id = uid`) → `replaceAll`.
+8. **Dettaglio cliente lato pro**: sessioni locali + RPC `get_linked_client_sessions_by_client_id`, fallback per email.
+
+### 1.7 Flussi del sito
+
+- Lettura schede via RLS (`listClients`, `listClientsEnriched`), Super Admin via service role (`admin-data.ts`).
+- Sessioni remote: RPC per client id nella scheda cliente; `get_linked_clients_last_remote_session` per l'"ultima misurazione"; ponte ricostruito con la service role in `remote-sessions.ts` per PDF singolo e monitoraggio.
+- Scritture dei link, prima di oggi: `POST /api/admin/clients` (scheda **uuid** + `createUser` + link con `client_id` uuid), `POST /api/admin/links` ("Collega scheda": scriveva `client_user_id` poi inseriva il link con `client_id = id epoch` in colonna uuid → errore 22P02), `POST /api/admin/links/manual` (insert diretto, trigger), `PATCH/DELETE /api/admin/links/[id]`. Da oggi tutte passano da `link_client_to_professional` (§4.4).
+
+### 1.8 I sei scenari
+
+| # | Scenario | Prima | Dopo la 019 |
+|---|---|---|---|
+| S1 | Il pro crea la scheda e invita: cliente nuovo | scheda app + EF: link insert → trigger `UPDATE … WHERE email` (ok se una sola scheda) | EF → `link_client_to_professional`: trova la scheda per email, scrive il ponte, crea il link; doppioni uniti |
+| S2 | Il pro invita un'email già registrata | EF risponde `email_exists`, nessun link | EF risolve l'utente esistente e collega comunque |
+| S3 | Il cliente si registra da solo e chiede il collegamento | pending → accept → trigger: ok solo se una scheda con quella email | pending → accept → trigger delega alla funzione (stesse regole, errore esplicito) |
+| S4 | Due schede con la stessa email sotto lo stesso pro (Sara) | il trigger colpisce entrambe, il link non nasce, la EF cancella l'utente | la funzione tiene la scheda con più sessioni (poi la più vecchia), archivia l'altra con `merged_into_client_id`, logga in `clients_merge_log` |
+| S5 | Il pro cancella e ricrea la scheda | vecchia scheda sparisce, link resta, trigger crea una scheda nuova al prossimo `active` | la funzione riaggancia per `client_user_id` → email → nome, altrimenti crea |
+| S6 | Lo stesso cliente con due professionisti | due link, due schede (una per pro) | invariato, ogni pro ha la sua scheda con il ponte; `uq_clients_prof_client_user` rispettato (test T9) |
+
+## 2. Stato dei dati (FASE 2)
 
 Fotografia del **11 settembre 2026, 13:40 UTC**, letta con la service role via PostgREST (tutte le righe di `profiles`, `clients`, `client_professional_links`, `sessions`, `measurement_analytics`, `monitoring_sessions`, `professional_profiles`, `client_email_aliases`, `client_notes`, `admin_audit_log`, più `auth.users` via Auth Admin API) e rielaborata in locale. Le verifiche che richiedono il catalogo (2.6 indice, 2.9 RPC eseguita come professionista) sono emulate dal testo delle migrazioni e vanno confermate con la connessione SQL: vedi §Verifiche SQL da eseguire.
 
@@ -204,7 +281,291 @@ Tutti gli orari in UTC (ora italiana = +2 h). Professionista: `1f8a818b` = info@
 
 **Riparazione proposta per Sara** (nello script 3.x): unire `e0892ecb` in `1788354294664` (tiene quella con il ponte e la misurazione) e creare il link `active` fra `14b75d60` e `1f8a818b` via `link_client_to_professional`; l'invito va rispedito (o Sara usa "password dimenticata") perché l'account non è confermato.
 
+## 3. Script di riparazione (FASE 3): anteprima dei conteggi
+
+File: `supabase-migrations/021_collegamenti_backup.sql` (backup) e `supabase-migrations/022_collegamenti_riparazione.sql` (riparazione). Entrambi testati su un Postgres locale caricato con i dati dell'11 settembre: lo script è idempotente (la seconda esecuzione non tocca nulla) e dopo l'applicazione la view di salute non mostra più duplicati di link, link senza scheda, ponti mancanti né analytics disallineati. Prerequisito: `019_collegamenti_flusso_unico.sql`. Modalità: eseguito così com'è fa solo l'**anteprima** e lascia i conteggi in `collegamenti_riparazione_log`; per applicare, nella stessa sessione del SQL Editor eseguire prima `select set_config('collegamenti.apply', 'on', false);`.
+
+| Blocco | Cosa fa | Righe toccate (anteprima locale) |
+|---|---|---|
+| A_link_duplicati_revocati | link vivi doppi per la stessa coppia: revoca i più vecchi, poi crea `uq_client_professional_active` | **8** |
+| B_link_profilo_inesistente_revocati | link active il cui profilo cliente è stato cancellato: revocati | **2** |
+| C_schede_duplicate_unite | schede duplicate stessa persona (stessa email, stesso professionista): unite nella scheda col ponte o con più sessioni, le altre archiviate | **17** |
+| C_schede_duplicate_da_decidere_a_mano | stessa email ma nomi diversi: NON toccate (pulsante Unisci nel pannello) | **4** |
+| D_ponte_costruito | email con scheda senza ponte e un solo profilo client: ponte scritto (una scheda per professionista) | **16** |
+| D_ponte_ambiguo_piu_profili | email con più profili client: saltate | **0** |
+| E_link_senza_scheda_riparati | link active senza scheda: scheda creata/agganciata | **2** |
+| F_ponte_senza_link_collegati | schede che avevano già il ponte ma nessun link mai esistito: collegate (caso Sara) | **1** |
+| G_sessioni_remote_invisibili_report | sessioni remote di utenti senza link: solo report, con il professionista candidato | **61** |
+| G_link_confermati_a_mano | coppie inserite in `collegamenti_riparazione_link_ok`: collegate | **0** |
+| H_analytics_riallineati | measurement_analytics.client_id riallineato alla sessione | **58** |
+| I_report_analytics_senza_sessione | righe di measurement_analytics senza sessione: solo report | **608** |
+| I_report_ponte_ruolo_non_client | ponte verso un profilo non client: solo report | **1** |
+| I_report_pending_vecchi | pending oltre 30 giorni: solo report | **0** |
+
+Nota: in anteprima il blocco D conta 16 email perché le unioni del blocco C non sono ancora applicate; nell'applicazione reale (testata in locale) D aggancia 6 schede, le altre sono già coperte da C. Le sessioni spostate dalle unioni sono elencate in `clients_merge_log.moved`.
+
+### C. Unioni automatiche (stessa persona)
+
+| Professionista | Email | Tiene | Unisce |
+|---|---|---|---|
+| Riccardo Mastrotto <mastrotto.riccardo@gmail.com> | davide.calse@gmail.com | `1782392763574` Davide Caltran | `1783084859522` Davide Caltran |
+| Riccardo Mastrotto <mastrotto.riccardo@gmail.com> | sassabert00@gmail.com | `1782403707747` Sara Bertoldo | `1784377042569` Sara Bertoldo |
+| info@massimofilippi.it | alessandro.mazzocchi@hotmail.it | `1776875556855` Alessandro Mazzocchi | `1783872783145` Alessandro Mazzocchi |
+| info@massimofilippi.it | eleonora.menin95@gmail.com | `1779551610050` Eleonora Menin | `1779628653721` Eleonora Menin |
+| info@massimofilippi.it | gianandreapazzini@gmail.com | `1779535113786` Gianandrea Pazzini | `1782895788075` Gian Andrea Pazzini |
+| info@massimofilippi.it | martinazanchini@gmail.com | `1782304040156` Martina Zanchini | `1784205492563` Martina Zanchini |
+| info@massimofilippi.it | saraspadoni@yahoo.it | `1788354294664` Sara Spadoni | `e0892ecb-080e-43a8-b804-8059a391ac74` Sara Spadoni |
+| Elisabetta Sacchi <elisabetta.sacchi@gmail.com> | antonella.sanguineti60@gmail.com | `1784101296413` Antonella Sanguineti | `1784101455689` Antonella Sanguineti |
+| Elisabetta Sacchi <elisabetta.sacchi@gmail.com> | barbiegrosso69@gmail.com | `1783969578721` Barbara Grosso | `1783969800720` Barbara Grosso |
+| Elisabetta Sacchi <elisabetta.sacchi@gmail.com> | camilla3297sarbia@gmail.com | `1783970945749` Camilla Sarbia | `1783971084856` Camilla Sarbia |
+| Elisabetta Sacchi <elisabetta.sacchi@gmail.com> | mercedes.cristina62@gmail.com | `1788948933917` Cristina Migone | `1788948932379` Cristina Migone |
+| Massimo Milanese <massimo.milanesekc@gmail.com> | igig24@alice.it | `1787294882170` Irene Gigante | `1788159842222` Irene Gigante |
+| Massimo Milanese <massimo.milanesekc@gmail.com> | martinawaddell@icloud.com | `1784492796734` Martina Waddell | `1788677380749` Martina Waddell |
+| Massimo Milanese <massimo.milanesekc@gmail.com> | massimo.milanesekc@gmail.com | `1778839106151` Massimo Milanese | `1784442665027` Massimo Milanese |
+| Nicolò Maragni <nicolo.maragni@gmail.com> | nicolo.maragni@gmail.com | `1786945443322` Nicolo Maragni | `1787248314292` Ginevra Maragni |
+| Alex Spirandelli <alex.spirandelli7@gmail.com> | alex.spirandelli7@gmail.com | `1783974033108` Alex Spirandelli | `1784220589177` Nicola Spirandelli |
+| DRAGOLJUB VUJANOVIC <ecospirito@gmail.com> | mondoeventi11@gmail.com | `1778961284515` Jelena Vujanovic | `1778959095174` Jelena Vujanovic |
+
+### C. Da decidere a mano (stessa email, persone diverse)
+
+| Professionista | Email | Schede |
+|---|---|---|
+| Liga Briviba <ligabriviba@gmail.com> | ligabriviba@gmail.com | `1778854627818` Liga Briviba, `1779102200806` Armando Benini, `1779296566435` Angelo Magrì, `1779635515733` Ciro Pennacchia, `1779727304558` Jenny Spinella |
+| Salvatore Tesauro <planetex@virgilio.it> | planetex@virgilio.it | `1783694845578` Salvatore Tesauro, `1784615870112` Sabrina Danieli |
+| Gian Luca Dettori <gluca.dettori@gmail.com> | breil69@hotmail.com | `1784318534609` Antonella Paddeu, `1784319603599` Manuela concas |
+| Gian Luca Dettori <gluca.dettori@gmail.com> | gluca.dettori@gmail.com | `1784063548747` Gian Luca Dettori, `1786810446358` Mamma Mamma |
+
+### D. Ponti da costruire
+
+| Email | Schede (professionista) |
+|---|---|
+| alessandra6.redaelli@gmail.com | `1783091621238` Alessandra Redaelli (Giuseppe Piacenza <info@motionpiacenza.it>) |
+| alessandro.mazzocchi@hotmail.it | `1783872783145` Alessandro Mazzocchi (info@massimofilippi.it) |
+| andreaoprandipc@gmail.com | `1779556889678` Andrea Oprandi (info@massimofilippi.it) |
+| antonella.sanguineti60@gmail.com | `1784101455689` Antonella Sanguineti (Elisabetta Sacchi <elisabetta.sacchi@gmail.com>) |
+| barbiegrosso69@gmail.com | `1783969800720` Barbara Grosso (Elisabetta Sacchi <elisabetta.sacchi@gmail.com>) |
+| camilla3297sarbia@gmail.com | `1783971084856` Camilla Sarbia (Elisabetta Sacchi <elisabetta.sacchi@gmail.com>) |
+| davide.calse@gmail.com | `1783084859522` Davide Caltran (Riccardo Mastrotto <mastrotto.riccardo@gmail.com>) |
+| gianandreapazzini@gmail.com | `1782895788075` Gian Andrea Pazzini (info@massimofilippi.it) |
+| marco.baldacci62@gmail.com | `1784552955137` Marco Baldacci (Gabriele Giuli <gabriele_06@hotmail.it>) |
+| martinazanchini@gmail.com | `1784205492563` Martina Zanchini (info@massimofilippi.it) |
+| mercedes.cristina62@gmail.com | `1788948932379` Cristina Migone (Elisabetta Sacchi <elisabetta.sacchi@gmail.com>) |
+| olautieri@gmail.com | `1778850227402` Osvaldo Lautieri (Osvaldo Lautieri <olautieri@gmail.com>) |
+| saraspadoni@yahoo.it | `e0892ecb-080e-43a8-b804-8059a391ac74` Sara Spadoni (info@massimofilippi.it) |
+| sassabert00@gmail.com | `1784377042569` Sara Bertoldo (Riccardo Mastrotto <mastrotto.riccardo@gmail.com>) |
+| veneziagiulia97@gmail.com | `1781963548004` GIULIA DE SANCTIS (Alfredo Donatini <alfdonatini@gmail.com>) |
+| warnerfisio@gmail.com | `1783692220045` Warner D'anniballe (Francesco Di Donato <didonatofrancesco69@gmail.com>); `1784103544616` Warner D'Anniballe (Warner D'Anniballe <warnerfisiovisite@gmail.com>) |
+
+### E. Link active senza scheda (scheda da creare)
+
+| Cliente | Professionista |
+|---|---|
+| Davide Caltran <davide.calse@gmail.con> | Riccardo Mastrotto <mastrotto.riccardo@gmail.com> |
+| Andrea Oprandi <andreaoprandipc@gmail.com> | Gabriele Giuli <gabriele_06@hotmail.it> |
+
+### B. Link con profilo cancellato (da revocare)
+
+| Link | client_user_id | Professionista |
+|---|---|---|
+| `a1984e34` | `455cca2a-695a-469a-8be4-4123bd631431` | info@massimofilippi.it |
+| `0e786321` | `a740ec91-8475-4b3f-95cf-38383c52646b` | Alessandro Verraz <alessandroverraz@gmail.com> |
+
+### F. Scheda con ponte e nessun link (collegamento da creare)
+
+| Scheda | Cliente | Professionista |
+|---|---|---|
+| `1788354294664` | Sara Spadoni <saraspadoni@yahoo.it> | info@massimofilippi.it |
+
+### A. Link doppi da revocare (resta l'active più recente)
+
+| Link | Cliente | Professionista | Stato | Creato |
+|---|---|---|---|---|
+| `8d41412f` | Nicola Caleo <timer-02@hotmail.it> | Jessica Possamai <dott.jessicapossamai@gmail.com> | active | 2026-09-09 |
+| `c9bfdcbc` | Andrea Porrini <andrea.porrinimoda@gmail.com> | Viviana anessi <viviana.anessi40@gmail.com> | active | 2026-07-10 |
+| `b3ac2681` | Sara Bertoldo <sassabert00@gmail.com> | Riccardo Mastrotto <mastrotto.riccardo@gmail.com> | active | 2026-07-04 |
+| `1ecdce13` | Sara Bertoldo <sassabert00@gmail.com> | Riccardo Mastrotto <mastrotto.riccardo@gmail.com> | active | 2026-07-02 |
+| `c231dbca` | Sara Bertoldo <sassabert00@gmail.com> | Riccardo Mastrotto <mastrotto.riccardo@gmail.com> | active | 2026-06-25 |
+| `3c71fe0a` | Mirko Sartori <mirko1sartori@gmail.com> | Riccardo Mastrotto <mastrotto.riccardo@gmail.com> | active | 2026-08-02 |
+| `c9a6c049` | Mirko Sartori <mirko1sartori@gmail.com> | Riccardo Mastrotto <mastrotto.riccardo@gmail.com> | active | 2026-07-19 |
+| `b228b552` | Mirko Sartori <mirko1sartori@gmail.com> | Riccardo Mastrotto <mastrotto.riccardo@gmail.com> | active | 2026-07-18 |
+
+### G. Le 61 sessioni remote invisibili, una per una
+
+Nessuna modifica automatica: sono misurazioni fatte dal cliente sulla sua app (`sessions.professionista_id` = suo uid, `client_id` NULL) e l'utente non ha nessun link active, quindi nessun professionista le vede. Per ogni utente: il professionista a cui **verrebbero attribuite** è quello con una scheda con la stessa email (colonna *Candidato*); dove non c'è nessuna scheda con quell'email non esiste un candidato certo e la riga resta ferma finché non decidi tu (gli *Indizi* elencano link revocati/pending, schede con lo stesso nome, il `client_nome` scritto nelle sessioni). Per attribuire, inserisci la coppia in `collegamenti_riparazione_link_ok` e riesegui la 022 in applicazione, oppure usa il pulsante nella tab Salute collegamenti:
+
+```sql
+insert into public.collegamenti_riparazione_link_ok (client_user_id, professional_id, note)
+values ('<client_user_id>', '<professional_id>', 'confermato a mano');
+```
+
+| # | Utente | Ruolo / registrato | Sessioni | Candidato (scheda con la stessa email) | Indizi |
+|---|---|---|---|---|---|
+| 1 | Beppino Simeon <simeonbeppino@yahoo.it> `1479bc2f-0477-4cc4-b268-3dda5bcd7184` | client / 2026-06-19 | 31 | **nessuno** | — |
+| 2 | Bart Sileghem <bartsileghem@gmail.com> `b87ee9c6-dec9-46b5-a954-7cce30c1beb7` | client / 2026-09-04 | 13 | **nessuno** | — |
+| 3 | Osvaldo Lautieri <olautieri@gmail.com> `40164cd1-450c-41a0-b5b8-cf043b526cac` | client / 2026-05-15 | 4 | **nessuno** | ha 2 schede proprie (ha usato l'app come professionista) |
+| 4 | Federico Casadei <f.casadey@gmail.com> `13d9baae-d3b0-4694-a467-f4dd5541e52a` | client / 2026-06-17 | 4 | **nessuno** | — |
+| 5 | Giulia De Sanctis <veneziagiulia97@gmail.com> `8e3974ec-628b-44d1-ba24-ccc75759c2ad` | client / 2026-06-19 | 3 | scheda `1781963548004` stessa email presso Alfredo Donatini <alfdonatini@gmail.com> | — |
+| 6 | Daniela Raus <raus.dana@yahoo.com> `6c204ae8-e463-4d71-b652-f6197ece346c` | client / 2026-05-20 | 2 | **nessuno** | — |
+| 7 | Roberto Bocca <boush1967@gmail.com> `54d6bc24-d790-4a65-a013-2e3d2b238c4f` | client / 2026-06-18 | 2 | **nessuno** | — |
+| 8 | Paolo Terenziani <terenzio@ngi.it> `59baf234-4791-432d-82d8-c1bca4a61ded` | client / 2026-08-17 | 2 | **nessuno** | scheda `1784286930004` stesso nome (email terenziani@ngi.it) presso info@massimofilippi.it |
+
+Elenco delle singole sessioni (data, durata, tipo):
+
+| Utente | Sessione | Data | Durata | Tipo |
+|---|---|---|---|---|
+| Beppino Simeon | `17821966` | 2026-06-23 08:37 | — | standard |
+| Beppino Simeon | `17822816` | 2026-06-24 08:13 | — | standard |
+| Beppino Simeon | `17822829` | 2026-06-24 08:35 | — | standard |
+| Beppino Simeon | `17822840` | 2026-06-24 08:53 | — | standard |
+| Beppino Simeon | `17823716` | 2026-06-25 09:14 | — | standard |
+| Beppino Simeon | `17824550` | 2026-06-26 08:24 | — | standard |
+| Beppino Simeon | `17825441` | 2026-06-27 09:09 | — | standard |
+| Beppino Simeon | `17826310` | 2026-06-28 09:17 | — | standard |
+| Beppino Simeon | `17827157` | 2026-06-29 08:49 | — | standard |
+| Beppino Simeon | `17828055` | 2026-06-30 09:45 | — | standard |
+| Beppino Simeon | `17828891` | 2026-07-01 08:58 | — | standard |
+| Beppino Simeon | `17828896` | 2026-07-01 09:07 | — | standard |
+| Beppino Simeon | `17829738` | 2026-07-02 08:31 | — | standard |
+| Beppino Simeon | `17832286` | 2026-07-05 07:16 | — | standard |
+| Beppino Simeon | `17840115` | 2026-07-14 08:45 | — | standard |
+| Beppino Simeon | `17840974` | 2026-07-15 08:38 | — | standard |
+| Beppino Simeon | `17841831` | 2026-07-16 08:25 | — | standard |
+| Beppino Simeon | `17842717` | 2026-07-17 09:02 | — | standard |
+| Beppino Simeon | `17843571` | 2026-07-18 08:46 | — | standard |
+| Beppino Simeon | `17845259` | 2026-07-20 07:38 | — | standard |
+| Beppino Simeon | `17846175` | 2026-07-21 09:05 | — | standard |
+| Beppino Simeon | `17847869` | 2026-07-23 08:08 | — | standard |
+| Beppino Simeon | `17850518` | 2026-07-26 09:43 | — | standard |
+| Beppino Simeon | `17851343` | 2026-07-27 08:39 | — | standard |
+| Beppino Simeon | `17852221` | 2026-07-28 09:02 | — | standard |
+| Beppino Simeon | `17853080` | 2026-07-29 08:54 | — | standard |
+| Beppino Simeon | `17853952` | 2026-07-30 09:06 | — | standard |
+| Beppino Simeon | `17854845` | 2026-07-31 09:56 | — | standard |
+| Beppino Simeon | `17855665` | 2026-08-01 08:42 | — | standard |
+| Beppino Simeon | `17860841` | 2026-08-07 08:29 | — | standard |
+| Beppino Simeon | `17863423` | 2026-08-10 08:12 | — | standard |
+| Bart Sileghem | `17885044` | 2026-09-04 08:47 | — | standard |
+| Bart Sileghem | `17885370` | 2026-09-04 17:50 | — | standard |
+| Bart Sileghem | `17885854` | 2026-09-05 07:17 | — | standard |
+| Bart Sileghem | `17885859` | 2026-09-05 07:25 | — | standard |
+| Bart Sileghem | `17886276` | 2026-09-05 19:00 | — | standard |
+| Bart Sileghem | `17886840` | 2026-09-06 10:40 | — | standard |
+| Bart Sileghem | `17887088` | 2026-09-06 17:34 | — | standard |
+| Bart Sileghem | `17887147` | 2026-09-06 19:13 | — | standard |
+| Bart Sileghem | `17887548` | 2026-09-07 06:21 | — | standard |
+| Bart Sileghem | `17888405` | 2026-09-08 06:08 | — | standard |
+| Bart Sileghem | `17889315` | 2026-09-09 07:26 | — | standard |
+| Bart Sileghem | `17891042` | 2026-09-11 07:24 | — | standard |
+| Bart Sileghem | `17891065` | 2026-09-11 08:02 | — | standard |
+| Osvaldo Lautieri | `17788388` | 2026-05-15 11:54 | — | standard |
+| Osvaldo Lautieri | `17789144` | 2026-05-16 08:54 | — | standard |
+| Osvaldo Lautieri | `17789282` | 2026-05-16 12:43 | — | standard |
+| Osvaldo Lautieri | `17793812` | 2026-05-21 18:33 | — | standard |
+| Federico Casadei | `17827530` | 2026-06-29 19:10 | — | standard |
+| Federico Casadei | `17831789` | 2026-07-04 17:29 | — | standard |
+| Federico Casadei | `17832413` | 2026-07-05 10:48 | — | standard |
+| Federico Casadei | `17832434` | 2026-07-05 11:24 | — | standard |
+| Giulia De Sanctis | `17827506` | 2026-06-29 18:30 | — | standard |
+| Giulia De Sanctis | `17827511` | 2026-06-29 18:39 | — | standard |
+| Giulia De Sanctis | `17857884` | 2026-08-03 22:21 | — | standard |
+| Daniela Raus | `17803178` | 2026-06-01 14:44 | — | standard |
+| Daniela Raus | `17815128` | 2026-06-15 10:41 | — | standard |
+| Roberto Bocca | `17868593` | 2026-08-16 07:49 | — | standard |
+| Roberto Bocca | `17869436` | 2026-08-17 07:14 | — | standard |
+| Paolo Terenziani | `17869522` | 2026-08-17 09:37 | — | standard |
+| Paolo Terenziani | `17871288` | 2026-08-19 10:40 | — | standard |
+
+### H. measurement_analytics da riallineare: 58 righe
+
+Gruppi: 1778435728417→1778869925505: 38, 1781353689443→1781200000000: 2, None→1783917628964: 17, None→1786945842116: 1.
+
+## 4. Flusso unico (FASE 4): `supabase-migrations/019_collegamenti_flusso_unico.sql`
+
+Testata su Postgres 16 locale con i dati dell'11 settembre (scenari T1–T9: Sara, doppioni con sessioni, riattivazione, trigger su pending→active, ponte da profilo nuovo, profilo inesistente, RLS scheda archiviata, due professionisti). Idempotente.
+
+### 4.1 `link_client_to_professional(p_client_user_id uuid, p_professional_id uuid, p_source text) returns jsonb` — SECURITY DEFINER
+
+1. Valida: profili esistenti, cliente ≠ professionista.
+2. **Scheda, in quest'ordine**: (a) `clients.client_user_id = utente` già valorizzato sotto quel professionista; se nel frattempo ci sono altre schede non ponteggiate con la stessa email, le unisce nella scheda col ponte; (b) per **email**: se le schede sono più di una tiene quella con **più sessioni, a parità la più vecchia** (id epoch, poi `created_at`), archivia le altre con `merged_into_client_id` e logga in `clients_merge_log`; (c) per nome+cognome se il profilo non ha email; (d) altrimenti crea la scheda con id epoch e `created_at = now()`.
+3. Scrive il ponte sulla scheda tenuta. Se la scrittura viola `uq_clients_prof_client_user` o qualunque altra cosa fallisce: **nessun link viene creato**, la funzione risponde `{ok:false, error, sqlstate}`.
+4. **Link**: `active` esistente → `already_active`; `pending`/`revoked` → riattivato; altrimenti insert. Gli altri link vivi della stessa coppia vengono revocati (mai più due vivi).
+5. Il trigger è disattivato durante la funzione (`collegamenti.skip_trigger`), così non si rientra.
+6. Risposta: `{ok, client_id, card_action, link_id, link_status, action, merged[], warnings[], source}`.
+
+`link_client_to_professional_guarded(uuid, uuid, text)`: stessa cosa ma `auth.uid()` deve essere uno dei due: è quella che l'app può chiamare direttamente (§4.6).
+
+`collegamenti_merge_card(p_keep_id, p_merge_id, p_reason, p_performed_by)`: unione "morbida" di una scheda nell'altra. Sposta tutte le FK verso `clients` (scoperte da `pg_constraint`) più `measurement_analytics.client_id` e `client_professional_links.client_id`; in caso di conflitto di unicità la riga doppia viene cancellata con snapshot nel log; la scheda unita resta in tabella con `merged_into_client_id` e `client_user_id = null` (così non viola l'indice), la scheda tenuta viene arricchita con i campi mancanti. Usata dalla funzione, dallo script 022 e dal modale "Unisci" del pannello.
+
+### 4.2 `ensure_client_bridge(p_email text)` + trigger su `profiles`
+
+Per ogni professionista che ha schede con quell'email e nessuna col ponte: unisce gli eventuali doppioni non ponteggiati e scrive `client_user_id`. Richiede **esattamente un** profilo `client` con quell'email (con due profili non fa nulla e lo dice). Salta la scheda "di sé stesso" (`professionista_id = utente`). Il trigger `tg_profiles_ensure_client_bridge` la chiama dopo insert/update di `email, role` su `profiles` (errore → solo `warning`, mai blocca la registrazione).
+
+### 4.3 `tg_create_client_on_active_link` riscritto
+
+Reagisce solo alla **transizione** a `active` (insert o update da altro stato), salta se `collegamenti.skip_trigger = on`, delega tutto a `link_client_to_professional(..., 'trigger')` e, se questa risponde `ok:false`, fa `RAISE EXCEPTION` con quel messaggio: il link **non nasce** e l'errore arriva esplicito al chiamante (app o Edge Function). Il vecchio `UPDATE … WHERE lower(email) = …` che colpiva più schede non esiste più. La copia nel repo dell'app (`supabase/migrations/client_crm_autocreate_on_link.sql`) va rimossa o sostituita con un rimando a questa migrazione (§4.6).
+
+### 4.4 Edge Function e route admin
+
+- **`supabase/functions/create-client-access/index.ts`** (nuova versione, in questo repo): invito → profilo → `link_client_to_professional(userId, pro, 'edge:invite')`. Se l'email esiste già (`email_exists`) risolve l'utente (profilo per email, poi elenco auth) e collega lo stesso (`'edge:existing'`). Se la RPC risponde `ok:false` la funzione risponde **500 `{ok:false, code:'link_failed', message, rpc, rollback}`**: il messaggio è quello del database e il campo `rollback` dice se profilo e utente creati in quella chiamata sono stati davvero eliminati (`rollback INCOMPLETO: …` altrimenti). Deploy, quando decidi tu: `supabase functions deploy create-client-access --project-ref ivwmjwukpeldbqkxgvvf`. La copia in `hrv_app/supabase/functions/create-client-access` va rimossa.
+- **`POST /api/admin/links` "Collega scheda"**: risolve l'account dal ponte o dall'email (solo profili `client`), rifiuta schede archiviate o di un altro professionista, chiama la RPC; non scrive più `client_professional_links.client_id`.
+- **`POST /api/admin/clients`**: la scheda nasce con **id epoch** (`String(Date.now())`, come l'app: i vecchi id uuid non erano mai caricati dall'app) e ponte; il link passa dalla RPC.
+- **`POST /api/admin/links/manual`**: RPC. **`POST /api/admin/clients/merge`**: anteprima con `admin_merge_clients` (dry run), esecuzione con `collegamenti_merge_card` (unione morbida e log; ricade sulla 017 se la 019 non è applicata).
+- Helper condiviso `src/lib/collegamenti.ts` (`linkViaRpc`, `resolveClientUserId`, `nextClientCardId`).
+
+### 4.5 Viste del sito e sessioni remote
+
+| Vista | Prima | Ora |
+|---|---|---|
+| Scheda cliente (panoramica, misurazioni, analytics, export, PDF singolo) | remote incluse | invariato (RPC 019 esclude le schede archiviate) |
+| **Report PDF periodico** `/api/client-report` | solo `sessions.client_id = scheda`: cliente "solo app" → report vuoto | + RPC `get_linked_client_sessions_by_client_id`, filtrate sul periodo, dedup per id |
+| **Lista clienti, colonna Stress** | solo `measurement_analytics` dello studio | + `get_linked_clients_last_remote_analytics()`; vince la più recente |
+| Lista clienti, ultima misurazione | remote incluse | invariato |
+| **Super Admin "Vedi sessioni"** di un cliente | passava da `links.client_id` (sempre null) → `[]` | schede per ponte + sessioni remote (`remote: true`, attribuite ai professionisti collegati o "invisibile") |
+| Analytics studio, home "oggi", trend 365 gg | solo studio | invariato: sono aggregati **dello studio**, per scelta; documentato qui |
+
+### 4.6 Modifiche da fare nell'app (`hrv_app`, non toccato)
+
+1. **Controllo doppioni** in `client_form_screen.dart` / `ClientService.saveClient`: oggi **non c'è nessun controllo per email**, né sulla cache locale né sul database (verificato: nessun confronto sull'email prima di `saveClient`). Prima di salvare una scheda nuova con email: cercare nella cache locale (`loadAllClients`) **e** su `clients` (`professionista_id = uid and lower(email) = …`, la RLS lo permette); se esiste, proporre di aprire quella scheda invece di crearne un'altra.
+2. **`created_at` in ora locale**: la versione rilasciata scrive `dataCreazione.toIso8601String()` senza fuso (509 schede con +2h). Il fix `toUtc()` (`sync_service.dart`, commit 968a039) è nel repo ma non rilasciato: va rilasciato; per le 509 righe esistenti serve un `update clients set created_at = created_at - interval '2 hours' where id ~ '^[0-9]+$' and created_at > to_timestamp(id::bigint/1000) + interval '1 hour'` (da valutare a parte, non incluso nella 022).
+3. **`downloadClients`** (`sync_service.dart` 330-363): filtrare `merged_into_client_id is null` (la policy restrictive lo fa già lato server, ma il filtro esplicito evita sorprese se la policy cambia) e non usare `replaceAll` mentre una sync di scrittura è in coda (race: la scheda appena creata sparisce fino al prossimo download).
+4. **`resolveClientSessionTarget`** (`professional_link_service.dart` 163-249): risolvere la scheda prima per `clients.client_user_id = uid` (via RPC `get_linked_client_profile` o una select con la nuova policy), poi per email; ricalcolare quando cambia un link, non solo al login.
+5. **`requestLink` / `acceptRequest` / `autoLinkOnClientLogin`**: `autoLinkOnClientLogin` va rimosso (non può funzionare per RLS, e crea link active senza consenso). `acceptRequest` può restare (UPDATE active → trigger → funzione) oppure chiamare `link_client_to_professional_guarded(uid_cliente, uid_pro, 'app:accept')` e gestire `ok:false` mostrando `error`. Dopo l'invito via Edge Function, fare `downloadClients` (la scheda può essere stata unita/agganciata).
+6. **Edge Function**: rimuovere `hrv_app/supabase/functions/create-client-access` (la versione buona vive nel repo del sito); `client_access_service.dart` deve trattare `code: 'link_failed'` e mostrare `message`; `emailExists` non è più un esito (la EF collega comunque).
+7. **Migrazioni nel repo app**: `client_crm_autocreate_on_link.sql` (vecchio trigger) e `client_professional_links_unique.sql` (mai applicata) vanno tolte o marcate "sostituite da stressindex-site 019/022"; `sessions_client_assignment.sql` è sostituita dalla variante `_text` della 019.
+8. `client_email_aliases`: non usata da nessuno; può essere eliminata.
+
+## 5. Controllo permanente (FASE 5): `supabase-migrations/020_collegamenti_salute.sql`
+
+### 5.1 View `v_collegamenti_salute`
+
+Una riga per problema, colonne `tipo_problema, gravita, client_id, client_user_id, professional_id, link_id, email, nome, professionista, dettaglio, fix_proposto, fix_auto, fix_rpc, fix_args`. Tipi: `scheda_duplicata` (2.1), `ponte_mancante` (2.2, esclusa la scheda di sé stesso), `ponte_ruolo_errato` (2.3), `link_senza_scheda` / `link_profilo_inesistente` (2.4), `pending_vecchio` (2.5), `link_duplicato` (2.6), `sessioni_remote_senza_link` (2.8, con i professionisti candidati in `fix_args.candidati`), `profilo_client_orfano` (2.10), `scheda_con_ponte_senza_link` (scheda agganciata a un utente che non ha mai avuto un link con quel pro: il caso Sara), `analytics_disallineato` (2.13), `monitoraggio_incoerente` (2.14). Grant solo alla service role. `collegamenti_salute_counts()` restituisce i conteggi per tipo.
+
+Sui dati dell'11 settembre, prima della riparazione: scheda_duplicata 21, profilo_client_orfano 18, sessioni_remote_senza_link 8, ponte_mancante 6, link_duplicato 4, analytics_disallineato 4 (sessioni), link_senza_scheda 2, link_profilo_inesistente 2, ponte_ruolo_errato 1, scheda_con_ponte_senza_link 1 (Sara). Dopo la 022 in locale: profilo_client_orfano 16, sessioni_remote_senza_link 8, scheda_con_ponte_senza_link 5 (le schede ponteggiate dal blocco D, il cui link va confermato a mano), scheda_duplicata 4 (nomi diversi, da decidere), ponte_ruolo_errato 1, ponte_mancante 1 (scheda di sé stesso di Osvaldo Lautieri, esclusa dalla view dopo la correzione).
+
+### 5.2 Tab "Salute collegamenti" nel pannello Super Admin
+
+`src/app/area-professionisti/professionisti/SaluteTab.tsx`, route `GET/POST /api/admin/collegamenti`. Conteggi per tipo (cliccabili come filtro), lista con cliente, professionista, dettaglio e fix proposto. Azioni, tutte con `ConfirmDialog` e riga in `admin_audit_log`: **Ripara** (`ensure_client_bridge`, `link_client_to_professional`, revoca link con profilo cancellato, riallineamento analytics), **Unisci** (apre `MergeClientsModal` sulle sole schede del doppione: anteprima, poi unione morbida), **Collega a <professionista>** per le sessioni remote invisibili con una scheda candidata, **Esegui controllo ora**. Il badge sulla tab è rosso quando c'è un alert aperto.
+
+### 5.3 Job settimanale
+
+`admin_alerts (kind, total, details, created_at, resolved_at)` + `collegamenti_salute_check()`: un solo alert aperto per tipo, aggiornato se cambiano i numeri, chiuso quando torna a zero. `pg_cron` `collegamenti_salute_weekly`, lunedì 07:00 UTC (se l'estensione non è attiva la migrazione lo segnala con un `notice` e il controllo resta manuale dal pannello).
+
+## 6. Ordine di applicazione (niente è stato eseguito sul database)
+
+1. `supabase-migrations/019_collegamenti_flusso_unico.sql` (funzioni, trigger, policy, RPC).
+2. `supabase-migrations/020_collegamenti_salute.sql` (view, alert, cron).
+3. `supabase-migrations/021_collegamenti_backup.sql` (tabelle `*_backup_YYYYMMDD`).
+4. `supabase-migrations/022_collegamenti_riparazione.sql` **in anteprima** (così com'è): leggere `collegamenti_riparazione_log` e confrontare con §3.
+5. Eventuali coppie confermate in `collegamenti_riparazione_link_ok` (§3.G).
+6. Stessa sessione SQL: `select set_config('collegamenti.apply','on',false);` poi di nuovo la 022. Rieseguibile.
+7. `notify pgrst, 'reload schema';` poi deploy del sito e della Edge Function.
+8. App: modifiche di §4.6 e rilascio.
+
+Ripristino: le tabelle di backup della 021 e `clients_merge_log` (snapshot delle righe cancellate per conflitto) bastano a tornare indietro; esempi nell'intestazione della 021.
+
 ## Verifiche SQL da eseguire (catalogo: servono per chiudere 1.2, 1.3, 1.4, 2.6, 2.9)
+
+> Output non ancora incollato: le sezioni 1.2–1.4 e le verifiche 2.6/2.9 restano basate sui file di migrazione.
 
 La service role permette solo tabelle e RPC via PostgREST: i testi reali di trigger, funzioni, policy e indici non sono leggibili da lì. Eseguire nel SQL Editor (o via `psql` con la connection string) e incollare l'output nel documento:
 
