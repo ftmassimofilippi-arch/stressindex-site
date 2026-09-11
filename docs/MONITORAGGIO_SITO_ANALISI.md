@@ -6,8 +6,8 @@
 > documento dell'app e il codice Dart divergono, vince il codice Dart e la
 > divergenza è annotata qui (§6).
 
-Aggiornato in FASE 6 con: migrazioni aggiunte al repo del sito (§8), cosa
-non si è potuto verificare (§9).
+Aggiornato in FASE 6 con: decisioni e file del sito (§8), verifiche fatte
+(§9), cosa non si è potuto verificare (§10).
 
 ---
 
@@ -339,19 +339,47 @@ nelle ore 23-07 locali → `notte`, con gli indici notturni "non disponibili".
 
 ---
 
-## 8. Cosa fa il sito (decisioni)
+## 8. Cosa fa il sito (decisioni e file)
 
-- **Accesso** (`src/lib/monitoring-data.ts`): stessa architettura di `remote-sessions.ts`. Con `SUPABASE_SERVICE_ROLE_KEY` il ponte è ricostruito lato server (`buildBridge`, ora esportato): righe con `professionista_id = pro` ∪ righe con `user_id ∈ account collegati`, `client_id` risolto quando è NULL. Senza service role: lettura con la sessione utente (RLS) + RPC dell'app. Le viste passano **solo** da qui. Le liste non caricano `windows` (250 KB a riga).
-- **Tipi** (`src/lib/monitoring-types.ts`): riga base + `Monitoring24hSession` / `SleepSession` discriminate su `monitoring_type`, con i jsonb tipizzati 1:1 sul Dart.
-- **RR grezzi**: URL firmata a 120 s generata lato server con la service role dopo aver verificato l'accesso alla riga; il file gzip viene decompresso lato server e servito come CSV. Mai usato per calcolare.
-- **Eventi dal sito**: PUT su `/api/monitoring/[id]/events` → aggiorna `events` (gli eventi nuovi/modificati hanno `response: null`), imposta `events_modified_on_web = true`. Il sito mostra "in attesa di ricalcolo" finché l'app non riscrive la riga.
-- **Migrazione del sito `supabase-migrations/018_monitoring_site.sql`** (da applicare a mano): colonna `events_modified_on_web` (+ `_at`), RPC bridge riscritta con `client_user_id`, policy superadmin esplicita (ridondante ma allineata a 010/011), `notify pgrst, 'reload schema'`, blocchi `EXCEPTION WHEN OTHERS`.
-- **Email**: il sito **non ha** un canale email reale (MessageComposer archivia in `messages` con `delivered: false` e un TODO sulla Edge Function). "Invia al cliente" crea la stessa riga in `messages` con oggetto/testo e il link al PDF cliente; l'allegato vero arriverà con la Edge Function.
-- **PDF**: `@react-pdf/renderer` (già in uso), grafici disegnati in SVG nel documento, stesse pagine e stringhe dell'app; variante cliente senza sigle, referenze, Ritmo, Parametri e "Come si calcola".
+### 8.1 Dati e accesso
+- `src/lib/monitoring-types.ts`: riga + jsonb tipizzati 1:1 sul Dart, discriminati su `monitoring_type` (`Monitoring24hSession` / `SleepSession`).
+- `src/lib/monitoring-strings.ts`, `src/lib/sleep-strings.ts`: **generati** da `pdf_strings.dart`, `monitoring_index_texts.dart`, `sleep_pdf_strings.dart` con `scripts/gen-monitoring-strings.js` (IT/EN/DE). Da rigenerare se cambiano i testi dell'app: `node scripts/gen-monitoring-strings.js`.
+- `src/lib/monitoring-format.ts`: palette, etichette, soglie dei livelli (copiate da `MonitoringIndexTexts.*Level`), fallback del profilo (§3.8), `dayPart`, orologio del dispositivo (`wallDate`/`hm`), testi del Sonno (`SleepVisuals`).
+- `src/lib/monitoring-data.ts`: stessa architettura di `remote-sessions.ts`. Con `SUPABASE_SERVICE_ROLE_KEY` il ponte è ricostruito lato server (`buildBridge`, ora esportato): righe con `professionista_id = pro` ∪ righe con `user_id ∈ account collegati`, `client_id` risolto quando è NULL. Senza service role: sessione utente (RLS) + RPC dell'app. Le liste non caricano `windows`. Colonne delle migrazioni non applicate lette con `selectWithMissingColumnFallback`.
+- RR grezzi: URL firmata a 120 s generata lato server, gunzip in memoria, CSV (`/api/monitoring/[id]/rr-csv`). Mai usati per calcolare.
+- Eventi dal sito: `PUT /api/monitoring/[id]/events` → `events` aggiornati (nuovi/spostati con `response: null`), `events_modified_on_web = true`; la UI mostra "in attesa di ricalcolo".
 
-## 9. Non verificabile senza sessioni reali
+### 8.2 Viste
+- Sidebar: voce **Monitoraggio** (sotto Sport, accento `#3D5A80`); pagina `/area-professionisti/monitoraggio` con filtri cliente / tipo / profilo / date e ricerca.
+- Scheda cliente: tab **Monitoraggi**, card "Ultimo monitoraggio" in Panoramica, contatore "Monitoraggi" nell'header. Oggi: "Monitoraggi recenti". Analytics: conteggi per periodo, tipo e profilo.
+- Dettaglio `/area-professionisti/monitoraggio/[id]`: `Monitoring24hDetail` (sezioni solo se previste dal profilo) o `SleepDetail`. Componenti in `src/components/monitoring/`.
+- Super Admin: tab **Monitoraggi** (service role, filtro per tipo), colonna Monitoraggi in Utenti e Clienti, lista nel dettaglio utente. Il dettaglio si apre con `?professionista=<titolare>`.
 
-- Nessuna riga `sleep` nel DB e migrazione `monitoring_sleep.sql` non applicata: il dettaglio Sonno e il suo PDF sono stati costruiti sui modelli Dart e provati con una riga sintetica generata dalla loro serializzazione, non con un file Checkme reale.
-- Nessuna riga `1.1.0-monitoring`: `summary.advanced`, `recording_profile`, `br` e gli indici sono stati provati con una riga sintetica costruita da `toJson` dei modelli Dart.
-- Il flusso "evento modificato sul sito → app ricalcola" richiede l'aggiornamento dell'app (§6.10).
-- L'invio email reale (Edge Function) non esiste ancora nel sito.
+### 8.3 PDF ed export
+- `src/lib/monitoring-pdf.tsx` (24h) e `src/lib/sleep-pdf.tsx` (Sonno) con `@react-pdf/renderer`, stesse pagine e stringhe dei PDF dell'app; grafici in SVG nel documento; Helvetica con sostituzione dei glifi assenti (`src/lib/pdf-text.ts`: α→alfa, ₂→2, ≥→>=, →→->). Variante cliente: solo nomi semplici ed etichette, senza sigle, referenze, Ritmo, Parametri, Come si calcola.
+- Route: `/api/monitoring/[id]/pdf?variant=pro|client`, `rr-csv`, `windows-csv`, `email`.
+- **Email**: il sito non ha un canale di consegna (MessageComposer archivia in `messages` con `delivered: false`, Edge Function `send-message` ancora da fare). "Invia al cliente" crea la riga in `messages` con oggetto, testo e link al PDF cliente e lo dice in chiaro: nessuna email parte davvero, nessuna simulazione.
+
+### 8.4 Migrazione del sito
+`supabase-migrations/018_monitoring_site.sql` (da applicare a mano, idempotente, blocchi con `EXCEPTION WHEN OTHERS`, `notify pgrst, 'reload schema'`):
+1. `monitoring_sessions.events_modified_on_web` boolean + `events_modified_on_web_at`;
+2. RPC `get_linked_client_monitoring_sessions_by_client_id` riscritta con il ponte `clients.client_user_id` (017) oltre a id/email, stessa firma;
+3. policy SELECT esplicita per `is_superadmin()`.
+
+Prerequisiti nel repo dell'app, **non ancora applicati** al 2026-09-11: `monitoring_recording_profile.sql`, `monitoring_sleep.sql` (colonne sleep + bucket `monitoring-spo2`). Senza di essi il sito funziona lo stesso (colonne lette con fallback), ma le righe 1.1 non portano il profilo salvato e le notti non hanno `sleep_score` in colonna.
+
+### 8.5 Modifica necessaria all'app
+Perché "eventi modificati dal sito → l'app ricalcola" funzioni, l'app deve: (a) leggere `events_modified_on_web` in `MonitoringSession.fromRow`, (b) all'apertura di una sessione con il flag alto lanciare `MonitoringService.reanalyze(s, events: s.events)` e riscrivere la riga con `events_modified_on_web = false`. Oggi il ricalcolo parte solo dalla UI dell'app.
+
+## 9. Come è stato verificato
+
+- `npx tsc --noEmit` e `npm run build` puliti (`npm run lint` non è configurato nel repo: nessun `.eslintrc`, il comando apre il wizard di Next).
+- Rendering reale (non solo tipi) con `@react-pdf/renderer` e `react-dom/server` su tre righe: la riga vera del DB (1.0, profilo stimato "notte", nessun `advanced`), una riga 1.1 sintetica costruita con la serializzazione dei modelli Dart (ciclo completo, notte, eventi, tutti gli indici) e una notte Sonno sintetica. Tutti i PDF (pro/cliente) e i componenti si generano senza errori; le pagine sono state controllate a occhio.
+
+## 10. Non verificabile senza sessioni reali
+
+- Nessuna riga `sleep` nel DB e `monitoring_sleep.sql` non applicata: dettaglio e PDF del Sonno provati solo sulla riga sintetica, non su un file Checkme reale.
+- Nessuna riga `1.1.0-monitoring`: `summary.advanced`, `recording_profile`, `br` provati sulla riga sintetica.
+- Il flusso "evento modificato sul sito → app ricalcola" richiede la modifica all'app (§8.5).
+- L'invio email reale non esiste ancora nel sito (§8.3).
+- I monitoraggi dei clienti collegati senza `professionista_id` compaiono nel sito tramite il ponte service role: verificato solo sul codice, nessuna riga di questo tipo nel DB.
