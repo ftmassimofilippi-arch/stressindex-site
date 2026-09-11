@@ -3,8 +3,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Users, UserCog, Link2, Search, Loader2, AlertTriangle, Plus, Crown, ShieldCheck,
-  Mail, KeyRound, Trash2, ArrowRightLeft, Activity, RefreshCw, X, CheckCircle2, Ban, Clock,
+  Mail, KeyRound, Trash2, ArrowRightLeft, Activity, RefreshCw, X, CheckCircle2, Ban, Clock, SunMoon,
 } from 'lucide-react'
+import Link from 'next/link'
+import { MonitoringTable } from '@/components/monitoring/MonitoringTable'
+import { TypeChip } from '@/components/monitoring/MonitoringChips'
+import type { AdminMonitoringRow } from '@/lib/admin-monitoring'
+import type { MonitoringSession } from '@/lib/monitoring-types'
+import { isSleepSession } from '@/lib/monitoring-types'
+import { duration, periodLabel } from '@/lib/monitoring-format'
 import { Modal } from '@/components/dashboard/Modal'
 import { ConfirmDialog } from '@/components/dashboard/ConfirmDialog'
 import { formatDate, formatRelative } from '@/lib/format'
@@ -19,7 +26,7 @@ import { ManualLinkModal } from './ManualLinkModal'
 // verifica superadmin lato server). Questo componente è solo presentazione + fetch.
 // ============================================================================
 
-type Tab = 'users' | 'clients' | 'links'
+type Tab = 'users' | 'clients' | 'links' | 'monitoring'
 
 type ProfessionalOption = { id: string; name: string; email: string | null }
 
@@ -34,6 +41,7 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
   const [users, setUsers] = useState<AdminUser[]>([])
   const [clients, setClients] = useState<AdminClientRow[]>([])
   const [links, setLinks] = useState<AdminLink[]>([])
+  const [monitoring, setMonitoring] = useState<AdminMonitoringRow[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [toast, setToast] = useState<Toast>(null)
@@ -51,15 +59,17 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
   const reload = useCallback(async () => {
     setLoading(true)
     setLoadError(null)
-    const [u, c, l] = await Promise.all([
+    const [u, c, l, m] = await Promise.all([
       api('GET', '/api/admin/users'),
       api('GET', '/api/admin/clients'),
       api('GET', '/api/admin/links'),
+      api('GET', '/api/admin/monitoring'),
     ])
     if (!u.ok) setLoadError(u.json?.error ?? 'Errore caricamento utenti')
     setUsers(u.json?.users ?? [])
     setClients(c.json?.clients ?? [])
     setLinks(l.json?.links ?? [])
+    setMonitoring(m.json?.sessions ?? [])
     setLoading(false)
   }, [])
 
@@ -90,6 +100,7 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
     { key: 'users', label: 'Utenti', icon: Users, count: users.length },
     { key: 'clients', label: 'Clienti', icon: UserCog, count: clients.length },
     { key: 'links', label: 'Collegamenti', icon: Link2, count: links.length },
+    { key: 'monitoring', label: 'Monitoraggi', icon: SunMoon, count: monitoring.length },
   ]
 
   return (
@@ -144,6 +155,8 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
         <UsersTab users={users} professionals={professionals} onChanged={reload} showToast={showToast} />
       ) : tab === 'clients' ? (
         <ClientsTab clients={clients} professionals={professionals} onChanged={reload} showToast={showToast} />
+      ) : tab === 'monitoring' ? (
+        <MonitoringAdminTab sessions={monitoring} />
       ) : (
         <LinksTab links={links} professionals={professionals} onChanged={reload} showToast={showToast} />
       )}
@@ -287,6 +300,7 @@ function UsersTab({ users, professionals, onChanged, showToast }: { users: Admin
                 <th className="px-3 py-3 font-medium">Registrazione</th>
                 <th className="px-3 py-3 font-medium">Ultimo accesso</th>
                 <th className="px-3 py-3 font-medium text-right">Mis.</th>
+                <th className="px-3 py-3 font-medium text-right">Monitoraggi</th>
                 <th className="px-4 py-3 font-medium text-right">Azioni</th>
               </tr>
             </thead>
@@ -318,6 +332,7 @@ function UsersTab({ users, professionals, onChanged, showToast }: { users: Admin
                   <td className="px-3 py-3 text-anthracite-lighter whitespace-nowrap">{u.created_at ? formatDate(u.created_at) : '—'}</td>
                   <td className="px-3 py-3 text-anthracite-lighter whitespace-nowrap">{u.last_sign_in_at ? formatRelative(u.last_sign_in_at) : 'Mai'}</td>
                   <td className="px-3 py-3 text-right text-anthracite">{u.measurements_count}</td>
+                  <td className="px-3 py-3 text-right text-anthracite">{u.monitoring_count}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex items-center gap-3">
                       {u.role === 'client' && (u.issue === 'no_link' || u.issue === 'revoked_link') && (
@@ -333,7 +348,7 @@ function UsersTab({ users, professionals, onChanged, showToast }: { users: Admin
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-10 text-center text-anthracite-lighter">Nessun utente trovato.</td></tr>
+                <tr><td colSpan={9} className="px-4 py-10 text-center text-anthracite-lighter">Nessun utente trovato.</td></tr>
               )}
             </tbody>
           </table>
@@ -378,6 +393,8 @@ function UserDetailModal({ user, onClose, onChanged, showToast }: { user: AdminU
   const [cascade, setCascade] = useState(false)
   const [sessions, setSessions] = useState<Array<{ id: string; measured_at: string | null; client_name: string; professional_name: string; test_type: string | null }> | null>(null)
   const [showSessions, setShowSessions] = useState(false)
+  const [monitoring, setMonitoring] = useState<AdminMonitoringRow[] | null>(null)
+  const [showMonitoring, setShowMonitoring] = useState(false)
 
   async function saveAnagrafica() {
     setBusy('save')
@@ -430,6 +447,14 @@ function UserDetailModal({ user, onClose, onChanged, showToast }: { user: AdminU
     const { ok, json } = await api('GET', `/api/admin/users/${user.id}/sessions`)
     if (ok) setSessions(json?.sessions ?? [])
     else { setSessions([]); showToast({ kind: 'err', text: json?.error ?? 'Errore sessioni' }) }
+  }
+
+  async function loadMonitoring() {
+    setShowMonitoring(true)
+    if (monitoring) return
+    const { ok, json } = await api('GET', `/api/admin/users/${user.id}/monitoring`)
+    if (ok) setMonitoring(json?.sessions ?? [])
+    else { setMonitoring([]); showToast({ kind: 'err', text: json?.error ?? 'Errore monitoraggi' }) }
   }
 
   async function deleteUser() {
@@ -519,6 +544,42 @@ function UserDetailModal({ user, onClose, onChanged, showToast }: { user: AdminU
                           <td className="px-3 py-2 whitespace-nowrap">{s.measured_at ? formatDate(s.measured_at) : '—'}</td>
                           <td className="px-3 py-2">{s.client_name}</td>
                           <td className="px-3 py-2">{s.professional_name}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* Monitoraggi */}
+        <section>
+          <button type="button" onClick={loadMonitoring} className="text-sm px-3 py-2 rounded-lg border border-surface-border hover:bg-surface inline-flex items-center gap-1.5">
+            <SunMoon size={14} /> Vedi monitoraggi
+          </button>
+          {showMonitoring && (
+            <div className="mt-3 rounded-xl border border-surface-border overflow-hidden">
+              {monitoring === null ? (
+                <div className="p-4 text-sm text-anthracite-lighter flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Caricamento…</div>
+              ) : monitoring.length === 0 ? (
+                <div className="p-4 text-sm text-anthracite-lighter">Nessun monitoraggio.</div>
+              ) : (
+                <div className="overflow-x-auto max-h-64">
+                  <table className="w-full text-xs min-w-[520px]">
+                    <thead className="bg-surface text-anthracite-lighter sticky top-0">
+                      <tr><th className="px-3 py-2 text-left font-medium">Inizio</th><th className="px-3 py-2 text-left font-medium">Tipo</th><th className="px-3 py-2 text-left font-medium">Durata</th><th className="px-3 py-2 text-left font-medium">Cliente</th><th className="px-3 py-2 text-left font-medium">Professionista</th><th className="px-3 py-2" /></tr>
+                    </thead>
+                    <tbody>
+                      {monitoring.map((m) => (
+                        <tr key={m.id} className="border-t border-surface-border">
+                          <td className="px-3 py-2 whitespace-nowrap">{periodLabel(m.start_time, m.end_time, m.tz_offset_minutes)}</td>
+                          <td className="px-3 py-2"><TypeChip type={m.monitoring_type} size="sm" /></td>
+                          <td className="px-3 py-2 whitespace-nowrap">{duration(m.duration_minutes)}</td>
+                          <td className="px-3 py-2">{m.client_name}</td>
+                          <td className="px-3 py-2">{m.professional_name ?? '—'}</td>
+                          <td className="px-3 py-2 text-right"><Link href={adminMonitoringHref(m)} className="text-teal-dark hover:underline whitespace-nowrap">Apri →</Link></td>
                         </tr>
                       ))}
                     </tbody>
@@ -628,6 +689,7 @@ function ClientsTab({ clients, professionals, onChanged, showToast }: { clients:
                 <th className="px-3 py-3 font-medium">Professionista</th>
                 <th className="px-3 py-3 font-medium">Accesso</th>
                 <th className="px-3 py-3 font-medium text-right">Misurazioni</th>
+                <th className="px-3 py-3 font-medium text-right">Monitoraggi</th>
                 <th className="px-3 py-3 font-medium">Creato</th>
                 <th className="px-4 py-3 font-medium text-right">Azioni</th>
               </tr>
@@ -650,6 +712,7 @@ function ClientsTab({ clients, professionals, onChanged, showToast }: { clients:
                     )}
                   </td>
                   <td className="px-3 py-3 text-right text-anthracite">{c.measurements_count}</td>
+                  <td className="px-3 py-3 text-right text-anthracite">{c.monitoring_count}</td>
                   <td className="px-3 py-3 text-anthracite-lighter whitespace-nowrap">{c.created_at ? formatDate(c.created_at) : '—'}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex items-center gap-3">
@@ -665,7 +728,7 @@ function ClientsTab({ clients, professionals, onChanged, showToast }: { clients:
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-anthracite-lighter">Nessun cliente.</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={7} className="px-4 py-10 text-center text-anthracite-lighter">Nessun cliente.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -940,6 +1003,49 @@ function LinkMoveBody({ link, professionals, onClose, onChanged, showToast }: { 
       <div className="flex justify-end gap-2 mt-4">
         <button type="button" onClick={onClose} className="btn-secondary text-sm py-2">Annulla</button>
         <button type="button" onClick={submit} disabled={!target || busy} className="text-sm px-5 py-2 rounded-xl bg-teal hover:bg-teal-dark text-white font-medium disabled:opacity-50">{busy ? 'Attendere…' : 'Ricollega'}</button>
+      </div>
+    </div>
+  )
+}
+
+// ── TAB MONITORAGGI ──────────────────────────────────────────────────────────
+// Tutti i monitoraggi (24h e sonno) di tutti gli utenti, letti con la
+// service_role. Il dettaglio si apre nella vista superadmin in sola lettura
+// del professionista titolare (?professionista=).
+
+function adminMonitoringHref(s: MonitoringSession): string {
+  const owner = s.professionista_id ?? s.user_id
+  return `/area-professionisti/monitoraggio/${s.id}?professionista=${owner}`
+}
+
+function MonitoringAdminTab({ sessions }: { sessions: AdminMonitoringRow[] }) {
+  const [search, setSearch] = useState('')
+  const [type, setType] = useState<'all' | '24h' | 'sleep'>('all')
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return sessions.filter((s) => {
+      if (type === 'sleep' && !isSleepSession(s)) return false
+      if (type === '24h' && isSleepSession(s)) return false
+      if (q && !`${s.client_name ?? ''} ${s.professional_name ?? ''} ${s.user_email ?? ''}`.toLowerCase().includes(q)) return false
+      return true
+    })
+  }, [sessions, search, type])
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-anthracite-lighter" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca cliente, professionista o email…" className="w-full pl-9 pr-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal" />
+        </div>
+        <select value={type} onChange={(e) => setType(e.target.value as typeof type)} className="px-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30">
+          <option value="all">Tutti i tipi</option>
+          <option value="24h">24h</option>
+          <option value="sleep">Sonno</option>
+        </select>
+        <div className="text-sm text-anthracite-lighter">{filtered.length} monitoraggi</div>
+      </div>
+      <div className="card overflow-hidden">
+        <MonitoringTable sessions={filtered} showProfessional hrefFor={adminMonitoringHref} emptyText="Nessun monitoraggio." />
       </div>
     </div>
   )

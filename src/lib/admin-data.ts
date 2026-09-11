@@ -1,6 +1,7 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { createAdminClient } from './supabase-admin'
 import { type AdminIssue, ADMIN_ISSUE_LABELS, clientLinkStatusLabel, linkStatusRank, pickBestLink } from './admin-issues'
+import { getAdminMonitoringCounts } from './admin-monitoring'
 
 // ============================================================================
 // SUPER ADMIN — data layer (service_role)
@@ -39,6 +40,9 @@ export interface AdminUser {
   trial_expires_at: string | null
   clients_count: number
   measurements_count: number
+  // monitoraggi (24h + sonno): registrati dall'utente o, per un professionista,
+  // con lui come riferimento più quelli dei suoi clienti collegati
+  monitoring_count: number
   // clienti
   linked_professional_id: string | null
   linked_professional_name: string | null
@@ -76,6 +80,7 @@ export interface AdminClientRow {
   professional_name: string | null
   created_at: string | null
   measurements_count: number
+  monitoring_count: number
   client_user_id: string | null // account del cliente (dalla scheda o dal link risolto)
   has_access: boolean // collegamento attivo
   link_status: string | null // stato del miglior collegamento risolto
@@ -182,13 +187,14 @@ const CLIENT_COLUMNS = 'id, professionista_id, nome, cognome, email, client_user
 export async function getAdminUsers(): Promise<AdminUser[]> {
   const admin = createAdminClient()
 
-  const [authUsers, profilesRes, profProfilesRes, clientsRes, measurementsRes, linksRes] = await Promise.all([
+  const [authUsers, profilesRes, profProfilesRes, clientsRes, measurementsRes, linksRes, monitoring] = await Promise.all([
     listAllAuthUsers(admin),
     admin.from('profiles').select('id, nome, cognome, email, role, plan, is_superadmin, organization_id, data_nascita, sesso'),
     admin.from('professional_profiles').select('id, nome, cognome, trial_expires_at'),
     admin.from('clients').select(CLIENT_COLUMNS),
     admin.from('measurement_analytics').select('user_id, client_id'),
     admin.from('client_professional_links').select(LINK_COLUMNS),
+    getAdminMonitoringCounts(),
   ])
 
   type ProfileRow = {
@@ -284,6 +290,20 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
         for (const id of crmIds) measurements += measByClient.get(id) ?? 0
       }
 
+      // monitoraggi: registrati dall'utente; per un professionista anche quelli
+      // con lui come riferimento e quelli registrati dagli account collegati.
+      const monitoringIds = new Set<string>()
+      let monitoringCount = monitoring.byUser.get(u.id) ?? 0
+      if (role === 'professional') {
+        monitoringCount += monitoring.byProfessional.get(u.id) ?? 0
+        for (const l of links) {
+          if (l.professional_id === u.id && l.client_user_id && l.status === 'active' && !monitoringIds.has(l.client_user_id)) {
+            monitoringIds.add(l.client_user_id)
+            monitoringCount += monitoring.byUser.get(l.client_user_id) ?? 0
+          }
+        }
+      }
+
       // stato abbonamento / collegamento testuale
       let subscription = 'Base'
       if (role === 'professional') {
@@ -325,6 +345,7 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
         trial_expires_at: trial,
         clients_count: clientsByProf.get(u.id) ?? 0,
         measurements_count: measurements,
+        monitoring_count: monitoringCount,
         linked_professional_id: linkedProfId,
         linked_professional_name: linkedProfId ? profName(linkedProfId) : null,
         link_status: link?.status ?? null,
@@ -408,13 +429,14 @@ export async function getAdminLinks(): Promise<AdminLink[]> {
 
 export async function getAdminClients(): Promise<AdminClientRow[]> {
   const admin = createAdminClient()
-  const [clientsRes, profilesRes, profProfilesRes, measurementsRes, linksRes, authUsers] = await Promise.all([
+  const [clientsRes, profilesRes, profProfilesRes, measurementsRes, linksRes, authUsers, monitoring] = await Promise.all([
     admin.from('clients').select(CLIENT_COLUMNS),
     admin.from('profiles').select('id, nome, cognome, email'),
     admin.from('professional_profiles').select('id, nome, cognome'),
     admin.from('measurement_analytics').select('client_id'),
     admin.from('client_professional_links').select(LINK_COLUMNS),
     listAllAuthUsers(admin),
+    getAdminMonitoringCounts(),
   ])
 
   type ProfileRow = { id: string; nome: string | null; cognome: string | null; email: string | null }
@@ -457,6 +479,7 @@ export async function getAdminClients(): Promise<AdminClientRow[]> {
         professional_name: profName(c.professionista_id),
         created_at: c.created_at,
         measurements_count: measByClient.get(c.id) ?? 0,
+        monitoring_count: (monitoring.byClient.get(c.id) ?? 0) + ((c.client_user_id ?? best?.client_user_id) ? monitoring.byUser.get((c.client_user_id ?? best?.client_user_id) as string) ?? 0 : 0),
         client_user_id: c.client_user_id ?? best?.client_user_id ?? null,
         has_access: linkStatusRank(best?.status) === linkStatusRank('active'),
         link_status: best?.status ?? null,

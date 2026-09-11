@@ -21,9 +21,13 @@ type Props = {
   baseQuery?: string
   emptyText?: string
   compact?: boolean
+  /** Colonna "Professionista" (pannello Super Admin). */
+  showProfessional?: boolean
+  /** Link al dettaglio per riga (default: monitoringHref con baseQuery). */
+  hrefFor?: (s: MonitoringSession) => string
 }
 
-export function MonitoringTable({ sessions, showClient = true, baseQuery = '', emptyText = 'Nessun monitoraggio', compact = false }: Props) {
+export function MonitoringTable({ sessions, showClient = true, baseQuery = '', emptyText = 'Nessun monitoraggio', compact = false, showProfessional = false, hrefFor }: Props) {
   if (sessions.length === 0) {
     return <div className="px-6 py-8 text-center text-sm text-anthracite-lighter">{emptyText}</div>
   }
@@ -33,6 +37,7 @@ export function MonitoringTable({ sessions, showClient = true, baseQuery = '', e
         <thead className="bg-surface text-anthracite-lighter">
           <tr>
             {showClient && <Th>Cliente</Th>}
+            {showProfessional && <Th>Professionista</Th>}
             <Th>Inizio</Th>
             <Th>Durata</Th>
             <Th>Tipo</Th>
@@ -61,6 +66,7 @@ export function MonitoringTable({ sessions, showClient = true, baseQuery = '', e
                     )}
                   </td>
                 )}
+                {showProfessional && <td className="px-3 py-3 text-anthracite-lighter whitespace-nowrap">{s.professional_name ?? '—'}</td>}
                 <td className="px-3 py-3 text-anthracite whitespace-nowrap">
                   <div>{periodLabel(s.start_time, s.end_time, tz)}</div>
                   {s.events_modified_on_web && (
@@ -100,7 +106,7 @@ export function MonitoringTable({ sessions, showClient = true, baseQuery = '', e
                   </div>
                 </td>
                 <td className="px-3 py-3 text-right whitespace-nowrap">
-                  <Link href={monitoringHref(s, baseQuery)} className="text-sm hover:underline inline-flex items-center gap-1" style={{ color: '#2B4160' }}>
+                  <Link href={hrefFor ? hrefFor(s) : monitoringHref(s, baseQuery)} className="text-sm hover:underline inline-flex items-center gap-1" style={{ color: '#2B4160' }}>
                     Apri <ArrowRight size={14} />
                   </Link>
                 </td>
