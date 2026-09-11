@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
 import { Monitoring24hDetail } from '@/components/monitoring/Monitoring24hDetail'
+import { SleepDetail } from '@/components/monitoring/SleepDetail'
 import { getProfessionalProfile, listAlerts, resolveViewingProfessional } from '@/lib/dashboard-data'
 import { getMonitoringSession } from '@/lib/monitoring-data'
 import { isSleepSession } from '@/lib/monitoring-types'
@@ -60,7 +61,7 @@ export default async function MonitoringDetailPage({
       </div>
 
       {isSleepSession(session) ? (
-        <div className="card p-8 text-center text-sm text-anthracite-lighter">Dettaglio del modulo Sonno in arrivo.</div>
+        <SleepDetail session={session} readOnly={readOnly} clientHref={clientHref} />
       ) : (
         <Monitoring24hDetail session={session} readOnly={readOnly} baseQuery={baseQuery} clientHref={clientHref} />
       )}
