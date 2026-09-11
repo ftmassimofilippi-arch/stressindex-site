@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Users, UserCog, Link2, Search, Loader2, AlertTriangle, Plus, Crown, ShieldCheck,
-  Mail, KeyRound, Trash2, ArrowRightLeft, Activity, RefreshCw, X, CheckCircle2, Ban, Clock, SunMoon,
+  Mail, KeyRound, Trash2, ArrowRightLeft, Activity, RefreshCw, X, CheckCircle2, Ban, Clock, SunMoon, HeartPulse,
 } from 'lucide-react'
 import Link from 'next/link'
 import { MonitoringTable } from '@/components/monitoring/MonitoringTable'
@@ -19,6 +19,7 @@ import type { AdminUser, AdminClientRow, AdminLink } from '@/lib/admin-data'
 import { type AdminIssue, ADMIN_ISSUE_HINTS, ADMIN_ISSUE_LABELS, ADMIN_ISSUE_ORDER, ADMIN_ISSUE_TONE, clientLinkStatusLabel } from '@/lib/admin-issues'
 import { api, type Toast } from './adminApi'
 import { ManualLinkModal } from './ManualLinkModal'
+import { SaluteTab } from './SaluteTab'
 
 // ============================================================================
 // Pannello Super Admin — gestione utenti, clienti e collegamenti.
@@ -26,7 +27,7 @@ import { ManualLinkModal } from './ManualLinkModal'
 // verifica superadmin lato server). Questo componente è solo presentazione + fetch.
 // ============================================================================
 
-type Tab = 'users' | 'clients' | 'links' | 'monitoring'
+type Tab = 'users' | 'clients' | 'links' | 'monitoring' | 'salute'
 
 type ProfessionalOption = { id: string; name: string; email: string | null }
 
@@ -42,6 +43,8 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
   const [clients, setClients] = useState<AdminClientRow[]>([])
   const [links, setLinks] = useState<AdminLink[]>([])
   const [monitoring, setMonitoring] = useState<AdminMonitoringRow[]>([])
+  const [saluteCount, setSaluteCount] = useState(0)
+  const [saluteAlert, setSaluteAlert] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [toast, setToast] = useState<Toast>(null)
@@ -59,12 +62,15 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
   const reload = useCallback(async () => {
     setLoading(true)
     setLoadError(null)
-    const [u, c, l, m] = await Promise.all([
+    const [u, c, l, m, s] = await Promise.all([
       api('GET', '/api/admin/users'),
       api('GET', '/api/admin/clients'),
       api('GET', '/api/admin/links'),
       api('GET', '/api/admin/monitoring'),
+      api('GET', '/api/admin/collegamenti'),
     ])
+    setSaluteCount(s.json?.total ?? 0)
+    setSaluteAlert(!!s.json?.alert)
     if (!u.ok) setLoadError(u.json?.error ?? 'Errore caricamento utenti')
     setUsers(u.json?.users ?? [])
     setClients(c.json?.clients ?? [])
@@ -101,6 +107,7 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
     { key: 'clients', label: 'Clienti', icon: UserCog, count: clients.length },
     { key: 'links', label: 'Collegamenti', icon: Link2, count: links.length },
     { key: 'monitoring', label: 'Monitoraggi', icon: SunMoon, count: monitoring.length },
+    { key: 'salute', label: 'Salute collegamenti', icon: HeartPulse, count: saluteCount },
   ]
 
   return (
@@ -122,7 +129,9 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
               >
                 <Icon size={15} />
                 {t.label}
-                <span className={`text-[11px] px-1.5 py-0.5 rounded-md ${active ? 'bg-teal-light text-teal-dark' : 'bg-white/60 text-anthracite-lighter'}`}>
+                <span className={`text-[11px] px-1.5 py-0.5 rounded-md ${
+                  t.key === 'salute' && saluteAlert ? 'bg-red-100 text-red-700' : active ? 'bg-teal-light text-teal-dark' : 'bg-white/60 text-anthracite-lighter'
+                }`}>
                   {t.count}
                 </span>
               </button>
@@ -157,6 +166,8 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
         <ClientsTab clients={clients} professionals={professionals} onChanged={reload} showToast={showToast} />
       ) : tab === 'monitoring' ? (
         <MonitoringAdminTab sessions={monitoring} />
+      ) : tab === 'salute' ? (
+        <SaluteTab clients={clients} onChanged={reload} showToast={showToast} />
       ) : (
         <LinksTab links={links} professionals={professionals} onChanged={reload} showToast={showToast} />
       )}
