@@ -13,9 +13,8 @@
 -- Contenuto (idempotente, ogni blocco protetto da EXCEPTION WHEN OTHERS):
 --   1. monitoring_sessions.events_modified_on_web (+ _at): eventi modificati
 --      dal sito, in attesa che l'app ricalcoli la reazione agli eventi.
---   2. RPC get_linked_client_monitoring_sessions_by_client_id riscritta con il
---      ponte clients.client_user_id (migration 017), oltre a email/id: stessa
---      firma della versione dell'app.
+--   2. (spostato nella 019 §7) RPC get_linked_client_monitoring_sessions_by_client_id
+--      riscritta con il ponte clients.client_user_id.
 --   3. Policy SELECT esplicita per il superadmin (ridondante con
 --      hrv_puo_accedere → hrv_e_amministrativo, ma allineata a 010/011).
 --   4. Reload dello schema PostgREST.
@@ -37,51 +36,9 @@ exception when others then
 end $$;
 
 -- ── 2. RPC bridge con client_user_id ─────────────────────────────────────────
--- Monitoraggi di un cliente collegato a partire dalla riga CRM. Tre vie:
---   a. clients.client_user_id (017)            → ponte esplicito
---   b. clients.id = profiles.id::text          → cliente nato dal link
---   c. email uguale (case-insensitive)         → storico
--- più le righe scritte direttamente sul CRM (client_id + professionista_id).
-do $$
-begin
-  execute $f$
-    create or replace function public.get_linked_client_monitoring_sessions_by_client_id(
-      p_client_id text
-    )
-    returns setof public.monitoring_sessions
-    language sql
-    security definer
-    set search_path = public
-    stable
-    as $body$
-      select m.*
-        from public.clients c
-        join public.client_professional_links l
-          on l.professional_id = auth.uid()
-         and l.status = 'active'
-        join public.profiles p
-          on p.id = l.client_user_id
-         and (
-              c.client_user_id = p.id
-           or c.id = p.id::text
-           or (c.email is not null and p.email is not null and lower(trim(c.email)) = lower(trim(p.email)))
-         )
-        join public.monitoring_sessions m
-          on m.user_id = p.id
-       where c.id = p_client_id
-         and c.professionista_id = auth.uid()
-      union
-      select m.*
-        from public.monitoring_sessions m
-       where m.client_id = p_client_id
-         and m.professionista_id = auth.uid()
-       order by start_time desc;
-    $body$;
-  $f$;
-  grant execute on function public.get_linked_client_monitoring_sessions_by_client_id(text) to authenticated;
-exception when others then
-  raise notice '018.2 RPC get_linked_client_monitoring_sessions_by_client_id non applicata: %', sqlerrm;
-end $$;
+-- SPOSTATA nella 019 (§7): get_linked_client_monitoring_sessions_by_client_id
+-- è definita lì, allineata alla RPC delle sessioni (ponte esplicito, fallback
+-- email/id, schede archiviate escluse). Applicare 018 e poi 019.
 
 -- ── 3. Lettura superadmin esplicita ──────────────────────────────────────────
 do $$

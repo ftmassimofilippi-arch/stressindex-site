@@ -16,22 +16,50 @@
 --   3. link_client_to_professional(p_client_user_id, p_professional_id, p_source)
 --   4. ensure_client_bridge(p_email) + trigger su profiles (after insert /
 --      update of email)
---   5. tg_create_client_on_active_link riscritto: delega a (3), fallisce
---      esplicitamente se l'aggancio non riesce (il link NON nasce)
+--   5. tg_create_client_on_active_link riscritto: delega a (3); se l'aggancio
+--      non riesce NON blocca il link (raise warning + riga in admin_audit_log
+--      'link_trigger_failed'): il link resta e la vista salute lo segnala
+--      come link_senza_scheda
 --   6. client_can_assign_session (RLS sessioni del client) usa il ponte
 --   7. RPC di lettura: escludono le schede archiviate
 --   8. get_linked_clients_last_remote_analytics(): ultima misurazione remota
 --      (con score) per la lista clienti del sito
 --   9. policy RESTRICTIVE "clients_hide_merged": le schede unite non si vedono
 --      più da app e sito con la sessione utente (la service role le vede)
+--  10. le DUE colonne dei link: link_client_to_professional scrive sempre
+--      client_id = client_user_id (client_id è la colonna legacy uuid con
+--      l'utente; l'unico indice univoco oggi in produzione è su
+--      (client_id, professional_id)); le policy RLS
+--      professional_reads_linked_client_sessions / _analytics, che oggi
+--      controllano solo cpl.client_id, vengono riscritte su
+--      coalesce(cpl.client_user_id, cpl.client_id)
+--  11. get_linked_client_monitoring_sessions_by_client_id allineata alla
+--      logica di get_linked_client_sessions_by_client_id (ponte esplicito,
+--      poi fallback email/id, schede archiviate escluse)
 --
--- ⚠️ Il file hrv_app/supabase/migrations/client_crm_autocreate_on_link.sql
---    contiene la versione PRECEDENTE del trigger: va rimosso o sostituito con
---    un rimando a questa migrazione, altrimenti una riapplicazione dal repo
---    app riporterebbe il trigger che aggiorna più schede per email.
+-- Adattata all'output reale del catalogo (docs/COLLEGAMENTI_AUDIT.md §1.2-1.4):
+--   • il trigger in produzione è quello di client_crm_autocreate_on_link.sql
+--     (passo 0 ponte, passo 1 UPDATE per email SENZA limite su tutte le
+--     schede, passo 2 dedup per nome, passo 3 insert epoch, nessun EXCEPTION):
+--     è la causa del caso Sara. Qui i passi 0 e 2 sono conservati dentro
+--     link_client_to_professional (rami a e c), il passo 1 sceglie UNA scheda
+--     in modo deterministico (ramo b) e tutto è avvolto in EXCEPTION WHEN
+--     OTHERS con log in admin_audit_log;
+--   • uq_client_professional_active NON esiste: lo crea la 022 dopo la dedup;
+--   • admin_merge_clients e admin_audit_log esistono già (017) e vengono
+--     riusate dalla 022; collegamenti_merge_card resta per il pannello
+--     (unione morbida) e per i doppioni trovati durante un collegamento.
 --
--- Applicazione: SQL Editor di Supabase, dopo la 017. Prima della 022
--- (riparazione), che usa queste funzioni.
+-- Il file hrv_app/supabase/migrations/client_crm_autocreate_on_link.sql è
+-- stato svuotato (commit 2453baf dell'app, 12/09/2026) e rimanda a questa
+-- migrazione: il vecchio corpo resta consultabile con
+--   git show 474b0e3:supabase/migrations/client_crm_autocreate_on_link.sql
+-- Riprodotto su copia locale dei dati di produzione (audit §2.12): con due
+-- schede saraspadoni@yahoo.it l'INSERT del link fallisce con 23505 su
+-- uq_clients_prof_client_user; con una scheda sola riesce.
+--
+-- Applicazione: SQL Editor di Supabase, dopo la 017 (e la 018). Prima della
+-- 022 (riparazione), che usa queste funzioni.
 
 -- =============================================================================
 -- 1. Archiviazione delle schede unite + log delle unioni
@@ -69,8 +97,10 @@ create policy "clients_merge_log_superadmin_read" on public.clients_merge_log
 -- =============================================================================
 -- Tabelle: tutte quelle con FK verso clients(id) (scoperta dinamica, stessa
 -- di admin_client_fk_refs) più i riferimenti "soft" senza FK:
--- measurement_analytics.client_id (text) e client_professional_links.client_id
--- (uuid: confronto sempre con ::text, gli id epoch non sono uuid).
+-- measurement_analytics.client_id e monitoring_sessions.client_id (entrambi
+-- text). client_professional_links.client_id NON è un riferimento alla scheda:
+-- è l'uuid dell'utente (colonna legacy, dalla 019 = client_user_id) e non va
+-- toccato dalle unioni.
 -- Conflitti di unicità (es. client_settings, una riga per cliente): la riga
 -- della scheda da unire viene eliminata e salvata nello snapshot del log.
 -- La scheda unita NON viene cancellata: merged_into_client_id = p_keep.
@@ -132,7 +162,7 @@ begin
     ),
     extra as (
       select t.tbl as ref_table, t.col as ref_column
-      from (values ('measurement_analytics', 'client_id'), ('client_professional_links', 'client_id')) as t(tbl, col)
+      from (values ('measurement_analytics', 'client_id'), ('monitoring_sessions', 'client_id')) as t(tbl, col)
       where exists (select 1 from information_schema.columns ic
                     where ic.table_schema = 'public' and ic.table_name = t.tbl and ic.column_name = t.col)
         and not exists (select 1 from fk where fk.ref_table = t.tbl and fk.ref_column = t.col)
@@ -245,10 +275,28 @@ grant execute on function public.collegamenti_merge_card(text, text, text, uuid)
 --   d) nessuna: crea la scheda (id epoch-millis, come l'app)
 -- Link: riusa l'active, attiva il pending, riattiva il revocato più recente,
 -- altrimenti lo crea; gli altri link vivi della stessa coppia vengono revocati.
+-- Scrive SEMPRE entrambe le colonne: client_user_id e client_id (= lo stesso
+-- uuid utente). L'indice univoco in produzione è su (client_id, professional_id)
+-- e non è parziale: per la stessa coppia una sola riga può portare client_id,
+-- quindi prima lo si azzera sulle altre righe della coppia e poi lo si scrive
+-- sulla riga scelta (mai un INSERT quando esiste già una riga della coppia).
 -- Il trigger su client_professional_links viene disattivato durante la
 -- funzione (flag di sessione) per non rientrare in sé stesso.
 -- EXCEPTION WHEN OTHERS: ritorna ok=false con l'errore; chi chiama decide se
 -- propagarlo (il trigger lo rilancia, così il link non nasce).
+
+-- Nome normalizzato per confrontare due schede: minuscolo, senza spazi né
+-- punteggiatura ("Gian Andrea Pazzini" = "Gianandrea Pazzini"). Vuoto se la
+-- scheda non ha nome. Usato qui (unione dei doppioni durante un collegamento)
+-- e nella 022 (blocco C): due schede con la stessa email si uniscono in
+-- automatico SOLO se hanno lo stesso nome, o se una delle due non ha nome.
+create or replace function public.collegamenti_nome_norm(p_nome text, p_cognome text)
+returns text
+language sql
+immutable
+as $$
+  select regexp_replace(lower(coalesce(p_nome, '') || coalesce(p_cognome, '')), '[^[:alnum:]]', '', 'g');
+$$;
 
 create or replace function public.link_client_to_professional(
   p_client_user_id uuid,
@@ -314,6 +362,9 @@ begin
          and c.merged_into_client_id is null
          and c.client_user_id is null
          and c.id <> v_card_id
+         -- stessa persona: stesso nome normalizzato, oppure scheda senza nome
+         and public.collegamenti_nome_norm(c.nome, c.cognome)
+             in ('', (select public.collegamenti_nome_norm(k.nome, k.cognome) from public.clients k where k.id = v_card_id))
     loop
       v_res := public.collegamenti_merge_card(v_card_id, v_other.id, 'link_fn:email_duplicate:' || coalesce(p_source, '?'), auth.uid());
       v_merged := v_merged || to_jsonb(v_other.id);
@@ -331,7 +382,8 @@ begin
        and lower(trim(c.email)) = v_email
        and c.merged_into_client_id is null
        and (c.client_user_id is null or c.client_user_id = p_client_user_id)
-     order by sc.n desc,
+     order by (public.collegamenti_nome_norm(c.nome, c.cognome) = public.collegamenti_nome_norm(v_profile.nome, v_profile.cognome)) desc,
+              sc.n desc,
               case when c.id ~ '^[0-9]+$' then c.id::numeric else null end asc nulls last,
               c.created_at asc nulls last
      limit 1;
@@ -343,6 +395,12 @@ begin
            and c.merged_into_client_id is null
            and (c.client_user_id is null or c.client_user_id = p_client_user_id)
            and c.id <> v_keep_id
+           -- stessa persona: stesso nome normalizzato, oppure scheda senza nome.
+           -- Le schede con la stessa email ma un altro nome (es. il pro che
+           -- mette la propria email a più clienti) restano dove sono e la
+           -- vista salute le mostra come scheda_duplicata.
+           and public.collegamenti_nome_norm(c.nome, c.cognome)
+               in ('', (select public.collegamenti_nome_norm(k.nome, k.cognome) from public.clients k where k.id = v_keep_id))
       loop
         v_res := public.collegamenti_merge_card(v_keep_id, v_other.id, 'link_fn:email_duplicate:' || coalesce(p_source, '?'), auth.uid());
         v_merged := v_merged || to_jsonb(v_other.id);
@@ -378,6 +436,12 @@ begin
   -- d) nuova scheda
   if v_card_id is null then
     v_card_id := (extract(epoch from clock_timestamp()) * 1000)::bigint::text;
+    -- id epoch-millis come l'app: due schede create nello stesso millisecondo
+    -- (es. il ciclo del blocco E della 022) collidono su clients_pkey →
+    -- avanza di 1 ms finché l'id è libero.
+    while exists (select 1 from public.clients c where c.id = v_card_id) loop
+      v_card_id := (v_card_id::bigint + 1)::text;
+    end loop;
     insert into public.clients (id, professionista_id, nome, cognome, email, client_user_id, created_at)
     values (v_card_id, p_professional_id,
             coalesce(nullif(trim(v_profile.nome), ''), 'Cliente'),
@@ -401,8 +465,8 @@ begin
    limit 1;
 
   if v_link.id is null then
-    insert into public.client_professional_links (client_user_id, professional_id, status)
-    values (p_client_user_id, p_professional_id, 'active')
+    insert into public.client_professional_links (client_user_id, client_id, professional_id, status)
+    values (p_client_user_id, p_client_user_id, p_professional_id, 'active')
     returning id into v_link_id;
     v_action := 'link_created';
   elsif v_link.status = 'active' then
@@ -422,6 +486,17 @@ begin
      set status = 'revoked', updated_at = now()
    where client_user_id = p_client_user_id and professional_id = p_professional_id
      and status <> 'revoked' and id <> v_link_id;
+
+  -- Le due colonne: client_id (legacy uuid utente) allineato a client_user_id
+  -- sulla riga scelta; azzerato sulle altre righe della coppia, altrimenti
+  -- l'indice univoco (client_id, professional_id) lo impedirebbe.
+  update public.client_professional_links
+     set client_id = null
+   where client_user_id = p_client_user_id and professional_id = p_professional_id
+     and id <> v_link_id and client_id = p_client_user_id;
+  update public.client_professional_links
+     set client_id = p_client_user_id
+   where id = v_link_id and client_id is distinct from p_client_user_id;
 
   perform set_config('collegamenti.skip_trigger', 'off', true);
   return jsonb_build_object(
@@ -581,11 +656,19 @@ create trigger trg_profiles_ensure_client_bridge
 -- =============================================================================
 -- 5. tg_create_client_on_active_link: delega al punto di verità
 -- =============================================================================
+-- Sostituisce il trigger reale in produzione (client_crm_autocreate_on_link.sql):
+--   passo 0 (ponte già presente → backfill anagrafica)   → ramo a) della funzione
+--   passo 1 (dedup per email, UPDATE su TUTTE le schede) → ramo b): UNA scheda
+--            scelta in modo deterministico (più sessioni, poi la più vecchia
+--            per epoch dell'id, poi created_at), le altre unite in essa
+--   passo 2 (dedup per nome senza email)                 → ramo c)
+--   passo 3 (insert con id epoch)                        → ramo d)
 -- Scatta alla transizione verso 'active' (INSERT già active, o UPDATE da altro
--- stato). Se la funzione non riesce ad agganciare la scheda, RILANCIA: la
--- transazione che porta il link ad active fallisce e l'errore arriva
--- esplicito a chi ha scritto (Edge Function, sito, app), invece di lasciare un
--- link senza scheda.
+-- stato). Tutto è avvolto in EXCEPTION WHEN OTHERS: se l'aggancio della
+-- scheda fallisce il link resta (non si fa più fallire la transazione del
+-- chiamante), l'errore viene scritto in admin_audit_log
+-- (action = 'link_trigger_failed') e in un WARNING, e il caso compare nella
+-- view v_collegamenti_salute come 'link_senza_scheda', riparabile dal pannello.
 
 create or replace function public.tg_create_client_on_active_link()
 returns trigger
@@ -595,6 +678,7 @@ set search_path = public
 as $BODY$
 declare
   v_res jsonb;
+  v_err text;
 begin
   if coalesce(current_setting('collegamenti.skip_trigger', true), 'off') = 'on' then
     return new;
@@ -605,15 +689,38 @@ begin
   if tg_op = 'UPDATE' and old.status = 'active' then
     return new;
   end if;
+
   if new.client_user_id is null then
-    raise exception 'collegamento senza client_user_id: impossibile agganciare la scheda';
+    v_err := 'collegamento senza client_user_id: impossibile agganciare la scheda';
+  else
+    v_res := public.link_client_to_professional(new.client_user_id, new.professional_id, 'trigger:' || tg_op);
+    if coalesce((v_res ->> 'ok')::boolean, false) is not true then
+      v_err := coalesce(v_res ->> 'error', 'errore sconosciuto') || ' (' || coalesce(v_res ->> 'sqlstate', '?') || ')';
+    end if;
   end if;
 
-  v_res := public.link_client_to_professional(new.client_user_id, new.professional_id, 'trigger:' || tg_op);
-  if coalesce((v_res ->> 'ok')::boolean, false) is not true then
-    raise exception 'collegamento non agganciabile alla scheda: %', coalesce(v_res ->> 'error', 'errore sconosciuto')
-      using errcode = coalesce(v_res ->> 'sqlstate', 'P0001');
+  if v_err is not null then
+    raise warning 'tg_create_client_on_active_link: link % non agganciato alla scheda: %', new.id, v_err;
+    begin
+      insert into public.admin_audit_log (performed_by, performed_by_email, action, target_type, target_id, details)
+      values (null, 'trigger:tg_create_client_on_active_link', 'link_trigger_failed', 'link', new.id::text,
+              jsonb_build_object('client_user_id', new.client_user_id, 'professional_id', new.professional_id,
+                                 'op', tg_op, 'error', v_err, 'result', v_res));
+    exception when others then
+      raise warning 'tg_create_client_on_active_link: audit non scritto: %', sqlerrm;
+    end;
   end if;
+  return new;
+exception when others then
+  raise warning 'tg_create_client_on_active_link: errore inatteso su link %: % (%)', new.id, sqlerrm, sqlstate;
+  begin
+    insert into public.admin_audit_log (performed_by, performed_by_email, action, target_type, target_id, details)
+    values (null, 'trigger:tg_create_client_on_active_link', 'link_trigger_failed', 'link', new.id::text,
+            jsonb_build_object('client_user_id', new.client_user_id, 'professional_id', new.professional_id,
+                               'op', tg_op, 'error', sqlerrm, 'sqlstate', sqlstate));
+  exception when others then
+    null;
+  end;
   return new;
 end;
 $BODY$;
@@ -699,6 +806,53 @@ exception when others then
   raise notice 'policy sessions_client_*_linked non ricreate: %', sqlerrm;
 end $$;
 
+-- ── 6b. Lettura delle misurazioni remote dei clienti collegati ──────────────
+-- In produzione le policy professional_reads_linked_client_sessions (su
+-- sessions) e professional_reads_linked_client_analytics (su
+-- measurement_analytics) controllano cpl.client_id, la colonna legacy: i link
+-- nati dall'app portano solo client_user_id e quelle policy non concedono
+-- nulla. Riscritte su coalesce(cpl.client_user_id, cpl.client_id), che regge
+-- sia le righe legacy sia le nuove (dove le due colonne coincidono). Solo
+-- SELECT, solo link active, secondo la convenzione remota: la misurazione del
+-- cliente ha professionista_id / user_id = uid del cliente.
+do $$
+begin
+  execute 'drop policy if exists "professional_reads_linked_client_sessions" on public.sessions';
+  execute $p$
+    create policy "professional_reads_linked_client_sessions" on public.sessions
+      for select to authenticated
+      using (
+        exists (
+          select 1 from public.client_professional_links cpl
+           where cpl.professional_id = auth.uid()
+             and cpl.status = 'active'
+             and coalesce(cpl.client_user_id, cpl.client_id) = public.sessions.professionista_id
+        )
+      )
+  $p$;
+exception when others then
+  raise notice 'policy professional_reads_linked_client_sessions non riscritta: %', sqlerrm;
+end $$;
+
+do $$
+begin
+  execute 'drop policy if exists "professional_reads_linked_client_analytics" on public.measurement_analytics';
+  execute $p$
+    create policy "professional_reads_linked_client_analytics" on public.measurement_analytics
+      for select to authenticated
+      using (
+        exists (
+          select 1 from public.client_professional_links cpl
+           where cpl.professional_id = auth.uid()
+             and cpl.status = 'active'
+             and coalesce(cpl.client_user_id, cpl.client_id) = public.measurement_analytics.user_id
+        )
+      )
+  $p$;
+exception when others then
+  raise notice 'policy professional_reads_linked_client_analytics non riscritta: %', sqlerrm;
+end $$;
+
 -- =============================================================================
 -- 7. RPC di lettura: escludono le schede archiviate
 -- =============================================================================
@@ -746,6 +900,41 @@ as $BODY$
     and c.merged_into_client_id is null
   group by c.id;
 $BODY$;
+
+-- Monitoraggi (24h / sonno) dei clienti collegati: stessa logica della RPC
+-- delle sessioni (ponte esplicito, poi fallback email/id per le righe
+-- legacy, schede archiviate escluse) più le righe scritte direttamente sul
+-- CRM (client_id + professionista_id). Sostituisce la versione dell'app
+-- (solo email / c.id = p.id::text) e quella della 018 del sito.
+create or replace function public.get_linked_client_monitoring_sessions_by_client_id(p_client_id text)
+returns setof public.monitoring_sessions
+language sql
+security definer
+set search_path = public
+stable
+as $BODY$
+  select m.*
+    from public.clients c
+    join public.client_professional_links l
+      on l.professional_id = auth.uid() and l.status = 'active'
+    join public.profiles p
+      on p.id = l.client_user_id
+     and (c.client_user_id = p.id
+          or (c.client_user_id is null and (lower(p.email) = lower(c.email) or c.id = p.id::text)))
+    join public.monitoring_sessions m
+      on m.user_id = p.id
+   where c.id = p_client_id
+     and c.professionista_id = auth.uid()
+     and c.merged_into_client_id is null
+  union
+  select m.*
+    from public.monitoring_sessions m
+   where m.client_id = p_client_id
+     and m.professionista_id = auth.uid()
+   order by start_time desc;
+$BODY$;
+
+grant execute on function public.get_linked_client_monitoring_sessions_by_client_id(text) to authenticated;
 
 -- =============================================================================
 -- 8. Ultima misurazione remota CON gli score, per la lista clienti del sito
