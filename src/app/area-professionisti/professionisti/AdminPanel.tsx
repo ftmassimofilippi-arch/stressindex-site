@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Users, UserCog, Link2, Search, Loader2, AlertTriangle, Plus, Crown, ShieldCheck,
-  Mail, KeyRound, Trash2, ArrowRightLeft, Activity, RefreshCw, X, CheckCircle2, Ban, Clock, SunMoon, HeartPulse,
+  Mail, KeyRound, Trash2, ArrowRightLeft, Activity, RefreshCw, X, CheckCircle2, Ban, Clock, SunMoon, HeartPulse, Merge, PencilLine,
 } from 'lucide-react'
 import Link from 'next/link'
 import { MonitoringTable } from '@/components/monitoring/MonitoringTable'
@@ -19,6 +19,8 @@ import type { AdminUser, AdminClientRow, AdminLink } from '@/lib/admin-data'
 import { type AdminIssue, ADMIN_ISSUE_HINTS, ADMIN_ISSUE_LABELS, ADMIN_ISSUE_ORDER, ADMIN_ISSUE_TONE, clientLinkStatusLabel } from '@/lib/admin-issues'
 import { api, type Toast } from './adminApi'
 import { ManualLinkModal } from './ManualLinkModal'
+import { MergeClientsModal } from './MergeClientsModal'
+import { EmailChangeDialog } from './EmailChangeDialog'
 import { SaluteTab } from './SaluteTab'
 
 // ============================================================================
@@ -406,11 +408,12 @@ function UserDetailModal({ user, onClose, onChanged, showToast }: { user: AdminU
   const [showSessions, setShowSessions] = useState(false)
   const [monitoring, setMonitoring] = useState<AdminMonitoringRow[] | null>(null)
   const [showMonitoring, setShowMonitoring] = useState(false)
+  const [emailOpen, setEmailOpen] = useState(false)
 
   async function saveAnagrafica() {
     setBusy('save')
     const { ok, json } = await api('PATCH', `/api/admin/users/${user.id}`, {
-      nome: form.nome, cognome: form.cognome, email: form.email,
+      nome: form.nome, cognome: form.cognome,
       data_nascita: form.data_nascita || null, sesso: form.sesso,
     })
     setBusy(null)
@@ -488,7 +491,15 @@ function UserDetailModal({ user, onClose, onChanged, showToast }: { user: AdminU
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><label className="input-label">Nome</label><input className={inputCls} value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
             <div><label className="input-label">Cognome</label><input className={inputCls} value={form.cognome} onChange={(e) => setForm({ ...form, cognome: e.target.value })} /></div>
-            <div><label className="input-label">Email</label><input className={inputCls} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+            <div>
+              <label className="input-label">Email dell&apos;account</label>
+              <div className="flex gap-2">
+                <input className={`${inputCls} bg-surface text-anthracite-lighter`} type="email" value={form.email} readOnly />
+                <button type="button" onClick={() => setEmailOpen(true)} title="Correggi l'email di login (auth), con anteprima e log" className="text-sm px-3 rounded-lg border border-surface-border hover:bg-surface inline-flex items-center gap-1.5 whitespace-nowrap">
+                  <PencilLine size={14} /> Correggi
+                </button>
+              </div>
+            </div>
             <div><label className="input-label">Data di nascita</label><input className={inputCls} type="date" value={form.data_nascita ? form.data_nascita.slice(0, 10) : ''} onChange={(e) => setForm({ ...form, data_nascita: e.target.value })} /></div>
             <div>
               <label className="input-label">Sesso</label>
@@ -617,6 +628,10 @@ function UserDetailModal({ user, onClose, onChanged, showToast }: { user: AdminU
         </section>
       </div>
 
+      {emailOpen && (
+        <EmailChangeDialog userId={user.id} currentEmail={user.email} onClose={() => setEmailOpen(false)} onChanged={onChanged} showToast={showToast} />
+      )}
+
       {/* Conferme */}
       <ConfirmDialog
         open={confirm === 'role'}
@@ -663,6 +678,7 @@ function ClientsTab({ clients, professionals, onChanged, showToast }: { clients:
   const [showNew, setShowNew] = useState(false)
   const [moveClient, setMoveClient] = useState<AdminClientRow | null>(null)
   const [linkClient, setLinkClient] = useState<AdminClientRow | null>(null)
+  const [mergeClient, setMergeClient] = useState<AdminClientRow | null>(null)
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
@@ -735,6 +751,11 @@ function ClientsTab({ clients, professionals, onChanged, showToast }: { clients:
                       <button type="button" onClick={() => setMoveClient(c)} className="inline-flex items-center gap-1 text-teal-dark hover:underline text-sm font-medium">
                         <ArrowRightLeft size={14} /> Sposta
                       </button>
+                      {c.professionista_id && (
+                        <button type="button" onClick={() => setMergeClient(c)} title="Unisci con un'altra scheda dello stesso professionista" className="inline-flex items-center gap-1 text-teal-dark hover:underline text-sm font-medium">
+                          <Merge size={14} /> Unisci
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -747,6 +768,14 @@ function ClientsTab({ clients, professionals, onChanged, showToast }: { clients:
 
       {showNew && <NewClientModal professionals={professionals} onClose={() => setShowNew(false)} onChanged={() => { onChanged(); setShowNew(false) }} showToast={showToast} />}
       {moveClient && <MoveClientModal client={moveClient} professionals={professionals} onClose={() => setMoveClient(null)} onChanged={() => { onChanged(); setMoveClient(null) }} showToast={showToast} />}
+      {mergeClient && (
+        <MergeClientsModal
+          clients={clients.filter((c) => c.professionista_id === mergeClient.professionista_id)}
+          onClose={() => setMergeClient(null)}
+          onChanged={onChanged}
+          showToast={showToast}
+        />
+      )}
       {linkClient && (
         <ManualLinkModal
           professionals={professionals}

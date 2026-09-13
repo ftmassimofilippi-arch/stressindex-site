@@ -5,8 +5,9 @@ import { createAdminClient } from '@/lib/supabase-admin'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// PATCH /api/admin/users/[id] — aggiorna anagrafica / ruolo / piano / email.
-// Body (tutti opzionali): { nome, cognome, email, data_nascita, sesso, role, plan }
+// PATCH /api/admin/users/[id] — aggiorna anagrafica / ruolo / piano.
+// Body (tutti opzionali): { nome, cognome, data_nascita, sesso, role, plan }
+// (l'email ha la sua route: ./email)
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireSuperadmin()
   if (guard.error) return guard.error
@@ -24,20 +25,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (body.role === 'professional' || body.role === 'client') profileUpdate.role = body.role
   if (body.plan === 'base' || body.plan === 'pro') profileUpdate.plan = body.plan
 
-  // Email: aggiorna sia auth.users sia il mirror su profiles.
-  let newEmail: string | null = null
+  // L'email dell'account NON si cambia da qui: passa da
+  // /api/admin/users/[id]/email (anteprima, conferma digitata, motivo, schede
+  // allineate, admin_audit_log).
   if (typeof body.email === 'string' && body.email.trim()) {
-    const email = body.email.trim().toLowerCase()
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      return NextResponse.json({ error: 'invalid_email' }, { status: 400 })
+    const { data: authData } = await admin.auth.admin.getUserById(userId)
+    if ((authData?.user?.email ?? '').toLowerCase() !== body.email.trim().toLowerCase()) {
+      return NextResponse.json({ error: 'use_email_route', message: "Per cambiare l'email usa \"Correggi email\"" }, { status: 400 })
     }
-    newEmail = email
-  }
-
-  if (newEmail) {
-    const { error: authErr } = await admin.auth.admin.updateUserById(userId, { email: newEmail, email_confirm: true })
-    if (authErr) return NextResponse.json({ error: `auth: ${authErr.message}` }, { status: 500 })
-    profileUpdate.email = newEmail
   }
 
   // Aggiorna nome/cognome anche su professional_profiles se esiste (per coerenza UI).
