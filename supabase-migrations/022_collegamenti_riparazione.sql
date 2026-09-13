@@ -16,11 +16,16 @@
 --
 -- Blocchi (nell'ordine di esecuzione):
 --   A  link duplicati: per ogni coppia con più link vivi tiene l'active più
---      recente e revoca gli altri; allinea la colonna legacy client_id
---      (uuid utente) a client_user_id sulle righe dove è NULL, una riga per
---      coppia (l'indice univoco esistente è su (client_id, professional_id));
---      poi crea l'indice univoco parziale uq_client_professional_active
---      (client_user_id, professional_id) where status <> 'revoked'
+--      recente e revoca gli altri, poi crea l'indice univoco parziale
+--      uq_client_professional_active (client_user_id, professional_id)
+--      where status <> 'revoked'
+--   A2 (blocco separato: un suo errore non annulla A né l'indice) allinea la
+--      colonna legacy client_id (uuid utente) a client_user_id sulle righe
+--      dove è NULL, una riga per coppia (l'indice univoco esistente è su
+--      (client_id, professional_id)); client_id ha una FK, letta da
+--      pg_constraint (A2_fk_client_id): le righe il cui utente non esiste
+--      nella tabella referenziata non vengono toccate
+--      (A2_report_client_id_non_allineabile)
 --   B  link active il cui profilo cliente non esiste più → revocati
 --   C  (3.2) schede duplicate sotto lo stesso professionista (stessa email,
 --      STESSA PERSONA: cognome o nome+cognome uguali, oppure una delle due
@@ -79,6 +84,35 @@ create table if not exists public.collegamenti_riparazione_link_ok (
 alter table public.collegamenti_riparazione_link_ok enable row level security;
 revoke all on public.collegamenti_riparazione_link_ok from public, anon, authenticated;
 
+-- Dettaglio del blocco C, una riga per coppia (scheda che resta, scheda che
+-- verrebbe unita), scritto a ogni esecuzione PRIMA delle unioni: in anteprima
+-- è l'elenco di cosa succederà. esito = 'automatica' (la 022 la unisce in
+-- applicazione) | 'a_mano' (nomi diversi: nessuna unione; tiene/archivia è
+-- solo l'ordine proposto, da decidere nel pannello). Vedi la query in fondo.
+create table if not exists public.collegamenti_riparazione_c_dettaglio (
+  id                bigserial primary key,
+  run_id            uuid not null,
+  run_at            timestamptz not null default now(),
+  mode              text not null,
+  esito             text not null,
+  email             text,
+  professionista_id uuid,
+  professionista    text,
+  tiene_id          text,
+  tiene_nome        text,
+  tiene_sessioni    integer,
+  tiene_creata      timestamptz,
+  tiene_ponte       boolean,
+  archivia_id       text,
+  archivia_nome     text,
+  archivia_sessioni integer,
+  archivia_creata   timestamptz,
+  archivia_ponte    boolean,
+  motivo            text
+);
+alter table public.collegamenti_riparazione_c_dettaglio enable row level security;
+revoke all on public.collegamenti_riparazione_c_dettaglio from public, anon, authenticated;
+
 -- Helper di log (le procedure locali non esistono in plpgsql).
 create or replace function public.collegamenti_riparazione_logb(
   p_run uuid, p_mode text, p_block text, p_n integer, p_details jsonb default '[]'::jsonb, p_error text default null
@@ -117,6 +151,8 @@ declare
   v_keep    text;
   v_ok      integer;
   v_err     integer;
+  v_fk_table text;
+  v_fk_col   name;
 begin
   v_mode := case when v_apply then 'applicazione' else 'anteprima' end;
   perform set_config('collegamenti.skip_trigger', 'on', true);
@@ -154,12 +190,42 @@ begin
     end if;
     perform public.collegamenti_riparazione_logb(v_run, v_mode, 'A_link_duplicati_revocati', v_n, v_det);
 
+    -- L'indice dipende solo dalla dedup qui sopra: viene creato prima di A2,
+    -- così un errore nell'allineamento di client_id non lo annulla più.
+    if v_apply then
+      execute 'create unique index if not exists uq_client_professional_active
+               on public.client_professional_links (client_user_id, professional_id)
+               where status <> ''revoked''';
+    end if;
+  exception when others then
+    perform public.collegamenti_riparazione_logb(v_run, v_mode, 'A_link_duplicati_revocati', 0, '[]'::jsonb, sqlerrm);
+  end;
+
+  -- ── A2. colonna legacy client_id allineata a client_user_id ────────────────
+  begin
     -- A2. Le due colonne dei link: client_id (legacy uuid utente) = client_user_id
     --     dove client_id è NULL. Una sola riga per coppia (client_user_id,
     --     professional_id) — l'indice univoco esistente è su
     --     (client_id, professional_id) e non è parziale — scelta così: la riga
     --     viva (active > pending), poi la più recente. Salta le coppie che hanno
     --     già una riga con client_id = client_user_id.
+    --     client_id ha una FK (client_professional_links_client_id_fkey): la
+    --     tabella referenziata si legge da pg_constraint e si allineano solo le
+    --     righe il cui client_user_id esiste lì. Gli utenti cancellati (i link
+    --     del blocco B) restano con client_id NULL e finiscono nel report
+    --     A2_report_client_id_non_allineabile.
+    select c.confrelid::regclass::text, a.attname
+      into v_fk_table, v_fk_col
+      from pg_constraint c
+      join pg_attribute a on a.attrelid = c.confrelid and a.attnum = c.confkey[1]
+     where c.conrelid = 'public.client_professional_links'::regclass
+       and c.contype = 'f'
+       and array_length(c.conkey, 1) = 1
+       and c.conkey[1] = (select attnum from pg_attribute
+                           where attrelid = 'public.client_professional_links'::regclass and attname = 'client_id');
+    perform public.collegamenti_riparazione_logb(v_run, v_mode, 'A2_fk_client_id', case when v_fk_table is null then 0 else 1 end,
+              jsonb_build_array(jsonb_build_object('references', coalesce(v_fk_table || '(' || v_fk_col || ')', 'nessuna FK'))));
+
     create temp table if not exists _align on commit drop as
     with cand as (
       select l.id, l.client_user_id, l.professional_id, l.status, l.created_at,
@@ -172,6 +238,17 @@ begin
     )
     select id, client_user_id, professional_id, status from cand where rn = 1 and id in
       (select id from public.client_professional_links where client_id is null);
+    -- righe che violerebbero la FK: fuori dall'allineamento, solo report
+    create temp table if not exists _align_ko (id uuid, client_user_id uuid, professional_id uuid, status text) on commit drop;
+    truncate _align_ko;
+    if v_fk_table is not null then
+      execute format('insert into _align_ko select a.* from _align a where not exists (select 1 from %s t where t.%I = a.client_user_id)',
+                     v_fk_table, v_fk_col);
+      delete from _align a using _align_ko k where k.id = a.id;
+    end if;
+    select count(*), coalesce(jsonb_agg(jsonb_build_object('link_id', id, 'client_user_id', client_user_id, 'professional_id', professional_id, 'status', status)), '[]'::jsonb)
+      into v_n, v_det from _align_ko;
+    perform public.collegamenti_riparazione_logb(v_run, v_mode, 'A2_report_client_id_non_allineabile', v_n, v_det);
     select count(*), coalesce(jsonb_agg(jsonb_build_object('link_id', id, 'client_user_id', client_user_id, 'professional_id', professional_id, 'status', status)), '[]'::jsonb)
       into v_n, v_det from _align;
     if v_apply and v_n > 0 then
@@ -185,14 +262,8 @@ begin
       into v_n, v_det from public.client_professional_links l
      where l.client_id is not null and l.client_id is distinct from l.client_user_id;
     perform public.collegamenti_riparazione_logb(v_run, v_mode, 'A2_report_client_id_legacy_diverso', v_n, v_det);
-
-    if v_apply then
-      execute 'create unique index if not exists uq_client_professional_active
-               on public.client_professional_links (client_user_id, professional_id)
-               where status <> ''revoked''';
-    end if;
   exception when others then
-    perform public.collegamenti_riparazione_logb(v_run, v_mode, 'A_link_duplicati_revocati', 0, '[]'::jsonb, sqlerrm);
+    perform public.collegamenti_riparazione_logb(v_run, v_mode, 'A2_client_id_allineato', 0, '[]'::jsonb, sqlerrm);
   end;
 
   -- ── B. link active con profilo inesistente → revoca ────────────────────────
@@ -235,6 +306,44 @@ begin
     -- stessa persona = UN solo nome distinto (il cognome uguale da solo non
     -- basta: "Nicolo Maragni" e "Ginevra Maragni" sono due persone)
     select g.*, (g.n_nomi <= 1) as same_person from grp g;
+
+    -- Dettaglio per coppia, scritto prima di qualsiasi unione (sessioni e
+    -- ponte sono quelli di adesso). Il motivo ripete l'ordinamento di ids:
+    -- ponte, poi più sessioni, poi id epoch più vecchio, poi created_at.
+    begin
+      insert into public.collegamenti_riparazione_c_dettaglio
+        (run_id, mode, esito, email, professionista_id, professionista,
+         tiene_id, tiene_nome, tiene_sessioni, tiene_creata, tiene_ponte,
+         archivia_id, archivia_nome, archivia_sessioni, archivia_creata, archivia_ponte, motivo)
+      select v_run, v_mode, case when d.same_person then 'automatica' else 'a_mano' end,
+             d.email_norm, d.professionista_id,
+             coalesce(nullif(trim(coalesce(pp.nome,'') || ' ' || coalesce(pp.cognome,'')), ''), q.email),
+             k.id, trim(coalesce(k.nome,'') || ' ' || coalesce(k.cognome,'')), ks.n, k.created_at, k.client_user_id is not null,
+             m.id, trim(coalesce(m.nome,'') || ' ' || coalesce(m.cognome,'')), ms.n, m.created_at, m.client_user_id is not null,
+             case
+               when not d.same_person then
+                 'nomi diversi (' || array_to_string(d.nomi, ' / ') || '): stessa email ma non la stessa persona, nessuna unione automatica'
+               when k.client_user_id is not null and m.client_user_id is not null then
+                 'ATTENZIONE: entrambe col ponte (client_user_id diversi); tiene quella con più sessioni/più vecchia'
+               when k.client_user_id is not null then
+                 'tiene la scheda col ponte (client_user_id)'
+                 || case when ms.n > ks.n then '; le ' || ms.n || ' sessioni dell''altra vengono spostate qui' else '' end
+               when ks.n <> ms.n then 'più sessioni (' || ks.n || ' contro ' || ms.n || ')'
+               when k.id ~ '^[0-9]+$' and m.id ~ '^[0-9]+$' then 'stesse sessioni (' || ks.n || '): id epoch più vecchio'
+               when k.id ~ '^[0-9]+$' then 'stesse sessioni (' || ks.n || '): id epoch preferito all''id uuid'
+               else 'stesse sessioni (' || ks.n || '): created_at più vecchio'
+             end
+        from _dup d
+        cross join lateral unnest(d.ids[2:]) as u(mid)
+        join public.clients k on k.id = d.ids[1]
+        join public.clients m on m.id = u.mid
+        left join public.professional_profiles pp on pp.id = d.professionista_id
+        left join public.profiles q on q.id = d.professionista_id
+        cross join lateral (select count(*)::int as n from public.sessions s where s.client_id = k.id) ks
+        cross join lateral (select count(*)::int as n from public.sessions s where s.client_id = m.id) ms;
+    exception when others then
+      perform public.collegamenti_riparazione_logb(v_run, v_mode, 'C_dettaglio_errore', 0, '[]'::jsonb, sqlerrm);
+    end;
 
     -- Anteprima per gruppo con admin_merge_clients(p_dry_run = true): conteggi
     -- per tabella delle righe spostate e di quelle che verrebbero eliminate per
@@ -457,6 +566,15 @@ begin
   raise notice '=== fine: vedi select riassuntivo ===';
 end
 $MAIN$;
+
+-- Dettaglio del blocco C dell'ultima esecuzione (il SQL Editor mostra solo
+-- l'ultimo SELECT: eseguire questa query a parte, nella stessa sessione).
+-- select esito, email, professionista,
+--        tiene_id, tiene_nome, tiene_sessioni, tiene_creata, tiene_ponte,
+--        archivia_id, archivia_nome, archivia_sessioni, archivia_creata, archivia_ponte, motivo
+--   from public.collegamenti_riparazione_c_dettaglio
+--  where run_id = (select run_id from public.collegamenti_riparazione_log order by id desc limit 1)
+--  order by esito, professionista, email, archivia_id;
 
 -- Riepilogo dell'esecuzione appena fatta.
 select block, mode, n, error,
