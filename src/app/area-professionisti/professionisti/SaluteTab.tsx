@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, CheckCircle2, HeartPulse, Link2, Loader2, Merge, RefreshCw, ShieldCheck, Wrench } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, EyeOff, HeartPulse, Link2, Loader2, Merge, RefreshCw, ShieldCheck, Wrench } from 'lucide-react'
+import { Modal } from '@/components/dashboard/Modal'
 import { ConfirmDialog } from '@/components/dashboard/ConfirmDialog'
 import type { AdminClientRow } from '@/lib/admin-data'
 import { api, type Toast } from './adminApi'
@@ -67,6 +68,8 @@ export function SaluteTab({ clients, onChanged, showToast }: { clients: AdminCli
   const [filter, setFilter] = useState<string | null>(null)
   const [pending, setPending] = useState<Pending>(null)
   const [mergeOpen, setMergeOpen] = useState<SaluteRow | null>(null)
+  const [excludeRow, setExcludeRow] = useState<SaluteRow | null>(null)
+  const [excludeReason, setExcludeReason] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -263,9 +266,20 @@ export function SaluteTab({ clients, onChanged, showToast }: { clients: AdminCli
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       {r.fix_rpc === 'admin_merge' ? (
-                        <button type="button" onClick={() => setMergeOpen(r)} className="btn-secondary text-xs inline-flex items-center gap-1">
-                          <Merge size={13} /> Unisci
-                        </button>
+                        <div className="flex flex-col gap-1">
+                          <button type="button" onClick={() => setMergeOpen(r)} className="btn-secondary text-xs inline-flex items-center gap-1">
+                            <Merge size={13} /> Unisci
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() => { setExcludeReason(''); setExcludeRow(r) }}
+                            title="Persone diverse con la stessa email: il gruppo non ricompare finché non si aggiunge una scheda nuova"
+                            className="text-xs inline-flex items-center gap-1 px-2 py-1 rounded-lg text-anthracite-lighter hover:bg-surface disabled:opacity-50"
+                          >
+                            <EyeOff size={13} /> Non unire
+                          </button>
+                        </div>
                       ) : r.fix_auto && r.fix_rpc ? (
                         <button type="button" disabled={isBusy} onClick={() => askRepair(r)} className="btn-primary text-xs inline-flex items-center gap-1 disabled:opacity-50">
                           {isBusy ? <Loader2 size={13} className="animate-spin" /> : <Wrench size={13} />} Ripara
@@ -315,6 +329,48 @@ export function SaluteTab({ clients, onChanged, showToast }: { clients: AdminCli
           if (p) await p.run()
         }}
       />
+
+      <Modal
+        open={!!excludeRow}
+        onClose={() => setExcludeRow(null)}
+        title="Verificato, da non unire"
+        description={excludeRow ? `${excludeRow.nome ?? ''} · ${excludeRow.email ?? ''} · ${excludeRow.professionista ?? ''}` : undefined}
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setExcludeRow(null)} className="btn-secondary text-sm">Annulla</button>
+            <button
+              type="button"
+              disabled={!excludeReason.trim()}
+              onClick={async () => {
+                const r = excludeRow
+                setExcludeRow(null)
+                if (!r) return
+                await runAction(
+                  r,
+                  { action: 'exclude_duplicate', professional_id: r.professional_id, email: r.email, client_ids: r.fix_args?.client_ids, motivo: excludeReason },
+                  'Gruppo segnato come da non unire',
+                )
+              }}
+              className="text-sm px-5 py-2.5 rounded-xl font-medium bg-teal hover:bg-teal-dark text-white disabled:opacity-50"
+            >
+              Conferma
+            </button>
+          </div>
+        }
+      >
+        <p className="text-sm text-anthracite-lighter mb-3">
+          Le schede restano separate e il gruppo sparisce da questa tab e dall&apos;anteprima della 022. Ricompare solo se il professionista
+          crea un&apos;altra scheda con la stessa email.
+        </p>
+        <label className="input-label">Motivo</label>
+        <input
+          className="input-field"
+          value={excludeReason}
+          onChange={(e) => setExcludeReason(e.target.value)}
+          placeholder="Es. registra familiari con la propria email"
+        />
+      </Modal>
 
       {mergeOpen && (
         <MergeClientsModal

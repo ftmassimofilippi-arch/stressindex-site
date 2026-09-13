@@ -8,11 +8,20 @@
 --   • ANTEPRIMA (default): nessuna scrittura sui dati; calcola e stampa i
 --     conteggi di ogni blocco e li lascia nella tabella
 --     collegamenti_riparazione_log (mode = 'anteprima').
---   • APPLICAZIONE: eseguire prima
---        select set_config('collegamenti.apply', 'on', false);
---     nella STESSA sessione del SQL Editor, poi questo file. Ogni blocco è
+--   • APPLICAZIONE, SOLO dei blocchi indicati, in un'unica esecuzione:
+--        begin;
+--        select set_config('collegamenti.apply',  'on', true);
+--        select set_config('collegamenti.blocks', 'A',  true);   -- es. 'A' o 'A,H'
+--        <contenuto di questo file>
+--        commit;
+--     I blocchi non elencati girano in anteprima (mode = 'anteprima' nel log,
+--     nessuna scrittura). collegamenti.apply senza collegamenti.blocks
+--     interrompe tutto prima di qualsiasi modifica. Il DO azzera entrambi i
+--     flag appena li ha letti: nessuna esecuzione successiva, nella stessa
+--     sessione o in un'altra, applica qualcosa senza ridarli. Ogni blocco è
 --     avvolto in EXCEPTION WHEN OTHERS: un caso strano viene loggato e non
 --     blocca gli altri.
+--   Prerequisito anche la 023 (collegamenti_escluso_duplicato, usata da C).
 --
 -- Blocchi (nell'ordine di esecuzione):
 --   A  link duplicati: per ogni coppia con più link vivi tiene l'active più
@@ -141,7 +150,9 @@ revoke all on function public.collegamenti_riparazione_audit(uuid, text, text, t
 
 do $MAIN$
 declare
-  v_apply   boolean := coalesce(current_setting('collegamenti.apply', true), 'off') = 'on';
+  v_apply_req boolean := coalesce(current_setting('collegamenti.apply', true), 'off') = 'on';
+  v_blocks  text[] := coalesce(string_to_array(upper(replace(nullif(trim(current_setting('collegamenti.blocks', true)), ''), ' ', '')), ','), '{}');
+  v_apply   boolean;
   v_mode    text;
   v_run     uuid := gen_random_uuid();
   v_n       integer;
@@ -154,7 +165,18 @@ declare
   v_fk_table text;
   v_fk_col   name;
 begin
-  v_mode := case when v_apply then 'applicazione' else 'anteprima' end;
+  -- I due flag valgono per QUESTA esecuzione e basta: vengono azzerati subito
+  -- (anche se erano stati impostati a livello di sessione), così il SQL
+  -- Editor non si porta dietro un'applicazione nel run successivo.
+  perform set_config('collegamenti.apply', 'off', false);
+  perform set_config('collegamenti.blocks', '', false);
+  if v_apply_req and cardinality(v_blocks) = 0 then
+    raise exception 'collegamenti.apply = on senza collegamenti.blocks: indicare i blocchi da applicare (es. ''A'' oppure ''A,H''). Nessuna modifica eseguita.';
+  end if;
+  if exists (select 1 from unnest(v_blocks) b where b not in ('A','B','C','D','E','F','G','H')) then
+    raise exception 'collegamenti.blocks contiene blocchi sconosciuti: %. Validi: A,B,C,D,E,F,G,H. Nessuna modifica eseguita.', array_to_string(v_blocks, ',');
+  end if;
+  v_mode := case when v_apply_req then 'applicazione ' || array_to_string(v_blocks, ',') else 'anteprima' end;
   perform set_config('collegamenti.skip_trigger', 'on', true);
   -- Schede che avevano GIÀ il ponte prima di questa esecuzione: solo queste
   -- possono ricevere un link automatico nel blocco F (il ponte è stato
@@ -167,6 +189,8 @@ begin
   raise notice '=== collegamenti riparazione: modalità % (run %) ===', v_mode, v_run;
 
   -- ── A. link duplicati + indice univoco ─────────────────────────────────────
+  v_apply := v_apply_req and 'A' = any(v_blocks);
+  v_mode := case when v_apply then 'applicazione' else 'anteprima' end;
   begin
     with ranked as (
       select l.id, l.client_user_id, l.professional_id, l.status, l.created_at,
@@ -202,6 +226,8 @@ begin
   end;
 
   -- ── A2. colonna legacy client_id allineata a client_user_id ────────────────
+  v_apply := v_apply_req and 'A' = any(v_blocks);
+  v_mode := case when v_apply then 'applicazione' else 'anteprima' end;
   begin
     -- A2. Le due colonne dei link: client_id (legacy uuid utente) = client_user_id
     --     dove client_id è NULL. Una sola riga per coppia (client_user_id,
@@ -267,6 +293,8 @@ begin
   end;
 
   -- ── B. link active con profilo inesistente → revoca ────────────────────────
+  v_apply := v_apply_req and 'B' = any(v_blocks);
+  v_mode := case when v_apply then 'applicazione' else 'anteprima' end;
   begin
     select count(*), coalesce(jsonb_agg(jsonb_build_object('link_id', l.id, 'client_user_id', l.client_user_id, 'professional_id', l.professional_id)), '[]'::jsonb)
       into v_n, v_det
@@ -283,6 +311,8 @@ begin
   end;
 
   -- ── C. schede duplicate stessa persona, stesso professionista → unione ─────
+  v_apply := v_apply_req and 'C' = any(v_blocks);
+  v_mode := case when v_apply then 'applicazione' else 'anteprima' end;
   begin
     create temp table if not exists _dup on commit drop as
     with cards as (
@@ -303,9 +333,12 @@ begin
              array_agg(trim(coalesce(nome,'') || ' ' || coalesce(cognome,'')) order by (client_user_id is not null) desc, n_sess desc, epoch asc nulls last, created_at asc) as nomi
       from cards group by professionista_id, email_norm having count(*) > 1
     )
+    -- ...esclusi i gruppi già verificati "da non unire" (023): tornano solo
+    -- se compare una scheda nuova con la stessa email
     -- stessa persona = UN solo nome distinto (il cognome uguale da solo non
     -- basta: "Nicolo Maragni" e "Ginevra Maragni" sono due persone)
-    select g.*, (g.n_nomi <= 1) as same_person from grp g;
+    select g.*, (g.n_nomi <= 1) as same_person from grp g
+     where not public.collegamenti_escluso_duplicato(g.professionista_id, g.email_norm, g.ids);
 
     -- Dettaglio per coppia, scritto prima di qualsiasi unione (sessioni e
     -- ponte sono quelli di adesso). Il motivo ripete l'ordinamento di ids:
@@ -387,6 +420,8 @@ begin
   end;
 
   -- ── D. ponte mancante → ensure_client_bridge ───────────────────────────────
+  v_apply := v_apply_req and 'D' = any(v_blocks);
+  v_mode := case when v_apply then 'applicazione' else 'anteprima' end;
   begin
     create temp table if not exists _bridge on commit drop as
     select x.email_norm, count(*) as n_schede,
@@ -432,6 +467,8 @@ begin
   end;
 
   -- ── E. link active senza scheda → link_client_to_professional ──────────────
+  v_apply := v_apply_req and 'E' = any(v_blocks);
+  v_mode := case when v_apply then 'applicazione' else 'anteprima' end;
   begin
     create temp table if not exists _nocard on commit drop as
     select l.id as link_id, l.client_user_id, l.professional_id, p.email
@@ -460,6 +497,8 @@ begin
   end;
 
   -- ── F. scheda con ponte ma nessun link mai esistito → link ─────────────────
+  v_apply := v_apply_req and 'F' = any(v_blocks);
+  v_mode := case when v_apply then 'applicazione' else 'anteprima' end;
   begin
     create temp table if not exists _nolink on commit drop as
     select c.id as client_id, c.client_user_id, c.professionista_id, p.email,
@@ -494,6 +533,8 @@ begin
   end;
 
   -- ── G. sessioni remote invisibili: report + coppie confermate ──────────────
+  v_apply := v_apply_req and 'G' = any(v_blocks);
+  v_mode := case when v_apply then 'applicazione' else 'anteprima' end;
   begin
     create temp table if not exists _orphan on commit drop as
     select s.professionista_id as client_user_id,
@@ -532,6 +573,8 @@ begin
   end;
 
   -- ── H. measurement_analytics.client_id riallineato alla sessione ───────────
+  v_apply := v_apply_req and 'H' = any(v_blocks);
+  v_mode := case when v_apply then 'applicazione' else 'anteprima' end;
   begin
     select count(*), coalesce(jsonb_agg(jsonb_build_object('ma_id', ma.id, 'session_id', ma.session_id, 'da', ma.client_id, 'a', s.client_id)), '[]'::jsonb)
       into v_n, v_det
@@ -548,6 +591,7 @@ begin
   end;
 
   -- ── I. solo report ─────────────────────────────────────────────────────────
+  v_apply := false; v_mode := 'anteprima';
   begin
     select count(*) into v_n from public.measurement_analytics ma where not exists (select 1 from public.sessions s where s.id = ma.session_id);
     perform public.collegamenti_riparazione_logb(v_run, v_mode, 'I_report_analytics_senza_sessione', v_n);

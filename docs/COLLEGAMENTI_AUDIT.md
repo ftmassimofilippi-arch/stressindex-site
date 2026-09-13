@@ -589,18 +589,21 @@ Sui dati del 12 settembre, prima della riparazione: scheda_duplicata 21, profilo
 
 `admin_alerts (kind, total, details, created_at, resolved_at)` + `collegamenti_salute_check()`: un solo alert aperto per tipo, aggiornato se cambiano i numeri, chiuso quando torna a zero. `pg_cron` `collegamenti_salute_weekly`, lunedì 07:00 UTC (se l'estensione non è attiva la migrazione lo segnala con un `notice` e il controllo resta manuale dal pannello).
 
-## 6. Ordine di applicazione (niente è stato eseguito sul database)
+## 6. Ordine di applicazione
+
+**Stato al 13 settembre 2026.** 019, 020 e 021 applicate. La 022 è stata eseguita in applicazione il 13/09 alle 04:51 UTC (run `bc252a79`, flag `collegamenti.apply` rimasto attivo nella sessione del SQL Editor): B, C (15 unioni), D (5 ponti), E (3 schede), H (58 analytics) sono **fatti**; A è stato annullato dalla FK `client_professional_links_client_id_fkey` → `auth.users` (A2 provava ad allineare i link di 2 utenti cancellati). Backup pre-run: `*_backup_20260913`.
 
 1. `supabase-migrations/019_collegamenti_flusso_unico.sql` (funzioni, trigger, policy, RPC).
 2. `supabase-migrations/020_collegamenti_salute.sql` (view, alert, cron).
 3. `supabase-migrations/021_collegamenti_backup.sql` (tabelle `*_backup_YYYYMMDD`).
-4. `supabase-migrations/022_collegamenti_riparazione.sql` **in anteprima** (così com'è): leggere `collegamenti_riparazione_log` e confrontare con §3.
-5. Eventuali coppie confermate in `collegamenti_riparazione_link_ok` (§3.G).
-6. Stessa sessione SQL: `select set_config('collegamenti.apply','on',false);` poi di nuovo la 022. Rieseguibile.
-7. `notify pgrst, 'reload schema';` poi deploy del sito e della Edge Function.
-8. App: modifiche di §4.6 e rilascio.
+4. `supabase-migrations/023_collegamenti_esclusioni.sql`: i 6 gruppi con la stessa email ma persone diverse (Dettori/"Mamma Mamma", Liga Briviba, ecc.) segnati "da non unire"; la view e la 022 li ignorano finché non compare una scheda nuova con quell'email. Dal pannello: tab Salute → "Non unire".
+5. `supabase-migrations/022_collegamenti_riparazione.sql` **in anteprima** (così com'è): leggere `collegamenti_riparazione_log` e `collegamenti_riparazione_c_dettaglio`.
+6. Eventuali coppie confermate in `collegamenti_riparazione_link_ok` (§3.G).
+7. Applicazione **per blocco**, in un'unica esecuzione: `begin; select set_config('collegamenti.apply','on',true); select set_config('collegamenti.blocks','A',true);` + contenuto della 022 + `commit;`. Senza `collegamenti.blocks` la 022 si ferma prima di scrivere; i flag vengono azzerati a ogni esecuzione.
+8. `notify pgrst, 'reload schema';` poi deploy del sito e della Edge Function.
+9. App: modifiche di §4.6 e rilascio.
 
-Ripristino: le tabelle di backup della 021 (le schede unite dal blocco C sono **cancellate** da `admin_merge_clients`: si ripristinano da `clients_backup_20260912`) e `clients_merge_log` (snapshot delle unioni morbide) bastano a tornare indietro; esempi nell'intestazione della 021. Ogni riparazione applicata è in `admin_audit_log` con `performed_by_email = 'migration:022'`.
+Ripristino: le tabelle di backup della 021 (le schede unite dal blocco C sono **cancellate** da `admin_merge_clients`: si ripristinano da `clients_backup_20260913`) e `clients_merge_log` (snapshot delle unioni morbide) bastano a tornare indietro; esempi nell'intestazione della 021. Ogni riparazione applicata è in `admin_audit_log` con `performed_by_email = 'migration:022'`.
 
 ## 7. Baseline e accessi: cosa NON cambia (verifica E)
 

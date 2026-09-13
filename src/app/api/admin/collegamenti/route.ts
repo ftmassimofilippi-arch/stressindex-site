@@ -16,6 +16,8 @@ export const dynamic = 'force-dynamic'
 //        { action: 'link', client_user_id, professional_id }        → link_client_to_professional
 //        { action: 'revoke_link', link_id }                         → status='revoked'
 //        { action: 'realign_analytics' }                            → client_id = sessione
+//        { action: 'exclude_duplicate', professional_id, email, client_ids, motivo }
+//                                                                   → collegamenti_esclusioni (023): "da non unire"
 //        { action: 'check' }                                        → collegamenti_salute_check (aggiorna il badge)
 //        { action: 'resolve_alert', alert_id }                      → chiude l'alert
 // Le unioni passano da /api/admin/clients/merge (admin_merge_clients).
@@ -129,6 +131,51 @@ export async function POST(req: NextRequest) {
     }
     await logAdminAction(admin, guard.user, { action: 'salute_realign_analytics', target_type: 'analytics', target_id: null, details: { fixed } })
     return NextResponse.json({ ok: true, fixed })
+  }
+
+  if (action === 'exclude_duplicate') {
+    // Gruppo di schede con la stessa email verificato "da non unire" (023):
+    // sparisce dalla view finché non compare una scheda nuova con quell'email.
+    const professionalId = typeof body.professional_id === 'string' ? body.professional_id : ''
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
+    const motivo = typeof body.motivo === 'string' ? body.motivo.trim() : ''
+    const clientIds = Array.isArray(body.client_ids) ? (body.client_ids as unknown[]).filter((x): x is string => typeof x === 'string') : []
+    if (!professionalId || !email || clientIds.length < 2) return NextResponse.json({ error: 'missing_params' }, { status: 400 })
+    if (!motivo) return NextResponse.json({ error: 'missing_reason', message: 'Indica il motivo' }, { status: 400 })
+    const { data: existing, error: selErr } = await admin
+      .from('collegamenti_esclusioni')
+      .select('id, client_ids')
+      .eq('tipo_problema', 'scheda_duplicata')
+      .eq('professionista_id', professionalId)
+      .eq('email_norm', email)
+      .maybeSingle()
+    if (selErr) {
+      if (isMissing(selErr)) return NextResponse.json({ error: 'migration_required', message: 'Applica la migration 023' }, { status: 409 })
+      return NextResponse.json({ error: selErr.message }, { status: 500 })
+    }
+    const prev = existing as { id: number; client_ids: string[] } | null
+    const ids = Array.from(new Set([...(prev?.client_ids ?? []), ...clientIds]))
+    const row = {
+      tipo_problema: 'scheda_duplicata',
+      professionista_id: professionalId,
+      email_norm: email,
+      client_ids: ids,
+      motivo,
+      created_by: guard.user.id,
+      created_by_email: guard.user.email ?? null,
+      updated_at: new Date().toISOString(),
+    }
+    const { error } = prev
+      ? await admin.from('collegamenti_esclusioni').update(row).eq('id', prev.id)
+      : await admin.from('collegamenti_esclusioni').insert(row)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    await logAdminAction(admin, guard.user, {
+      action: 'exclude_duplicate',
+      target_type: 'client',
+      target_id: clientIds[0],
+      details: { professionista_id: professionalId, email, client_ids: ids, motivo, precedenti: prev?.client_ids ?? null },
+    })
+    return NextResponse.json({ ok: true })
   }
 
   if (action === 'check') {
