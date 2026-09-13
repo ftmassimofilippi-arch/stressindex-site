@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
+const SUSPENDED_PATH = '/area-professionisti/sospeso'
+
 const PUBLIC_DASHBOARD_PATHS = [
   '/area-professionisti/login',
   '/area-professionisti/recupera-password',
@@ -45,6 +47,37 @@ export async function middleware(request: NextRequest) {
     url.pathname = '/area-professionisti/login'
     url.searchParams.set('redirect', pathname)
     return NextResponse.redirect(url)
+  }
+
+  // Stato dell'account (migration 024), letto a ogni richiesta: sospensione e
+  // blocco valgono subito, senza rifare login. Se la RPC non esiste o fallisce
+  // si prosegue come prima.
+  if (user && !isPublicDashboardPath) {
+    const { data, error } = await supabase.rpc('my_account_access')
+    const stato = error ? null : ((data as { stato?: string } | null)?.stato ?? null)
+    if (stato === 'bloccato') {
+      await supabase.auth.signOut()
+      const url = request.nextUrl.clone()
+      url.pathname = '/area-professionisti/login'
+      url.search = ''
+      url.searchParams.set('stato', 'bloccato')
+      const redirect = NextResponse.redirect(url)
+      response.cookies.getAll().forEach((c) => redirect.cookies.set(c))
+      return redirect
+    }
+    if (stato === 'sospeso' && pathname !== SUSPENDED_PATH) {
+      const url = request.nextUrl.clone()
+      url.pathname = SUSPENDED_PATH
+      url.search = ''
+      const rewrite = NextResponse.rewrite(url, { request })
+      response.cookies.getAll().forEach((c) => rewrite.cookies.set(c))
+      return rewrite
+    }
+    if (stato !== 'sospeso' && pathname === SUSPENDED_PATH) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/area-professionisti'
+      return NextResponse.redirect(url)
+    }
   }
 
   if (user && isPublicDashboardPath) {

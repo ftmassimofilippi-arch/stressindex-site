@@ -2,34 +2,35 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  Users, UserCog, Link2, Search, Loader2, AlertTriangle, Plus, Crown, ShieldCheck,
-  Mail, KeyRound, Trash2, ArrowRightLeft, Activity, RefreshCw, X, CheckCircle2, Ban, Clock, SunMoon, HeartPulse, Merge, PencilLine,
+  Users, UserCog, Link2, Search, Loader2, AlertTriangle, Plus,
+  ArrowRightLeft, RefreshCw, CheckCircle2, Ban, SunMoon, HeartPulse, Merge, LayoutDashboard, Trash2,
 } from 'lucide-react'
-import Link from 'next/link'
 import { MonitoringTable } from '@/components/monitoring/MonitoringTable'
-import { TypeChip } from '@/components/monitoring/MonitoringChips'
 import type { AdminMonitoringRow } from '@/lib/admin-monitoring'
 import type { MonitoringSession } from '@/lib/monitoring-types'
 import { isSleepSession } from '@/lib/monitoring-types'
-import { duration, periodLabel } from '@/lib/monitoring-format'
 import { Modal } from '@/components/dashboard/Modal'
 import { ConfirmDialog } from '@/components/dashboard/ConfirmDialog'
-import { formatDate, formatRelative } from '@/lib/format'
+import { formatDate } from '@/lib/format'
 import type { AdminUser, AdminClientRow, AdminLink } from '@/lib/admin-data'
-import { type AdminIssue, ADMIN_ISSUE_HINTS, ADMIN_ISSUE_LABELS, ADMIN_ISSUE_ORDER, ADMIN_ISSUE_TONE, clientLinkStatusLabel } from '@/lib/admin-issues'
+import { clientLinkStatusLabel } from '@/lib/admin-issues'
 import { api, type Toast } from './adminApi'
 import { ManualLinkModal } from './ManualLinkModal'
 import { MergeClientsModal } from './MergeClientsModal'
-import { EmailChangeDialog } from './EmailChangeDialog'
 import { SaluteTab } from './SaluteTab'
+import { UsersTab } from './UsersTab'
+import { OverviewTab, overviewCounts } from './OverviewTab'
+import type { Catalogo } from './commerciale-ui'
+import type { AccountStato } from '@/lib/admin-commerciale'
 
 // ============================================================================
-// Pannello Super Admin — gestione utenti, clienti e collegamenti.
+// Pannello Super Admin — panoramica commerciale, utenti (stato, abbonamento,
+// moduli), clienti, collegamenti, monitoraggi e salute dei collegamenti.
 // Tutte le azioni privilegiate passano dalle route /api/admin/* (service_role,
 // verifica superadmin lato server). Questo componente è solo presentazione + fetch.
 // ============================================================================
 
-type Tab = 'users' | 'clients' | 'links' | 'monitoring' | 'salute'
+type Tab = 'overview' | 'users' | 'clients' | 'links' | 'monitoring' | 'salute'
 
 type ProfessionalOption = { id: string; name: string; email: string | null }
 
@@ -40,8 +41,10 @@ function apiError(json: { message?: string; error?: string } | null | undefined,
 }
 
 export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: boolean }) {
-  const [tab, setTab] = useState<Tab>('users')
+  const [tab, setTab] = useState<Tab>('overview')
   const [users, setUsers] = useState<AdminUser[]>([])
+  const [catalogo, setCatalogo] = useState<Catalogo | null>(null)
+  const [usersFilter, setUsersFilter] = useState<{ key: number; scadenza30?: boolean; stato?: AccountStato }>({ key: 0 })
   const [clients, setClients] = useState<AdminClientRow[]>([])
   const [links, setLinks] = useState<AdminLink[]>([])
   const [monitoring, setMonitoring] = useState<AdminMonitoringRow[]>([])
@@ -61,8 +64,10 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
     if (t) setTimeout(() => setToast(null), 4000)
   }, [])
 
-  const reload = useCallback(async () => {
-    setLoading(true)
+  // silent: aggiorna i dati senza sostituire la tab con lo spinner (il pannello
+  // laterale resta aperto dopo un'azione)
+  const reload = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true)
     setLoadError(null)
     const [u, c, l, m, s] = await Promise.all([
       api('GET', '/api/admin/users'),
@@ -75,6 +80,7 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
     setSaluteAlert(!!s.json?.alert)
     if (!u.ok) setLoadError(u.json?.error ?? 'Errore caricamento utenti')
     setUsers(u.json?.users ?? [])
+    setCatalogo(u.json?.catalogo ?? null)
     setClients(c.json?.clients ?? [])
     setLinks(l.json?.links ?? [])
     setMonitoring(m.json?.sessions ?? [])
@@ -85,6 +91,9 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
     if (serviceRoleConfigured) reload()
     else setLoading(false)
   }, [serviceRoleConfigured, reload])
+
+  const silentReload = useCallback(() => reload({ silent: true }), [reload])
+  const counts = useMemo(() => overviewCounts(users), [users])
 
   if (!serviceRoleConfigured) {
     return (
@@ -104,12 +113,13 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
     )
   }
 
-  const TABS: Array<{ key: Tab; label: string; icon: typeof Users; count: number }> = [
+  const TABS: Array<{ key: Tab; label: string; icon: typeof Users; count: number | null; alert?: boolean }> = [
+    { key: 'overview', label: 'Panoramica', icon: LayoutDashboard, count: catalogo ? counts.scadenza30 : null, alert: counts.scadenza30 > 0 },
     { key: 'users', label: 'Utenti', icon: Users, count: users.length },
     { key: 'clients', label: 'Clienti', icon: UserCog, count: clients.length },
     { key: 'links', label: 'Collegamenti', icon: Link2, count: links.length },
     { key: 'monitoring', label: 'Monitoraggi', icon: SunMoon, count: monitoring.length },
-    { key: 'salute', label: 'Salute collegamenti', icon: HeartPulse, count: saluteCount },
+    { key: 'salute', label: 'Salute collegamenti', icon: HeartPulse, count: saluteCount, alert: saluteAlert },
   ]
 
   return (
@@ -131,18 +141,23 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
               >
                 <Icon size={15} />
                 {t.label}
-                <span className={`text-[11px] px-1.5 py-0.5 rounded-md ${
-                  t.key === 'salute' && saluteAlert ? 'bg-red-100 text-red-700' : active ? 'bg-teal-light text-teal-dark' : 'bg-white/60 text-anthracite-lighter'
-                }`}>
-                  {t.count}
-                </span>
+                {t.count !== null && (
+                  <span
+                    title={t.key === 'overview' ? 'Abbonamenti in scadenza entro 30 giorni' : undefined}
+                    className={`text-[11px] px-1.5 py-0.5 rounded-md ${
+                      t.alert ? (t.key === 'overview' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-700') : active ? 'bg-teal-light text-teal-dark' : 'bg-white/60 text-anthracite-lighter'
+                    }`}
+                  >
+                    {t.count}
+                  </span>
+                )}
               </button>
             )
           })}
         </div>
         <button
           type="button"
-          onClick={reload}
+          onClick={() => reload()}
           disabled={loading}
           className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-xl border border-surface-border hover:bg-surface text-anthracite-lighter disabled:opacity-50"
         >
@@ -162,8 +177,24 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
         <div className="card p-12 flex items-center justify-center text-anthracite-lighter">
           <Loader2 className="animate-spin mr-2" size={18} /> Caricamento…
         </div>
+      ) : tab === 'overview' ? (
+        <OverviewTab
+          users={users}
+          catalogo={catalogo}
+          onChanged={silentReload}
+          showToast={showToast}
+          onOpenUsers={(filter) => { setUsersFilter((prev) => ({ key: prev.key + 1, ...filter })); setTab('users') }}
+        />
       ) : tab === 'users' ? (
-        <UsersTab users={users} professionals={professionals} onChanged={reload} showToast={showToast} />
+        <UsersTab
+          key={usersFilter.key}
+          users={users}
+          catalogo={catalogo}
+          professionals={professionals}
+          onChanged={silentReload}
+          showToast={showToast}
+          initialFilter={usersFilter}
+        />
       ) : tab === 'clients' ? (
         <ClientsTab clients={clients} professionals={professionals} onChanged={reload} showToast={showToast} />
       ) : tab === 'monitoring' ? (
@@ -186,22 +217,6 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
 
 // ── Badge ruolo/piano/stato ──────────────────────────────────────────────────
 
-function RoleBadge({ role }: { role: AdminUser['role'] }) {
-  if (role === 'professional')
-    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-teal-light text-teal-dark"><ShieldCheck size={11} /> Professionista</span>
-  if (role === 'client')
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-surface text-anthracite-lighter border border-surface-border">Cliente</span>
-  return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-600">—</span>
-}
-
-function PlanBadge({ plan }: { plan: 'base' | 'pro' }) {
-  return plan === 'pro' ? (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-teal-50 text-teal-dark border border-teal-200"><Crown size={11} /> Pro</span>
-  ) : (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-surface text-anthracite-lighter border border-surface-border">Base</span>
-  )
-}
-
 // Pill di stato: `tone` esplicito, altrimenti dedotto dal testo.
 function StatusPill({ status, tone }: { status: string; tone?: 'green' | 'red' | 'amber' | 'neutral' }) {
   const s = status.toLowerCase()
@@ -222,452 +237,6 @@ function StatusPill({ status, tone }: { status: string; tone?: 'green' | 'red' |
 function LinkStatusPill({ status }: { status: string }) {
   const label = status === 'active' ? 'Attivo' : status === 'pending' ? 'In attesa' : status === 'revoked' ? 'Revocato' : status
   return <StatusPill status={label} tone={status === 'active' ? 'green' : status === 'pending' ? 'amber' : status === 'revoked' ? 'red' : 'neutral'} />
-}
-
-// Badge di segnalazione accanto al nome (tab Utenti): un'etichetta diversa per
-// ogni situazione, con la spiegazione nel tooltip.
-function IssueBadge({ issue }: { issue: AdminIssue }) {
-  const tone = ADMIN_ISSUE_TONE[issue]
-  const cls = tone === 'red' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600'
-  const Icon = issue === 'pending_link' ? Clock : AlertTriangle
-  return (
-    <span title={ADMIN_ISSUE_HINTS[issue]} className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md whitespace-nowrap ${cls}`}>
-      <Icon size={10} /> {ADMIN_ISSUE_LABELS[issue]}
-    </span>
-  )
-}
-
-// ── TAB UTENTI ────────────────────────────────────────────────────────────────
-
-function UsersTab({ users, professionals, onChanged, showToast }: { users: AdminUser[]; professionals: ProfessionalOption[]; onChanged: () => void; showToast: (t: Toast) => void }) {
-  const [search, setSearch] = useState('')
-  const [roleFilter, setRoleFilter] = useState<'all' | 'professional' | 'client'>('all')
-  const [issueFilter, setIssueFilter] = useState<'all' | 'any' | AdminIssue>('all')
-  const [planFilter, setPlanFilter] = useState<'all' | 'pro' | 'base'>('all')
-  const [selected, setSelected] = useState<AdminUser | null>(null)
-  const [linkUser, setLinkUser] = useState<AdminUser | null>(null)
-
-  const issueCounts = useMemo(() => {
-    const counts = new Map<AdminIssue, number>()
-    for (const u of users) if (u.issue) counts.set(u.issue, (counts.get(u.issue) ?? 0) + 1)
-    return counts
-  }, [users])
-
-  const filtered = useMemo(() => {
-    const s = search.trim().toLowerCase()
-    return users.filter((u) => {
-      if (s) {
-        const hay = `${u.full_name} ${u.email ?? ''}`.toLowerCase()
-        if (!hay.includes(s)) return false
-      }
-      if (roleFilter !== 'all' && u.role !== roleFilter) return false
-      if (issueFilter === 'any' && !u.issue) return false
-      if (issueFilter !== 'all' && issueFilter !== 'any' && u.issue !== issueFilter) return false
-      if (planFilter !== 'all' && u.plan !== planFilter) return false
-      return true
-    })
-  }, [users, search, roleFilter, issueFilter, planFilter])
-
-  const selectCls = 'px-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30'
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-anthracite-lighter" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cerca per nome o email…"
-            className="w-full pl-9 pr-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal"
-          />
-        </div>
-        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as typeof roleFilter)} className={selectCls}>
-          <option value="all">Tutti i ruoli</option>
-          <option value="professional">Professionisti</option>
-          <option value="client">Clienti</option>
-        </select>
-        <select value={issueFilter} onChange={(e) => setIssueFilter(e.target.value as typeof issueFilter)} className={selectCls}>
-          <option value="all">Tutte le situazioni</option>
-          <option value="any">Solo da sistemare</option>
-          {ADMIN_ISSUE_ORDER.map((k) => (
-            <option key={k} value={k}>{ADMIN_ISSUE_LABELS[k]} ({issueCounts.get(k) ?? 0})</option>
-          ))}
-        </select>
-        <select value={planFilter} onChange={(e) => setPlanFilter(e.target.value as typeof planFilter)} className={selectCls}>
-          <option value="all">Tutti i piani</option>
-          <option value="pro">Pro</option>
-          <option value="base">Base</option>
-        </select>
-      </div>
-
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[860px]">
-            <thead>
-              <tr className="text-left text-anthracite-lighter border-b border-surface-border bg-surface">
-                <th className="px-4 py-3 font-medium">Utente</th>
-                <th className="px-3 py-3 font-medium">Ruolo</th>
-                <th className="px-3 py-3 font-medium">Piano</th>
-                <th className="px-3 py-3 font-medium">Stato</th>
-                <th className="px-3 py-3 font-medium">Registrazione</th>
-                <th className="px-3 py-3 font-medium">Ultimo accesso</th>
-                <th className="px-3 py-3 font-medium text-right">Mis.</th>
-                <th className="px-3 py-3 font-medium text-right">Monitoraggi</th>
-                <th className="px-4 py-3 font-medium text-right">Azioni</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((u) => (
-                <tr key={u.id} className="border-t border-surface-border hover:bg-surface/60 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div>
-                        <div className="font-medium text-anthracite flex items-center gap-1.5">
-                          {u.full_name}
-                          {u.is_superadmin && <ShieldCheck size={13} className="text-teal-dark" aria-label="Superadmin" />}
-                          {u.issue && <IssueBadge issue={u.issue} />}
-                        </div>
-                        <div className="text-xs text-anthracite-lighter">{u.email ?? '—'}</div>
-                        {u.role === 'client' && u.linked_professional_name && (
-                          <div className="text-[11px] text-anthracite-lighter mt-0.5">
-                            ↳ {u.linked_professional_name}
-                            {u.link_status === 'pending' && <span className="ml-1 text-amber-600">(in attesa di accettazione)</span>}
-                            {u.link_status === 'revoked' && <span className="ml-1 text-red-500">(revocato)</span>}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3"><RoleBadge role={u.role} /></td>
-                  <td className="px-3 py-3">{u.role === 'professional' ? <PlanBadge plan={u.plan} /> : <span className="text-anthracite-lighter">—</span>}</td>
-                  <td className="px-3 py-3"><StatusPill status={u.subscription_status} /></td>
-                  <td className="px-3 py-3 text-anthracite-lighter whitespace-nowrap">{u.created_at ? formatDate(u.created_at) : '—'}</td>
-                  <td className="px-3 py-3 text-anthracite-lighter whitespace-nowrap">{u.last_sign_in_at ? formatRelative(u.last_sign_in_at) : 'Mai'}</td>
-                  <td className="px-3 py-3 text-right text-anthracite">{u.measurements_count}</td>
-                  <td className="px-3 py-3 text-right text-anthracite">{u.monitoring_count}</td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="inline-flex items-center gap-3">
-                      {u.role === 'client' && (u.issue === 'no_link' || u.issue === 'revoked_link') && (
-                        <button type="button" onClick={() => setLinkUser(u)} className="inline-flex items-center gap-1 text-teal-dark hover:underline text-sm font-medium whitespace-nowrap">
-                          <Link2 size={14} /> Collega
-                        </button>
-                      )}
-                      <button type="button" onClick={() => setSelected(u)} className="inline-flex items-center gap-1 text-teal-dark hover:underline text-sm font-medium">
-                        <UserCog size={14} /> Gestisci
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr><td colSpan={9} className="px-4 py-10 text-center text-anthracite-lighter">Nessun utente trovato.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {selected && (
-        <UserDetailModal
-          user={selected}
-          onClose={() => setSelected(null)}
-          onChanged={() => { onChanged(); setSelected(null) }}
-          showToast={showToast}
-        />
-      )}
-      {linkUser && (
-        <ManualLinkModal
-          professionals={professionals}
-          initialEmail={linkUser.email ?? ''}
-          initialProfessionalId={linkUser.linked_professional_id ?? ''}
-          onClose={() => setLinkUser(null)}
-          onChanged={onChanged}
-          showToast={showToast}
-        />
-      )}
-    </div>
-  )
-}
-
-// ── Modale dettaglio/azioni utente ────────────────────────────────────────────
-
-function UserDetailModal({ user, onClose, onChanged, showToast }: { user: AdminUser; onClose: () => void; onChanged: () => void; showToast: (t: Toast) => void }) {
-  const [form, setForm] = useState({
-    nome: user.nome ?? '',
-    cognome: user.cognome ?? '',
-    email: user.email ?? '',
-    data_nascita: user.data_nascita ?? '',
-    sesso: user.sesso ?? '',
-  })
-  const [busy, setBusy] = useState<string | null>(null)
-  const [confirm, setConfirm] = useState<null | 'delete' | 'role' | 'setpw'>(null)
-  const [newPassword, setNewPassword] = useState('')
-  const [cascade, setCascade] = useState(false)
-  const [sessions, setSessions] = useState<Array<{ id: string; measured_at: string | null; client_name: string; professional_name: string; test_type: string | null }> | null>(null)
-  const [showSessions, setShowSessions] = useState(false)
-  const [monitoring, setMonitoring] = useState<AdminMonitoringRow[] | null>(null)
-  const [showMonitoring, setShowMonitoring] = useState(false)
-  const [emailOpen, setEmailOpen] = useState(false)
-
-  async function saveAnagrafica() {
-    setBusy('save')
-    const { ok, json } = await api('PATCH', `/api/admin/users/${user.id}`, {
-      nome: form.nome, cognome: form.cognome,
-      data_nascita: form.data_nascita || null, sesso: form.sesso,
-    })
-    setBusy(null)
-    if (ok) { showToast({ kind: 'ok', text: 'Dati aggiornati' }); onChanged() }
-    else showToast({ kind: 'err', text: json?.error ?? 'Errore salvataggio' })
-  }
-
-  async function togglePlan() {
-    const next = user.plan === 'pro' ? 'base' : 'pro'
-    setBusy('plan')
-    const { ok, json } = await api('PATCH', `/api/admin/users/${user.id}`, { plan: next })
-    setBusy(null)
-    if (ok) { showToast({ kind: 'ok', text: `Piano impostato su ${next.toUpperCase()}` }); onChanged() }
-    else showToast({ kind: 'err', text: json?.error ?? 'Errore' })
-  }
-
-  async function changeRole() {
-    const next = user.role === 'professional' ? 'client' : 'professional'
-    setBusy('role')
-    const { ok, json } = await api('PATCH', `/api/admin/users/${user.id}`, { role: next })
-    setBusy(null); setConfirm(null)
-    if (ok) { showToast({ kind: 'ok', text: `Ruolo cambiato in ${next}` }); onChanged() }
-    else showToast({ kind: 'err', text: json?.error ?? 'Errore' })
-  }
-
-  async function resetPassword() {
-    setBusy('reset')
-    const { ok, json } = await api('POST', `/api/admin/users/${user.id}/password`, { action: 'reset' })
-    setBusy(null)
-    if (ok) showToast({ kind: 'ok', text: `Email di reset inviata a ${json?.email ?? user.email}` })
-    else showToast({ kind: 'err', text: json?.error ?? 'Errore invio email' })
-  }
-
-  async function setPassword() {
-    setBusy('setpw')
-    const { ok, json } = await api('POST', `/api/admin/users/${user.id}/password`, { action: 'set', password: newPassword })
-    setBusy(null); setConfirm(null)
-    if (ok) { showToast({ kind: 'ok', text: 'Password aggiornata' }); setNewPassword('') }
-    else showToast({ kind: 'err', text: json?.error === 'password_too_short' ? 'Password troppo corta (min 8)' : json?.error ?? 'Errore' })
-  }
-
-  async function loadSessions() {
-    setShowSessions(true)
-    if (sessions) return
-    const { ok, json } = await api('GET', `/api/admin/users/${user.id}/sessions`)
-    if (ok) setSessions(json?.sessions ?? [])
-    else { setSessions([]); showToast({ kind: 'err', text: json?.error ?? 'Errore sessioni' }) }
-  }
-
-  async function loadMonitoring() {
-    setShowMonitoring(true)
-    if (monitoring) return
-    const { ok, json } = await api('GET', `/api/admin/users/${user.id}/monitoring`)
-    if (ok) setMonitoring(json?.sessions ?? [])
-    else { setMonitoring([]); showToast({ kind: 'err', text: json?.error ?? 'Errore monitoraggi' }) }
-  }
-
-  async function deleteUser() {
-    setBusy('delete')
-    const qs = cascade ? '?cascadeClients=true' : ''
-    const { ok, json } = await api('DELETE', `/api/admin/users/${user.id}${qs}`)
-    setBusy(null); setConfirm(null)
-    if (ok) { showToast({ kind: 'ok', text: 'Utente eliminato' }); onChanged() }
-    else showToast({ kind: 'err', text: json?.error === 'cannot_delete_self' ? 'Non puoi eliminare te stesso' : json?.error ?? 'Errore eliminazione' })
-  }
-
-  const inputCls = 'w-full px-3 py-2 text-sm bg-white border border-surface-border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal'
-
-  return (
-    <Modal open onClose={onClose} title={user.full_name} description={user.email ?? undefined} size="lg">
-      <div className="space-y-6">
-        {/* Anagrafica */}
-        <section>
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-anthracite-lighter mb-3">Anagrafica</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div><label className="input-label">Nome</label><input className={inputCls} value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
-            <div><label className="input-label">Cognome</label><input className={inputCls} value={form.cognome} onChange={(e) => setForm({ ...form, cognome: e.target.value })} /></div>
-            <div>
-              <label className="input-label">Email dell&apos;account</label>
-              <div className="flex gap-2">
-                <input className={`${inputCls} bg-surface text-anthracite-lighter`} type="email" value={form.email} readOnly />
-                <button type="button" onClick={() => setEmailOpen(true)} title="Correggi l'email di login (auth), con anteprima e log" className="text-sm px-3 rounded-lg border border-surface-border hover:bg-surface inline-flex items-center gap-1.5 whitespace-nowrap">
-                  <PencilLine size={14} /> Correggi
-                </button>
-              </div>
-            </div>
-            <div><label className="input-label">Data di nascita</label><input className={inputCls} type="date" value={form.data_nascita ? form.data_nascita.slice(0, 10) : ''} onChange={(e) => setForm({ ...form, data_nascita: e.target.value })} /></div>
-            <div>
-              <label className="input-label">Sesso</label>
-              <select className={inputCls} value={form.sesso} onChange={(e) => setForm({ ...form, sesso: e.target.value })}>
-                <option value="">—</option><option value="M">M</option><option value="F">F</option><option value="X">X</option>
-              </select>
-            </div>
-          </div>
-          <button type="button" onClick={saveAnagrafica} disabled={busy === 'save'} className="btn-primary mt-3 text-sm py-2.5">
-            {busy === 'save' ? <Loader2 size={15} className="animate-spin" /> : 'Salva anagrafica'}
-          </button>
-        </section>
-
-        {/* Piano + ruolo */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="rounded-xl border border-surface-border p-4">
-            <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-anthracite">Piano</span><PlanBadge plan={user.plan} /></div>
-            <button type="button" onClick={togglePlan} disabled={busy === 'plan'} className="w-full text-sm px-3 py-2 rounded-lg border border-teal-dark text-teal-dark hover:bg-teal-50 disabled:opacity-50 inline-flex items-center justify-center gap-1.5">
-              {busy === 'plan' ? <Loader2 size={14} className="animate-spin" /> : <Crown size={14} />}
-              {user.plan === 'pro' ? 'Disattiva Pro' : 'Attiva Pro'}
-            </button>
-          </div>
-          <div className="rounded-xl border border-surface-border p-4">
-            <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-anthracite">Ruolo</span><RoleBadge role={user.role} /></div>
-            <button type="button" onClick={() => setConfirm('role')} disabled={busy === 'role'} className="w-full text-sm px-3 py-2 rounded-lg border border-surface-border text-anthracite hover:bg-surface disabled:opacity-50 inline-flex items-center justify-center gap-1.5">
-              <ArrowRightLeft size={14} /> {user.role === 'professional' ? 'Rendi cliente' : 'Rendi professionista'}
-            </button>
-          </div>
-        </section>
-
-        {/* Password */}
-        <section>
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-anthracite-lighter mb-3">Password</h4>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={resetPassword} disabled={busy === 'reset'} className="text-sm px-3 py-2 rounded-lg border border-surface-border hover:bg-surface inline-flex items-center gap-1.5 disabled:opacity-50">
-              {busy === 'reset' ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />} Invia email di reset
-            </button>
-            <button type="button" onClick={() => setConfirm('setpw')} className="text-sm px-3 py-2 rounded-lg border border-surface-border hover:bg-surface inline-flex items-center gap-1.5">
-              <KeyRound size={14} /> Imposta password manuale
-            </button>
-          </div>
-        </section>
-
-        {/* Sessioni */}
-        <section>
-          <button type="button" onClick={loadSessions} className="text-sm px-3 py-2 rounded-lg border border-surface-border hover:bg-surface inline-flex items-center gap-1.5">
-            <Activity size={14} /> Vedi sessioni
-          </button>
-          {showSessions && (
-            <div className="mt-3 rounded-xl border border-surface-border overflow-hidden">
-              {sessions === null ? (
-                <div className="p-4 text-sm text-anthracite-lighter flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Caricamento…</div>
-              ) : sessions.length === 0 ? (
-                <div className="p-4 text-sm text-anthracite-lighter">Nessuna sessione.</div>
-              ) : (
-                <div className="overflow-x-auto max-h-64">
-                  <table className="w-full text-xs min-w-[420px]">
-                    <thead className="bg-surface text-anthracite-lighter sticky top-0">
-                      <tr><th className="px-3 py-2 text-left font-medium">Data</th><th className="px-3 py-2 text-left font-medium">Cliente</th><th className="px-3 py-2 text-left font-medium">Professionista</th></tr>
-                    </thead>
-                    <tbody>
-                      {sessions.map((s) => (
-                        <tr key={s.id} className="border-t border-surface-border">
-                          <td className="px-3 py-2 whitespace-nowrap">{s.measured_at ? formatDate(s.measured_at) : '—'}</td>
-                          <td className="px-3 py-2">{s.client_name}</td>
-                          <td className="px-3 py-2">{s.professional_name}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-        </section>
-
-        {/* Monitoraggi */}
-        <section>
-          <button type="button" onClick={loadMonitoring} className="text-sm px-3 py-2 rounded-lg border border-surface-border hover:bg-surface inline-flex items-center gap-1.5">
-            <SunMoon size={14} /> Vedi monitoraggi
-          </button>
-          {showMonitoring && (
-            <div className="mt-3 rounded-xl border border-surface-border overflow-hidden">
-              {monitoring === null ? (
-                <div className="p-4 text-sm text-anthracite-lighter flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Caricamento…</div>
-              ) : monitoring.length === 0 ? (
-                <div className="p-4 text-sm text-anthracite-lighter">Nessun monitoraggio.</div>
-              ) : (
-                <div className="overflow-x-auto max-h-64">
-                  <table className="w-full text-xs min-w-[520px]">
-                    <thead className="bg-surface text-anthracite-lighter sticky top-0">
-                      <tr><th className="px-3 py-2 text-left font-medium">Inizio</th><th className="px-3 py-2 text-left font-medium">Tipo</th><th className="px-3 py-2 text-left font-medium">Durata</th><th className="px-3 py-2 text-left font-medium">Cliente</th><th className="px-3 py-2 text-left font-medium">Professionista</th><th className="px-3 py-2" /></tr>
-                    </thead>
-                    <tbody>
-                      {monitoring.map((m) => (
-                        <tr key={m.id} className="border-t border-surface-border">
-                          <td className="px-3 py-2 whitespace-nowrap">{periodLabel(m.start_time, m.end_time, m.tz_offset_minutes)}</td>
-                          <td className="px-3 py-2"><TypeChip type={m.monitoring_type} size="sm" /></td>
-                          <td className="px-3 py-2 whitespace-nowrap">{duration(m.duration_minutes)}</td>
-                          <td className="px-3 py-2">{m.client_name}</td>
-                          <td className="px-3 py-2">{m.professional_name ?? '—'}</td>
-                          <td className="px-3 py-2 text-right"><Link href={adminMonitoringHref(m)} className="text-teal-dark hover:underline whitespace-nowrap">Apri →</Link></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-        </section>
-
-        {/* Eliminazione */}
-        <section className="rounded-xl border border-red-200 bg-red-50/40 p-4">
-          <h4 className="text-sm font-medium text-red-600 mb-1.5">Zona pericolosa</h4>
-          <p className="text-xs text-anthracite-lighter mb-3">L&apos;eliminazione rimuove l&apos;account auth e il profilo. {user.role === 'professional' && 'Spunta la casella per cancellare anche tutti i suoi clienti e le relative misurazioni.'}</p>
-          {user.role === 'professional' && (
-            <label className="flex items-center gap-2 text-xs text-anthracite mb-3">
-              <input type="checkbox" checked={cascade} onChange={(e) => setCascade(e.target.checked)} />
-              Cancella anche i {user.clients_count} clienti e i loro dati (irreversibile)
-            </label>
-          )}
-          <button type="button" onClick={() => setConfirm('delete')} className="text-sm px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white inline-flex items-center gap-1.5">
-            <Trash2 size={14} /> Elimina utente
-          </button>
-        </section>
-      </div>
-
-      {emailOpen && (
-        <EmailChangeDialog userId={user.id} currentEmail={user.email} onClose={() => setEmailOpen(false)} onChanged={onChanged} showToast={showToast} />
-      )}
-
-      {/* Conferme */}
-      <ConfirmDialog
-        open={confirm === 'role'}
-        onClose={() => setConfirm(null)}
-        onConfirm={changeRole}
-        title="Cambiare ruolo?"
-        description={`L'utente diventerà ${user.role === 'professional' ? 'un cliente' : 'un professionista'}. Verifica che non perda accesso ai suoi dati.`}
-        confirmText="Cambia ruolo"
-        destructive
-      />
-      <ConfirmDialog
-        open={confirm === 'delete'}
-        onClose={() => setConfirm(null)}
-        onConfirm={deleteUser}
-        title="Eliminare definitivamente?"
-        description={`Stai per eliminare ${user.full_name}.${cascade ? ' Verranno cancellati anche tutti i suoi clienti e le misurazioni.' : ''} Operazione irreversibile.`}
-        confirmText="Elimina"
-        destructive
-        requireTypedConfirmation={user.email ?? 'ELIMINA'}
-      />
-      <Modal open={confirm === 'setpw'} onClose={() => setConfirm(null)} title="Imposta nuova password" size="sm"
-        footer={
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setConfirm(null)} className="btn-secondary text-sm py-2">Annulla</button>
-            <button type="button" onClick={setPassword} disabled={newPassword.length < 8 || busy === 'setpw'} className="text-sm px-5 py-2 rounded-xl bg-teal hover:bg-teal-dark text-white font-medium disabled:opacity-50">
-              {busy === 'setpw' ? 'Attendere…' : 'Imposta'}
-            </button>
-          </div>
-        }
-      >
-        <label className="input-label">Nuova password (min 8 caratteri)</label>
-        <input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="input-field" placeholder="••••••••" />
-        <p className="text-xs text-anthracite-lighter mt-2">La password verrà impostata immediatamente. Comunicala all&apos;utente su un canale sicuro.</p>
-      </Modal>
-    </Modal>
-  )
 }
 
 // ── TAB CLIENTI ─────────────────────────────────────────────────────────────

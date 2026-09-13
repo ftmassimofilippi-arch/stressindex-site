@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-export default function LoginPage({ searchParams }: { searchParams: { redirect?: string } }) {
+export default function LoginPage({ searchParams }: { searchParams: { redirect?: string; stato?: string } }) {
   const redirectTo = searchParams.redirect ?? '/area-professionisti'
 
   return (
@@ -42,6 +42,13 @@ export default function LoginPage({ searchParams }: { searchParams: { redirect?:
           <p className="mt-3 text-anthracite-light">
             Inserisci le credenziali della tua app per accedere alla dashboard clinica.
           </p>
+
+          {searchParams.stato === 'bloccato' && (
+            <div className="mt-6 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
+              Il tuo account è stato bloccato e la sessione è stata chiusa. Per informazioni scrivi a{' '}
+              <a href="mailto:support@stressindex.io" className="font-medium underline">support@stressindex.io</a>.
+            </div>
+          )}
 
           <div className="mt-8">
             <LoginForm redirectTo={redirectTo} />

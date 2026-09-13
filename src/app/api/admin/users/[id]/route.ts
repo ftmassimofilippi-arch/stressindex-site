@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { logAdminAction } from '@/lib/admin-audit'
+import { setPlanViaSubscription } from '@/lib/admin-commerciale'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -23,7 +25,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (body.data_nascita === null) profileUpdate.data_nascita = null
   if (typeof body.sesso === 'string') profileUpdate.sesso = body.sesso || null
   if (body.role === 'professional' || body.role === 'client') profileUpdate.role = body.role
-  if (body.plan === 'base' || body.plan === 'pro') profileUpdate.plan = body.plan
 
   // L'email dell'account NON si cambia da qui: passa da
   // /api/admin/users/[id]/email (anteprima, conferma digitata, motivo, schede
@@ -41,6 +42,22 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (profileUpdate.nome !== undefined) ppUpdate.nome = profileUpdate.nome
     if (profileUpdate.cognome !== undefined) ppUpdate.cognome = profileUpdate.cognome
     await admin.from('professional_profiles').update(ppUpdate).eq('id', userId)
+  }
+
+  // Piano: abbonamenti + storico + audit (024), non più profiles.plan diretto.
+  if (body.plan === 'base' || body.plan === 'pro') {
+    const res = await setPlanViaSubscription(admin, guard.user, userId, body.plan)
+    if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status })
+  }
+
+  if (profileUpdate.role !== undefined) {
+    const { data: before } = await admin.from('profiles').select('role').eq('id', userId).maybeSingle()
+    await logAdminAction(admin, guard.user, {
+      action: 'change_role',
+      target_type: 'user',
+      target_id: userId,
+      details: { prima: (before as { role?: string } | null)?.role ?? null, dopo: profileUpdate.role },
+    })
   }
 
   if (Object.keys(profileUpdate).length > 0) {

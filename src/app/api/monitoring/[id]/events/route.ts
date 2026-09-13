@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getMonitoringSession, saveEventsFromWeb } from '@/lib/monitoring-data'
 import { getCurrentUser, resolveViewingProfessional } from '@/lib/dashboard-data'
 import { EVENT_TYPE_LABEL } from '@/lib/monitoring-format'
+import { getMyAccountAccess, hasModule } from '@/lib/account-access'
 import type { MonitoringEvent } from '@/lib/monitoring-types'
 
 export const runtime = 'nodejs'
@@ -40,6 +41,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   const session = await getMonitoringSession(params.id, currentUserId)
   if (!session) return NextResponse.json({ error: 'Monitoraggio non trovato o non accessibile.' }, { status: 404 })
   if (session.monitoring_type === 'sleep') return NextResponse.json({ error: 'Le notti del modulo Sonno non hanno eventi modificabili.' }, { status: 400 })
+  if (!hasModule(await getMyAccountAccess(), 'monitoring')) return NextResponse.json({ error: 'Modulo Monitoraggio non attivo per questo account.' }, { status: 403 })
 
   const startMs = new Date(session.start_time).getTime()
   const endMs = new Date(session.end_time).getTime()

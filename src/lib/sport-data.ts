@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import { getMyAccountAccess, hasModule } from './account-access'
 import { createClient } from './supabase-server'
 import { resolveViewingProfessional, type ViewingProfessional } from './dashboard-data'
 import { SPORT_LIVE_COLUMNS, type AthleteMeta, type SportLiveRow } from './sport-live'
@@ -117,7 +118,7 @@ export interface SportSessionFilters {
 export interface SportAccess {
   userId: string | null
   plan: string | null
-  isPro: boolean // plan === 'pro' OPPURE superadmin
+  isPro: boolean // modulo sport attivo (has_module_access) — il superadmin ha sempre accesso
   isSuperadmin: boolean
 }
 
@@ -125,20 +126,11 @@ export interface SportAccess {
 // richiesta (React cache): più chiamate nello stesso render condividono il
 // risultato senza ripetere la query. Error-safe: se la colonna plan non esiste
 // ancora, plan resta null e isPro=false (sezione Sport nascosta).
+// Dalla 024 l'accesso viene da has_module_access(uid, 'sport') tramite
+// my_account_access (piano + eccezioni + stato); senza la 024 vale plan='pro'.
 export const getSportAccess = cache(async (): Promise<SportAccess> => {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { userId: null, plan: null, isPro: false, isSuperadmin: false }
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('plan, is_superadmin')
-    .eq('id', user.id)
-    .maybeSingle()
-  if (error) return { userId: user.id, plan: null, isPro: false, isSuperadmin: false }
-  const row = data as { plan?: string | null; is_superadmin?: boolean } | null
-  const plan = row?.plan ?? null
-  const isSuperadmin = !!row?.is_superadmin
-  return { userId: user.id, plan, isPro: plan === 'pro' || isSuperadmin, isSuperadmin }
+  const access = await getMyAccountAccess()
+  return { userId: access.userId, plan: access.plan, isPro: hasModule(access, 'sport'), isSuperadmin: access.isSuperadmin }
 })
 
 // Helper booleano: l'utente loggato ha accesso al Modulo Sport?

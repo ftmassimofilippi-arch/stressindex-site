@@ -8,6 +8,8 @@ import { SleepDetail } from '@/components/monitoring/SleepDetail'
 import { getProfessionalProfile, listAlerts, resolveViewingProfessional } from '@/lib/dashboard-data'
 import { getMonitoringSession } from '@/lib/monitoring-data'
 import { isSleepSession } from '@/lib/monitoring-types'
+import { ModuleLocked } from '@/components/dashboard/ModuleLocked'
+import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
 
 export const metadata = { title: 'Dettaglio monitoraggio' }
 export const dynamic = 'force-dynamic'
@@ -27,6 +29,16 @@ export default async function MonitoringDetailPage({
     getMonitoringSession(params.id, professionalId),
   ])
   if (!session) notFound()
+  if (filterMonitoringByModules([session], await getMyAccountAccess()).length === 0) {
+    return (
+      <DashboardLayout professional={professional} alertCount={alerts.length}>
+        <ModuleLocked
+          title={isSleepSession(session) ? 'Modulo Sonno' : 'Modulo Monitoraggio'}
+          description={`Il modulo ${isSleepSession(session) ? 'Sonno' : 'Monitoraggio 24h'} non è attivo per il tuo account.`}
+        />
+      </DashboardLayout>
+    )
+  }
 
   const readOnly = !!viewing
   const isSuperadminView = viewing?.access === 'superadmin'

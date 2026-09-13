@@ -6,6 +6,8 @@ import { getProfessionalProfile, listAlerts, listClientsEnriched, resolveViewing
 import { listMonitoringSessionsForProfessional } from '@/lib/monitoring-data'
 import { MON } from '@/lib/monitoring-format'
 import { MonitoringIndex } from './MonitoringIndex'
+import { ModuleLocked } from '@/components/dashboard/ModuleLocked'
+import { filterMonitoringByModules, getMyAccountAccess, hasModule } from '@/lib/account-access'
 
 export const metadata = { title: 'Monitoraggio' }
 export const dynamic = 'force-dynamic'
@@ -13,12 +15,21 @@ export const dynamic = 'force-dynamic'
 export default async function MonitoringPage({ searchParams }: { searchParams?: { professionista?: string } }) {
   const { viewing, currentUserId } = await resolveViewingProfessional(searchParams?.professionista)
   const professionalId = viewing?.user_id ?? currentUserId
-  const [professional, alerts, sessions, clients] = await Promise.all([
+  const [professional, alerts, allSessions, clients, access] = await Promise.all([
     getProfessionalProfile(),
     listAlerts({ status: ['new'] }),
     professionalId ? listMonitoringSessionsForProfessional(professionalId) : Promise.resolve([]),
     listClientsEnriched(viewing ? { professionistaId: viewing.user_id } : undefined),
+    getMyAccountAccess(),
   ])
+  if (!hasModule(access, 'monitoring') && !hasModule(access, 'sleep')) {
+    return (
+      <DashboardLayout professional={professional} alertCount={alerts.length}>
+        <ModuleLocked title="Monitoraggio e Sonno" description="I moduli Monitoraggio 24h e Sonno non sono attivi per il tuo account." />
+      </DashboardLayout>
+    )
+  }
+  const sessions = filterMonitoringByModules(allSessions, access)
   const isSuperadminView = viewing?.access === 'superadmin'
   const baseQuery = viewing ? `?professionista=${viewing.user_id}` : ''
   const clientOptions = clients

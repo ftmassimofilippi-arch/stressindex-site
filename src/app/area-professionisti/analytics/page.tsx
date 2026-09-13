@@ -1,6 +1,7 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { getCurrentUser, getProfessionalProfile, listAlerts, listAllMeasurements, listClientsEnriched } from '@/lib/dashboard-data'
 import { listMonitoringSessionsForProfessional } from '@/lib/monitoring-data'
+import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
 import { AnalyticsClient } from './AnalyticsClient'
 
 export const dynamic = 'force-dynamic'
@@ -23,7 +24,7 @@ export default async function AnalyticsPage() {
         <p className="mt-1.5 text-sm text-anthracite-lighter">Confronta i tuoi clienti, scopri pattern, ottimizza il tuo lavoro</p>
       </header>
 
-      <AnalyticsClient clients={clients} measurements={measurements} monitoring={monitoring} />
+      <AnalyticsClient clients={clients} measurements={measurements} monitoring={filterMonitoringByModules(monitoring, await getMyAccountAccess())} />
     </DashboardLayout>
   )
 }

@@ -17,6 +17,7 @@ type SidebarProps = {
   } | null
   isSuperadmin?: boolean
   isPro?: boolean
+  hasMonitoring?: boolean // modulo monitoring o sleep attivo (has_module_access)
 }
 
 type NavItem = {
@@ -37,7 +38,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/area-professionisti/organizzazione', label: 'Organizzazione', icon: Building2 },
 ]
 
-// Voce Sport: visibile solo ai professionisti Pro (o superadmin). Inserita
+// Voce Sport: visibile solo con il modulo sport attivo (o superadmin). Inserita
 // dopo "Analytics" e prima di "Impostazioni".
 const SPORT_ITEM: NavItem = {
   href: '/area-professionisti/sport',
@@ -55,7 +56,7 @@ const TEAM_LIVE_ITEM: NavItem = {
 }
 
 // Monitoraggio (24h, notte, sonno): sotto Sport, con il colore accento del
-// modulo (blu notte #3D5A80). Visibile a tutti i professionisti.
+// modulo (blu notte #3D5A80). Visibile con il modulo monitoring o sleep.
 const MONITORING_ITEM: NavItem = {
   href: '/area-professionisti/monitoraggio',
   label: 'Monitoraggio',
@@ -69,15 +70,16 @@ const SUPERADMIN_ITEM: NavItem = {
   icon: ShieldCheck,
 }
 
-export function Sidebar({ professional, isSuperadmin, isPro }: SidebarProps) {
+export function Sidebar({ professional, isSuperadmin, isPro, hasMonitoring = true }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [liveActive, setLiveActive] = useState(false)
   // Sport + Team Live vanno dopo Analytics (indice 3, prima di Impostazioni).
+  const monitoringItems = hasMonitoring ? [MONITORING_ITEM] : []
   const baseItems = isPro
-    ? [...NAV_ITEMS.slice(0, 3), SPORT_ITEM, TEAM_LIVE_ITEM, MONITORING_ITEM, ...NAV_ITEMS.slice(3)]
-    : [...NAV_ITEMS.slice(0, 3), MONITORING_ITEM, ...NAV_ITEMS.slice(3)]
+    ? [...NAV_ITEMS.slice(0, 3), SPORT_ITEM, TEAM_LIVE_ITEM, ...monitoringItems, ...NAV_ITEMS.slice(3)]
+    : [...NAV_ITEMS.slice(0, 3), ...monitoringItems, ...NAV_ITEMS.slice(3)]
   const navItems = isSuperadmin ? [...baseItems, SUPERADMIN_ITEM] : baseItems
 
   // Pallino "live": conta gli atleti in sessione (connessi e aggiornati negli

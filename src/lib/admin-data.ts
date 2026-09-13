@@ -2,6 +2,7 @@ import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { createAdminClient } from './supabase-admin'
 import { type AdminIssue, ADMIN_ISSUE_LABELS, clientLinkStatusLabel, linkStatusRank, pickBestLink } from './admin-issues'
 import { getAdminMonitoringCounts } from './admin-monitoring'
+import { getCommercialeByUser, type AccountCommerciale } from './admin-commerciale'
 
 // ============================================================================
 // SUPER ADMIN — data layer (service_role)
@@ -53,6 +54,8 @@ export interface AdminUser {
   issue_label: string | null
   // stato piano/abbonamento testuale
   subscription_status: string
+  // stato account, abbonamento, moduli (migration 024); null se non applicata
+  commerciale: AccountCommerciale | null
 }
 
 export interface AdminLink {
@@ -100,6 +103,20 @@ async function listAllAuthUsers(admin: SupabaseClient): Promise<User[]> {
     if (data.users.length < perPage) break
   }
   return out
+}
+
+// Tutte le righe di una select (PostgREST restituisce al massimo 1000 righe
+// per richiesta: measurement_analytics ne ha migliaia).
+async function selectAll<T>(admin: SupabaseClient, table: string, columns: string): Promise<{ data: T[]; error: null }> {
+  const out: T[] = []
+  const PAGE = 1000
+  for (let from = 0; from < 1_000_000; from += PAGE) {
+    const { data, error } = await admin.from(table).select(columns).range(from, from + PAGE - 1)
+    if (error) throw new Error(`${table}: ${error.message}`)
+    out.push(...((data ?? []) as T[]))
+    if ((data ?? []).length < PAGE) break
+  }
+  return { data: out, error: null }
 }
 
 function fullName(nome: string | null, cognome: string | null, fallback: string | null): string {
@@ -187,14 +204,15 @@ const CLIENT_COLUMNS = 'id, professionista_id, nome, cognome, email, client_user
 export async function getAdminUsers(): Promise<AdminUser[]> {
   const admin = createAdminClient()
 
-  const [authUsers, profilesRes, profProfilesRes, clientsRes, measurementsRes, linksRes, monitoring] = await Promise.all([
+  const [authUsers, profilesRes, profProfilesRes, clientsRes, measurementsRes, linksRes, monitoring, commerciale] = await Promise.all([
     listAllAuthUsers(admin),
     admin.from('profiles').select('id, nome, cognome, email, role, plan, is_superadmin, organization_id, data_nascita, sesso'),
     admin.from('professional_profiles').select('id, nome, cognome, trial_expires_at'),
     admin.from('clients').select(CLIENT_COLUMNS),
-    admin.from('measurement_analytics').select('user_id, client_id'),
+    selectAll<{ user_id: string | null; client_id: string | null }>(admin, 'measurement_analytics', 'user_id, client_id'),
     admin.from('client_professional_links').select(LINK_COLUMNS),
     getAdminMonitoringCounts(),
+    getCommercialeByUser(admin),
   ])
 
   type ProfileRow = {
@@ -353,6 +371,7 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
         issue,
         issue_label: issue ? ADMIN_ISSUE_LABELS[issue] : null,
         subscription_status: subscription,
+        commerciale: commerciale?.get(u.id) ?? null,
       }
     })
     .sort((a, b) => {
@@ -433,7 +452,7 @@ export async function getAdminClients(): Promise<AdminClientRow[]> {
     admin.from('clients').select(CLIENT_COLUMNS),
     admin.from('profiles').select('id, nome, cognome, email'),
     admin.from('professional_profiles').select('id, nome, cognome'),
-    admin.from('measurement_analytics').select('client_id'),
+    selectAll<{ client_id: string | null }>(admin, 'measurement_analytics', 'client_id'),
     admin.from('client_professional_links').select(LINK_COLUMNS),
     listAllAuthUsers(admin),
     getAdminMonitoringCounts(),

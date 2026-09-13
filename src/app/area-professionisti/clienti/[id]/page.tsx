@@ -11,6 +11,7 @@ import {
   resolveViewingProfessional,
 } from '@/lib/dashboard-data'
 import { listMonitoringSessionsForClient } from '@/lib/monitoring-data'
+import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
 import { ClientProfile } from './ClientProfile'
 
 export const dynamic = 'force-dynamic'
@@ -28,7 +29,7 @@ export default async function ClientPage({
   const superadminAccess = viewing?.access === 'superadmin'
 
   const professionalId = viewing?.user_id ?? currentUserId
-  const [client, professional, measurements, alerts, notes, settings, messages, allAlerts, monitoring] = await Promise.all([
+  const [client, professional, measurements, alerts, notes, settings, messages, allAlerts, allMonitoring, access] = await Promise.all([
     getClient(params.id),
     getProfessionalProfile(),
     listMeasurementsForClient(params.id),
@@ -38,7 +39,9 @@ export default async function ClientPage({
     listMessagesForClient(params.id),
     listAlerts({ status: ['new'] }),
     professionalId ? listMonitoringSessionsForClient(professionalId, params.id) : Promise.resolve([]),
+    getMyAccountAccess(),
   ])
+  const monitoring = filterMonitoringByModules(allMonitoring, access)
 
   if (!client) notFound()
 

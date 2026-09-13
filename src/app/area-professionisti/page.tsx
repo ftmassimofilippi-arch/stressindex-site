@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Activity, AlertTriangle, ArrowRight, Calendar, NotebookPen, SunMoon, TrendingUp, UserCheck } from 'lucide-react'
 import { MonitoringTable } from '@/components/monitoring/MonitoringTable'
 import { listMonitoringSessionsForProfessional } from '@/lib/monitoring-data'
+import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
 import { MON } from '@/lib/monitoring-format'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { MetricCard } from '@/components/dashboard/MetricCard'
@@ -40,7 +41,7 @@ export default async function DashboardHome() {
     listPendingInvitesForCurrentUser(),
     user ? listMonitoringSessionsForProfessional(user.id) : Promise.resolve([]),
   ])
-  const recentMonitoring = monitoring.slice(0, 5)
+  const recentMonitoring = filterMonitoringByModules(monitoring, await getMyAccountAccess()).slice(0, 5)
 
   const clientMap = new Map(allClients.map((c) => [c.id, c]))
   const newAlertCount = alerts.filter((a) => a.status === 'new').length

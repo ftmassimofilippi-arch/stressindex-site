@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { filterMonitoringByModules, getMyAccountAccess } from './account-access'
 import { createClient } from './supabase-server'
 import { getMonitoringSession } from './monitoring-data'
 import type { MonitoringSession } from './monitoring-types'
@@ -23,6 +24,10 @@ export async function loadMonitoringForRoute(sessionId: string): Promise<Monitor
   const session = await getMonitoringSession(sessionId, user.id)
   if (!session) {
     return { error: NextResponse.json({ error: 'Monitoraggio non trovato o non accessibile con questo account.' }, { status: 404 }), session: null, professional: null, userId: null }
+  }
+  const modules = await getMyAccountAccess()
+  if (filterMonitoringByModules([session], modules).length === 0) {
+    return { error: NextResponse.json({ error: 'Modulo non attivo per questo account.' }, { status: 403 }), session: null, professional: null, userId: null }
   }
   const ownerId = session.professionista_id ?? user.id
   const { data: professional } = await supabase

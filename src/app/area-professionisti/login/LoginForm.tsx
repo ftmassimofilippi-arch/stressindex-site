@@ -33,7 +33,9 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       setError(
         authError.message.includes('Invalid login credentials')
           ? 'Email o password non corrette'
-          : authError.message
+          : /banned/i.test(authError.message)
+            ? 'Account bloccato. Per informazioni scrivi a support@stressindex.io'
+            : authError.message
       )
       return
     }
