@@ -5,7 +5,12 @@ import { SettingsTabs } from './SettingsTabs'
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Impostazioni' }
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  // ?tab=notifiche: ci arriva il link "cambia le preferenze" in fondo alle email.
+  searchParams?: { tab?: string }
+}) {
   const [professional, prefs, alerts] = await Promise.all([
     getProfessionalProfile(),
     getNotificationPreferences(),
@@ -19,7 +24,7 @@ export default async function SettingsPage() {
         <p className="mt-1.5 text-sm text-anthracite-lighter">Gestisci il tuo profilo, notifiche e account</p>
       </header>
 
-      <SettingsTabs professional={professional} preferences={prefs} />
+      <SettingsTabs professional={professional} preferences={prefs} initialTab={searchParams?.tab} />
     </DashboardLayout>
   )
 }

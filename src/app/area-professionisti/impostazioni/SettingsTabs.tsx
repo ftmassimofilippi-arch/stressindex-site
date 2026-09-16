@@ -10,6 +10,8 @@ import type { NotificationPreferences, ProfessionalProfile } from '@/lib/types'
 type Props = {
   professional: ProfessionalProfile | null
   preferences: NotificationPreferences | null
+  /** Scheda da aprire: arriva da ?tab=, così il link "cambia preferenze" delle email atterra qui. */
+  initialTab?: string
 }
 
 const TABS = [
@@ -20,8 +22,12 @@ const TABS = [
 
 type TabId = typeof TABS[number]['id']
 
-export function SettingsTabs({ professional, preferences }: Props) {
-  const [tab, setTab] = useState<TabId>('profilo')
+function asTabId(v: string | undefined): TabId {
+  return TABS.some((t) => t.id === v) ? (v as TabId) : 'profilo'
+}
+
+export function SettingsTabs({ professional, preferences, initialTab }: Props) {
+  const [tab, setTab] = useState<TabId>(() => asTabId(initialTab))
 
   return (
     <>
@@ -148,6 +154,33 @@ function ProfiloTab({ professional }: { professional: ProfessionalProfile | null
   )
 }
 
+// Fusi proposti nel menu. `Intl.supportedValuesOf` copre tutto ma non esiste
+// ovunque: in quel caso resta questa lista breve, che basta a chi lavora in
+// Italia e nei paesi vicini.
+const FUSI_BASE = [
+  'Europe/Rome', 'Europe/Zurich', 'Europe/Vienna', 'Europe/Berlin', 'Europe/Paris',
+  'Europe/Madrid', 'Europe/London', 'Europe/Lisbon', 'Europe/Athens', 'UTC',
+]
+
+function fusiDisponibili(selezionato: string): string[] {
+  let lista = FUSI_BASE
+  try {
+    const tutti = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.('timeZone')
+    if (tutti?.length) lista = tutti
+  } catch {
+    /* lista breve */
+  }
+  return lista.includes(selezionato) ? lista : [selezionato, ...lista]
+}
+
+const ORE = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}:00`)
+
+const MODI: Array<{ id: NotificationPreferences['on_client_measurement']; label: string; desc: string }> = [
+  { id: 'subito', label: 'Subito', desc: 'Una email appena il cliente si misura. Al massimo una per cliente ogni ora.' },
+  { id: 'riepilogo', label: 'Riepilogo', desc: 'Una sola email al giorno con tutte le misurazioni, raggruppate per cliente.' },
+  { id: 'mai', label: 'Mai', desc: 'Nessuna email. Le misurazioni restano comunque visibili nelle schede.' },
+]
+
 function NotificheTab({ preferences }: { preferences: NotificationPreferences | null }) {
   const router = useRouter()
   const [data, setData] = useState({
@@ -155,26 +188,123 @@ function NotificheTab({ preferences }: { preferences: NotificationPreferences | 
     weekly_summary_day: (preferences?.weekly_summary_day ?? 'monday') as NotificationPreferences['weekly_summary_day'],
     weekly_summary_time: preferences?.weekly_summary_time ?? '08:00',
     alert_email_enabled: preferences?.alert_email_enabled ?? false,
-    marketing_email_enabled: preferences?.marketing_email_enabled ?? true,
+    marketing_emails: preferences?.marketing_emails ?? true,
+    on_client_measurement: (preferences?.on_client_measurement ?? 'riepilogo') as NotificationPreferences['on_client_measurement'],
+    digest_hour: preferences?.digest_hour ?? 20,
+    email_override: preferences?.email_override ?? '',
+    timezone: preferences?.timezone ?? 'Europe/Rome',
+    lingua: (preferences?.lingua ?? 'it') as NotificationPreferences['lingua'],
   })
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
+  const [err, setErr] = useState<string | null>(null)
 
   async function save() {
-    setSaving(true); setMsg(null)
+    setErr(null); setMsg(null)
+    const override = data.email_override.trim()
+    if (override && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(override)) {
+      setErr('L\'email alternativa non è valida.')
+      return
+    }
+    setSaving(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
     const { error } = await supabase
       .from('notification_preferences')
-      .upsert({ user_id: user.id, ...data })
+      .upsert({ user_id: user.id, ...data, email_override: override || null })
     setSaving(false)
-    if (error) setMsg('Errore: ' + error.message)
+    if (error) setErr('Errore: ' + error.message)
     else { setMsg('Preferenze salvate'); router.refresh(); setTimeout(() => setMsg(null), 3000) }
   }
 
   return (
     <div className="space-y-6">
+      <section className="card p-6">
+        <h2 className="font-serif text-lg text-anthracite mb-1">Misurazioni dei clienti collegati</h2>
+        <p className="text-sm text-anthracite-lighter mb-5">
+          Quando un cliente collegato si misura dalla propria app puoi essere avvisato via email, con il link diretto alla registrazione.
+        </p>
+
+        <div className="space-y-2">
+          {MODI.map((m) => (
+            <label
+              key={m.id}
+              className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-colors ${
+                data.on_client_measurement === m.id
+                  ? 'border-teal bg-teal-light/50'
+                  : 'border-surface-border hover:bg-surface'
+              }`}
+            >
+              <input
+                type="radio"
+                name="on_client_measurement"
+                value={m.id}
+                checked={data.on_client_measurement === m.id}
+                onChange={() => setData({ ...data, on_client_measurement: m.id })}
+                className="mt-0.5 accent-teal"
+              />
+              <span className="flex-1">
+                <span className="block text-sm font-medium text-anthracite">{m.label}</span>
+                <span className="block text-xs text-anthracite-lighter mt-0.5">{m.desc}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+
+        {data.on_client_measurement !== 'mai' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5 pt-5 border-t border-surface-border">
+            {data.on_client_measurement === 'riepilogo' && (
+              <>
+                <div>
+                  <label className="input-label">Ora del riepilogo</label>
+                  <select
+                    value={`${String(data.digest_hour).padStart(2, '0')}:00`}
+                    onChange={(e) => setData({ ...data, digest_hour: Number(e.target.value.slice(0, 2)) })}
+                    className="input-field"
+                  >
+                    {ORE.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="input-label">Fuso orario</label>
+                  <select
+                    value={data.timezone}
+                    onChange={(e) => setData({ ...data, timezone: e.target.value })}
+                    className="input-field"
+                  >
+                    {fusiDisponibili(data.timezone).map((f) => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                  <p className="text-xs text-anthracite-lighter mt-1">L&apos;ora del riepilogo è letta in questo fuso.</p>
+                </div>
+              </>
+            )}
+            <div>
+              <label className="input-label">Lingua delle email</label>
+              <select
+                value={data.lingua}
+                onChange={(e) => setData({ ...data, lingua: e.target.value as NotificationPreferences['lingua'] })}
+                className="input-field"
+              >
+                <option value="it">Italiano</option>
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+              </select>
+            </div>
+            <div>
+              <label className="input-label">Email alternativa (opzionale)</label>
+              <input
+                type="email"
+                value={data.email_override}
+                onChange={(e) => setData({ ...data, email_override: e.target.value })}
+                className="input-field"
+                placeholder="Lascia vuoto per usare l'email dell'account"
+              />
+            </div>
+          </div>
+        )}
+      </section>
+
       <section className="card p-6 space-y-5">
         <Switch
           label="Riassunto settimanale via email"
@@ -211,12 +341,13 @@ function NotificheTab({ preferences }: { preferences: NotificationPreferences | 
         <Switch
           label="Marketing e novità prodotto"
           desc="Aggiornamenti su nuove funzionalità di Stress Index"
-          checked={data.marketing_email_enabled}
-          onChange={(v) => setData({ ...data, marketing_email_enabled: v })}
+          checked={data.marketing_emails}
+          onChange={(v) => setData({ ...data, marketing_emails: v })}
         />
       </section>
 
       <div className="flex items-center justify-end gap-3 flex-wrap">
+        {err && <span className="text-sm text-red-600">{err}</span>}
         {msg && <span className="text-sm text-emerald-600">{msg}</span>}
         <button type="button" onClick={save} disabled={saving} className="btn-primary text-sm inline-flex items-center gap-1.5">
           <Save size={15} /> {saving ? 'Salvataggio…' : 'Salva preferenze'}

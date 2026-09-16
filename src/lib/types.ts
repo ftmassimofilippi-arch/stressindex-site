@@ -298,13 +298,27 @@ export interface Message {
   delivered: boolean
 }
 
+/** Cosa fare quando un cliente collegato si misura dalla propria app. */
+export type OnClientMeasurement = 'subito' | 'riepilogo' | 'mai'
+
 export interface NotificationPreferences {
   user_id: UUID
   weekly_summary_email: boolean
   weekly_summary_day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
   weekly_summary_time: string
   alert_email_enabled: boolean
-  marketing_email_enabled: boolean
+  // ⚠️ La colonna si chiama `marketing_emails` (001), non `marketing_email_enabled`:
+  // il nome sbagliato faceva fallire ogni salvataggio delle preferenze con PGRST204.
+  marketing_emails: boolean
+  // ── Notifiche sulle misurazioni da remoto (migration 025) ──────────────────
+  on_client_measurement: OnClientMeasurement
+  /** Ora locale (0-23) del riepilogo giornaliero. */
+  digest_hour: number
+  /** Indirizzo alternativo; se vuoto si usa l'email dell'account. */
+  email_override: string | null
+  /** Fuso IANA, serve a far partire il riepilogo all'ora giusta. */
+  timezone: string
+  lingua: 'it' | 'en' | 'de'
 }
 
 export interface AiInsight {
