@@ -56,11 +56,12 @@ comando, **non si cerca il modo di aggirarlo**: si scrive nella proposta cosa se
   scrive una scheda nuova (issue) e si va avanti.
 - Inventare un dato mancante. Se manca, si dice che manca.
 
-## Come si scrive una richiesta (scheda)
+## Le richieste si dicono, non si compilano
 
-Su GitHub, "Issues" → "New issue" → modulo "Richiesta". Tre righe, in parole proprie:
-cosa voglio ottenere, perché, come riconosco che è fatto. **Mai la soluzione tecnica**: quella la
-trova chi costruisce. Ogni proposta cita la sua scheda (`Chiude #12`).
+Chi chiede non compila moduli: dice cosa vuole, e il diario lo registra da solo. È **l'AI** che,
+quando c'è qualcosa da tenere in sospeso per dopo, apre la scheda (Issues → "Richiesta") e la cita
+nella proposta (`Chiude #12`). Nella proposta la richiesta va incollata **com'era scritta**, non
+riassunta: è quella che dice cosa si voleva ottenere, e serve a chi ripara il difetto fra sei mesi.
 
 ## Cosa fa l'AI all'inizio di ogni sessione
 
