@@ -1,10 +1,12 @@
 import Link from 'next/link'
-import { ArrowLeft, Plus, Users } from 'lucide-react'
+import { ArrowLeft, Users } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { EmptyState } from '@/components/dashboard/EmptyState'
 import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
 import { PlanToggle } from '@/components/dashboard/PlanToggle'
+import { getMyAccountAccess, hasModule } from '@/lib/account-access'
 import { ClientsTable } from './ClientsTable'
+import { NewClientButton } from './NewClientButton'
 import {
   getProfessionalPlan,
   getProfessionalProfile,
@@ -25,11 +27,12 @@ export default async function ClientiPage({
   const effectiveId = viewing?.user_id
   const isSuperadminView = viewing?.access === 'superadmin'
 
-  const [professional, clients, alerts, viewingPlan] = await Promise.all([
+  const [professional, clients, alerts, viewingPlan, access] = await Promise.all([
     getProfessionalProfile(),
     listClientsEnriched(effectiveId ? { professionistaId: effectiveId } : undefined),
     listAlerts({ status: ['new', 'seen'] }),
     isSuperadminView && viewing ? getProfessionalPlan(viewing.user_id) : Promise.resolve(null),
+    getMyAccountAccess(),
   ])
 
   const newAlertCount = alerts.filter((a) => a.status === 'new').length
@@ -70,11 +73,8 @@ export default async function ClientiPage({
           </h1>
           <p className="mt-1.5 text-sm text-anthracite-lighter">{clients.length} clienti</p>
         </div>
-        {!viewing && (
-          <button type="button" className="btn-primary text-sm inline-flex items-center gap-2" disabled title="Aggiungi clienti dall'app mobile">
-            <Plus size={16} /> Nuovo cliente
-          </button>
-        )}
+        {/* In vista "dati di un altro professionista" si guarda, non si crea. */}
+        {!viewing && <NewClientButton sportEnabled={hasModule(access, 'sport')} />}
       </header>
 
       {clients.length === 0 ? (
