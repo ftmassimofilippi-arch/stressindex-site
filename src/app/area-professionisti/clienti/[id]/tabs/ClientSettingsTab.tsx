@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/dashboard/ConfirmDialog'
 import { createClient } from '@/lib/supabase-browser'
 import { fullName } from '@/lib/format'
 import type { Client, ClientSettings } from '@/lib/types'
+import { ClientAccessSection } from '../ClientAccessSection'
 
 type Props = { client: Client; initialSettings: ClientSettings | null }
 
@@ -212,6 +213,8 @@ export function ClientSettingsTab({ client, initialSettings }: Props) {
           <Save size={15} /> {saving ? 'Salvataggio…' : 'Salva modifiche'}
         </button>
       </div>
+
+      <ClientAccessSection clientId={client.id} clientName={fullName(client) || 'Il cliente'} />
 
       <section className="card p-6 border-2 border-red-100 bg-red-50/30">
         <h3 className="font-serif text-lg text-red-700 mb-1">Zona pericolosa</h3>
