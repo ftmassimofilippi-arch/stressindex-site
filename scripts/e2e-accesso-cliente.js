@@ -95,6 +95,25 @@ async function link(professionalId, clientUserId) {
   if (error) throw new Error(`link: ${error.message}`)
 }
 
+/**
+ * Stato commerciale di un account (migration 024). `stato` null rimuove la riga,
+ * cioè riporta l'account ad "attivo".
+ *
+ * Si scrive direttamente su `account_stato` invece di passare da
+ * admin_set_account_status: quella scrive anche in admin_audit_log, e per un
+ * account usa-e-getta non vogliamo lasciare righe di audit in giro.
+ */
+async function impostaStato(userId, stato) {
+  if (stato === null) {
+    const { error } = await admin.from('account_stato').delete().eq('user_id', userId)
+    return error
+  }
+  const { error } = await admin
+    .from('account_stato')
+    .upsert({ user_id: userId, stato, motivo: 'prova e2e' })
+  return error
+}
+
 /** Cookie di sessione nel formato esatto di @supabase/ssr. */
 async function cookieHeader(email) {
   const anon = createClient(URL, ANON, { auth: { persistSession: false } })
@@ -147,6 +166,10 @@ async function pulizia() {
     // come traccia pseudonimizzata (uuid, azione, data) e non impediscono la
     // cancellazione dell'account. Si ripuliscono solo dal SQL Editor, con
     // select public.professional_access_log_purge_utente('<uuid>').
+    // Lo stato commerciale sparirebbe comunque in cascata con l'utente: si
+    // toglie prima perché se deleteUser fallisse non resti un account_stato
+    // orfano di una prova.
+    await admin.from('account_stato').delete().eq('user_id', uid)
     await admin.from('client_professional_links').delete().eq('client_user_id', uid)
     await admin.from('client_professional_links').delete().eq('professional_id', uid)
     await admin.from('clients').delete().eq('professionista_id', uid)
@@ -350,6 +373,53 @@ async function main() {
     console.log('  ⊘ registro non verificabile: migration 027 non applicata')
   } else {
     ok('l\'azione dall\'app è registrata come quella dal sito', dopoLog === primaLog + 1, `${primaLog} -> ${dopoLog}`)
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Stato dell'account. Sul sito lo fa il middleware, che però guarda solo
+  // /area-professionisti: le route /api/* non ci passano e girano con la
+  // service_role, quindi il controllo deve stare in requireProfessional. Vale
+  // per entrambe le porte, cookie e Bearer.
+  console.log('\n— Stato dell\'account (sospeso / bloccato) —')
+  const errStato = await impostaStato(profA.id, 'sospeso')
+  if (errStato && (errStato.code === '42P01' || errStato.code === 'PGRST205')) {
+    console.log('  ⊘ account_stato non esiste: migration 024 NON applicata, il controllo')
+    console.log('    dello stato non è verificabile (e in produzione non ha effetto).')
+  } else if (errStato) {
+    fail++
+    console.log(`  ✗ non sono riuscito a sospendere il professionista A: ${errStato.message}`)
+  } else {
+    r = await req(ckA, 'GET', `/api/clienti/${cardNuovo}/accesso`)
+    ok('>>> sospeso, col cookie -> 403 account_suspended',
+       r.status === 403 && r.json?.error === 'account_suspended', JSON.stringify(r.json))
+    r = await reqBearer(tokA, 'GET', `/api/clienti/${cardNuovo}/accesso`)
+    ok('>>> sospeso, dall\'app -> 403 account_suspended',
+       r.status === 403 && r.json?.error === 'account_suspended', JSON.stringify(r.json))
+    r = await reqBearer(tokA, 'POST', `/api/clienti/${cardNuovo}/accesso`, { action: 'copy_reset_link' })
+    ok('sospeso: nessuna azione sull\'accesso, nemmeno dall\'app',
+       r.status === 403 && r.json?.error === 'account_suspended', JSON.stringify(r.json))
+    r = await req(ckA, 'POST', '/api/clienti', {
+      nome: 'Sospeso', cognome: 'E2E', email: `sospeso-${TS}@${dom}`, accessMode: 'nessuno',
+    })
+    ok('sospeso: non crea nemmeno clienti -> 403',
+       r.status === 403 && r.json?.error === 'account_suspended', JSON.stringify(r.json))
+    // Se per un bug fosse passata, la scheda va comunque ripulita.
+    if (r.json?.client_id) creati.cards.push(r.json.client_id)
+
+    await impostaStato(profA.id, 'bloccato')
+    r = await req(ckA, 'GET', `/api/clienti/${cardNuovo}/accesso`)
+    ok('>>> bloccato, col cookie -> 403 account_blocked',
+       r.status === 403 && r.json?.error === 'account_blocked', JSON.stringify(r.json))
+    r = await reqBearer(tokA, 'GET', `/api/clienti/${cardNuovo}/accesso`)
+    ok('>>> bloccato, dall\'app -> 403 account_blocked',
+       r.status === 403 && r.json?.error === 'account_blocked', JSON.stringify(r.json))
+
+    // Riattivato: lo stato è letto a ogni richiesta, quindi vale subito, senza
+    // rifare login e senza aspettare la scadenza di un token.
+    await impostaStato(profA.id, null)
+    r = await reqBearer(tokA, 'GET', `/api/clienti/${cardNuovo}/accesso`)
+    ok('riattivato: si torna operativi subito, senza rifare login',
+       r.status === 200 && r.json?.ok === true, JSON.stringify(r.json))
   }
 
   console.log('\n— Rate limit —')

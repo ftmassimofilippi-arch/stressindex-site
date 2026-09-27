@@ -42,10 +42,24 @@ function isMissingRpc(error: { code?: string; message?: string } | null): boolea
   return error.code === 'PGRST202' || error.code === '42883' || (error.message ?? '').includes('my_account_access')
 }
 
-// Usata anche dal middleware (client con i cookie della richiesta).
+/**
+ * Stato dell'account di chi sta chiamando, con QUALUNQUE client Supabase che
+ * porti la sua identità: i cookie della richiesta (middleware) o l'header
+ * Authorization (requireProfessional, quindi anche l'app Flutter).
+ *
+ * null = non si sa: la 024 non è applicata, oppure la RPC è fallita. Chi chiama
+ * in quel caso lascia passare, perché una guardia che non sa non deve chiudere
+ * la porta a tutti.
+ */
 export async function fetchAccountStato(supabase: SupabaseClient): Promise<AccountStato | null> {
   const { data, error } = await supabase.rpc('my_account_access')
-  if (error || !data) return null
+  if (error) {
+    // La RPC assente è la normalità finché la 024 non è applicata: non è un
+    // errore da segnalare. Tutto il resto sì, o un guasto vero resterebbe muto.
+    if (!isMissingRpc(error)) console.error('[account-access] my_account_access', error.message)
+    return null
+  }
+  if (!data) return null
   return ((data as RpcResult).stato ?? null) as AccountStato | null
 }
 

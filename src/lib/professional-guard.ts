@@ -3,6 +3,7 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { createClient } from './supabase-server'
 import { resolveClientUserId } from './collegamenti'
+import { fetchAccountStato } from './account-access'
 
 // =============================================================================
 // Guardie per le route che agiscono a nome di un PROFESSIONISTA
@@ -23,6 +24,13 @@ import { resolveClientUserId } from './collegamenti'
 // Niente di ciò che arriva dal browser viene creduto: il professionista è
 // quello del cookie di sessione (o del JWT nell'header Authorization, per l'app
 // Flutter), e la scheda cliente deve risultare sua leggendo il database.
+//
+// Qui dentro vive anche il controllo dello stato commerciale dell'account. Sul
+// sito lo fa il middleware, che però guarda solo /area-professionisti: le route
+// /api/* non ci passano, e girando con la service_role scavalcano anche le
+// policy RESTRICTIVE della 024. Senza questo controllo un account sospeso o
+// bloccato restava operativo via API — dal cookie con un curl, e dall'app con
+// il Bearer. Ora è un 403 in entrambi i casi.
 
 export type ProfessionalGuard =
   | { error: NextResponse; user: null; isSuperadmin: false }
@@ -56,7 +64,8 @@ function createBearerClient(token: string): SupabaseClient {
 }
 
 /**
- * Autenticato E profiles.role = 'professional'.
+ * Autenticato, `profiles.role = 'professional'` E account non sospeso né
+ * bloccato.
  *
  * Con `req` la route accetta anche `Authorization: Bearer <access token
  * Supabase>` (è così che chiama l'app Flutter, che non ha il cookie di sessione
@@ -87,6 +96,29 @@ export async function requireProfessional(req?: Request | null): Promise<Profess
       isSuperadmin: false,
     }
   }
+  // Stato commerciale (024): `prova` e `attivo` passano, gli altri due no.
+  // Nessuna esenzione per i superadmin, come nel middleware: se un account è
+  // bloccato lo è da tutte le porte. Con la 024 non applicata la RPC non esiste,
+  // `fetchAccountStato` torna null e non si blocca nessuno — il comportamento di
+  // oggi, non un fail-open nuovo.
+  const stato = await fetchAccountStato(supabase)
+  if (stato === 'sospeso' || stato === 'bloccato') {
+    const bloccato = stato === 'bloccato'
+    return {
+      error: NextResponse.json(
+        {
+          error: bloccato ? 'account_blocked' : 'account_suspended',
+          message: bloccato
+            ? 'Il tuo account è bloccato: scrivi a support@stressindex.io.'
+            : 'Il tuo account è temporaneamente sospeso: per riattivarlo scrivi a support@stressindex.io.',
+        },
+        { status: 403 },
+      ),
+      user: null,
+      isSuperadmin: false,
+    }
+  }
+
   return { error: null, user, isSuperadmin: !!row.is_superadmin }
 }
 
