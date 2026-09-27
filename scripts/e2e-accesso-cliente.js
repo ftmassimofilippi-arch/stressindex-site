@@ -18,6 +18,10 @@
 //
 // Il rate limit e il registro delle azioni passano SOLO dopo aver applicato la
 // migration 027: senza `professional_access_log` il test lo dice e lo salta.
+// L'ultimo caso (cancellazione di un cliente che ha righe nel registro) e la
+// pulizia finale richiedono anche la 028: prima di quella il registro aveva una
+// FK con ON DELETE CASCADE verso auth.users e il trigger append-only faceva
+// fallire ogni deleteUser con "Database error deleting user".
 const { createClient } = require('@supabase/supabase-js')
 const { createServerClient } = require('@supabase/ssr')
 const fs = require('fs')
@@ -47,7 +51,9 @@ const TS = Date.now()
 const dom = 'claude-e2e.test'
 const PW = 'ProvaClaude!' + TS
 
-const creati = { users: [], cards: [] }
+// `users` è la lista di chi resta da cancellare in pulizia; `tutti` non si
+// svuota mai e serve per i controlli finali.
+const creati = { users: [], tutti: [], cards: [] }
 let pass = 0, fail = 0
 function ok(nome, cond, extra = '') {
   if (cond) { pass++; console.log(`  ✓ ${nome}`) }
@@ -61,6 +67,7 @@ async function nuovoUtente(prefix, role) {
   })
   if (error) throw new Error(`createUser ${email}: ${error.message}`)
   creati.users.push(data.user.id)
+  creati.tutti.push(data.user.id)
   const { error: pe } = await admin.from('profiles').upsert({
     id: data.user.id, email, nome: prefix, cognome: 'E2E', role,
   })
@@ -114,20 +121,38 @@ async function pulizia() {
   console.log('\nPulizia:')
   for (const id of creati.cards) await admin.from('clients').delete().eq('id', id)
   for (const uid of creati.users) {
-    await admin.from('professional_access_log').delete().eq('professional_id', uid)
+    // Le righe di professional_access_log NON si cancellano: il registro è
+    // append-only e dalla 028 non ha più FK verso auth.users, quindi restano
+    // come traccia pseudonimizzata (uuid, azione, data) e non impediscono la
+    // cancellazione dell'account. Si ripuliscono solo dal SQL Editor, con
+    // select public.professional_access_log_purge_utente('<uuid>').
     await admin.from('client_professional_links').delete().eq('client_user_id', uid)
     await admin.from('client_professional_links').delete().eq('professional_id', uid)
     await admin.from('clients').delete().eq('professionista_id', uid)
     await admin.from('clients').delete().eq('client_user_id', uid)
     await admin.from('profiles').delete().eq('id', uid)
     const { error } = await admin.auth.admin.deleteUser(uid)
-    if (error) console.log(`  ⚠ utente ${uid} NON eliminato: ${error.message}`)
+    // Conta come fallimento: prima era solo un avviso, e per questo il test
+    // restava verde mentre in produzione nessun professionista che avesse usato
+    // la gestione accessi riusciva più a cancellare il proprio account.
+    if (error) { fail++; console.log(`  ✗ utente ${uid} NON eliminato: ${error.message}`) }
   }
   // Verifica che non resti niente col nostro dominio di prova.
   const { data: resti } = await admin.from('profiles').select('id, email').ilike('email', `%@${dom}`)
   const { data: restiC } = await admin.from('clients').select('id, email').ilike('email', `%@${dom}`)
   const n = (resti ?? []).length + (restiC ?? []).length
   console.log(n === 0 ? '  ✓ nessun residuo' : `  ✗ residui: ${JSON.stringify({ profiles: resti, clients: restiC })}`)
+
+  // Le tracce nel registro sono volute: si dice quante sono e come togliersele.
+  const { data: tracce } = await admin
+    .from('professional_access_log')
+    .select('id')
+    .in('professional_id', creati.tutti)
+  if ((tracce ?? []).length > 0) {
+    console.log(`  · ${tracce.length} righe nel registro restano come traccia pseudonimizzata (voluto).`)
+    console.log('    Per togliere anche quelle, dal SQL Editor:')
+    for (const uid of creati.tutti) console.log(`      select public.professional_access_log_purge_utente('${uid}');`)
+  }
   return n === 0
 }
 
@@ -250,6 +275,29 @@ async function main() {
     }
     ok('oltre il limite -> 429 rate_limited', ultimo?.status === 429 && ultimo.json?.error === 'rate_limited', JSON.stringify(ultimo?.json))
   }
+
+  console.log('\n— Cancellazione di un cliente con righe nel registro —')
+  // Il caso che si rompeva: le righe del registro puntavano all'utente con una
+  // FK ON DELETE CASCADE, la cascata faceva scattare il trigger append-only e
+  // deleteUser tornava "Database error deleting user". Dalla 028 il registro non
+  // ha più FK: la cancellazione passa e le righe restano, senza dati personali.
+  const { data: logPrima } = await admin
+    .from('professional_access_log').select('id, details').eq('client_user_id', cliNuovo.id)
+  const nPrima = (logPrima ?? []).length
+
+  // Gli stessi passi della cancellazione account vera (Edge Function delete-account).
+  await admin.from('client_professional_links').delete().eq('client_user_id', cliNuovo.id)
+  await admin.from('clients').delete().eq('client_user_id', cliNuovo.id)
+  await admin.from('profiles').delete().eq('id', cliNuovo.id)
+  const { error: delErr } = await admin.auth.admin.deleteUser(cliNuovo.id)
+  if (!delErr) creati.users = creati.users.filter((u) => u !== cliNuovo.id)
+
+  const { data: logDopo } = await admin
+    .from('professional_access_log').select('id, details').eq('client_user_id', cliNuovo.id)
+  const conEmail = (logDopo ?? []).filter((r) => r.details && 'email' in r.details).length
+  ok('>>> cliente con righe nel registro: cancellato, traccia pseudonimizzata',
+     !delErr && nPrima > 0 && (logDopo ?? []).length === nPrima && conEmail === 0,
+     JSON.stringify({ errore: delErr?.message, righePrima: nPrima, righeDopo: (logDopo ?? []).length, righeConEmail: conEmail }))
 }
 
 main()
