@@ -6,11 +6,14 @@ import { MetricCard } from '@/components/dashboard/MetricCard'
 import { EmptyState } from '@/components/dashboard/EmptyState'
 import { getProfessionalProfile } from '@/lib/dashboard-data'
 import {
+  getAthleteThresholds,
   getSportAthleteProfile,
   getTrainingLoad,
   listSportSessions,
+  listThresholdTests,
   resolveSportContext,
 } from '@/lib/sport-data'
+import { ThresholdAthleteSection } from './ThresholdAthleteSection'
 import { formatMeasuredDate, num } from '@/lib/format'
 import { competitiveLevelLabel, formatDuration } from '@/lib/sport-format'
 import { LnRmssdChart, PmcChart } from '../../SportCharts'
@@ -34,9 +37,11 @@ export default async function SportAthletePage({
   ])
   if (!athlete) notFound()
 
-  const [sessions, load] = await Promise.all([
+  const [sessions, load, thresholds, thresholdTests] = await Promise.all([
     listSportSessions(professionalId, { athleteId: params.id, period: 90 }),
     getTrainingLoad(params.id, 120),
+    getAthleteThresholds(params.id),
+    listThresholdTests(params.id),
   ])
 
   const baseQuery = viewing ? `?professionista=${viewing.user_id}` : ''
@@ -150,6 +155,9 @@ export default async function SportAthletePage({
           </div>
         )}
       </section>
+
+      {/* SEZIONE 3b — Test soglie */}
+      <ThresholdAthleteSection thresholds={thresholds} tests={thresholdTests} baseQuery={baseQuery} />
 
       {/* SEZIONE 4 — Storico sessioni */}
       <section className="card overflow-hidden">

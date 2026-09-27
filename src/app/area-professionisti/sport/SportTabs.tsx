@@ -329,7 +329,7 @@ function SessionRow({ s, baseQuery, variant = 'recent' }: { s: SportSessionWithA
         <>
           <Td className="text-anthracite-lighter whitespace-nowrap">{formatMeasuredAt(s)}</Td>
           <Td className="font-medium text-anthracite">{s.athlete_name}</Td>
-          <Td>{s.sport ?? '—'}</Td>
+          <Td>{s.sport ?? '—'}{s.test_type === 'threshold_test' && <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] bg-orange-50 text-orange-700 border border-orange-200">Test soglie</span>}</Td>
           <Td>{formatDuration(s.duration_s)}</Td>
           <Td>{s.hr_avg == null ? '—' : `${s.hr_avg}`}</Td>
           <Td>{s.hr_max == null ? '—' : `${s.hr_max}`}</Td>

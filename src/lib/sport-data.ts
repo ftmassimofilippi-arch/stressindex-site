@@ -4,6 +4,8 @@ import { createClient } from './supabase-server'
 import { resolveViewingProfessional, type ViewingProfessional } from './dashboard-data'
 import { SPORT_LIVE_COLUMNS, type AthleteMeta, type SportLiveRow } from './sport-live'
 import { measuredInstant, type ConIstante } from './format'
+import { selectWithMissingColumnFallback } from './safe-select'
+import { parseHrZones, parseThresholdTest, type AthleteThresholds, type ThresholdTestRecord } from './threshold-types'
 
 // ============================================================================
 // MODULO SPORT — data layer
@@ -52,6 +54,9 @@ export interface SportSession {
   trimp: number | null
   notes: string | null
   questionnaire: SportQuestionnaire | null
+  /** Protocollo del test strutturato ('incremental_step', 'field_threshold',
+   *  'threshold_test'); null per una sessione libera. */
+  test_type: string | null
   created_at: string | null
 }
 
@@ -216,6 +221,7 @@ type SportSessionRow = {
   trimp: number | null
   notes: string | null
   questionnaire: unknown
+  test_type?: string | null
   created_at: string | null
 }
 
@@ -236,12 +242,13 @@ function mapSession(r: SportSessionRow): SportSession {
     trimp: r.trimp,
     notes: r.notes,
     questionnaire: parseQuestionnaire(r.questionnaire),
+    test_type: r.test_type ?? null,
     created_at: r.created_at,
   }
 }
 
 const SESSION_COLUMNS =
-  'id, athlete_id, professional_id, start_time, end_time, duration_s, sport, tags, hr_avg, hr_max, rmssd_avg, dfa_alpha1_avg, trimp, notes, questionnaire, created_at'
+  'id, athlete_id, professional_id, start_time, end_time, duration_s, sport, tags, hr_avg, hr_max, rmssd_avg, dfa_alpha1_avg, trimp, notes, questionnaire, test_type, created_at'
 
 function periodFrom(period?: SportSessionFilters['period']): string | null {
   if (!period || period === 'all') return null
@@ -347,6 +354,102 @@ export async function getSportAthleteProfile(athleteId: string): Promise<SportAt
     .eq('id', athleteId)
     .maybeSingle()
   return (data as SportAthleteProfile) ?? null
+}
+
+// ── Test incrementale con stima delle soglie ─────────────────────────────────
+// Le colonne arrivano dalle migrazioni 031 (sport_sessions.threshold_test) e
+// 032 (clients.hr_vt1 …) dell'app: su un database non ancora allineato la
+// lettura degrada (null) invece di far fallire la pagina.
+
+const THRESHOLD_SESSION_COLUMNS = ['id', 'threshold_test'] as const
+
+/** Il record del test soglie di una sessione, o null se non è un test soglie
+ *  (o la colonna non esiste ancora). */
+export async function getThresholdTest(sessionId: string): Promise<ThresholdTestRecord | null> {
+  const supabase = await createClient()
+  const { data } = await selectWithMissingColumnFallback<{ id: string; threshold_test?: unknown }>(
+    THRESHOLD_SESSION_COLUMNS,
+    (cols) => supabase.from('sport_sessions').select(cols).eq('id', sessionId) as unknown as PromiseLike<{ data: Array<{ id: string; threshold_test?: unknown }> | null; error: null }>,
+    { label: 'sport_sessions.threshold_test', required: ['id'] },
+  )
+  const row = data?.[0]
+  return row ? parseThresholdTest(row.threshold_test) : null
+}
+
+export interface ThresholdTestSummary {
+  session: SportSession
+  record: ThresholdTestRecord
+}
+
+/** Storico dei test soglie di un atleta, dal più recente. */
+export async function listThresholdTests(athleteId: string, limit = 50): Promise<ThresholdTestSummary[]> {
+  const supabase = await createClient()
+  const cols = [...SESSION_COLUMNS.split(',').map((c) => c.trim()), 'threshold_test'] as const
+  const { data } = await selectWithMissingColumnFallback<SportSessionRow & { threshold_test?: unknown }>(
+    cols,
+    (c) =>
+      supabase
+        .from('sport_sessions')
+        .select(c)
+        .eq('athlete_id', athleteId)
+        .eq('test_type', 'threshold_test')
+        .order('start_time', { ascending: false })
+        .limit(limit) as unknown as PromiseLike<{ data: Array<SportSessionRow & { threshold_test?: unknown }> | null; error: null }>,
+    { label: 'sport_sessions threshold tests', required: ['id'] },
+  )
+  const out: ThresholdTestSummary[] = []
+  for (const r of data ?? []) {
+    const record = parseThresholdTest(r.threshold_test)
+    if (record) out.push({ session: mapSession(r), record })
+  }
+  return out
+}
+
+const ATHLETE_THRESHOLD_COLUMNS = [
+  'id',
+  'hr_vt1',
+  'hr_vt2',
+  'vt_test_date',
+  'vt_mode',
+  'power_vt1',
+  'power_vt2',
+  'speed_vt1',
+  'speed_vt2',
+  'hr_zones',
+  'hr_zones_manual',
+  'threshold_session_id',
+] as const
+
+/** Soglie e zone salvate sul profilo dell'atleta; null se non ne ha (o le
+ *  colonne non esistono ancora). */
+export async function getAthleteThresholds(athleteId: string): Promise<AthleteThresholds | null> {
+  const supabase = await createClient()
+  const { data } = await selectWithMissingColumnFallback<Record<string, unknown>>(
+    ATHLETE_THRESHOLD_COLUMNS,
+    (cols) => supabase.from('clients').select(cols).eq('id', athleteId) as unknown as PromiseLike<{ data: Record<string, unknown>[] | null; error: null }>,
+    { label: 'clients thresholds', required: ['id'] },
+  )
+  const r = data?.[0]
+  if (!r) return null
+  const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : typeof v === 'string' && v.trim() && Number.isFinite(Number(v)) ? Number(v) : null)
+  const hrVt1 = num(r.hr_vt1)
+  const hrVt2 = num(r.hr_vt2)
+  const zones = parseHrZones(r.hr_zones)
+  if (hrVt1 == null && hrVt2 == null && zones.length === 0) return null
+  const mode = r.vt_mode === 'bike' || r.vt_mode === 'treadmill' || r.vt_mode === 'field' ? r.vt_mode : null
+  return {
+    hr_vt1: hrVt1,
+    hr_vt2: hrVt2,
+    vt_test_date: typeof r.vt_test_date === 'string' ? r.vt_test_date : null,
+    vt_mode: mode,
+    power_vt1: num(r.power_vt1),
+    power_vt2: num(r.power_vt2),
+    speed_vt1: num(r.speed_vt1),
+    speed_vt2: num(r.speed_vt2),
+    hr_zones: zones,
+    hr_zones_manual: r.hr_zones_manual === true,
+    threshold_session_id: typeof r.threshold_session_id === 'string' ? r.threshold_session_id : null,
+  }
 }
 
 export async function getTrainingLoad(athleteId: string, days = 90): Promise<TrainingLoadDaily[]> {

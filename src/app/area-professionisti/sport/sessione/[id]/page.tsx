@@ -3,7 +3,9 @@ import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft, Download, Tag as TagIcon } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { getProfessionalProfile } from '@/lib/dashboard-data'
-import { getDfaWindows, getSportSession, getSportAccess } from '@/lib/sport-data'
+import { getDfaWindows, getSportSession, getSportAccess, getThresholdTest } from '@/lib/sport-data'
+import { THRESHOLD_TEST_TYPE } from '@/lib/threshold-types'
+import { ThresholdTestView } from './ThresholdTestView'
 import { formatMeasuredAt, num } from '@/lib/format'
 import { energyEmoji, ENERGY_LABEL, formatClock, formatDuration, rpeColor, sorenessZoneLabel } from '@/lib/sport-format'
 import { DfaAlpha1Chart, DfaZoneBar, HrChart, RmssdChart } from '../../SportCharts'
@@ -27,7 +29,10 @@ export default async function SportSessionPage({
   ])
   if (!session) notFound()
 
-  const windows = await getDfaWindows(session.id)
+  const [windows, threshold] = await Promise.all([
+    getDfaWindows(session.id),
+    session.test_type === THRESHOLD_TEST_TYPE ? getThresholdTest(session.id) : Promise.resolve(null),
+  ])
   const baseQuery = searchParams?.professionista ? `?professionista=${searchParams.professionista}` : ''
   const q = session.questionnaire
 
@@ -55,6 +60,7 @@ export default async function SportSessionPage({
           <p className="mt-1.5 text-sm text-anthracite-lighter">
             {formatMeasuredAt(session)} · {formatDuration(session.duration_s)}
             {session.sport ? ` · ${session.sport}` : ''}
+            {session.test_type === THRESHOLD_TEST_TYPE ? ' · Test incrementale con stima delle soglie' : ''}
           </p>
         </div>
         <button
@@ -76,6 +82,17 @@ export default async function SportSessionPage({
           </div>
         ))}
       </div>
+
+      {/* SEZIONE 1b — Test incrementale con stima delle soglie */}
+      {session.test_type === THRESHOLD_TEST_TYPE && (
+        <div className="mb-6">
+          {threshold ? (
+            <ThresholdTestView record={threshold} windows={windows} />
+          ) : (
+            <div className="card p-6 text-sm text-anthracite-lighter">Dati del test soglie non disponibili per questa sessione.</div>
+          )}
+        </div>
+      )}
 
       {/* SEZIONE 2 — Zone DFA Alpha1 */}
       <section className="card p-5 mb-6">
