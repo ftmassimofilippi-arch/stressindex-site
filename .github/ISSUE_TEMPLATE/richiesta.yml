@@ -1,0 +1,41 @@
+name: Richiesta
+description: Una cosa che il sistema deve fare o fare diversamente, in parole tue.
+title: "[richiesta] "
+labels: ["richiesta"]
+body:
+  - type: dropdown
+    id: programma
+    attributes:
+      label: Programma
+      options: ["Stress Index (app)", "Stress Index (sito)", "CRM Calderone", "Vivi", "Bifrost", "BioIndex", "Non lo so"]
+    validations:
+      required: true
+  - type: textarea
+    id: obiettivo
+    attributes:
+      label: Cosa voglio ottenere
+      description: In parole tue, come lo diresti a voce. Non la soluzione tecnica.
+      placeholder: "Quando l'utente finisce una misurazione, voglio che..."
+    validations:
+      required: true
+  - type: textarea
+    id: perche
+    attributes:
+      label: Perché
+      description: Il problema che oggi c'è, o l'occasione che si perde.
+    validations:
+      required: true
+  - type: textarea
+    id: fatto
+    attributes:
+      label: Come riconosco che è fatto
+      description: Cosa vedrai sullo schermo, o cosa smetterà di succedere.
+    validations:
+      required: true
+  - type: dropdown
+    id: urgenza
+    attributes:
+      label: Quanto urge
+      options: ["Blocca il lavoro di qualcuno", "Serve presto", "Quando c'è tempo"]
+    validations:
+      required: true

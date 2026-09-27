@@ -1,0 +1,15 @@
+#!/bin/bash
+# Guardiano git: rifiuta il push su main da qualunque strumento (non solo dall'AI).
+# Sul Mac di chi amministra (Matteo) il file ~/.lavoro-a-due-admin lo disattiva.
+[ -f "$HOME/.lavoro-a-due-admin" ] && exit 0
+while read -r locale sha_locale remoto sha_remoto; do
+  case "$remoto" in
+    refs/heads/main|refs/heads/master)
+      echo "GUARDIANO: non si spinge su main. Crea un ramo e apri una proposta (gh pr create). Vedi REGOLE-A-DUE.md." >&2
+      exit 1 ;;
+  esac
+  if [ "$sha_locale" = "0000000000000000000000000000000000000000" ]; then
+    echo "GUARDIANO: non si cancellano rami sul server ($remoto)." >&2; exit 1
+  fi
+done
+exit 0
