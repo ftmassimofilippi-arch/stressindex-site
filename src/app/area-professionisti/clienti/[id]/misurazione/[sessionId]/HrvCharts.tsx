@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import {
   Area,
   AreaChart,
@@ -19,6 +20,19 @@ import {
   ZAxis,
 } from 'recharts'
 import { num, toNum } from '@/lib/format'
+import { ScaleToggle } from '@/components/dashboard/ScaleToggle'
+import {
+  PSD_BANDS,
+  PSD_X_MAX,
+  PSD_X_MIN,
+  PSD_X_TICKS,
+  psdClamp,
+  psdDecades,
+  psdLabel,
+  psdScaleFor,
+  rrScaleAdaptive,
+  rrScaleFor,
+} from '@/lib/chart-scales'
 
 // I valori arrivano dal database (colonne numeriche, array e campi jsonb) e i
 // tipi dichiarati non sono garantiti a runtime: si coercizzano una volta sola
@@ -43,6 +57,10 @@ export function PoincareScatter({ rr: rawRr, sd1: rawSd1, sd2: rawSd2 }: { rr: u
   const rr = toNumArray(rawRr)
   const sd1 = toNum(rawSd1)
   const sd2 = toNum(rawSd2)
+  // Scala fissa di default (stessi valori dell'app: 400–1400 ms, estesa a
+  // 300–1600), così due misurazioni — o le due fasi di un ortostatico — si
+  // confrontano a colpo d'occhio. "Zoom" passa alla scala adattiva.
+  const [zoom, setZoom] = useState(false)
   if (rr.length < 2) {
     return <Placeholder text="Dati RR non disponibili" />
   }
@@ -53,18 +71,13 @@ export function PoincareScatter({ rr: rawRr, sd1: rawSd1, sd2: rawSd2 }: { rr: u
 
   const meanRr = rr.reduce((a, b) => a + b, 0) / rr.length
 
-  const xs = sample.map((p) => p.x)
-  const ys = sample.map((p) => p.y)
-  const dataMin = Math.min(...xs, ...ys)
-  const dataMax = Math.max(...xs, ...ys)
-  // simmetrico rispetto al centroide con padding 20% del range
-  const halfRange = Math.max(dataMax - meanRr, meanRr - dataMin)
-  const padded = halfRange * 1.2
-  const min = Math.floor(meanRr - padded)
-  const max = Math.ceil(meanRr + padded)
+  const scale = zoom ? rrScaleAdaptive(rr) : rrScaleFor(rr)
+  const min = scale.min
+  const max = scale.max
 
   return (
     <div>
+      <ScaleToggle zoom={zoom} onToggle={() => setZoom((z) => !z)} extended={scale.extended} />
       <div className="aspect-square w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 12, right: 16, bottom: 32, left: 8 }}>
@@ -241,9 +254,12 @@ function PoincareOverlay({ chart, meanRr, sd1, sd2 }: { chart: ChartInternals; m
 
 export function Rhythmogram({ rr: rawRr }: { rr: unknown[] | null }) {
   const rr = toNumArray(rawRr)
+  // Asse Y fisso (400–1400 ms, esteso 300–1600) come nell'app; "Zoom" = adattivo.
+  const [zoom, setZoom] = useState(false)
   if (rr.length === 0) {
     return <Placeholder text="Dati RR non disponibili" />
   }
+  const scale = zoom ? rrScaleAdaptive(rr) : rrScaleFor(rr)
   let acc = 0
   const data = rr.map((v) => {
     acc += v
@@ -255,6 +271,8 @@ export function Rhythmogram({ rr: rawRr }: { rr: unknown[] | null }) {
   const tickStep = totalSec > 300 ? 60 : totalSec > 120 ? 30 : 15
 
   return (
+    <div>
+    <ScaleToggle zoom={zoom} onToggle={() => setZoom((z) => !z)} extended={scale.extended} />
     <ResponsiveContainer width="100%" height={320}>
       <LineChart data={sample} margin={{ top: 8, right: 20, bottom: 32, left: 8 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" />
@@ -271,7 +289,8 @@ export function Rhythmogram({ rr: rawRr }: { rr: unknown[] | null }) {
         <YAxis
           stroke="#6B7280"
           fontSize={10}
-          domain={['auto', 'auto']}
+          domain={[scale.min, scale.max]}
+          allowDataOverflow
           label={{ value: 'Intervallo RR (ms)', angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
         />
         <ReferenceLine y={meanRr} stroke="#9CA3AF" strokeDasharray="4 4" label={{ value: `media ${meanRr.toFixed(0)} ms`, position: 'right', fontSize: 10, fill: '#6B7280' }} />
@@ -284,6 +303,7 @@ export function Rhythmogram({ rr: rawRr }: { rr: unknown[] | null }) {
         <Brush dataKey="t" height={26} stroke="#4FA39A" travellerWidth={8} tickFormatter={(v) => `${Math.round(Number(v))}s`} />
       </LineChart>
     </ResponsiveContainer>
+    </div>
   )
 }
 
@@ -311,22 +331,32 @@ export function PsdPlaceholder({
   const hf = toNum(rawHf)
   const lfHfRatio = toNum(rawLfHfRatio)
   const resonanceHz = toNum(rawResonanceHz)
+  // Asse Y logaritmico fisso (10 – 1.000.000 ms²/Hz, esteso 1 – 10.000.000,
+  // tick solo sulle potenze di 10) e asse X 0 – 0,5 Hz, come nell'app.
+  // "Zoom" torna alla scala lineare adattiva.
+  const [zoom, setZoom] = useState(false)
   if (vlf == null && lf == null && hf == null) return <Placeholder text="Dati spettro non disponibili" />
 
-  const fMax = 0.4
+  const fMax = PSD_X_MAX
   const step = 0.004
-  const data: { f: number; psd: number }[] = []
-  for (let f = 0; f <= fMax + step / 2; f += step) {
+  const raw: { f: number; psd: number }[] = []
+  for (let f = PSD_X_MIN; f <= fMax + step / 2; f += step) {
     const psd =
       (vlf ?? 0) * gauss(f, VLF_CENTER, VLF_SIGMA) +
       (lf ?? 0) * gauss(f, LF_CENTER, LF_SIGMA) +
       (hf ?? 0) * gauss(f, HF_CENTER, HF_SIGMA)
-    data.push({ f: +f.toFixed(4), psd })
+    raw.push({ f: +f.toFixed(4), psd })
   }
-  const maxPsd = Math.max(...data.map((d) => d.psd), 1)
+  const maxPsd = Math.max(...raw.map((d) => d.psd), 1)
+  const scale = psdScaleFor(raw.map((d) => d.psd))
+  // Su asse logaritmico i valori sotto il minimo si appoggiano al bordo,
+  // non spariscono: meglio una scala dichiarata che dei punti tagliati fuori.
+  const data = zoom ? raw : raw.map((d) => ({ f: d.f, psd: psdClamp(d.psd, scale) }))
+  const decades = psdDecades(scale)
 
   return (
     <div>
+      <ScaleToggle zoom={zoom} onToggle={() => setZoom((z) => !z)} extended={scale.extended} />
       <ResponsiveContainer width="100%" height={260}>
         <AreaChart data={data} margin={{ top: 24, right: 16, bottom: 28, left: 8 }}>
           <defs>
@@ -339,23 +369,36 @@ export function PsdPlaceholder({
           <XAxis
             dataKey="f"
             type="number"
-            domain={[0, fMax]}
-            ticks={[0, 0.04, 0.1, 0.15, 0.2, 0.3, 0.4]}
+            domain={[PSD_X_MIN, fMax]}
+            ticks={PSD_X_TICKS}
             stroke="#6B7280"
             fontSize={10}
             tickFormatter={(v) => Number(v).toFixed(2)}
             label={{ value: 'Frequenza (Hz)', position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
           />
-          <YAxis
-            stroke="#6B7280"
-            fontSize={10}
-            domain={[0, Math.ceil(maxPsd * 1.15)]}
-            tickFormatter={(v) => Number(v).toFixed(0)}
-            label={{ value: 'PSD (ms²/Hz)', angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
-          />
-          <ReferenceArea x1={0} x2={0.04} fill="#DC2626" fillOpacity={0.18} label={{ value: 'VLF', position: 'insideTop', fill: '#991B1B', fontSize: 11, fontWeight: 600 }} />
-          <ReferenceArea x1={0.04} x2={0.15} fill="#F59E0B" fillOpacity={0.18} label={{ value: 'LF', position: 'insideTop', fill: '#92400E', fontSize: 11, fontWeight: 600 }} />
-          <ReferenceArea x1={0.15} x2={0.4} fill="#4FA39A" fillOpacity={0.18} label={{ value: 'HF', position: 'insideTop', fill: '#115E59', fontSize: 11, fontWeight: 600 }} />
+          {zoom ? (
+            <YAxis
+              stroke="#6B7280"
+              fontSize={10}
+              domain={[0, Math.ceil(maxPsd * 1.15)]}
+              tickFormatter={(v) => Number(v).toFixed(0)}
+              label={{ value: 'PSD (ms²/Hz)', angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
+            />
+          ) : (
+            <YAxis
+              stroke="#6B7280"
+              fontSize={10}
+              scale="log"
+              domain={[scale.min, scale.max]}
+              ticks={decades}
+              allowDataOverflow
+              tickFormatter={(v) => psdLabel(Number(v))}
+              label={{ value: 'PSD (ms²/Hz)', angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
+            />
+          )}
+          <ReferenceArea x1={PSD_BANDS.vlf.from} x2={PSD_BANDS.vlf.to} fill="#DC2626" fillOpacity={0.18} label={{ value: 'VLF', position: 'insideTop', fill: '#991B1B', fontSize: 11, fontWeight: 600 }} />
+          <ReferenceArea x1={PSD_BANDS.lf.from} x2={PSD_BANDS.lf.to} fill="#F59E0B" fillOpacity={0.18} label={{ value: 'LF', position: 'insideTop', fill: '#92400E', fontSize: 11, fontWeight: 600 }} />
+          <ReferenceArea x1={PSD_BANDS.hf.from} x2={PSD_BANDS.hf.to} fill="#4FA39A" fillOpacity={0.18} label={{ value: 'HF', position: 'insideTop', fill: '#115E59', fontSize: 11, fontWeight: 600 }} />
           {resonanceHz != null && resonanceHz > 0 && resonanceHz <= fMax && (
             <ReferenceLine
               x={+resonanceHz.toFixed(4)}
