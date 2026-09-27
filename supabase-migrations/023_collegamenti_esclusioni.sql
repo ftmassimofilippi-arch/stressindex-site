@@ -60,31 +60,67 @@ grant execute on function public.collegamenti_escluso_duplicato(uuid, text, text
 
 -- I 6 gruppi verificati il 13/09/2026: tutte le schede attuali del gruppo,
 -- solo se i nomi sono davvero diversi (stesso criterio della 022).
-with gruppi as (
-  select c.professionista_id, lower(trim(c.email)) as email_norm, array_agg(c.id order by c.id) as ids
-    from public.clients c
-   where c.merged_into_client_id is null
-     and lower(trim(c.email)) in ('planetex@virgilio.it', 'ligabriviba@gmail.com', 'gluca.dettori@gmail.com',
-                                  'breil69@hotmail.com', 'alex.spirandelli7@gmail.com', 'nicolo.maragni@gmail.com')
-   group by c.professionista_id, lower(trim(c.email))
-  having count(*) > 1
-     and count(distinct nullif(public.collegamenti_nome_norm(c.nome, c.cognome), '')) > 1
-),
-ins as (
+--
+-- Dentro un blocco protetto: questo insert dipende da colonne e funzioni di
+-- altre migrazioni (clients.merged_into_client_id e collegamenti_nome_norm
+-- della 019). Se manca qualcosa deve mancare l'elenco delle esclusioni, non
+-- tutto il file — tabella, funzione e vista comprese.
+do $do$
+declare
+  v_righe integer;
+begin
+  with gruppi as (
+    select c.professionista_id, lower(trim(c.email)) as email_norm, array_agg(c.id order by c.id) as ids
+      from public.clients c
+     where c.merged_into_client_id is null
+       and lower(trim(c.email)) in ('planetex@virgilio.it', 'ligabriviba@gmail.com', 'gluca.dettori@gmail.com',
+                                    'breil69@hotmail.com', 'alex.spirandelli7@gmail.com', 'nicolo.maragni@gmail.com')
+     group by c.professionista_id, lower(trim(c.email))
+    having count(*) > 1
+       and count(distinct nullif(public.collegamenti_nome_norm(c.nome, c.cognome), '')) > 1
+  )
   insert into public.collegamenti_esclusioni (tipo_problema, professionista_id, email_norm, client_ids, motivo, created_by_email)
   select 'scheda_duplicata', g.professionista_id, g.email_norm, g.ids,
          'Verificato il 13/09/2026: il professionista registra familiari o altre persone con la propria email. Non unire.',
          'migration:023'
     from gruppi g
-  on conflict (tipo_problema, professionista_id, email_norm) do nothing
-  returning id, professionista_id, email_norm, client_ids, motivo
-)
-insert into public.admin_audit_log (performed_by, performed_by_email, action, target_type, target_id, details)
-select null, 'migration:023', 'exclude_duplicate', 'client', i.client_ids[1],
-       jsonb_build_object('esclusione_id', i.id, 'professionista_id', i.professionista_id, 'email', i.email_norm,
-                          'client_ids', to_jsonb(i.client_ids), 'motivo', i.motivo)
-  from ins i;
+  on conflict (tipo_problema, professionista_id, email_norm) do nothing;
+  get diagnostics v_righe = row_count;
+  raise notice '023 esclusioni inserite: %', v_righe;
+exception when others then
+  raise notice '023 esclusioni NON inserite: %', sqlerrm;
+end $do$;
 
+-- Traccia a parte, non nella stessa istruzione delle esclusioni: se l'audit
+-- fallisse (per esempio performed_by tornata NOT NULL), le esclusioni — che
+-- sono la cosa che conta — devono restare scritte.
+do $do$
+declare
+  v_righe integer;
+begin
+  insert into public.admin_audit_log (performed_by, performed_by_email, action, target_type, target_id, details)
+  select null, 'migration:023', 'exclude_duplicate', 'client', e.client_ids[1],
+         jsonb_build_object('esclusione_id', e.id, 'professionista_id', e.professionista_id, 'email', e.email_norm,
+                            'client_ids', to_jsonb(e.client_ids), 'motivo', e.motivo)
+    from public.collegamenti_esclusioni e
+   where e.created_by_email = 'migration:023'
+     and not exists (
+       select 1 from public.admin_audit_log l
+        where l.performed_by_email = 'migration:023'
+          and (l.details->>'esclusione_id')::bigint = e.id
+     );
+  get diagnostics v_righe = row_count;
+  raise notice '023 righe di audit scritte: %', v_righe;
+exception when others then
+  raise notice '023 audit non scritto (le esclusioni restano valide): %', sqlerrm;
+end $do$;
+
+-- Anche la vista in un blocco protetto: legge tabelle dell'app
+-- (professional_profiles, monitoring_sessions, measurement_analytics) che
+-- nessuna migrazione del sito crea. Se una colonna cambia nome, si perde
+-- l'aggiornamento della vista e non il resto del file.
+do $do$
+begin
 create or replace view public.v_collegamenti_salute as
 with cards as (
   select c.* from public.clients c where c.merged_into_client_id is null
@@ -279,8 +315,12 @@ where (m.client_id is not null and c.id is null)
    or (p.role = 'client' and m.client_id is null)
    or (m.professionista_id is not null and not exists (select 1 from public.profiles x where x.id = m.professionista_id));
 
--- Solo la service role (pannello Super Admin) legge la view.
-revoke all on public.v_collegamenti_salute from public, anon, authenticated;
-grant select on public.v_collegamenti_salute to service_role;
+  -- Solo la service role (pannello Super Admin) legge la view.
+  revoke all on public.v_collegamenti_salute from public, anon, authenticated;
+  grant select on public.v_collegamenti_salute to service_role;
+  raise notice '023 vista v_collegamenti_salute aggiornata';
+exception when others then
+  raise notice '023 vista v_collegamenti_salute NON aggiornata: %', sqlerrm;
+end $do$;
 
 notify pgrst, 'reload schema';

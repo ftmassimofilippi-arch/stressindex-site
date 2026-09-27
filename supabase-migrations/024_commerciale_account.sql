@@ -73,13 +73,16 @@ create table if not exists public.piano_moduli (
   primary key (piano, modulo)
 );
 -- Default solo alla prima applicazione (una riga tolta a mano non ritorna).
--- Base: nessuno. Pro: sport + monitoring. Prova: come Pro. Sonno: sempre a parte.
+-- Base: nessuno. Pro: sport + monitoring. Prova: come Pro. Il Sonno qui resta
+-- fuori; lo aggiunge a Pro e prova la 024b, decisione del 2026-09-27.
 do $$
 begin
   if not exists (select 1 from public.piano_moduli) then
     insert into public.piano_moduli (piano, modulo) values
       ('pro', 'sport'), ('pro', 'monitoring'), ('prova', 'sport'), ('prova', 'monitoring');
   end if;
+exception when others then
+  raise notice '024.1 default di piano_moduli non inseriti: %', sqlerrm;
 end $$;
 
 alter table public.moduli enable row level security;
@@ -95,7 +98,7 @@ create policy piano_moduli_read on public.piano_moduli for select to authenticat
 -- ── 2-4. Stato, abbonamento, storico, eccezioni ────────────────────────────
 create table if not exists public.account_stato (
   user_id            uuid primary key references auth.users(id) on delete cascade,
-  stato              text not null default 'attivo' check (stato in ('attivo', 'sospeso', 'bloccato')),
+  stato              text not null default 'attivo',
   motivo             text,
   cambiato_il        timestamptz not null default now(),
   cambiato_da        uuid,
@@ -111,11 +114,30 @@ create table if not exists public.abbonamenti (
   note                text,
   aggiornato_il       timestamptz not null default now(),
   aggiornato_da       uuid,
-  aggiornato_da_email text,
-  constraint abbonamenti_prova_con_scadenza check (piano <> 'prova' or data_scadenza is not null),
-  constraint abbonamenti_date check (data_scadenza is null or data_scadenza >= data_inizio)
+  aggiornato_da_email text
 );
 create index if not exists idx_abbonamenti_scadenza on public.abbonamenti (data_scadenza) where data_scadenza is not null;
+
+-- I check NON stanno dentro il `create table if not exists`: se la tabella
+-- esistesse già (applicazione parziale precedente, o creata a mano) i vincoli
+-- inline non verrebbero mai aggiunti e mancherebbero in silenzio. Qui invece
+-- vengono ricreati a ogni esecuzione, come fa la 025.
+do $$
+begin
+  alter table public.account_stato drop constraint if exists account_stato_stato_check;
+  alter table public.account_stato
+    add constraint account_stato_stato_check check (stato in ('attivo', 'sospeso', 'bloccato'));
+
+  alter table public.abbonamenti drop constraint if exists abbonamenti_prova_con_scadenza;
+  alter table public.abbonamenti
+    add constraint abbonamenti_prova_con_scadenza check (piano <> 'prova' or data_scadenza is not null);
+
+  alter table public.abbonamenti drop constraint if exists abbonamenti_date;
+  alter table public.abbonamenti
+    add constraint abbonamenti_date check (data_scadenza is null or data_scadenza >= data_inizio);
+exception when others then
+  raise notice '024.2 vincoli di account_stato/abbonamenti non applicati: %', sqlerrm;
+end $$;
 
 create table if not exists public.abbonamenti_storico (
   id                bigserial primary key,
@@ -156,26 +178,41 @@ grant select, insert, update, delete on public.account_stato, public.abbonamenti
 grant usage, select on sequence public.abbonamenti_storico_id_seq to service_role;
 
 -- ── Semina ──────────────────────────────────────────────────────────────────
-insert into public.abbonamenti (user_id, piano, data_inizio, data_scadenza, note, aggiornato_da_email)
-select p.id,
-       case when p.plan = 'pro' then 'pro' else 'base' end,
-       coalesce(p.created_at, now())::date,
-       null,
-       case when p.plan is distinct from 'pro' and pp.trial_expires_at > now()
-            then 'Trial di registrazione fino al ' || to_char(pp.trial_expires_at, 'DD/MM/YYYY') || ' non convertito in piano prova dalla migrazione 024'
-            else null end,
-       'migration:024'
-  from public.profiles p
-  join auth.users u on u.id = p.id
-  left join public.professional_profiles pp on pp.id = p.id
- where p.role = 'professional'
-on conflict (user_id) do nothing;
+-- In un blocco protetto: legge professional_profiles, tabella dell'app che
+-- nessuna migrazione del sito crea. Se non c'è, o se trial_expires_at cambia
+-- nome, si perde la semina e non l'intero impianto commerciale.
+do $$
+declare
+  v_righe integer;
+begin
+  insert into public.abbonamenti (user_id, piano, data_inizio, data_scadenza, note, aggiornato_da_email)
+  select p.id,
+         case when p.plan = 'pro' then 'pro' else 'base' end,
+         coalesce(p.created_at, now())::date,
+         null,
+         case when p.plan is distinct from 'pro' and pp.trial_expires_at > now()
+              then 'Trial di registrazione fino al ' || to_char(pp.trial_expires_at, 'DD/MM/YYYY') || ' non convertito in piano prova dalla migrazione 024'
+              else null end,
+         'migration:024'
+    from public.profiles p
+    join auth.users u on u.id = p.id
+    left join public.professional_profiles pp on pp.id = p.id
+   where p.role = 'professional'
+  on conflict (user_id) do nothing;
+  get diagnostics v_righe = row_count;
+  raise notice '024.3 abbonamenti seminati: %', v_righe;
+exception when others then
+  raise notice '024.3 abbonamenti NON seminati: %', sqlerrm;
+end $$;
 
 -- Moduli già in uso prima della 024 e non inclusi nel piano (es. professionisti
 -- Base con monitoraggi 24h): eccezione positiva, così nessuno perde l'accesso
 -- applicando la migrazione. Si tolgono dal pannello. Solo account senza
 -- eccezione su quel modulo (rieseguibile).
-with ins as (
+do $$
+declare
+  v_righe integer;
+begin
   insert into public.moduli_eccezioni (user_id, modulo, abilitato, motivo, creato_da_email)
   select distinct u.user_id, u.modulo, true, 'Modulo già in uso prima della migrazione 024 (non incluso nel piano)', 'migration:024'
     from (
@@ -187,20 +224,52 @@ with ins as (
     join auth.users au on au.id = u.user_id
     left join public.abbonamenti a on a.user_id = u.user_id
    where not exists (select 1 from public.piano_moduli pm where pm.piano = a.piano and pm.modulo = u.modulo)
-  on conflict (user_id, modulo) do nothing
-  returning user_id, modulo, motivo
-)
-insert into public.admin_audit_log (performed_by, performed_by_email, action, target_type, target_id, details)
-select null, 'migration:024', 'module_exception_change', 'user', i.user_id::text,
-       jsonb_build_object('modulo', i.modulo, 'eccezione_dopo', jsonb_build_object('abilitato', true, 'scade_il', null),
-                          'accesso_prima', true, 'accesso_dopo', true, 'motivo', i.motivo)
-  from ins i;
+  on conflict (user_id, modulo) do nothing;
+  get diagnostics v_righe = row_count;
+  raise notice '024.4 eccezioni per moduli già in uso: %', v_righe;
+exception when others then
+  raise notice '024.4 eccezioni per moduli già in uso NON create: %', sqlerrm;
+end $$;
 
-insert into public.abbonamenti_storico (user_id, evento, piano_dopo, note, eseguito_da_email)
-select a.user_id, 'creazione', a.piano, 'Semina dalla migrazione 024 (profiles.plan)', 'migration:024'
-  from public.abbonamenti a
- where a.aggiornato_da_email = 'migration:024'
-   and not exists (select 1 from public.abbonamenti_storico s where s.user_id = a.user_id);
+-- Traccia delle eccezioni, in un blocco a sé: prima era la stessa istruzione
+-- (CTE con returning), quindi un audit fallito si portava via anche le
+-- eccezioni, che sono la cosa che conta.
+do $$
+declare
+  v_righe integer;
+begin
+  insert into public.admin_audit_log (performed_by, performed_by_email, action, target_type, target_id, details)
+  select null, 'migration:024', 'module_exception_change', 'user', e.user_id::text,
+         jsonb_build_object('modulo', e.modulo, 'eccezione_dopo', jsonb_build_object('abilitato', true, 'scade_il', null),
+                            'accesso_prima', true, 'accesso_dopo', true, 'motivo', e.motivo)
+    from public.moduli_eccezioni e
+   where e.creato_da_email = 'migration:024'
+     and not exists (
+       select 1 from public.admin_audit_log l
+        where l.performed_by_email = 'migration:024'
+          and l.target_id = e.user_id::text
+          and l.details->>'modulo' = e.modulo
+     );
+  get diagnostics v_righe = row_count;
+  raise notice '024.5 righe di audit delle eccezioni: %', v_righe;
+exception when others then
+  raise notice '024.5 audit delle eccezioni non scritto (le eccezioni restano valide): %', sqlerrm;
+end $$;
+
+do $$
+declare
+  v_righe integer;
+begin
+  insert into public.abbonamenti_storico (user_id, evento, piano_dopo, note, eseguito_da_email)
+  select a.user_id, 'creazione', a.piano, 'Semina dalla migrazione 024 (profiles.plan)', 'migration:024'
+    from public.abbonamenti a
+   where a.aggiornato_da_email = 'migration:024'
+     and not exists (select 1 from public.abbonamenti_storico s where s.user_id = a.user_id);
+  get diagnostics v_righe = row_count;
+  raise notice '024.6 righe di storico create: %', v_righe;
+exception when others then
+  raise notice '024.6 storico non scritto: %', sqlerrm;
+end $$;
 
 -- ── 5. Accesso ai moduli: un solo punto di verità ──────────────────────────
 create or replace function public.account_stato_effettivo(p_user_id uuid)
@@ -681,17 +750,32 @@ exception when others then
   return new;
 end;
 $$;
-drop trigger if exists trg_abbonamento_da_professional_profile on public.professional_profiles;
-drop function if exists public.tg_abbonamento_da_professional_profile();
-drop trigger if exists trg_abbonamento_iniziale on public.professional_profiles;
-create trigger trg_abbonamento_iniziale
-  after insert or update of trial_expires_at on public.professional_profiles
-  for each row execute function public.tg_abbonamento_iniziale();
-drop trigger if exists trg_abbonamento_iniziale on public.profiles;
-create trigger trg_abbonamento_iniziale
-  after insert or update of role on public.profiles
-  for each row when (new.role = 'professional')
-  execute function public.tg_abbonamento_iniziale();
+-- I trigger stanno su tabelle dell'app (professional_profiles, profiles): se
+-- il ruolo che esegue non ne è proprietario, `create trigger` dà 42501. In un
+-- blocco protetto, così un problema di ownership non annulla tutto il file — e
+-- il notice dice quale dei due trigger manca.
+do $$
+begin
+  drop trigger if exists trg_abbonamento_da_professional_profile on public.professional_profiles;
+  drop function if exists public.tg_abbonamento_da_professional_profile();
+  drop trigger if exists trg_abbonamento_iniziale on public.professional_profiles;
+  create trigger trg_abbonamento_iniziale
+    after insert or update of trial_expires_at on public.professional_profiles
+    for each row execute function public.tg_abbonamento_iniziale();
+exception when others then
+  raise notice '024.7 trigger su professional_profiles NON creato: %', sqlerrm;
+end $$;
+
+do $$
+begin
+  drop trigger if exists trg_abbonamento_iniziale on public.profiles;
+  create trigger trg_abbonamento_iniziale
+    after insert or update of role on public.profiles
+    for each row when (new.role = 'professional')
+    execute function public.tg_abbonamento_iniziale();
+exception when others then
+  raise notice '024.8 trigger su profiles NON creato: %', sqlerrm;
+end $$;
 
 -- ── 7. Job giornaliero delle scadenze ──────────────────────────────────────
 create or replace function public.commerciale_scadenze_giornaliere()
@@ -781,16 +865,27 @@ $$;
 revoke all on function public.account_puo_scrivere(uuid) from public, anon;
 grant execute on function public.account_puo_scrivere(uuid) to authenticated, service_role;
 
+-- Una tabella per volta, ognuna col suo handler: se una policy non si crea (per
+-- esempio per ownership della tabella), le altre tre restano e il notice dice
+-- quale manca. Prima un solo errore qui — ultimo blocco del file — faceva
+-- rollback di tutta la 024.
 do $$
 declare
   t text;
 begin
   foreach t in array array['clients', 'sessions', 'monitoring_sessions', 'sport_sessions'] loop
-    if to_regclass('public.' || t) is null then continue; end if;
-    execute format('drop policy if exists account_attivo_insert on public.%I', t);
-    execute format('create policy account_attivo_insert on public.%I as restrictive for insert to authenticated with check (public.account_puo_scrivere(auth.uid()))', t);
-    execute format('drop policy if exists account_attivo_update on public.%I', t);
-    execute format('create policy account_attivo_update on public.%I as restrictive for update to authenticated using (public.account_puo_scrivere(auth.uid())) with check (public.account_puo_scrivere(auth.uid()))', t);
+    if to_regclass('public.' || t) is null then
+      raise notice '024.9 tabella % assente: policy restrittive non create', t;
+      continue;
+    end if;
+    begin
+      execute format('drop policy if exists account_attivo_insert on public.%I', t);
+      execute format('create policy account_attivo_insert on public.%I as restrictive for insert to authenticated with check (public.account_puo_scrivere(auth.uid()))', t);
+      execute format('drop policy if exists account_attivo_update on public.%I', t);
+      execute format('create policy account_attivo_update on public.%I as restrictive for update to authenticated using (public.account_puo_scrivere(auth.uid())) with check (public.account_puo_scrivere(auth.uid()))', t);
+    exception when others then
+      raise notice '024.9 policy restrittive su % NON create: %', t, sqlerrm;
+    end;
   end loop;
 end $$;
 
