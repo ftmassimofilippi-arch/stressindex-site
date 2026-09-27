@@ -29,6 +29,11 @@ export const dynamic = 'force-dynamic'
 // collegamento `active` con l'account del cliente. La service_role serve per
 // updateUserById / generateLink e non lascia mai il server.
 //
+// Si entra in due modi, con le stesse regole: il cookie di sessione Next (sito)
+// o `Authorization: Bearer <access token Supabase>` (app Flutter), verificato
+// lato server da requireProfessional. La password temporanea la genera e la
+// mostra il chiamante: entra col POST e non torna mai nella risposta.
+//
 // Il rifiuto di impostare una password su un account già in uso vive QUI, non
 // nella UI: nascondere il bottone non è un controllo.
 
@@ -38,8 +43,8 @@ function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://stressindex.io').replace(/\/+$/, '')
 }
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
-  const guard = await requireProfessional()
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const guard = await requireProfessional(req)
   if (guard.error) return guard.error
   const admin = createAdminClient()
 
@@ -51,7 +56,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const guard = await requireProfessional()
+  const guard = await requireProfessional(req)
   if (guard.error) return guard.error
   const admin = createAdminClient()
 

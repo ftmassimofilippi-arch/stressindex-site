@@ -7,6 +7,9 @@
 //     dall'API (409), non solo nascosto nella UI;
 //   • agire sulla scheda di un altro professionista deve dare 403.
 //
+// E che le stesse regole valgano identiche per le due vie d'ingresso: cookie di
+// sessione Next (sito) e `Authorization: Bearer <access token>` (app Flutter).
+//
 // ⚠️  SCRIVE SUL DATABASE CONFIGURATO IN .env.local, che è quello di produzione.
 //     Crea quattro account usa-e-getta sul dominio @claude-e2e.test e alla fine
 //     li cancella, verificando che non resti nulla. Nessun dato reale viene
@@ -106,15 +109,33 @@ async function cookieHeader(email) {
   return raccolti.map((c) => `${c.name}=${encodeURIComponent(c.value)}`).join('; ')
 }
 
-async function req(cookie, method, path, body) {
+/** Access token nudo, come quello che l'app Flutter mette nell'header. */
+async function accessToken(email) {
+  const anon = createClient(URL, ANON, { auth: { persistSession: false } })
+  const { data, error } = await anon.auth.signInWithPassword({ email, password: PW })
+  if (error) throw new Error(`signIn ${email}: ${error.message}`)
+  return data.session.access_token
+}
+
+async function richiesta(headers, method, path, body) {
   const res = await fetch(BASE + path, {
     method,
-    headers: { 'content-type': 'application/json', cookie },
+    headers: { 'content-type': 'application/json', ...headers },
     body: body ? JSON.stringify(body) : undefined,
   })
   let json = null
   try { json = await res.json() } catch {}
   return { status: res.status, json }
+}
+
+/** Via del sito: cookie di sessione Next. */
+function req(cookie, method, path, body) {
+  return richiesta({ cookie }, method, path, body)
+}
+
+/** Via dell'app: solo Authorization, nessun cookie. */
+function reqBearer(token, method, path, body) {
+  return richiesta({ authorization: `Bearer ${token}` }, method, path, body)
 }
 
 async function pulizia() {
@@ -260,6 +281,77 @@ async function main() {
   r = await req(ckCli, 'POST', '/api/clienti', { nome: 'A', cognome: 'B', email: `hack-${TS}@${dom}`, accessMode: 'nessuno' })
   ok('>>> un cliente non può creare clienti -> 403', r.status === 403, JSON.stringify(r.json))
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Le stesse regole dalla porta dell'app: header Authorization, zero cookie.
+  // Non basta che "funzioni": deve rifiutare esattamente ciò che rifiuta il
+  // cookie, altrimenti l'app sarebbe una via più larga per entrare.
+  console.log('\n— Ingresso con Authorization: Bearer (app Flutter) —')
+  const tokA = await accessToken(profA.email)
+
+  const conCookie = await req(ckA, 'GET', `/api/clienti/${cardNuovo}/accesso`)
+  r = await reqBearer(tokA, 'GET', `/api/clienti/${cardNuovo}/accesso`)
+  ok('stato leggibile col solo Bearer (200)', r.status === 200 && r.json?.state?.hasAccount === true, JSON.stringify(r.json))
+  ok('stesso stato che col cookie',
+     r.json?.state?.email === conCookie.json?.state?.email &&
+     r.json?.state?.neverUsed === conCookie.json?.state?.neverUsed &&
+     r.json?.state?.linkActive === conCookie.json?.state?.linkActive,
+     JSON.stringify({ bearer: r.json?.state, cookie: conCookie.json?.state }))
+
+  r = await richiesta({}, 'GET', `/api/clienti/${cardNuovo}/accesso`)
+  ok('né cookie né Bearer -> 401', r.status === 401, JSON.stringify(r.json))
+
+  r = await reqBearer('non-un-token', 'GET', `/api/clienti/${cardNuovo}/accesso`)
+  ok('>>> token inventato -> 401', r.status === 401, JSON.stringify(r.json))
+
+  // Un token firmato davvero dal progetto ma senza `sub`: non è una sessione.
+  r = await reqBearer(ANON, 'GET', `/api/clienti/${cardNuovo}/accesso`)
+  ok('>>> anon key usata come token -> 401', r.status === 401, JSON.stringify(r.json))
+
+  r = await richiesta({ authorization: `Basic ${Buffer.from('a:b').toString('base64')}` }, 'GET', `/api/clienti/${cardNuovo}/accesso`)
+  ok('header non-Bearer senza cookie -> 401', r.status === 401, JSON.stringify(r.json))
+
+  r = await reqBearer(tokA, 'GET', `/api/clienti/${cardDiB}/accesso`)
+  ok('>>> col Bearer, scheda di un ALTRO professionista -> 403', r.status === 403, JSON.stringify(r.json))
+
+  const tokCli = await accessToken(cliAttivo.email)
+  r = await reqBearer(tokCli, 'GET', `/api/clienti/${cardNuovo}/accesso`)
+  ok('>>> Bearer di un cliente (role=client) -> 403', r.status === 403, JSON.stringify(r.json))
+
+  if (cardAttivo2) {
+    r = await reqBearer(tokA, 'POST', `/api/clienti/${cardAttivo2}/accesso`, { action: 'set_temp_password', password: 'DallApp123456' })
+    ok('>>> col Bearer, password su account ATTIVO -> 409 account_in_use',
+       r.status === 409 && r.json?.error === 'account_in_use', JSON.stringify(r.json))
+    const { data: sempreSua } = await createClient(URL, ANON, { auth: { persistSession: false } })
+      .auth.signInWithPassword({ email: cliAttivo.email, password: PW })
+    ok('la password del cliente attivo NON è cambiata nemmeno dall\'app', !!sempreSua?.session)
+  }
+
+  r = await reqBearer(tokA, 'POST', `/api/clienti/${cardNuovo}/accesso`, { action: 'invent_action' })
+  ok('azione sconosciuta col Bearer -> 400', r.status === 400 && r.json?.error === 'invalid_action', JSON.stringify(r.json))
+
+  // Registro: un'azione fatta dall'app finisce nello stesso posto, attribuita
+  // allo stesso professionista. Se la 027 non è applicata il conteggio è 0 a 0
+  // e il controllo si salta da sé.
+  const conta = async () => {
+    const { data } = await admin
+      .from('professional_access_log')
+      .select('id')
+      .eq('professional_id', profA.id)
+      .eq('client_id', cardNuovo)
+    return (data ?? []).length
+  }
+  const primaLog = await conta()
+  r = await reqBearer(tokA, 'POST', `/api/clienti/${cardNuovo}/accesso`, { action: 'copy_reset_link' })
+  ok('azione dall\'app riuscita (200) con link e messaggio',
+     r.status === 200 && typeof r.json?.link === 'string' && typeof r.json?.message === 'string', JSON.stringify(r.json).slice(0, 200))
+  ok('la password non torna mai nella risposta', r.json && !('password' in r.json), JSON.stringify(Object.keys(r.json ?? {})))
+  const dopoLog = await conta()
+  if (primaLog === 0 && dopoLog === 0) {
+    console.log('  ⊘ registro non verificabile: migration 027 non applicata')
+  } else {
+    ok('l\'azione dall\'app è registrata come quella dal sito', dopoLog === primaLog + 1, `${primaLog} -> ${dopoLog}`)
+  }
+
   console.log('\n— Rate limit —')
   const { error: logErr } = await admin.from('professional_access_log').select('id').limit(1)
   // PostgREST dice PGRST205 per una tabella che non è nella cache dello schema;
@@ -274,6 +366,11 @@ async function main() {
       if (ultimo.status === 429) break
     }
     ok('oltre il limite -> 429 rate_limited', ultimo?.status === 429 && ultimo.json?.error === 'rate_limited', JSON.stringify(ultimo?.json))
+    // Il limite è del cliente, non della porta da cui si entra: esaurito dal
+    // sito, l'app non ne ha uno suo.
+    const dallApp = await reqBearer(tokA, 'POST', `/api/clienti/${cardNuovo}/accesso`, { action: 'copy_reset_link' })
+    ok('>>> limite esaurito dal sito: anche l\'app riceve 429',
+       dallApp.status === 429 && dallApp.json?.error === 'rate_limited', JSON.stringify(dallApp.json))
   }
 
   console.log('\n— Cancellazione di un cliente con righe nel registro —')
