@@ -7,23 +7,30 @@ import { PoincareScatter, Rhythmogram } from './HrvCharts'
 // Vista dedicata alla misurazione ortostatica: confronto supino vs in piedi
 // (stessa analisi della pagina risultati dell'app) + indice di reattività.
 
-type Row = { key: keyof OrthostaticPhaseMetrics; label: string; unit?: string; digits?: number }
+// `expected`: direzione fisiologica ATTESA nel passaggio supino → in piedi
+// (+1 sale, -1 scende, 0 nessuna attesa). Il colore della variazione dice se
+// la risposta è nella direzione attesa (teal), opposta (ambra) o neutra: un
+// aumento della frequenza cardiaca in piedi è normale, colorarlo di verde o di
+// rosso "per segno" raccontava il contrario. Stessa lettura della pagina
+// risultati dell'app (risposte fisiologiche normali: HR +10–30 bpm, RMSSD
+// -30–50%, LF/HF in aumento, Stress Index in aumento).
+type Row = { key: keyof OrthostaticPhaseMetrics; label: string; unit?: string; digits?: number; expected: -1 | 0 | 1 }
 
 const ROWS: Row[] = [
-  { key: 'meanBpm', label: 'Frequenza cardiaca', unit: 'bpm', digits: 0 },
-  { key: 'sdnn', label: 'SDNN', unit: 'ms' },
-  { key: 'rmssd', label: 'RMSSD', unit: 'ms' },
-  { key: 'pnn50', label: 'pNN50', unit: '%' },
-  { key: 'sd1', label: 'SD1', unit: 'ms' },
-  { key: 'sd2', label: 'SD2', unit: 'ms' },
-  { key: 'lfPower', label: 'LF', unit: 'ms²' },
-  { key: 'hfPower', label: 'HF', unit: 'ms²' },
-  { key: 'lfHfRatio', label: 'LF/HF', digits: 2 },
-  { key: 'lfNorm', label: 'LFnu', unit: 'n.u.' },
-  { key: 'hfNorm', label: 'HFnu', unit: 'n.u.' },
-  { key: 'totalPower', label: 'Total Power', unit: 'ms²' },
-  { key: 'dfaAlpha1', label: 'DFA α1', digits: 2 },
-  { key: 'stressIndex', label: 'Stress Index (Baevsky)', digits: 1 },
+  { key: 'meanBpm', label: 'Frequenza cardiaca', unit: 'bpm', digits: 0, expected: 1 },
+  { key: 'sdnn', label: 'SDNN', unit: 'ms', expected: 0 },
+  { key: 'rmssd', label: 'RMSSD', unit: 'ms', expected: -1 },
+  { key: 'pnn50', label: 'pNN50', unit: '%', expected: -1 },
+  { key: 'sd1', label: 'SD1', unit: 'ms', expected: -1 },
+  { key: 'sd2', label: 'SD2', unit: 'ms', expected: 0 },
+  { key: 'lfPower', label: 'LF', unit: 'ms²', expected: 0 },
+  { key: 'hfPower', label: 'HF', unit: 'ms²', expected: -1 },
+  { key: 'lfHfRatio', label: 'LF/HF', digits: 2, expected: 1 },
+  { key: 'lfNorm', label: 'LFnu', unit: 'n.u.', expected: 1 },
+  { key: 'hfNorm', label: 'HFnu', unit: 'n.u.', expected: -1 },
+  { key: 'totalPower', label: 'Total Power', unit: 'ms²', expected: 0 },
+  { key: 'dfaAlpha1', label: 'DFA α1', digits: 2, expected: 0 },
+  { key: 'stressIndex', label: 'Stress Index (Baevsky)', digits: 1, expected: 1 },
 ]
 
 function val(phase: OrthostaticPhaseMetrics | null | undefined, key: keyof OrthostaticPhaseMetrics): number | null {
@@ -34,6 +41,19 @@ function val(phase: OrthostaticPhaseMetrics | null | undefined, key: keyof Ortho
 function deltaPct(supine: number | null, standing: number | null): number | null {
   if (supine == null || standing == null || supine === 0) return null
   return ((standing - supine) / Math.abs(supine)) * 100
+}
+
+function deltaAbs(supine: number | null, standing: number | null): number | null {
+  if (supine == null || standing == null) return null
+  return standing - supine
+}
+
+// Classe colore della variazione: nella direzione attesa (teal), opposta
+// (ambra), oppure neutra quando non c'è un'attesa fisiologica per quel
+// parametro o la variazione è trascurabile.
+function deltaTone(pctDelta: number | null, expected: -1 | 0 | 1): string {
+  if (pctDelta == null || expected === 0 || Math.abs(pctDelta) < 2) return 'text-anthracite'
+  return Math.sign(pctDelta) === expected ? 'text-teal-dark' : 'text-amber-700'
 }
 
 export function OrthostaticView({ data }: { data: OrthostaticData | null }) {
@@ -95,6 +115,7 @@ export function OrthostaticView({ data }: { data: OrthostaticData | null }) {
                   </span>
                 </th>
                 <th className="py-2 pl-4 font-medium text-right">Variazione</th>
+                <th className="py-2 pl-4 font-medium text-right">%</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
@@ -102,6 +123,8 @@ export function OrthostaticView({ data }: { data: OrthostaticData | null }) {
                 const s = val(supine, r.key)
                 const st = val(standing, r.key)
                 const d = deltaPct(s, st)
+                const da = deltaAbs(s, st)
+                const tone = deltaTone(d, r.expected)
                 return (
                   <tr key={String(r.key)}>
                     <td className="py-2 pr-4 text-anthracite-lighter">{r.label}</td>
@@ -112,8 +135,15 @@ export function OrthostaticView({ data }: { data: OrthostaticData | null }) {
                       {num(st, r.digits ?? 1)}{r.unit ? <span className="text-[10px] text-anthracite-lighter ml-1">{r.unit}</span> : null}
                     </td>
                     <td className="py-2 pl-4 text-right tabular-nums">
+                      {da == null ? <span className="text-anthracite-lighter">—</span> : (
+                        <span className={tone}>
+                          {da > 0 ? '+' : ''}{da.toFixed(r.digits ?? 1)}{r.unit ? <span className="text-[10px] text-anthracite-lighter ml-1">{r.unit}</span> : null}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2 pl-4 text-right tabular-nums">
                       {d == null ? <span className="text-anthracite-lighter">—</span> : (
-                        <span className={d > 0 ? 'text-emerald-700' : d < 0 ? 'text-red-700' : 'text-anthracite-lighter'}>
+                        <span className={tone}>
                           {d > 0 ? '+' : ''}{d.toFixed(0)}%
                         </span>
                       )}
@@ -125,7 +155,10 @@ export function OrthostaticView({ data }: { data: OrthostaticData | null }) {
           </table>
         </div>
         <p className="text-[11px] text-anthracite-lighter mt-3">
-          La variazione confronta la fase in piedi rispetto a quella supina. Nel passaggio ortostatico è fisiologico l&apos;aumento della frequenza cardiaca e la riduzione della variabilità vagale (RMSSD, HF).
+          La variazione confronta la fase in piedi rispetto a quella supina, in valore assoluto e in percentuale.
+          Nel passaggio ortostatico è atteso l&apos;aumento della frequenza cardiaca (10–30 bpm), di LF/HF e dello Stress Index,
+          e la riduzione della variabilità vagale (RMSSD 30–50%, HF, pNN50). Colore teal = variazione nella direzione attesa,
+          ambra = direzione opposta; i parametri senza un&apos;attesa precisa restano neutri.
         </p>
       </section>
 

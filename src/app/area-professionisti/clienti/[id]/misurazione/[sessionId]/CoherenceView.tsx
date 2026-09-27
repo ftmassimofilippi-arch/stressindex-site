@@ -45,11 +45,17 @@ export function CoherenceView({
     .map((v) => toNum(v))
     .filter((v): v is number => v != null)
 
+  // Soglie dell'app (coherenceScoreLabel): ≥60 alta, ≥30 moderata, sotto bassa.
   const scoreLevel =
     score == null ? null
-      : score >= 66 ? { label: 'Coerenza alta', tone: 'text-emerald-700' }
-      : score >= 33 ? { label: 'Coerenza media', tone: 'text-amber-700' }
+      : score >= 60 ? { label: 'Coerenza alta', tone: 'text-emerald-700' }
+      : score >= 30 ? { label: 'Coerenza moderata', tone: 'text-amber-700' }
       : { label: 'Coerenza bassa', tone: 'text-red-700' }
+
+  // Picco di risonanza contro il ritmo impostato: come nella pagina risultati
+  // dell'app, entro 0,5 resp/min il picco è "allineato" al ritmo guidato.
+  const peakDelta = resonanceBpm != null && breathing != null ? Math.abs(resonanceBpm - breathing) : null
+  const peakAligned = peakDelta == null ? null : peakDelta <= 0.5
 
   // Distribuisce i punti della serie sul tempo della sessione (finestre uniformi).
   const dur = toNum(measurement.duration_seconds) ?? 0
@@ -77,7 +83,7 @@ export function CoherenceView({
             <span className="font-serif text-4xl text-anthracite">{num(breathing, 1)}</span>
             <span className="text-xs text-anthracite-lighter">resp/min</span>
           </div>
-          <div className="text-[11px] text-anthracite-lighter mt-1">ritmo di respirazione guidato</div>
+          <div className="text-[11px] text-anthracite-lighter mt-1">ritmo impostato per la sessione</div>
         </div>
         <div className="card p-5">
           <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter">Frequenza di risonanza</div>
@@ -92,6 +98,11 @@ export function CoherenceView({
             )}
           </div>
           {resonanceBpm != null && <div className="text-[11px] text-anthracite-lighter mt-1">≈ {resonanceBpm.toFixed(1)} resp/min</div>}
+          {peakAligned != null && (
+            <div className={`text-[11px] font-medium mt-1 ${peakAligned ? 'text-emerald-700' : 'text-amber-700'}`}>
+              {peakAligned ? 'Picco allineato al ritmo impostato' : `Picco a ${peakDelta!.toFixed(1)} resp/min dal ritmo impostato`}
+            </div>
+          )}
         </div>
         <div className="card p-5">
           <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter">Rapporto inspirazione</div>
