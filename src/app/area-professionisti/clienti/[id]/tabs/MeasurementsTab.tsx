@@ -9,9 +9,11 @@ import { DownloadMeasurementPdfButton } from '@/components/dashboard/DownloadMea
 import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { formatMeasuredAt, formatDate } from '@/lib/format'
-import { normalizeTestType, measurementTypeMeta, type MeasurementTypeKey } from '@/lib/measurement-type'
+import { normalizeTestType, measurementTypeMeta, ALL_MEASUREMENT_TYPE_META, type MeasurementTypeKey } from '@/lib/measurement-type'
 import type { Client, MeasurementAnalytics } from '@/lib/types'
 import { measuredInstant } from '@/lib/format'
+import { rowHasTag, tagCounts, tagLabel } from '@/lib/before-after'
+import { FilterChipRow } from '@/components/dashboard/SessionFilterChips'
 
 const DURATION_FILTERS = [
   { value: 'all', label: 'Tutte le durate' },
@@ -23,22 +25,18 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
   const qs = professionistaId ? `?professionista=${professionistaId}` : ''
   const [range, setRange] = useState<DateRange>(defaultRange(90))
   const [duration, setDuration] = useState<typeof DURATION_FILTERS[number]['value']>('all')
-  const [typeFilter, setTypeFilter] = useState<'all' | MeasurementTypeKey>('all')
+  const [typeFilter, setTypeFilter] = useState<MeasurementTypeKey | null>(null)
+  // Filtro per etichetta (chiave neutra, vedi normalizeTagKey): combinabile
+  // con il tipo, con i conteggi sui chip. Stessa logica dell'app.
+  const [tagFilter, setTagFilter] = useState<string | null>(null)
 
-  // Tipi effettivamente presenti tra le misurazioni del cliente (per popolare il filtro).
-  const availableTypes = useMemo(() => {
-    const keys = new Set<MeasurementTypeKey>()
-    for (const m of measurements) keys.add(normalizeTestType(m.test_type))
-    return Array.from(keys)
-  }, [measurements])
-
-  const filtered = useMemo(() => {
+  // Misurazioni nel periodo e nella durata scelti: i chip contano su queste.
+  const inPeriod = useMemo(() => {
     const fromMs = new Date(range.from).getTime()
     const toMs = new Date(range.to).getTime() + 24 * 3600 * 1000
     return measurements.filter((m) => {
       const t = measuredInstant(m)?.getTime() ?? 0
       if (t < fromMs || t > toMs) return false
-      if (typeFilter !== 'all' && normalizeTestType(m.test_type) !== typeFilter) return false
       if (duration !== 'all') {
         const d = (m.duration_seconds ?? 0) / 60
         const target = Number(duration)
@@ -46,7 +44,35 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
       }
       return true
     })
-  }, [measurements, range, duration, typeFilter])
+  }, [measurements, range, duration])
+
+  const tagOptions = useMemo(
+    () => Array.from(tagCounts(inPeriod).entries()).map(([value, count]) => ({ value, label: tagLabel(value), count })),
+    [inPeriod],
+  )
+  const typeOptions = useMemo(() => {
+    const counts = new Map<MeasurementTypeKey, number>()
+    for (const m of inPeriod) {
+      const k = normalizeTestType(m.test_type)
+      counts.set(k, (counts.get(k) ?? 0) + 1)
+    }
+    return ALL_MEASUREMENT_TYPE_META.map((meta) => ({
+      value: meta.key,
+      label: meta.label,
+      count: counts.get(meta.key) ?? 0,
+      color: meta.dotColor,
+    }))
+  }, [inPeriod])
+
+  const filtered = useMemo(
+    () =>
+      inPeriod.filter((m) => {
+        if (typeFilter && normalizeTestType(m.test_type) !== typeFilter) return false
+        if (tagFilter && !rowHasTag(m, tagFilter)) return false
+        return true
+      }),
+    [inPeriod, typeFilter, tagFilter],
+  )
 
   function exportCsv() {
     const headers = ['Data','Tipo','Durata (s)','Stress','Recupero','Equilibrio','Energia','Adattamento','BPM','SDNN','RMSSD','Artifact %']
@@ -100,18 +126,6 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
       <div className="flex flex-wrap items-center gap-3 justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <DateRangePicker value={range} onChange={setRange} />
-          {availableTypes.length > 1 && (
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
-              className="px-3 py-2 text-sm bg-white border border-surface-border rounded-xl"
-            >
-              <option value="all">Tutti i tipi</option>
-              {availableTypes.map((k) => (
-                <option key={k} value={k}>{measurementTypeMeta(k).label}</option>
-              ))}
-            </select>
-          )}
           <select
             value={duration}
             onChange={(e) => setDuration(e.target.value as typeof duration)}
@@ -124,12 +138,16 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
           <Download size={15} /> Esporta CSV
         </button>
       </div>
+      <div className="space-y-2">
+        <FilterChipRow allLabel="Tutte le etichette" total={inPeriod.length} options={tagOptions} selected={tagFilter} onChange={setTagFilter} />
+        <FilterChipRow allLabel="Tutti i test" total={inPeriod.length} options={typeOptions} selected={typeFilter} onChange={(v) => setTypeFilter(v as MeasurementTypeKey | null)} />
+      </div>
       <DataTable
         columns={columns}
         rows={filtered}
         rowKey={(m) => m.id}
         initialSort={{ key: 'measured_at', dir: 'desc' }}
-        emptyState={<div className="card p-10 text-center text-sm text-anthracite-lighter">Nessuna misurazione nel periodo selezionato</div>}
+        emptyState={<div className="card p-10 text-center text-sm text-anthracite-lighter">{tagFilter || typeFilter ? 'Nessuna misurazione con questi filtri' : 'Nessuna misurazione nel periodo selezionato'}</div>}
       />
     </div>
   )

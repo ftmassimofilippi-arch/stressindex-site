@@ -7,6 +7,7 @@ import type { Alert, Client, ClientNote, ClientSettings, MeasurementAnalytics, M
 import { age, fullName, initials } from '@/lib/format'
 import { OverviewTab } from './tabs/OverviewTab'
 import { MeasurementsTab } from './tabs/MeasurementsTab'
+import { BeforeAfterTab } from './tabs/BeforeAfterTab'
 import { MonitoringTab } from './tabs/MonitoringTab'
 import type { MonitoringSession } from '@/lib/monitoring-types'
 import { AdvancedAnalyticsTab } from './tabs/AdvancedAnalyticsTab'
@@ -23,6 +24,7 @@ import type { AlertRule } from '@/lib/alert-rules'
 const ALL_TABS = [
   { id: 'panoramica', label: 'Panoramica' },
   { id: 'misurazioni', label: 'Misurazioni' },
+  { id: 'prima-dopo', label: 'Prima e dopo' },
   { id: 'monitoraggi', label: 'Monitoraggi' },
   { id: 'analytics', label: 'Analytics' },
   { id: 'report', label: 'Report' },
@@ -173,6 +175,7 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, n
 
       {tab === 'panoramica' && <OverviewTab client={client} measurements={measurements} monitoring={monitoring} alerts={alerts} professionistaId={professionistaId} />}
       {tab === 'misurazioni' && <MeasurementsTab client={client} measurements={measurements} professionistaId={professionistaId} />}
+      {tab === 'prima-dopo' && <BeforeAfterTab client={client} measurements={measurements} professionistaId={professionistaId} />}
       {tab === 'monitoraggi' && <MonitoringTab sessions={monitoring} professionistaId={professionistaId} />}
       {tab === 'analytics' && <AdvancedAnalyticsTab measurements={measurements} />}
       {tab === 'report' && <ReportTab client={client} />}
