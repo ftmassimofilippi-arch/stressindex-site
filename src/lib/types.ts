@@ -250,7 +250,11 @@ export interface Alert {
   id: UUID
   professional_id: UUID
   client_id: string
-  type: 'high_stress' | 'low_recovery' | 'missed_measurement' | 'abnormal_value' | 'trend_negative'
+  // Cron del sito: high_stress | low_recovery | missed_measurement |
+  // abnormal_value | trend_negative. Eventi dell'app (alert_events): i codici
+  // delle regole di alert_rules (rmssd_drop_20, stress_critical, …).
+  // Etichette in alertTypeLabel() di src/lib/alert-rules.ts.
+  type: string
   severity: 'low' | 'medium' | 'high'
   message?: string | null
   triggering_value?: number | null
@@ -259,6 +263,8 @@ export interface Alert {
   created_at: string
   seen_at?: string | null
   resolved_at?: string | null
+  /** 'app' per gli eventi scritti dall'app (alert_events), assente per il cron. */
+  source?: 'app' | 'cron'
 }
 
 export interface ClientSettings {
@@ -331,7 +337,7 @@ export interface AiInsight {
 }
 
 // Etichette UI in italiano
-export const ALERT_TYPE_LABEL: Record<Alert['type'], string> = {
+export const ALERT_TYPE_LABEL: Record<string, string> = {
   high_stress: 'Stress elevato',
   low_recovery: 'Recupero basso',
   missed_measurement: 'Misurazione mancante',

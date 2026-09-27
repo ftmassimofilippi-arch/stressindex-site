@@ -8,10 +8,12 @@ import { createClient } from '@/lib/supabase-browser'
 import { fullName } from '@/lib/format'
 import type { Client, ClientSettings } from '@/lib/types'
 import { ClientAccessSection } from '../ClientAccessSection'
+import { AlertRulesSection } from '@/components/dashboard/AlertRulesSection'
+import type { AlertRule } from '@/lib/alert-rules'
 
-type Props = { client: Client; initialSettings: ClientSettings | null }
+type Props = { client: Client; initialSettings: ClientSettings | null; alertRules?: AlertRule[]; professionalId?: string | null }
 
-export function ClientSettingsTab({ client, initialSettings }: Props) {
+export function ClientSettingsTab({ client, initialSettings, alertRules = [], professionalId = null }: Props) {
   const router = useRouter()
   const [data, setData] = useState({
     nome: client.nome ?? '',
@@ -181,9 +183,13 @@ export function ClientSettingsTab({ client, initialSettings }: Props) {
         </div>
       </section>
 
+      <AlertRulesSection clientId={client.id} rules={alertRules} professionalId={professionalId} />
+
       <section className="card p-6">
-        <h3 className="font-serif text-lg text-anthracite mb-1">Soglie alert</h3>
-        <p className="text-xs text-anthracite-lighter mb-4">Genera un alert quando il valore supera/scende sotto queste soglie</p>
+        <h3 className="font-serif text-lg text-anthracite mb-1">Soglie degli alert automatici del sito</h3>
+        <p className="text-xs text-anthracite-lighter mb-4">
+          Usate dal controllo orario del sito sugli score (alert &quot;Stress elevato&quot; e &quot;Recupero basso&quot; in dashboard). Le soglie dell&apos;app sono nella sezione qui sopra.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { key: 'alert_threshold_stress', label: 'Stress (≥)', max: 100 },

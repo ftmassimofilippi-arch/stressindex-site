@@ -11,6 +11,7 @@ import {
   resolveViewingProfessional,
 } from '@/lib/dashboard-data'
 import { listMonitoringSessionsForClient } from '@/lib/monitoring-data'
+import { listAlertEvents, listAlertRules, mergeAlerts } from '@/lib/alert-rules'
 import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
 import { ClientProfile } from './ClientProfile'
 
@@ -29,7 +30,7 @@ export default async function ClientPage({
   const superadminAccess = viewing?.access === 'superadmin'
 
   const professionalId = viewing?.user_id ?? currentUserId
-  const [client, professional, measurements, alerts, notes, settings, messages, allAlerts, allMonitoring, access] = await Promise.all([
+  const [client, professional, measurements, cronAlerts, notes, settings, messages, allAlerts, allMonitoring, access, alertRules, appEvents] = await Promise.all([
     getClient(params.id),
     getProfessionalProfile(),
     listMeasurementsForClient(params.id),
@@ -40,8 +41,13 @@ export default async function ClientPage({
     listAlerts({ status: ['new'] }),
     professionalId ? listMonitoringSessionsForClient(professionalId, params.id) : Promise.resolve([]),
     getMyAccountAccess(),
+    // Regole di alert_rules (generali + override del cliente) ed eventi
+    // dell'app: la stessa precedenza per cliente dell'app.
+    readOnly ? Promise.resolve([]) : listAlertRules(),
+    listAlertEvents({ clientId: params.id, unreadOnly: true, days: 30 }),
   ])
   const monitoring = filterMonitoringByModules(allMonitoring, access)
+  const alerts = mergeAlerts(cronAlerts, appEvents)
 
   if (!client) notFound()
 
@@ -61,6 +67,8 @@ export default async function ClientPage({
         professionistaId={viewing?.user_id}
         superadminAccess={superadminAccess}
         adminId={currentUserId ?? undefined}
+        alertRules={alertRules}
+        currentUserId={currentUserId ?? undefined}
       />
     </DashboardLayout>
   )

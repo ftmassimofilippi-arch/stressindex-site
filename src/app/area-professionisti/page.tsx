@@ -22,7 +22,7 @@ import {
   listRecentNotes,
   todaysMeasurements,
 } from '@/lib/dashboard-data'
-import { ALERT_TYPE_LABEL } from '@/lib/types'
+import { alertTypeLabel, listAlertEvents, mergeAlerts } from '@/lib/alert-rules'
 import { formatGreeting, formatMeasuredTime, todayLongIt, daysSince } from '@/lib/format'
 
 export const metadata = { title: 'Oggi' }
@@ -30,9 +30,12 @@ export const dynamic = 'force-dynamic'
 
 export default async function DashboardHome() {
   const user = await getCurrentUser()
-  const [professional, alerts, measurements, contacts, trend, allClients, notes, invites, monitoring] = await Promise.all([
+  const [professional, cronAlerts, appEvents, measurements, contacts, trend, allClients, notes, invites, monitoring] = await Promise.all([
     getProfessionalProfile(),
     listAlerts({ status: ['new', 'seen'], limit: 5 }),
+    // Eventi valutati dall'app sulle regole di alert_rules (con la precedenza
+    // per cliente): si mostrano insieme agli alert del cron.
+    listAlertEvents({ unreadOnly: true, days: 14, limit: 10 }),
     todaysMeasurements(),
     clientsToContact(),
     aggregatedDailyAverages(365),
@@ -42,6 +45,7 @@ export default async function DashboardHome() {
     user ? listMonitoringSessionsForProfessional(user.id) : Promise.resolve([]),
   ])
   const recentMonitoring = filterMonitoringByModules(monitoring, await getMyAccountAccess()).slice(0, 5)
+  const alerts = mergeAlerts(cronAlerts, appEvents, 6)
 
   const clientMap = new Map(allClients.map((c) => [c.id, c]))
   const newAlertCount = alerts.filter((a) => a.status === 'new').length
@@ -85,7 +89,8 @@ export default async function DashboardHome() {
                             {c ? `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() : 'Cliente'}
                           </div>
                           <div className="text-xs text-anthracite-lighter mt-0.5">
-                            {ALERT_TYPE_LABEL[a.type]}{a.triggering_value != null ? ` · valore ${Math.round(a.triggering_value)}` : ''}
+                            {alertTypeLabel(a.type)}{a.triggering_value != null ? ` · valore ${Math.round(a.triggering_value)}` : ''}
+                            {a.source === 'app' && a.message ? ` · ${a.message}` : ''}
                           </div>
                         </div>
                         <ArrowRight size={16} className="text-anthracite-lighter" />

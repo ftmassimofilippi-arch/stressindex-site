@@ -9,7 +9,7 @@ import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadg
 import { LastMonitoringCard } from '@/components/monitoring/LastMonitoringCard'
 import type { MonitoringSession } from '@/lib/monitoring-types'
 import type { Alert, Client, MeasurementAnalytics } from '@/lib/types'
-import { ALERT_TYPE_LABEL } from '@/lib/types'
+import { alertTypeLabel } from '@/lib/alert-rules'
 import { formatDateTime, formatMeasuredAt } from '@/lib/format'
 import { measuredDayKey } from '@/lib/format'
 
@@ -69,7 +69,7 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, pro
                 <li key={a.id} className="px-5 py-3 flex items-center gap-3">
                   <AlertBadge severity={a.severity} />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-anthracite">{ALERT_TYPE_LABEL[a.type]}</div>
+                    <div className="text-sm font-medium text-anthracite">{alertTypeLabel(a.type)}</div>
                     <div className="text-xs text-anthracite-lighter mt-0.5">{a.message ?? ''}</div>
                   </div>
                   <span className="text-xs text-anthracite-lighter">{formatDateTime(a.created_at)}</span>

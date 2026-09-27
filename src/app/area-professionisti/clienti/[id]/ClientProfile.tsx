@@ -18,6 +18,7 @@ import { PdfExportModal } from './PdfExportModal'
 import { MessageComposer } from './MessageComposer'
 import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
 import { formatDate } from '@/lib/format'
+import type { AlertRule } from '@/lib/alert-rules'
 
 const ALL_TABS = [
   { id: 'panoramica', label: 'Panoramica' },
@@ -48,9 +49,13 @@ type Props = {
   professionistaId?: string
   superadminAccess?: boolean
   adminId?: string
+  /** Regole di alert_rules del professionista (generali + override). */
+  alertRules?: AlertRule[]
+  /** Utente loggato: serve per scrivere gli override su alert_rules. */
+  currentUserId?: string
 }
 
-export function ClientProfile({ client, measurements, monitoring = [], alerts, notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId, superadminAccess, adminId }: Props) {
+export function ClientProfile({ client, measurements, monitoring = [], alerts, notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId, superadminAccess, adminId, alertRules = [], currentUserId }: Props) {
   const [tab, setTab] = useState<TabId>('panoramica')
   const TABS = readOnly ? READONLY_TABS : ALL_TABS
   const backHref = professionistaId
@@ -174,7 +179,7 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, n
       {!readOnly && tab === 'note' && <NotesTab client={client} initialNotes={notes} />}
       {readOnly && tab === 'note' && <ReadOnlyNotesList notes={notes} />}
       {!readOnly && tab === 'messaggi' && <MessagesTab client={client} initialMessages={messages} />}
-      {!readOnly && tab === 'impostazioni' && <ClientSettingsTab client={client} initialSettings={settings} />}
+      {!readOnly && tab === 'impostazioni' && <ClientSettingsTab client={client} initialSettings={settings} alertRules={alertRules} professionalId={currentUserId ?? null} />}
 
       <PdfExportModal
         open={pdfOpen}
