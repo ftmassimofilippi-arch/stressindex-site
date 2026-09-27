@@ -22,7 +22,8 @@ import {
   listRecentNotes,
   todaysMeasurements,
 } from '@/lib/dashboard-data'
-import { alertTypeLabel, listAlertEvents, mergeAlerts } from '@/lib/alert-rules'
+import { alertTypeLabel, mergeAlerts } from '@/lib/alert-rules'
+import { listAlertEvents } from '@/lib/alert-rules-server'
 import { formatGreeting, formatMeasuredTime, todayLongIt, daysSince } from '@/lib/format'
 
 export const metadata = { title: 'Oggi' }

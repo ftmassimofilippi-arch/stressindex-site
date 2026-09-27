@@ -11,7 +11,8 @@ import {
   resolveViewingProfessional,
 } from '@/lib/dashboard-data'
 import { listMonitoringSessionsForClient } from '@/lib/monitoring-data'
-import { listAlertEvents, listAlertRules, mergeAlerts } from '@/lib/alert-rules'
+import { mergeAlerts } from '@/lib/alert-rules'
+import { listAlertEvents, listAlertRules } from '@/lib/alert-rules-server'
 import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
 import { ClientProfile } from './ClientProfile'
 
