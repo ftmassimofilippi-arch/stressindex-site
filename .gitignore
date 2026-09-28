@@ -32,3 +32,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env.local.save
+
+# env (qualsiasi variante, tranne l'esempio)
+.env
+.env.*
+!.env.example
+
+# Supabase CLI local state
+supabase/.temp/
