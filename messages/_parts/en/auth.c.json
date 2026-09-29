@@ -1,0 +1,86 @@
+{
+  "login": {
+    "title": "Sign in",
+    "intro": "Enter your app credentials to open the professional dashboard.",
+    "blocked": "Your account has been blocked and your session has been closed. For information, write to <link>support@stressindex.io</link>.",
+    "noAccount": "Don't have an account yet? <link>Start for free →</link>",
+    "email": "Email",
+    "emailPlaceholder": "name@practice.com",
+    "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "remember": "Remember me",
+    "forgot": "Forgot your password?",
+    "fillAll": "Fill in all fields",
+    "submit": "Sign in",
+    "submitting": "Signing in..."
+  },
+  "recover": {
+    "eyebrow": "Recover access",
+    "title": "Forgot your password",
+    "intro": "Enter your email and we will send you a link to reset your password.",
+    "backToLogin": "← Back to sign in",
+    "email": "Email",
+    "emailPlaceholder": "name@practice.com",
+    "emailRequired": "Enter your email",
+    "submit": "Send reset link",
+    "submitting": "Sending...",
+    "sent": "We sent you an email with instructions to reset your password. Check your spam folder too."
+  },
+  "setPassword": {
+    "recovery": {
+      "eyebrow": "Recover access",
+      "title": "New password",
+      "intro": "Choose a new password for your Stress Index account.",
+      "cta": "Save new password",
+      "done": "Password updated. You can now sign in with your new credentials, both on the website and in the app."
+    },
+    "invite": {
+      "eyebrow": "Activate account",
+      "title": "Set your password",
+      "intro": "Welcome to Stress Index. Choose a password to activate your account.",
+      "cta": "Activate account",
+      "done": "Account activated. You can now sign in with your email and the password you just chose."
+    },
+    "checking": "Checking the link...",
+    "unusable": "Link cannot be used",
+    "requestNew": "Request a new link",
+    "backToLogin": "← Back to sign in",
+    "doneEyebrow": "Done",
+    "doneTitle": "All set",
+    "goToArea": "Go to your area",
+    "account": "Account: <b>{email}</b>",
+    "newPassword": "New password",
+    "newPasswordPlaceholder": "At least {min} characters",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordPlaceholder": "Repeat the password",
+    "passwordTooShort": "Password must be at least {min} characters",
+    "passwordMismatch": "The two passwords do not match",
+    "sessionExpired": "The recovery session has expired. Request a new reset link.",
+    "saving": "Saving...",
+    "errors": {
+      "sameBrowserTitle": "Open the link in the same browser",
+      "sameBrowserDetail": "For security, the reset can only be completed from the browser and device you requested it from. If you requested the reset on your computer and are opening the email on your phone (or the other way round), open this link from there. If that is not possible, request a new link from this device.",
+      "expiredTitle": "Link expired or already used",
+      "expiredDetail": "Reset links work once and expire after a short time. Request a new one: it will arrive by email right away.",
+      "expiredExchangeTitle": "Link expired or already used",
+      "expiredExchangeDetail": "The reset could not be completed with this link. Request a new one.",
+      "invalidTitle": "Invalid link",
+      "invalidDetail": "The link was not recognized. Request a new one.",
+      "sessionTitle": "Invalid recovery session",
+      "sessionDetail": "The link token can no longer be used. Request a new reset link.",
+      "tokenInvalidTitle": "Link expired or already used",
+      "tokenInvalidDetail": "The token is no longer valid. Request a new reset link.",
+      "missingTitle": "Missing token",
+      "missingDetail": "This page must be opened from the link you received by email. If you copied the address by hand you may have lost the final part: open the link from the email again, or request a new one.",
+      "unexpectedTitle": "Something went wrong",
+      "unexpectedDetail": "The link could not be validated. Try requesting a password reset again."
+    }
+  },
+  "suspended": {
+    "title": "Account suspended",
+    "body": "Your account is temporarily suspended: clients and measurements are not accessible until it is reactivated. Your data is safe and will be available again once the account is reactivated.",
+    "contact": "Contact support: <link>support@stressindex.io</link>",
+    "supportPage": "Support page"
+  }
+}

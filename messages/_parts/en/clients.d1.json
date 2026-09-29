@@ -1,0 +1,135 @@
+{
+  "list": {
+    "title": "My <em>clients</em>",
+    "titleOf": "Clients of <em>{name}</em>",
+    "count": "{count, plural, one {# client} other {# clients}}",
+    "viewing": "You are viewing the data of <b>{name}</b>",
+    "supportMode": "(support mode)",
+    "readOnly": "read-only",
+    "backToProfessionals": "Back to professionals",
+    "backToTeam": "Back to your team",
+    "emptyTitle": "You have no clients yet",
+    "emptyTitleOf": "No clients for this professional",
+    "emptyBody": "Clients are synced from the mobile app.",
+    "searchPlaceholder": "Search by first name, last name, email…",
+    "allTags": "All tags",
+    "noName": "No name",
+    "never": "Never",
+    "periods": {
+      "all": "All",
+      "today": "Today",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "never": "Never"
+    },
+    "columns": {
+      "client": "Client",
+      "age": "Age",
+      "tags": "Tags",
+      "lastMeasurement": "Last measurement",
+      "alerts": "Alerts"
+    }
+  },
+  "form": {
+    "newClient": "New client",
+    "title": "New client",
+    "createdTitle": "Client created",
+    "intro": "First name, last name and email are required. The other fields can be completed later.",
+    "openRecord": "Open the record",
+    "creating": "Creating…",
+    "create": "Create client",
+    "checkFields": "Check the highlighted fields.",
+    "createFailed": "Creation failed.",
+    "networkError": "Network error.",
+    "copyFailed": "The browser did not allow copying: select the text by hand.",
+    "thisClient": "this client",
+    "duplicate": "A record with this email already exists: {name}.",
+    "openExisting": "<link>Open the existing record</link> instead of creating a second one.",
+    "tempPasswordNotice": "Temporary password: it will not be shown again",
+    "copied": "Copied",
+    "copy": "Copy",
+    "generate": "Generate",
+    "outcome": {
+      "existingLinked": "An account with this email already existed: it has been linked to this record without sending a new invitation. Its measurements are visible right away.",
+      "inviteSent": "Invitation sent: the client will set their own password from the link in the email.",
+      "passwordSet": "Account created with the temporary password. Share it with the client: at the first sign-in the app will ask them to change it.",
+      "recordOnly": "Record created. App access can be created later from the client's record.",
+      "merged": "A duplicate record with the same email has been merged into this one.",
+      "linkWarning": "Link failed: {detail}"
+    },
+    "sections": {
+      "personal": "Personal details",
+      "lifestyle": "Lifestyle",
+      "contacts": "Contacts",
+      "access": "App access",
+      "notes": "Notes",
+      "sport": "Sport data"
+    },
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "birthDate": "Date of birth",
+      "sex": "Sex",
+      "weight": "Weight (kg)",
+      "height": "Height (cm)",
+      "smoker": "Smoker",
+      "athlete": "Athlete",
+      "activityLevel": "Physical activity level",
+      "email": "Email",
+      "phone": "Phone",
+      "sport": "Sport",
+      "competitiveLevel": "Competitive level",
+      "hrMax": "Max HR (bpm)",
+      "ftp": "Estimated FTP (watt)",
+      "currentGoal": "Current goal",
+      "tempPassword": "Temporary password (min {min} characters)"
+    },
+    "placeholders": {
+      "weight": "e.g. 75",
+      "height": "e.g. 178",
+      "password": "Generate or type a password",
+      "hrMax": "e.g. 185",
+      "ftp": "e.g. 280 watt"
+    },
+    "access": {
+      "inviteTitle": "Invite the client to sign in",
+      "inviteDesc": "They will receive an invitation email and set their own password. Their measurements will be linked to this record.",
+      "passwordTitle": "Set a temporary password",
+      "passwordDesc": "For when the client is in front of you or does not use email. At the first sign-in the app will ask them to change it.",
+      "noneTitle": "Just the record, for now",
+      "noneDesc": "No account: you can create it later from the client's record."
+    },
+    "sex": {
+      "M": "Male",
+      "F": "Female"
+    },
+    "activity": {
+      "sedentario": "Sedentary",
+      "moderato": "Moderate",
+      "attivo": "Active",
+      "atleta": "Athlete"
+    },
+    "competitive": {
+      "amateur": "Amateur",
+      "semi_pro": "Semi-pro",
+      "professional": "Professional",
+      "elite": "Elite"
+    },
+    "validation": {
+      "firstNameRequired": "First name is required",
+      "lastNameRequired": "Last name is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Invalid email",
+      "range": "Enter a value between {min} and {max}",
+      "notAllowed": "Value not allowed",
+      "passwordMin": "The password must have at least {min} characters"
+    }
+  },
+  "noteCategories": {
+    "assessment": "Assessment",
+    "followUp": "Follow-up",
+    "postSession": "After session",
+    "background": "Background",
+    "other": "Other"
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "login": {
+    "title": "Anmelden",
+    "intro": "Geben Sie die Zugangsdaten Ihrer App ein, um das professionelle Dashboard zu öffnen.",
+    "blocked": "Ihr Konto wurde gesperrt und die Sitzung beendet. Für Informationen schreiben Sie an <link>support@stressindex.io</link>.",
+    "noAccount": "Noch kein Konto? <link>Kostenlos starten →</link>",
+    "email": "E-Mail",
+    "emailPlaceholder": "name@praxis.de",
+    "password": "Passwort",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen",
+    "remember": "Angemeldet bleiben",
+    "forgot": "Passwort vergessen?",
+    "fillAll": "Füllen Sie alle Felder aus",
+    "submit": "Anmelden",
+    "submitting": "Anmeldung läuft..."
+  },
+  "recover": {
+    "eyebrow": "Zugang wiederherstellen",
+    "title": "Passwort vergessen",
+    "intro": "Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen des Passworts.",
+    "backToLogin": "← Zurück zur Anmeldung",
+    "email": "E-Mail",
+    "emailPlaceholder": "name@praxis.de",
+    "emailRequired": "Geben Sie Ihre E-Mail-Adresse ein",
+    "submit": "Link zum Zurücksetzen senden",
+    "submitting": "Wird gesendet...",
+    "sent": "Wir haben Ihnen eine E-Mail mit Anweisungen zum Zurücksetzen des Passworts gesendet. Prüfen Sie auch den Spam-Ordner."
+  },
+  "setPassword": {
+    "recovery": {
+      "eyebrow": "Zugang wiederherstellen",
+      "title": "Neues Passwort",
+      "intro": "Wählen Sie ein neues Passwort für Ihr Stress Index Konto.",
+      "cta": "Neues Passwort speichern",
+      "done": "Passwort aktualisiert. Sie können sich jetzt mit den neuen Zugangsdaten anmelden, sowohl auf der Website als auch in der App."
+    },
+    "invite": {
+      "eyebrow": "Konto aktivieren",
+      "title": "Passwort festlegen",
+      "intro": "Willkommen bei Stress Index. Wählen Sie ein Passwort, um Ihr Konto zu aktivieren.",
+      "cta": "Konto aktivieren",
+      "done": "Konto aktiviert. Sie können sich jetzt mit Ihrer E-Mail-Adresse und dem soeben gewählten Passwort anmelden."
+    },
+    "checking": "Link wird geprüft...",
+    "unusable": "Link nicht verwendbar",
+    "requestNew": "Neuen Link anfordern",
+    "backToLogin": "← Zurück zur Anmeldung",
+    "doneEyebrow": "Erledigt",
+    "doneTitle": "Alles bereit",
+    "goToArea": "Zu Ihrem Bereich",
+    "account": "Konto: <b>{email}</b>",
+    "newPassword": "Neues Passwort",
+    "newPasswordPlaceholder": "Mindestens {min} Zeichen",
+    "confirmPassword": "Passwort bestätigen",
+    "confirmPasswordPlaceholder": "Passwort wiederholen",
+    "passwordTooShort": "Das Passwort muss mindestens {min} Zeichen haben",
+    "passwordMismatch": "Die beiden Passwörter stimmen nicht überein",
+    "sessionExpired": "Die Wiederherstellungssitzung ist abgelaufen. Fordern Sie einen neuen Link an.",
+    "saving": "Wird gespeichert...",
+    "errors": {
+      "sameBrowserTitle": "Öffnen Sie den Link im selben Browser",
+      "sameBrowserDetail": "Aus Sicherheitsgründen kann die Wiederherstellung nur in dem Browser und auf dem Gerät abgeschlossen werden, von dem aus Sie sie angefordert haben. Wenn Sie das Zurücksetzen am Computer angefordert haben und die E-Mail am Telefon öffnen (oder umgekehrt), öffnen Sie diesen Link von dort. Falls das nicht möglich ist, fordern Sie von diesem Gerät aus einen neuen Link an.",
+      "expiredTitle": "Link abgelaufen oder bereits verwendet",
+      "expiredDetail": "Links zum Zurücksetzen gelten nur einmal und laufen nach kurzer Zeit ab. Fordern Sie einen neuen an: Er kommt sofort per E-Mail.",
+      "expiredExchangeTitle": "Link abgelaufen oder bereits verwendet",
+      "expiredExchangeDetail": "Die Wiederherstellung konnte mit diesem Link nicht abgeschlossen werden. Fordern Sie einen neuen an.",
+      "invalidTitle": "Ungültiger Link",
+      "invalidDetail": "Der Link wurde nicht erkannt. Fordern Sie einen neuen an.",
+      "sessionTitle": "Ungültige Wiederherstellungssitzung",
+      "sessionDetail": "Das Token des Links ist nicht mehr verwendbar. Fordern Sie einen neuen Link an.",
+      "tokenInvalidTitle": "Link abgelaufen oder bereits verwendet",
+      "tokenInvalidDetail": "Das Token ist nicht mehr gültig. Fordern Sie einen neuen Link an.",
+      "missingTitle": "Token fehlt",
+      "missingDetail": "Diese Seite muss über den per E-Mail erhaltenen Link geöffnet werden. Wenn Sie die Adresse von Hand kopiert haben, fehlt möglicherweise der letzte Teil: Öffnen Sie den Link erneut aus der E-Mail oder fordern Sie einen neuen an.",
+      "unexpectedTitle": "Etwas ist schiefgelaufen",
+      "unexpectedDetail": "Der Link konnte nicht überprüft werden. Fordern Sie das Zurücksetzen des Passworts erneut an."
+    }
+  },
+  "suspended": {
+    "title": "Konto vorübergehend gesperrt",
+    "body": "Ihr Konto ist vorübergehend gesperrt: Klienten und Messungen sind erst nach der Reaktivierung wieder zugänglich. Ihre Daten sind sicher und stehen nach der Reaktivierung wieder zur Verfügung.",
+    "contact": "Support kontaktieren: <link>support@stressindex.io</link>",
+    "supportPage": "Support-Seite"
+  }
+}

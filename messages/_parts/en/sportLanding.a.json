@@ -1,0 +1,127 @@
+{
+  "hero": {
+    "badge": "Sport Module · Pro plan",
+    "titleLead": "Bring the lab",
+    "titleEm": "to the field.",
+    "body": "Real-time DFA Alpha1, live metabolic zones, injury risk. All from your phone, during the workout.",
+    "ctaPro": "Activate the Pro plan",
+    "ctaHow": "See how it works",
+    "note": "{price}/month · Includes every core feature · Cancel anytime"
+  },
+  "gap": {
+    "eyebrow": "The gap",
+    "titleLead": "Your athletes train every day.",
+    "titleEm": "You assess them once in a while.",
+    "lines": [
+      "In between, you have no data.",
+      "You do not know whether they are recovering.",
+      "You do not know whether the load is too much.",
+      "You do not know whether they get injured tomorrow."
+    ],
+    "callout": "Stress Index Sport changes everything."
+  },
+  "dfa": {
+    "eyebrow": "Real-time DFA Alpha1",
+    "titleLead": "Metabolic zones.",
+    "titleEm": "No lab required.",
+    "description": "The only parameter that tells you in real time which metabolic zone your athlete is in. No lab test. No CPET. Just a chest strap and a phone.",
+    "zones": [
+      { "title": "Pure aerobic zone", "body": "Active recovery, long endurance, aerobic base building." },
+      { "title": "Transition (above VT1)", "body": "Aerobic threshold crossed. Sustainable moderate load." },
+      { "title": "Anaerobic zone (above VT2)", "body": "Anaerobic threshold crossed. Intense effort, limited duration." },
+      { "title": "Maximal load", "body": "Maximum intensity. Sustainable for a few minutes only." }
+    ],
+    "note": "Updated every 5 seconds. Computed in a dedicated processor. Lab-grade precision."
+  },
+  "live": {
+    "eyebrow": "Live session",
+    "titleLead": "Start a session.",
+    "titleEm": "See everything in real time.",
+    "description": "Start a sport session, connect the strap, and watch everything live:",
+    "items": [
+      "Live HR with scrolling chart",
+      "Rolling RMSSD to monitor recovery",
+      "DFA Alpha1 with the 4 color zones",
+      "Tags during the activity (sprint start, pace change, break, end of warm-up)",
+      "TRIMP computed automatically at the end of the session"
+    ],
+    "mock": {
+      "session": "Session · LIVE",
+      "zone": "Aerobic zone",
+      "rolling": "ms · 60s rolling",
+      "tags": "Session tags",
+      "tagItems": ["Warm-up 12’", "Sprint #1", "Recovery", "Sprint #2"]
+    }
+  },
+  "post": {
+    "eyebrow": "Post-workout questionnaire",
+    "titleLead": "Subjective + objective.",
+    "titleEm": "The full picture.",
+    "description": "At the end of every session, the app walks your athlete through a quick questionnaire:",
+    "items": [
+      "RPE on the Borg scale (1-10)",
+      "Energy level",
+      "Mood",
+      "Interactive muscle soreness map (12 zones)",
+      "Free-form notes"
+    ],
+    "calloutLead": "Subjective data + objective HRV data",
+    "calloutRest": "= the full picture."
+  },
+  "dashboard": {
+    "eyebrow": "Athlete dashboard · 60 days",
+    "titleLead": "ln(RMSSD) with an individual baseline.",
+    "titleEm": "The Plews method.",
+    "description": "ln(RMSSD) trend with an individual baseline and normal band (Plews method). See at a glance whether your athlete is in shape, overtrained, or at risk.",
+    "bands": [
+      { "title": "Above the band", "body": "Recovered. Ready for a heavier load." },
+      { "title": "Inside the band", "body": "Normal. Planned load, no changes." },
+      { "title": "Below the band", "body": "Caution. Consider reducing the load." }
+    ],
+    "chartTitle": "ln(RMSSD), last 60 days",
+    "chartNote": "Normal band in teal. Green dots = recovery, red = caution.",
+    "stats": {
+      "trimp": "Weekly TRIMP",
+      "rpe": "Average RPE",
+      "sessions": "Sessions"
+    }
+  },
+  "compare": {
+    "eyebrow": "Comparison",
+    "titleLead": "Why Stress Index Sport.",
+    "titleEm": "In one table.",
+    "colFeature": "Feature",
+    "desktopOnly": "Desktop only",
+    "rows": {
+      "dfa": { "feature": "Real-time DFA Alpha1", "us": "Mobile" },
+      "zones": { "feature": "Live metabolic zones", "us": "4 zones" },
+      "pain": { "feature": "Muscle soreness map", "us": "12 zones" },
+      "pdf": { "feature": "Sport PDF report", "kubios": "Desktop, {price}/year", "us": "Included" },
+      "gdpr": { "feature": "EU GDPR, servers in Europe" },
+      "price": { "feature": "Price", "kubios": "{price}/year", "hrv4": "{price}/month, consumer", "us": "{price}/month, Pro" }
+    }
+  },
+  "roadmap": {
+    "eyebrow": "Roadmap · Phase 2-3",
+    "titleLead": "Coming next.",
+    "titleEm": "For those who are in now.",
+    "description": "The Sport Module is just the beginning. Here is what arrives in the coming months:",
+    "items": [
+      "Injury risk alerts (ACWR + HRV)",
+      "Performance Management Chart (CTL, ATL, TSB)",
+      "Multi-athlete Team Dashboard",
+      "Automatic VT1/VT2 threshold detection",
+      "AI interpretation of trends",
+      "Daily wellness questionnaire"
+    ],
+    "callout": "Professionals who activate now get early access to every new feature."
+  },
+  "cta": {
+    "eyebrow": "Activate the Pro plan",
+    "titleLead": "Bring the lab to the field.",
+    "titleEm": "Activate the Pro plan.",
+    "note1": "{price}/month · 60-day trial · Cancel anytime",
+    "note2": "Includes every Basic plan feature ({base}/month) + the full Sport Module",
+    "linkFeatures": "See all core features"
+  }
+}

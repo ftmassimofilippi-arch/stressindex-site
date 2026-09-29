@@ -1,0 +1,17 @@
+{
+  "api": {
+    "generic": "Something went wrong. Please try again.",
+    "invalid_json": "Invalid request.",
+    "pdf_missing_params": "Required parameters are missing.",
+    "invalid_date_format": "Dates must be in YYYY-MM-DD format.",
+    "invalid_date_range": "The start date must come before the end date.",
+    "session_expired": "Session expired: reload the page and sign in again.",
+    "client_read_failed": "The client record could not be read. Please try again in a moment.",
+    "measurement_read_failed": "The measurement could not be read. Please try again in a moment.",
+    "measurement_not_linked": "This measurement is not linked to the selected client: a PDF cannot be generated in their name.",
+    "measurement_not_found": "Measurement not found. If the client recorded it from their app, check that the link with the practice is still active.",
+    "pdf_render_failed": "The measurement was found but the document could not be generated. Try again; if the problem persists, let us know.",
+    "report_read_failed": "The measurements for the period could not be read. Please try again in a moment.",
+    "report_render_failed": "The data were read but the document could not be generated. Try again; if the problem persists, let us know."
+  }
+}

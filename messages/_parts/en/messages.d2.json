@@ -1,0 +1,30 @@
+{
+  "composer": {
+    "title": "Send message",
+    "recipient": "Recipient: {name}",
+    "edit": "Edit",
+    "preview": "Preview",
+    "send": "Send",
+    "sending": "Sending…",
+    "previewLabel": "Email preview",
+    "noSubject": "(no subject)",
+    "empty": "(empty)",
+    "subject": "Subject",
+    "subjectPlaceholder": "E.g. Weekly measurement reminder",
+    "body": "Message",
+    "bodyPlaceholder": "Hi {name},\n\n…",
+    "note": "Email delivery goes through a dedicated Edge Function (coming soon). For now the message is stored in the history.",
+    "missingFields": "Fill in subject and content"
+  },
+  "tab": {
+    "history": "History of messages sent to the client",
+    "sendNew": "Send new",
+    "emptyTitle": "No messages sent",
+    "emptyBody": "When you send a message to the client, you will find it here.",
+    "send": "Send message",
+    "channelEmail": "Email",
+    "channelPush": "Push",
+    "delivered": "Delivered",
+    "queued": "Queued"
+  }
+}

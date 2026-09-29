@@ -1,0 +1,66 @@
+{
+  "types": {
+    "rmssd_drop_20": "Deutlicher RMSSD-Abfall",
+    "rmssd_drop_40": "Starker RMSSD-Abfall",
+    "stress_high_chronic": "Anhaltend hoher Stress",
+    "stress_critical": "Kritischer Stress",
+    "recovery_low": "Unzureichende Erholung",
+    "sdnn_low": "Sehr niedrige SDNN",
+    "dfa_alpha1_abnormal": "Herzschlag-Variabilität sinkt",
+    "hr_rest_high": "Erhöhter Ruhepuls",
+    "inflammation_drop": "Niedrige Anpassung",
+    "high_stress": "Hoher Stress",
+    "low_recovery": "Niedrige Erholung",
+    "missed_measurement": "Fehlende Messung",
+    "abnormal_value": "Auffälliger Wert",
+    "trend_negative": "Negativer Trend",
+    "acwr_warning": "Belastung steigt schnell",
+    "acwr_danger": "Überlastungsrisiko: Belastung",
+    "acwr_danger_hrv": "Überlastungsrisiko: Belastung und HRV",
+    "undertraining": "Belastung zu niedrig",
+    "tsb_peak": "Form auf dem Höhepunkt"
+  },
+  "thresholds": {
+    "dropFromBaseline": "Abfall gegenüber der Baseline",
+    "stressAbove": "Stressindex über",
+    "recoveryBelow": "Erholung unter",
+    "sdnnBelow": "SDNN unter",
+    "dfaBelow": "DFA α1 unter",
+    "hrAbove": "HF über",
+    "adaptationBelow": "Anpassungs-Score unter"
+  },
+  "severity": {
+    "high": "Hoch",
+    "medium": "Mittel",
+    "low": "Niedrig"
+  },
+  "messages": {
+    "value": "Wert {value}",
+    "rmssdDrop": "RMSSD {rmssd} ms, {drop}% unter der Baseline ({baseline} ms)",
+    "stressChronic": "Stressindex über {threshold} in den letzten 3 Messungen",
+    "stressCritical": "Stressindex bei {value}",
+    "recoveryLow": "Erholung bei {value} in den letzten 2 Messungen",
+    "sdnnLow": "SDNN {value} ms, unter der Referenzschwelle",
+    "dfaAbnormal": "DFA α1 {value} in Ruhe, unter der Schwelle von {threshold}",
+    "hrRestHigh": "Ruhepuls {value} bpm, über der Schwelle von {threshold}",
+    "adaptationDrop": "Anpassungs-Score bei {value}",
+    "acwr": "ACWR {acwr}",
+    "acwrHrv": "ACWR {acwr} mit HRV unter der Baseline",
+    "tsb": "TSB {tsb}"
+  },
+  "rules": {
+    "title": "Warnschwellen",
+    "description": "Dieselben Regeln wie in der App. Eine Schwelle des Klienten ersetzt die allgemeine Schwelle desselben Typs, sie addiert sich nicht.",
+    "useGlobal": "Allgemeine Schwellen verwenden",
+    "followsGlobal": "Der Klient folgt den allgemeinen Schwellen der Fachkraft. Schalten Sie den Schalter aus, um sie anzupassen.",
+    "active": "aktiv",
+    "restore": "Allgemeine Schwellen wiederherstellen",
+    "save": "Schwellen des Klienten speichern",
+    "saving": "Wird gespeichert…",
+    "saved": "Schwellen des Klienten gespeichert",
+    "restored": "Der Klient folgt wieder den allgemeinen Schwellen",
+    "saveError": "Fehler beim Speichern: {detail}",
+    "error": "Fehler: {detail}",
+    "sessionInvalid": "Ungültige Sitzung: Laden Sie die Seite neu."
+  }
+}

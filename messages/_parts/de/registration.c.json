@@ -1,0 +1,64 @@
+{
+  "page": {
+    "eyebrow": "60 Tage kostenlos testen",
+    "title": "Jetzt messen",
+    "intro": "Erstellen Sie Ihr professionelles Konto und nutzen Sie 60 Tage lang alle Funktionen von Stress Index, ganz unverbindlich.",
+    "calloutTitle": "Das erhalten Sie sofort",
+    "calloutBody": "Voller Zugriff auf die App, unbegrenztes Klienten-CRM, professionelle PDF-Berichte und alle 24 HRV-Parameter. Keine Kreditkarte erforderlich.",
+    "trustGdpr": "DSGVO-geschützte Daten",
+    "trustEu": "EU-Server in Frankfurt",
+    "trustNoCard": "Keine Kreditkarte erforderlich"
+  },
+  "form": {
+    "firstName": "Vorname",
+    "firstNamePlaceholder": "Anna",
+    "lastName": "Nachname",
+    "lastNamePlaceholder": "Müller",
+    "email": "Geschäftliche E-Mail",
+    "emailPlaceholder": "anna.mueller@praxis.de",
+    "password": "Passwort",
+    "passwordPlaceholder": "Mindestens 8 Zeichen",
+    "confirmPassword": "Passwort bestätigen",
+    "confirmPasswordPlaceholder": "Passwort wiederholen",
+    "profession": "Beruf",
+    "professionPlaceholder": "Wählen Sie Ihren Beruf",
+    "professions": {
+      "medico": "Arzt/Ärztin",
+      "fisioterapista": "Physiotherapeut/in",
+      "osteopata": "Osteopath/in",
+      "coach": "Coach",
+      "altro": "Sonstiges"
+    },
+    "studioName": "Name der Praxis",
+    "studioNamePlaceholder": "Wellness-Praxis München",
+    "consent": "Mit der Registrierung akzeptieren Sie die <terms>Nutzungsbedingungen</terms> und die <privacy>Datenschutzerklärung</privacy>. Ihre Daten sind geschützt und werden DSGVO-konform auf EU-Servern gespeichert.",
+    "submit": "Kostenloses Konto erstellen",
+    "submitting": "Konto wird erstellt...",
+    "createFailed": "Das Konto konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+  },
+  "validation": {
+    "firstNameRequired": "Der Vorname ist erforderlich",
+    "firstNameTooShort": "Der Vorname muss mindestens 2 Zeichen haben",
+    "lastNameRequired": "Der Nachname ist erforderlich",
+    "lastNameTooShort": "Der Nachname muss mindestens 2 Zeichen haben",
+    "emailRequired": "Die E-Mail-Adresse ist erforderlich",
+    "emailInvalid": "Geben Sie eine gültige E-Mail-Adresse ein",
+    "passwordRequired": "Das Passwort ist erforderlich",
+    "passwordTooShort": "Das Passwort muss mindestens {min} Zeichen haben",
+    "confirmPasswordRequired": "Bestätigen Sie das Passwort",
+    "passwordMismatch": "Die Passwörter stimmen nicht überein",
+    "professionRequired": "Wählen Sie Ihren Beruf"
+  },
+  "confirm": {
+    "title": "Willkommen bei Stress Index",
+    "intro": "Ihr Konto wurde erstellt. Sie haben 60 Tage lang vollen Zugriff auf alle Funktionen.",
+    "nextSteps": "Nächste Schritte",
+    "step1Title": "Prüfen Sie Ihr E-Mail-Postfach",
+    "step1Body": "Wir haben Ihnen eine Bestätigungs-E-Mail gesendet: Öffnen Sie den Link, um Ihr Konto zu aktivieren.",
+    "step2Title": "App herunterladen",
+    "step2Body": "Installieren Sie Stress Index auf Ihrem Smartphone oder Tablet.",
+    "step3Title": "Sensor verbinden",
+    "step3Body": "Melden Sie sich mit den soeben erstellten Zugangsdaten an und verbinden Sie Ihren Polar H10 (oder einen anderen kompatiblen EKG-Sensor) per Bluetooth für die ersten Messungen.",
+    "help": "Brauchen Sie Hilfe? <link>Kontaktieren Sie uns</link>"
+  }
+}

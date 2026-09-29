@@ -1,0 +1,12 @@
+{
+  "api": {
+    "generic": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "validation_failed": "Prüfen Sie die markierten Felder.",
+    "duplicate_check_failed": "Prüfung auf Duplikate fehlgeschlagen.",
+    "profile_failed": "Profil konnte nicht erstellt werden",
+    "client_failed": "Klientenprofil konnte nicht erstellt werden",
+    "invite_failed": "Die Einladung konnte nicht gesendet werden.",
+    "account_create_failed": "Das Konto konnte nicht erstellt werden.",
+    "migration_027_missing": "Wenden Sie Migration 027 an: Ohne must_change_password fordert die App den Klienten nicht auf, das temporäre Passwort zu ändern."
+  }
+}

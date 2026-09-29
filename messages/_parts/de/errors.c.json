@@ -1,0 +1,13 @@
+{
+  "supabase": {
+    "invalidCredentials": "E-Mail oder Passwort falsch",
+    "emailNotConfirmed": "E-Mail noch nicht bestätigt: Öffnen Sie den Link, den wir Ihnen zur Aktivierung Ihres Kontos gesendet haben.",
+    "rateLimit": "Zu viele Versuche. Warten Sie einige Minuten und versuchen Sie es erneut.",
+    "alreadyRegistered": "Diese E-Mail-Adresse ist bereits registriert. Melden Sie sich stattdessen an.",
+    "weakPassword": "Das Passwort ist zu schwach: Verwenden Sie mindestens 8 Zeichen.",
+    "otpExpired": "Der Link ist abgelaufen oder wurde bereits verwendet. Fordern Sie einen neuen an.",
+    "banned": "Konto gesperrt. Für Informationen schreiben Sie an support@stressindex.io",
+    "sessionMissing": "Ihre Sitzung ist nicht mehr gültig. Bitte melden Sie sich erneut an.",
+    "generic": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es in Kürze erneut."
+  }
+}

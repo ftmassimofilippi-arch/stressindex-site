@@ -1,0 +1,23 @@
+{
+  "features": {
+    "title": "Funktionen | Stress Index, vollständige HRV-Analyse",
+    "description": "5 eigene Scores, über 25 HRV-Parameter, 3 Testarten, lange Sitzungen, PDF-Berichte, Klienten-CRM, Web-Dashboard. Entdecken Sie alle Funktionen.",
+    "shortDescription": "5 eigene Scores, über 25 HRV-Parameter, 3 Testarten, lange Sitzungen, PDF-Berichte, Klienten-CRM, Web-Dashboard."
+  },
+  "sport": {
+    "title": "Sport-Modul | DFA Alpha1 in Echtzeit, Stress Index",
+    "description": "DFA Alpha1 in Echtzeit, metabolische Zonen, Verletzungsrisiko, Fragebogen nach dem Training. Für Athletiktrainer und Sportmediziner.",
+    "shortDescription": "DFA Alpha1 in Echtzeit, metabolische Zonen, Verletzungsrisiko, Fragebogen nach dem Training."
+  },
+  "support": {
+    "title": "Support | Stress Index",
+    "description": "Brauchen Sie Hilfe mit Stress Index? Schreiben Sie dem Support, lesen Sie die Anleitungen oder die häufigen Fragen.",
+    "shortDescription": "Brauchen Sie Hilfe mit Stress Index? Schreiben Sie dem Support, lesen Sie die Anleitungen oder die FAQ."
+  },
+  "og": {
+    "tagline": "Professionelle HRV-Software",
+    "badgeScores": "5 eigene Scores",
+    "badgeParams": "Über 25 HRV-Parameter",
+    "badgeReport": "PDF-Berichte"
+  }
+}

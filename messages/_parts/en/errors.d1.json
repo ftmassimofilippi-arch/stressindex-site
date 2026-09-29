@@ -1,0 +1,12 @@
+{
+  "api": {
+    "generic": "Something went wrong. Please try again.",
+    "validation_failed": "Check the highlighted fields.",
+    "duplicate_check_failed": "Duplicate check failed.",
+    "profile_failed": "Profile creation failed",
+    "client_failed": "Client record creation failed",
+    "invite_failed": "The invitation could not be sent.",
+    "account_create_failed": "The account could not be created.",
+    "migration_027_missing": "Apply migration 027: without must_change_password the app will not ask the client to change the temporary password."
+  }
+}

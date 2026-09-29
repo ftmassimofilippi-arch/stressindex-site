@@ -1,0 +1,46 @@
+{
+  "analytics": {
+    "title": "Practice <em>analytics</em>",
+    "subtitle": "Compare your clients, spot patterns, optimize your work",
+    "activeClients": "Active clients",
+    "ofTotal": "/ {count} total",
+    "measurements": "Measurements",
+    "inPeriod": "in the period",
+    "activeAlerts": "Active alerts",
+    "adherence": "% adherence",
+    "adherenceHint": "have measured",
+    "monitoringTitle": "Monitoring in the period",
+    "monitoringSubtitle": "Long recordings and nights analyzed by the app, by type and by profile",
+    "monitoring": "Monitoring",
+    "h24": "24h",
+    "sleep": "Sleep",
+    "clients": "Clients",
+    "withMonitoring": "with monitoring",
+    "distributionTitle": "Client score distribution",
+    "distributionSubtitle": "How many measurements fall into each value band",
+    "topTitle": "Top performers",
+    "topSubtitle": "Best average recovery in the period",
+    "watchTitle": "Clients to watch",
+    "watchSubtitle": "Lowest average recovery in the period",
+    "insufficientData": "Not enough data",
+    "measurementsCount": "{count, plural, one {# measurement} other {# measurements}}",
+    "segmentsTitle": "Segment comparison",
+    "segmentsSubtitle": "Average differences by client dimension",
+    "dims": {
+      "sex": "Sex",
+      "athlete": "Athlete vs non-athlete",
+      "smoker": "Smoker vs non-smoker",
+      "tag": "By tag"
+    },
+    "segments": {
+      "men": "Men",
+      "women": "Women",
+      "unspecified": "Not specified",
+      "athletes": "Athletes",
+      "nonAthletes": "Non-athletes",
+      "smokers": "Smokers",
+      "nonSmokers": "Non-smokers",
+      "noTag": "No tag"
+    }
+  }
+}

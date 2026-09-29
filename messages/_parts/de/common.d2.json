@@ -1,0 +1,15 @@
+{
+  "tags": {
+    "morning": "Morgenmessung",
+    "guidedBreathing": "Geführte Atmung",
+    "preSession": "Vor der Sitzung",
+    "postSession": "Nach der Sitzung",
+    "preWorkout": "Vor dem Training",
+    "postWorkout": "Nach dem Training",
+    "general": "Allgemeiner Check-in"
+  },
+  "beforeAfterKind": {
+    "treatment": "Sitzung",
+    "workout": "Training"
+  }
+}

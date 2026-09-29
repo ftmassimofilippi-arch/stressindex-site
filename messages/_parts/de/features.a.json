@@ -1,0 +1,166 @@
+{
+  "hero": {
+    "eyebrow": "Alle Funktionen von Stress Index",
+    "titleLead": "Alles, was Sie brauchen, um Stress zu messen.",
+    "titleEm": "In einer einzigen App.",
+    "body": "Stress Index ist die umfassendste professionelle HRV-Software auf dem europäischen Markt. Das können Sie damit tun.",
+    "ctaHow": "So funktioniert es"
+  },
+  "scores": {
+    "eyebrow": "Eigene Scores",
+    "titleLead": "5 Zahlen.",
+    "titleEm": "Alles auf einen Blick.",
+    "description": "Sie müssen kein HRV-Experte sein, um Stress Index zu nutzen. Die 5 eigenen Scores geben Ihnen sofort ein Bild Ihres Klienten: wie gestresst er ist, wie er sich erholt, ob das Nervensystem im Gleichgewicht ist, wie viel Energie er hat und wie gut er sich an Belastungen anpasst.",
+    "items": [
+      {
+        "name": "Stressindex",
+        "description": "Wie stark das Nervensystem unter Druck steht. Basiert auf 5 gewichteten Parametern: Baevsky-Stressindex, SDNN, Total Power, DFA Alpha1, HF norm."
+      },
+      {
+        "name": "Erholung",
+        "description": "Die Fähigkeit des Parasympathikus zur Regeneration. Bleibt sie dauerhaft niedrig, erholt sich der Klient zwischen den Sitzungen nicht."
+      },
+      {
+        "name": "Gleichgewicht",
+        "description": "Das Verhältnis von Sympathikus und Parasympathikus. Hier gilt nicht: je höher, desto besser. Der optimale Wert liegt in der Mitte."
+      },
+      {
+        "name": "Energie",
+        "description": "Die gesamten Energieressourcen des Nervensystems. Basiert auf der Gesamtleistung des Spektrums."
+      },
+      {
+        "name": "Anpassung",
+        "description": "Die Fähigkeit des autonomen Nervensystems, sich zu erholen und an die täglichen Anforderungen anzupassen. Einzigartig auf dem Markt."
+      }
+    ]
+  },
+  "params": {
+    "eyebrow": "Wissenschaftliche Parameter",
+    "titleLead": "Über 25 HRV-Parameter.",
+    "titleEm": "Die gesamte Fachliteratur, immer dabei.",
+    "description": "Für Fachkräfte, die in die Tiefe gehen wollen, berechnet Stress Index alle in der wissenschaftlichen Literatur validierten Parameter.",
+    "groups": {
+      "time": "Zeitbereich",
+      "frequency": "Frequenzbereich",
+      "nonlinear": "Nichtlinear",
+      "geometric": "Geometrisch"
+    },
+    "calloutLead": "Automatische Referenzbereiche.",
+    "calloutBody": "Jeder Parameter erhält eine farbige Ampel auf Basis der Referenzbereiche für Alter und Geschlecht des Klienten (Nunan 2010, Voss 2015). Sie müssen sich keine Referenzwerte merken, das übernimmt die App."
+  },
+  "tests": {
+    "eyebrow": "Testarten",
+    "titleLead": "Ein Test für jeden Bedarf.",
+    "titleEm": "Vom Standardprotokoll bis zur langen Sitzung.",
+    "description": "Vier Messmodi, die 100 % der Situationen in der Praxis und im Feld abdecken.",
+    "items": [
+      {
+        "title": "Standardmessung",
+        "body": "Die Momentaufnahme des aktuellen Zustands. 5 oder 10 Minuten, sitzend oder liegend. 70 % Ihrer Bewertungen werden Sie damit durchführen."
+      },
+      {
+        "title": "Orthostatischer Test",
+        "body": "Misst die Reaktivität des Nervensystems. 5 Minuten liegend, dann 5 Minuten stehend. Die App führt Sie mit Ton und Vibration durch den Übergang. Ideal bei langsamer Erholung, anhaltender Erschöpfung und übertrainierten Sportlern."
+      },
+      {
+        "title": "Kohärenzatmung",
+        "body": "Animierte visuelle Atemführung. Finden Sie die persönliche Resonanzfrequenz Ihres Klienten. Kohärenz-Score in Echtzeit. Ideal für die Arbeit an Entspannung, Schlafqualität und Umgang mit Anspannung."
+      },
+      {
+        "title": "Lange Sitzungen",
+        "body": "Freie Dauer, um während Ihrer Sitzungen zu messen. Tags in Echtzeit, Analyse alle 2 Minuten, automatischer Vorher-Nachher-Vergleich. Zeigen Sie Ihren Klienten mit Daten, dass die Sitzung wirkt."
+      }
+    ],
+    "athletesNote": "Sie arbeiten mit Sportlern? Dafür gibt es ein eigenes Modul mit DFA Alpha1 in Echtzeit und metabolischen Zonen live.",
+    "athletesCta": "Sport-Modul entdecken"
+  },
+  "pdf": {
+    "eyebrow": "PDF-Bericht",
+    "titleLead": "Ein professionelles PDF.",
+    "titleEm": "Fertig in der Sitzung.",
+    "body": "Ein 4-seitiges PDF, das Sie drucken, per E-Mail senden oder dem Klienten in der Sitzung zeigen können. Es enthält alle Scores, die detaillierten Parameter, die HRV-Grafiken (Poincaré, Rhythmogramm, PSD-Spektrum) und den rechtlichen Hinweis. Anpassbar mit Ihrem Namen, Titel und Ihrer Praxis.",
+    "items": [
+      "Individuelle Kopfzeile mit Name, Titel und Praxis",
+      "5 eigene Scores mit farbigem Balkendiagramm",
+      "Über 25 HRV-Parameter mit Referenzbereichen und Ampel",
+      "HRV-Grafiken: Poincaré, RR-Rhythmogramm, PSD-Spektrum",
+      "Rechtlicher Hinweis und nachvollziehbare Erstellung"
+    ],
+    "mockReport": "Klientenbericht",
+    "mockFooter": "Seite 1 von 4 · Erstellt mit Stress Index"
+  },
+  "crm": {
+    "eyebrow": "Klienten-CRM",
+    "titleLead": "Ihre Klienten, gut organisiert.",
+    "titleEm": "An einem Ort.",
+    "description": "Verwalten Sie alle Klienten an einem Ort. Vollständige Stammdaten, Messhistorie, Sitzungsvergleich, Notizen der Fachkraft. Alles zwischen App und Web-Dashboard synchronisiert.",
+    "items": [
+      "Erweiterte Stammdaten (Geschlecht, Alter, Raucher, Sportler)",
+      "Messhistorie mit Trends",
+      "Vergleich von bis zu 29 Parametern zwischen Sitzungen",
+      "Freie Notizen pro Klient",
+      "Mess-Tags zum Kategorisieren"
+    ]
+  },
+  "dashboard": {
+    "eyebrow": "Web-Dashboard",
+    "titleLead": "Nicht nur App.",
+    "titleEm": "Auch am Computer.",
+    "body": "Greifen Sie auch am Computer auf die Daten Ihrer Klienten zu, unter stressindex.io. Interaktive Grafiken, Trends über die Zeit, automatische Alerts, regelmäßige PDF-Berichte. Ideal, wenn Sie in der Praxis am PC sitzen.",
+    "items": [
+      "Interaktive Grafiken mit doppelter Y-Achse",
+      "Trends über 30 / 60 / 90 Tage",
+      "Automatische Alerts zu Stress und Erholung",
+      "Regelmäßige PDF-Berichte mit automatischem Kommentar",
+      "Vollständiges CRM im Browser"
+    ],
+    "trendLabel": "Trend der letzten 30 Tage"
+  },
+  "privacy": {
+    "eyebrow": "Sicherheit und Datenschutz",
+    "titleLead": "Datenschutz garantiert.",
+    "titleEm": "Per Gesetz.",
+    "description": "Die sensiblen Daten Ihrer Klienten sind durch die strengste europäische Regelung geschützt. Kein verstecktes Tracking, keine Dritten, keine Überraschungen.",
+    "items": [
+      { "title": "Server in Europa", "body": "Rechenzentrum in Frankfurt, Deutschland." },
+      { "title": "DSGVO-konform", "body": "Einwilligung für jeden Klienten dokumentiert." },
+      { "title": "Verschlüsselung", "body": "Daten bei der Übertragung und im Ruhezustand verschlüsselt." },
+      { "title": "Keine Weitergabe", "body": "Die Daten verlassen Europa nicht. Nie." }
+    ]
+  },
+  "sensors": {
+    "eyebrow": "Sensoren",
+    "titleLead": "Funktioniert mit Ihrem Brustgurt.",
+    "titleEm": "Oder mit dem, den wir empfehlen.",
+    "description": "Keine proprietäre Hardware. Stress Index verbindet sich per Bluetooth mit den gängigen Herzfrequenzsensoren auf dem Markt.",
+    "calloutLead": "Unsere Empfehlung.",
+    "calloutBody": "Wir empfehlen den Polar H10: EKG, Präzision auf die Millisekunde. Wir nutzen ihn intern für jeden Test und jede Validierung. Die Schritt-für-Schritt-Einrichtung finden Sie in den <link>Anleitungen zum Sensor</link>.",
+    "table": {
+      "sensor": "Sensor",
+      "status": "Status",
+      "notes": "Hinweise"
+    },
+    "status": {
+      "ok": "Kompatibel",
+      "limit": "Mit Einschränkungen",
+      "no": "Nicht kompatibel"
+    },
+    "items": {
+      "h10": { "name": "Polar H10", "note": "Unser Standard, EKG, höchste Präzision. Empfohlen." },
+      "h9": { "name": "Polar H9", "note": "Gleiche EKG-Qualität wie der H10, sehr gutes Preis-Leistungs-Verhältnis." },
+      "oh1": { "name": "Polar OH1 / Verity Sense", "note": "Optischer Armsensor, funktioniert, aber weniger präzise als ein EKG-Brustgurt." },
+      "tickr": { "name": "Wahoo TICKR", "note": "Funktioniert, gute BLE-Stabilität. Mit dem eigenen Gerät testen." },
+      "coospo": { "name": "CooSpo H808S", "note": "Funktioniert, günstig ({price}), geringere Qualität als Polar." },
+      "whoop": { "name": "Whoop 4.0", "note": "Überträgt nur BPM, nicht die für die HRV-Analyse nötigen RR-Intervalle." },
+      "garmin": { "name": "Garmin-Gurte (HRM-Dual, HRM-Pro)", "note": "Übertragen keine RR-Intervalle über Standard-BLE." },
+      "watch": { "name": "Apple Watch", "note": "Überträgt keine EKG-Daten über BLE." }
+    }
+  },
+  "cta": {
+    "eyebrow": "Starten Sie heute",
+    "titleLead": "Testen Sie Stress Index kostenlos,",
+    "titleEm": "60 Tage lang.",
+    "body": "Alle Funktionen. Keine Bindung. Jederzeit kündbar.",
+    "button": "Kostenlose Testphase starten"
+  }
+}

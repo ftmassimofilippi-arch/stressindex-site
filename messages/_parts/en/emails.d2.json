@@ -1,0 +1,35 @@
+{
+  "access": {
+    "yourProfessional": "Your professional",
+    "set_temp_password": {
+      "subject": "Your Stress Index access has been reset",
+      "title": "Your access has been reset",
+      "action": "has set a temporary password for your account"
+    },
+    "send_reset_email": {
+      "subject": "Recovery of your Stress Index access",
+      "title": "Recovery of your access",
+      "action": "has started the recovery of your access"
+    },
+    "copy_reset_link": {
+      "subject": "Recovery of your Stress Index access",
+      "title": "Recovery of your access",
+      "action": "has generated a link to recover your access"
+    },
+    "intro": "{who} {action} on Stress Index.",
+    "tempPasswordHtml": "The password you were given is temporary: at your next sign-in the app will ask you to choose your own password, which nobody else knows.",
+    "resetHtml": "You will find the link to choose a new password in the recovery email, or your professional will hand it to you directly. The link is valid for one hour and can be used once.",
+    "warningHtml": "If you did <strong>not</strong> request this, contact your professional before using the link or the password, and change the password as soon as you sign in.",
+    "tempPasswordText": "The password you were given is temporary: at your next sign-in the app will ask you to choose your own password.",
+    "resetText": "The link to choose a new password is valid for one hour and can be used once.",
+    "warningText": "If you did not request this, contact your professional before using the link or the password.",
+    "footer": "This email is an automatic notice: you will receive it every time someone acts on your access.",
+    "signature": "Stress Index"
+  },
+  "resetLink": {
+    "greeting": "Hi {name},",
+    "greetingNoName": "Hi,",
+    "body": "here is the link to get back into your Stress Index app and choose a new password:",
+    "note": "It is valid for one hour and can be used once. If it has expired, let me know and I will send you another one."
+  }
+}

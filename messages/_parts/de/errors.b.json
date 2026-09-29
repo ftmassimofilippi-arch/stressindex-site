@@ -1,0 +1,11 @@
+{
+  "api": {
+    "guide_chat_forbidden": "Anfrage von dieser Herkunft nicht erlaubt.",
+    "guide_chat_rate_limited": "Zu viele Anfragen, versuchen Sie es in einer Minute erneut.",
+    "guide_chat_invalid_body": "Ungültige Anfrage.",
+    "guide_chat_empty_message": "Geben Sie vor dem Senden eine Nachricht ein.",
+    "guide_chat_message_too_long": "Nachricht zu lang (maximal 2000 Zeichen).",
+    "guide_chat_not_configured": "Assistent nicht konfiguriert. Schreiben Sie an support@stressindex.io.",
+    "guide_chat_upstream_error": "Der Assistent antwortet im Moment nicht. Versuchen Sie es gleich noch einmal oder schreiben Sie an support@stressindex.io."
+  }
+}

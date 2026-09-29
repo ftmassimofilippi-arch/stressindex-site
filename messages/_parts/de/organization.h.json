@@ -1,0 +1,80 @@
+{
+  "createTitle": "Erstellen Sie Ihre <em>Organisation</em>",
+  "createIntro": "Verwalten Sie Ihr Team von Fachkräften über ein einziges Dashboard. Laden Sie Ihre Kolleginnen und Kollegen ein und verfolgen Sie die Aktivität aller Klienten.",
+  "adminIntro": "Verwalten Sie Ihr Team und verfolgen Sie die Aktivität der Fachkräfte",
+  "memberIntro": "Ihr Team",
+  "form": {
+    "name": "Name der Organisation",
+    "placeholder": "z. B. Praxis Aurora",
+    "creating": "Wird erstellt…",
+    "create": "Organisation erstellen",
+    "error": "Fehler beim Erstellen"
+  },
+  "tabs": {
+    "team": "Team",
+    "overview": "Übersicht",
+    "professionals": "Fachkräfte"
+  },
+  "team": {
+    "organization": "Organisation",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "members": "Teammitglieder",
+    "invite": "Fachkraft einladen",
+    "inviteNote": "Die Einladung wird angenommen, sobald sich die Fachkraft im Dashboard anmeldet.",
+    "thProfessional": "Fachkraft",
+    "thRole": "Rolle",
+    "thStatus": "Status",
+    "thClients": "Klienten",
+    "thLastActivity": "Letzte Aktivität",
+    "remove": "Mitglied entfernen",
+    "removeTitle": "Mitglied entfernen?",
+    "removeDescription": "Die Fachkraft verliert den Zugriff auf die Organisation. Ihre Klienten und Messungen bleiben in ihrem Konto.",
+    "removeConfirm": "Entfernen"
+  },
+  "roles": {
+    "owner": "Inhaber",
+    "admin": "Administrator",
+    "member": "Fachkraft"
+  },
+  "memberStatus": {
+    "active": "Aktiv",
+    "pending": "Ausstehend",
+    "revoked": "Widerrufen"
+  },
+  "inviteDialog": {
+    "title": "Fachkraft einladen",
+    "email": "E-Mail",
+    "placeholder": "kollege@praxis.de",
+    "role": "Rolle",
+    "roleHelp": "Administratoren können weitere Fachkräfte einladen.",
+    "sending": "Wird gesendet…",
+    "send": "Einladen"
+  },
+  "overview": {
+    "professionals": "Fachkräfte",
+    "professionalsHint": "aktiv",
+    "totalClients": "Klienten gesamt",
+    "totalMeasurements": "Messungen gesamt",
+    "measurements": "Messungen",
+    "measurementsHint": "letzte 7 Tage",
+    "recent": "Letzte Aktivität",
+    "empty": "Noch keine Messung erfasst",
+    "thProfessional": "Fachkraft",
+    "thClient": "Klient",
+    "thDate": "Datum",
+    "thStress": "Stress",
+    "open": "Öffnen →"
+  },
+  "professionals": {
+    "title": "Fachkräfte",
+    "help": "Klicken Sie auf eine Fachkraft, um ihre Klienten und Messungen zu sehen (nur Lesen).",
+    "empty": "Keine aktive Fachkraft. Laden Sie jemanden über den Tab Team ein.",
+    "clients": "Klienten",
+    "measurements": "Messungen"
+  },
+  "memberView": {
+    "title": "Ihre Kolleginnen und Kollegen",
+    "count": "{count, plural, one {# aktive Fachkraft} other {# aktive Fachkräfte}}"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "api": {
+    "generic": "Something went wrong. Please try again.",
+    "session_expired": "Session expired: reload the page and sign in again.",
+    "invalid_json": "Invalid request.",
+    "monitoring_not_found": "Monitoring not found or not accessible with this account.",
+    "monitoring_module_not_active": "Module not active for this account.",
+    "monitoring_no_client": "This monitoring is not linked to a client record.",
+    "monitoring_email_fields_required": "Subject and message are required.",
+    "monitoring_invalid_events": "Invalid events.",
+    "monitoring_sleep_events_readonly": "Sleep module nights have no editable events.",
+    "monitoring_event_outside_period": "An event falls outside the recording period.",
+    "monitoring_save_failed": "Save failed.",
+    "monitoring_pdf_not_generated": "The monitoring was read but the document was not generated. Try again; if it persists, let us know.",
+    "monitoring_rr_file_missing": "This monitoring has no RR file in the bucket.",
+    "monitoring_rr_file_unreadable": "RR file not readable: check that the upload from the app completed successfully."
+  }
+}

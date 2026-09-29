@@ -1,0 +1,14 @@
+{
+  "api": {
+    "invalid_action": "Invalid action.",
+    "no_account": "This client does not have an app account yet.",
+    "rate_limited": "You have reached the limit of actions on this client's access in the last 24 hours. Try again later.",
+    "account_not_found": "Account not found.",
+    "account_in_use": "This client has already used their account: the password is theirs and you cannot set it. Use \"Resend reset email\" or \"Copy reset link\".",
+    "access_password_too_short": "The password must be at least 8 characters long.",
+    "set_password_failed": "The password could not be set.",
+    "access_no_email": "This client has no email address.",
+    "reset_failed": "The recovery email could not be sent.",
+    "access_link_failed": "Link not generated."
+  }
+}

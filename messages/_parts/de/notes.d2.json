@@ -1,0 +1,35 @@
+{
+  "searchPlaceholder": "In den Notizen suchen…",
+  "allCategories": "Alle Kategorien",
+  "newNote": "Neue Notiz",
+  "editNote": "Notiz bearbeiten",
+  "emptyTitle": "Keine Notizen",
+  "emptyBody": "Halten Sie Beobachtungen, Bewertungen und Follow-ups fest.",
+  "noneForClient": "Keine Notizen zu diesem Klienten",
+  "reminderTitle": "Erinnerung: {date}",
+  "edit": "Bearbeiten",
+  "delete": "Löschen",
+  "deleteConfirm": "Diese Notiz löschen?",
+  "client": "Klient: {name}",
+  "text": "Notiztext",
+  "textPlaceholder": "Anmerkungen, Beobachtungen, Follow-ups…",
+  "category": "Kategorie",
+  "noCategory": "Keine",
+  "reminder": "Erinnerung (optional)",
+  "reminderHint": "Eine Benachrichtigung erinnert Sie an diesem Datum daran, die Notiz zu prüfen.",
+  "tags": "Tags",
+  "saving": "Wird gespeichert…",
+  "categories": {
+    "assessment": "Bewertung",
+    "followUp": "Follow-up",
+    "postSession": "Nach der Sitzung",
+    "history": "Vorgeschichte und Kontext",
+    "other": "Sonstiges"
+  },
+  "tagPresets": {
+    "urgent": "dringend",
+    "toReview": "zu prüfen",
+    "documentation": "Dokumentation",
+    "protocol": "Protokoll"
+  }
+}

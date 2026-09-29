@@ -1,0 +1,35 @@
+{
+  "access": {
+    "yourProfessional": "Ihre Fachkraft",
+    "set_temp_password": {
+      "subject": "Ihr Zugang zu Stress Index wurde zurückgesetzt",
+      "title": "Ihr Zugang wurde zurückgesetzt",
+      "action": "hat bei Stress Index ein temporäres Passwort für Ihr Konto festgelegt"
+    },
+    "send_reset_email": {
+      "subject": "Wiederherstellung Ihres Zugangs zu Stress Index",
+      "title": "Wiederherstellung Ihres Zugangs",
+      "action": "hat bei Stress Index die Wiederherstellung Ihres Zugangs gestartet"
+    },
+    "copy_reset_link": {
+      "subject": "Wiederherstellung Ihres Zugangs zu Stress Index",
+      "title": "Wiederherstellung Ihres Zugangs",
+      "action": "hat bei Stress Index einen Link zur Wiederherstellung Ihres Zugangs erstellt"
+    },
+    "intro": "{who} {action}.",
+    "tempPasswordHtml": "Das Ihnen mitgeteilte Passwort ist temporär: Bei der nächsten Anmeldung in der App werden Sie aufgefordert, ein eigenes Passwort zu wählen, das niemand sonst kennt.",
+    "resetHtml": "Den Link zur Wahl eines neuen Passworts finden Sie in der Wiederherstellungs-E-Mail, oder Ihre Fachkraft gibt ihn Ihnen direkt. Der Link ist eine Stunde gültig und kann einmal verwendet werden.",
+    "warningHtml": "Wenn Sie diesen Vorgang <strong>nicht</strong> veranlasst haben, kontaktieren Sie Ihre Fachkraft, bevor Sie den Link oder das Passwort verwenden, und ändern Sie das Passwort gleich nach der Anmeldung.",
+    "tempPasswordText": "Das mitgeteilte Passwort ist temporär: Bei der nächsten Anmeldung in der App werden Sie aufgefordert, ein eigenes Passwort zu wählen.",
+    "resetText": "Der Link zur Wahl eines neuen Passworts ist eine Stunde gültig und kann einmal verwendet werden.",
+    "warningText": "Wenn Sie diesen Vorgang nicht veranlasst haben, kontaktieren Sie Ihre Fachkraft, bevor Sie den Link oder das Passwort verwenden.",
+    "footer": "Diese E-Mail ist eine automatische Benachrichtigung: Sie erhalten sie jedes Mal, wenn jemand in Ihren Zugang eingreift.",
+    "signature": "Stress Index"
+  },
+  "resetLink": {
+    "greeting": "Hallo {name},",
+    "greetingNoName": "Hallo,",
+    "body": "hier ist der Link, um wieder in Ihre Stress Index App zu gelangen und ein neues Passwort zu wählen:",
+    "note": "Er ist eine Stunde gültig und kann einmal verwendet werden. Falls er abgelaufen ist, schreiben Sie mir und ich sende Ihnen einen neuen."
+  }
+}

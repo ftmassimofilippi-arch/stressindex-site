@@ -1,0 +1,66 @@
+{
+  "types": {
+    "rmssd_drop_20": "Noticeable RMSSD drop",
+    "rmssd_drop_40": "Large RMSSD drop",
+    "stress_high_chronic": "Persistent high stress",
+    "stress_critical": "Critical stress",
+    "recovery_low": "Insufficient recovery",
+    "sdnn_low": "Very low SDNN",
+    "dfa_alpha1_abnormal": "Heartbeat variability going down",
+    "hr_rest_high": "High resting heart rate",
+    "inflammation_drop": "Low adaptation",
+    "high_stress": "High stress",
+    "low_recovery": "Low recovery",
+    "missed_measurement": "Missed measurement",
+    "abnormal_value": "Unusual value",
+    "trend_negative": "Negative trend",
+    "acwr_warning": "Workload rising fast",
+    "acwr_danger": "Overload risk: workload",
+    "acwr_danger_hrv": "Overload risk: workload and HRV",
+    "undertraining": "Workload too low",
+    "tsb_peak": "Peak form"
+  },
+  "thresholds": {
+    "dropFromBaseline": "Drop from baseline",
+    "stressAbove": "Stress Index above",
+    "recoveryBelow": "Recovery below",
+    "sdnnBelow": "SDNN below",
+    "dfaBelow": "DFA α1 below",
+    "hrAbove": "HR above",
+    "adaptationBelow": "Adaptation score below"
+  },
+  "severity": {
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "messages": {
+    "value": "value {value}",
+    "rmssdDrop": "RMSSD {rmssd} ms, {drop}% below the baseline ({baseline} ms)",
+    "stressChronic": "Stress Index above {threshold} in the last 3 measurements",
+    "stressCritical": "Stress Index at {value}",
+    "recoveryLow": "Recovery at {value} in the last 2 measurements",
+    "sdnnLow": "SDNN {value} ms, below the reference threshold",
+    "dfaAbnormal": "DFA α1 {value} at rest, below the {threshold} threshold",
+    "hrRestHigh": "Resting heart rate {value} bpm, above the {threshold} threshold",
+    "adaptationDrop": "Adaptation score at {value}",
+    "acwr": "ACWR {acwr}",
+    "acwrHrv": "ACWR {acwr} with HRV below baseline",
+    "tsb": "TSB {tsb}"
+  },
+  "rules": {
+    "title": "Alert thresholds",
+    "description": "The same rules as the app. A client threshold replaces the general one of the same type, it does not add to it.",
+    "useGlobal": "Use general thresholds",
+    "followsGlobal": "The client follows the professional's general thresholds. Turn the switch off to customize them.",
+    "active": "active",
+    "restore": "Restore general thresholds",
+    "save": "Save client thresholds",
+    "saving": "Saving…",
+    "saved": "Client thresholds saved",
+    "restored": "The client follows the general thresholds again",
+    "saveError": "Save error: {detail}",
+    "error": "Error: {detail}",
+    "sessionInvalid": "Invalid session: reload the page."
+  }
+}

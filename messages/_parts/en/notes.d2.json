@@ -1,0 +1,35 @@
+{
+  "searchPlaceholder": "Search notes…",
+  "allCategories": "All categories",
+  "newNote": "New note",
+  "editNote": "Edit note",
+  "emptyTitle": "No notes",
+  "emptyBody": "Start recording observations, assessments and follow-ups.",
+  "noneForClient": "No notes for this client",
+  "reminderTitle": "Reminder: {date}",
+  "edit": "Edit",
+  "delete": "Delete",
+  "deleteConfirm": "Delete this note?",
+  "client": "Client: {name}",
+  "text": "Note text",
+  "textPlaceholder": "Observations, remarks, follow-ups…",
+  "category": "Category",
+  "noCategory": "None",
+  "reminder": "Reminder (optional)",
+  "reminderHint": "A notification will remind you to review the note on that date.",
+  "tags": "Tags",
+  "saving": "Saving…",
+  "categories": {
+    "assessment": "Assessment",
+    "followUp": "Follow-up",
+    "postSession": "After session",
+    "history": "History and context",
+    "other": "Other"
+  },
+  "tagPresets": {
+    "urgent": "urgent",
+    "toReview": "to review",
+    "documentation": "documentation",
+    "protocol": "protocol"
+  }
+}

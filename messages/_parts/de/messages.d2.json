@@ -1,0 +1,30 @@
+{
+  "composer": {
+    "title": "Nachricht senden",
+    "recipient": "Empfänger: {name}",
+    "edit": "Bearbeiten",
+    "preview": "Vorschau",
+    "send": "Senden",
+    "sending": "Wird gesendet…",
+    "previewLabel": "E-Mail-Vorschau",
+    "noSubject": "(ohne Betreff)",
+    "empty": "(leer)",
+    "subject": "Betreff",
+    "subjectPlaceholder": "z. B. Erinnerung an die wöchentliche Messung",
+    "body": "Nachricht",
+    "bodyPlaceholder": "Hallo {name},\n\n…",
+    "note": "Der E-Mail-Versand läuft über eine eigene Edge Function (demnächst). Vorerst wird die Nachricht im Verlauf gespeichert.",
+    "missingFields": "Betreff und Inhalt ausfüllen"
+  },
+  "tab": {
+    "history": "Verlauf der an den Klienten gesendeten Nachrichten",
+    "sendNew": "Neue senden",
+    "emptyTitle": "Keine Nachrichten gesendet",
+    "emptyBody": "Wenn Sie dem Klienten eine Nachricht senden, finden Sie sie hier.",
+    "send": "Nachricht senden",
+    "channelEmail": "E-Mail",
+    "channelPush": "Push",
+    "delivered": "Zugestellt",
+    "queued": "In der Warteschlange"
+  }
+}

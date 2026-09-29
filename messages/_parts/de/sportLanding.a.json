@@ -1,0 +1,127 @@
+{
+  "hero": {
+    "badge": "Sport-Modul · Pro-Tarif",
+    "titleLead": "Bringen Sie das Labor",
+    "titleEm": "auf den Platz.",
+    "body": "DFA Alpha1 in Echtzeit, metabolische Zonen live, Verletzungsrisiko. Alles auf Ihrem Telefon, während des Trainings.",
+    "ctaPro": "Pro-Tarif aktivieren",
+    "ctaHow": "So funktioniert es",
+    "note": "{price}/Monat · Alle Basisfunktionen inklusive · Jederzeit kündbar"
+  },
+  "gap": {
+    "eyebrow": "Die Lücke",
+    "titleLead": "Ihre Sportler trainieren jeden Tag.",
+    "titleEm": "Sie bewerten sie nur ab und zu.",
+    "lines": [
+      "Dazwischen haben Sie keine Daten.",
+      "Sie wissen nicht, ob sie sich erholen.",
+      "Sie wissen nicht, ob die Belastung zu hoch ist.",
+      "Sie wissen nicht, ob sie sich morgen verletzen."
+    ],
+    "callout": "Stress Index Sport ändert alles."
+  },
+  "dfa": {
+    "eyebrow": "DFA Alpha1 in Echtzeit",
+    "titleLead": "Metabolische Zonen.",
+    "titleEm": "Ohne Labor.",
+    "description": "Der einzige Parameter, der Ihnen in Echtzeit sagt, in welcher metabolischen Zone sich Ihr Sportler befindet. Ohne Labortest. Ohne Spiroergometrie. Nur ein Brustgurt und das Telefon.",
+    "zones": [
+      { "title": "Rein aerobe Zone", "body": "Aktive Erholung, langer Grundlagenlauf, Aufbau der aeroben Basis." },
+      { "title": "Übergang (VT1 überschritten)", "body": "Aerobe Schwelle überschritten. Moderate, tragbare Belastung." },
+      { "title": "Anaerobe Zone (VT2 überschritten)", "body": "Anaerobe Schwelle überschritten. Intensive Belastung, begrenzte Dauer." },
+      { "title": "Maximale Belastung", "body": "Höchste Intensität. Nur wenige Minuten durchhaltbar." }
+    ],
+    "note": "Alle 5 Sekunden aktualisiert. In einem eigenen Prozessor berechnet. Präzision auf Laborniveau."
+  },
+  "live": {
+    "eyebrow": "Live-Sitzung",
+    "titleLead": "Starten Sie eine Sitzung.",
+    "titleEm": "Sehen Sie alles in Echtzeit.",
+    "description": "Starten Sie eine Sport-Sitzung, verbinden Sie den Brustgurt und sehen Sie alles live:",
+    "items": [
+      "HF live mit laufender Grafik",
+      "Rollierende RMSSD zur Überwachung der Erholung",
+      "DFA Alpha1 mit den 4 farbigen Zonen",
+      "Tags während der Aktivität (Sprintstart, Tempowechsel, Pause, Ende des Aufwärmens)",
+      "TRIMP am Ende der Sitzung automatisch berechnet"
+    ],
+    "mock": {
+      "session": "Sitzung · LIVE",
+      "zone": "Aerobe Zone",
+      "rolling": "ms · rollierend 60 s",
+      "tags": "Sitzungs-Tags",
+      "tagItems": ["Aufwärmen 12’", "Sprint #1", "Erholung", "Sprint #2"]
+    }
+  },
+  "post": {
+    "eyebrow": "Fragebogen nach dem Training",
+    "titleLead": "Subjektiv + objektiv.",
+    "titleEm": "Das vollständige Bild.",
+    "description": "Am Ende jeder Sitzung führt die App Ihren Sportler durch einen kurzen Fragebogen:",
+    "items": [
+      "RPE nach Borg-Skala (1-10)",
+      "Energieniveau",
+      "Stimmung",
+      "Interaktive Muskelschmerz-Karte (12 Zonen)",
+      "Freie Notizen"
+    ],
+    "calloutLead": "Subjektive Daten + objektive HRV-Daten",
+    "calloutRest": "= das vollständige Bild."
+  },
+  "dashboard": {
+    "eyebrow": "Sportler-Dashboard · 60 Tage",
+    "titleLead": "ln(RMSSD) mit individueller Baseline.",
+    "titleEm": "Plews-Methode.",
+    "description": "ln(RMSSD)-Trend mit individueller Baseline und Normalband (Plews-Methode). Sehen Sie auf einen Blick, ob Ihr Sportler in Form, übertrainiert oder gefährdet ist.",
+    "bands": [
+      { "title": "Über dem Band", "body": "Erholt. Bereit für eine höhere Belastung." },
+      { "title": "Im Band", "body": "Normal. Geplante Belastung ohne Änderungen." },
+      { "title": "Unter dem Band", "body": "Achtung. Erwägen Sie eine Reduzierung der Belastung." }
+    ],
+    "chartTitle": "ln(RMSSD), letzte 60 Tage",
+    "chartNote": "Normalband in Teal. Grüne Punkte = Erholung, rote = Achtung.",
+    "stats": {
+      "trimp": "TRIMP pro Woche",
+      "rpe": "Mittlere RPE",
+      "sessions": "Sitzungen"
+    }
+  },
+  "compare": {
+    "eyebrow": "Vergleich",
+    "titleLead": "Warum Stress Index Sport.",
+    "titleEm": "In einer Tabelle.",
+    "colFeature": "Funktion",
+    "desktopOnly": "Nur Desktop",
+    "rows": {
+      "dfa": { "feature": "DFA Alpha1 in Echtzeit", "us": "Mobil" },
+      "zones": { "feature": "Metabolische Zonen live", "us": "4 Zonen" },
+      "pain": { "feature": "Muskelschmerz-Karte", "us": "12 Zonen" },
+      "pdf": { "feature": "Sport-PDF-Bericht", "kubios": "Desktop, {price}/Jahr", "us": "Inklusive" },
+      "gdpr": { "feature": "EU-DSGVO, Server in Europa" },
+      "price": { "feature": "Preis", "kubios": "{price}/Jahr", "hrv4": "{price}/Monat, Consumer", "us": "{price}/Monat, Pro" }
+    }
+  },
+  "roadmap": {
+    "eyebrow": "Roadmap · Phase 2-3",
+    "titleLead": "Demnächst.",
+    "titleEm": "Für alle, die jetzt dabei sind.",
+    "description": "Das Sport-Modul ist erst der Anfang. Das kommt in den nächsten Monaten:",
+    "items": [
+      "Alerts zum Verletzungsrisiko (ACWR + HRV)",
+      "Performance Management Chart (CTL, ATL, TSB)",
+      "Team-Dashboard für mehrere Sportler",
+      "Automatische Erkennung der Schwellen VT1/VT2",
+      "KI-Interpretation der Trends",
+      "Täglicher Wellness-Fragebogen"
+    ],
+    "callout": "Fachkräfte, die jetzt aktivieren, erhalten vorab Zugang zu allen neuen Funktionen."
+  },
+  "cta": {
+    "eyebrow": "Pro-Tarif aktivieren",
+    "titleLead": "Bringen Sie das Labor auf den Platz.",
+    "titleEm": "Aktivieren Sie den Pro-Tarif.",
+    "note1": "{price}/Monat · 60 Tage Testphase · Jederzeit kündbar",
+    "note2": "Enthält alle Funktionen des Basis-Tarifs ({base}/Monat) + das vollständige Sport-Modul",
+    "linkFeatures": "Alle Basisfunktionen ansehen"
+  }
+}

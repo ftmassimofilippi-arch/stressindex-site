@@ -1,0 +1,27 @@
+{
+  "registration": {
+    "title": "Free 60-Day Trial | Stress Index",
+    "description": "Sign up and try Stress Index free for 60 days. Every feature, no commitment. For physiotherapists and wellness professionals.",
+    "shortDescription": "Sign up and try Stress Index free for 60 days. Every feature, no commitment."
+  },
+  "registrationConfirm": {
+    "title": "Registration complete"
+  },
+  "login": {
+    "title": "Sign in"
+  },
+  "recoverPassword": {
+    "title": "Reset password"
+  },
+  "setPassword": {
+    "title": "Set password"
+  },
+  "suspended": {
+    "title": "Account suspended"
+  },
+  "proArea": {
+    "title": "Professional Area",
+    "template": "%s | Stress Index Professional Area",
+    "description": "Stress Index professional dashboard, restricted area"
+  }
+}

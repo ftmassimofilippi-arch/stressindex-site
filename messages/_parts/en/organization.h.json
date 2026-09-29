@@ -1,0 +1,80 @@
+{
+  "createTitle": "Create your <em>organization</em>",
+  "createIntro": "Manage your team of professionals from a single dashboard. Invite your colleagues and follow the activity of all clients.",
+  "adminIntro": "Manage your team and follow the professionals' activity",
+  "memberIntro": "Your team",
+  "form": {
+    "name": "Organization name",
+    "placeholder": "E.g. Aurora Practice",
+    "creating": "Creating…",
+    "create": "Create organization",
+    "error": "Error creating the organization"
+  },
+  "tabs": {
+    "team": "Team",
+    "overview": "Overview",
+    "professionals": "Professionals"
+  },
+  "team": {
+    "organization": "Organization",
+    "save": "Save",
+    "cancel": "Cancel",
+    "members": "Team members",
+    "invite": "Invite professional",
+    "inviteNote": "The invitation is accepted when the professional signs in to the dashboard.",
+    "thProfessional": "Professional",
+    "thRole": "Role",
+    "thStatus": "Status",
+    "thClients": "Clients",
+    "thLastActivity": "Last activity",
+    "remove": "Remove member",
+    "removeTitle": "Remove the member?",
+    "removeDescription": "The professional will lose access to the organization. Their clients and measurements stay in their account.",
+    "removeConfirm": "Remove"
+  },
+  "roles": {
+    "owner": "Owner",
+    "admin": "Administrator",
+    "member": "Professional"
+  },
+  "memberStatus": {
+    "active": "Active",
+    "pending": "Pending",
+    "revoked": "Revoked"
+  },
+  "inviteDialog": {
+    "title": "Invite professional",
+    "email": "Email",
+    "placeholder": "colleague@practice.com",
+    "role": "Role",
+    "roleHelp": "Administrators can invite other professionals.",
+    "sending": "Sending…",
+    "send": "Invite"
+  },
+  "overview": {
+    "professionals": "Professionals",
+    "professionalsHint": "active",
+    "totalClients": "Total clients",
+    "totalMeasurements": "Total measurements",
+    "measurements": "Measurements",
+    "measurementsHint": "last 7 days",
+    "recent": "Recent activity",
+    "empty": "No measurements recorded yet",
+    "thProfessional": "Professional",
+    "thClient": "Client",
+    "thDate": "Date",
+    "thStress": "Stress",
+    "open": "Open →"
+  },
+  "professionals": {
+    "title": "Professionals",
+    "help": "Click a professional to see their clients and measurements (read-only).",
+    "empty": "No active professionals. Invite someone from the Team tab.",
+    "clients": "clients",
+    "measurements": "measurements"
+  },
+  "memberView": {
+    "title": "Your colleagues",
+    "count": "{count, plural, one {# active professional} other {# active professionals}}"
+  }
+}

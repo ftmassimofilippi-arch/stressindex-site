@@ -1,0 +1,18 @@
+{
+  "api": {
+    "generic": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "session_expired": "Sitzung abgelaufen: Laden Sie die Seite neu und melden Sie sich erneut an.",
+    "invalid_json": "Ungültige Anfrage.",
+    "monitoring_not_found": "Monitoring nicht gefunden oder mit diesem Konto nicht zugänglich.",
+    "monitoring_module_not_active": "Modul für dieses Konto nicht aktiv.",
+    "monitoring_no_client": "Dieses Monitoring ist mit keinem Klientenprofil verknüpft.",
+    "monitoring_email_fields_required": "Betreff und Nachricht sind erforderlich.",
+    "monitoring_invalid_events": "Ungültige Ereignisse.",
+    "monitoring_sleep_events_readonly": "Die Nächte des Schlaf-Moduls haben keine bearbeitbaren Ereignisse.",
+    "monitoring_event_outside_period": "Ein Ereignis liegt außerhalb des Aufzeichnungszeitraums.",
+    "monitoring_save_failed": "Speichern fehlgeschlagen.",
+    "monitoring_pdf_not_generated": "Das Monitoring wurde gelesen, aber das Dokument wurde nicht erstellt. Versuchen Sie es erneut; falls es weiterhin auftritt, melden Sie es uns.",
+    "monitoring_rr_file_missing": "Dieses Monitoring hat keine RR-Datei im Bucket.",
+    "monitoring_rr_file_unreadable": "RR-Datei nicht lesbar: Prüfen Sie, ob der Upload aus der App erfolgreich war."
+  }
+}

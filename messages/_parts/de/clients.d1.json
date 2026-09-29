@@ -1,0 +1,135 @@
+{
+  "list": {
+    "title": "Meine <em>Klienten</em>",
+    "titleOf": "Klienten von <em>{name}</em>",
+    "count": "{count, plural, one {# Klient} other {# Klienten}}",
+    "viewing": "Sie sehen die Daten von <b>{name}</b>",
+    "supportMode": "(Support-Modus)",
+    "readOnly": "nur lesend",
+    "backToProfessionals": "Zurück zu den Fachkräften",
+    "backToTeam": "Zurück zu Ihrem Team",
+    "emptyTitle": "Sie haben noch keine Klienten",
+    "emptyTitleOf": "Keine Klienten für diese Fachkraft",
+    "emptyBody": "Klienten werden aus der Mobile-App synchronisiert.",
+    "searchPlaceholder": "Nach Vorname, Nachname, E-Mail suchen…",
+    "allTags": "Alle Tags",
+    "noName": "Ohne Namen",
+    "never": "Nie",
+    "periods": {
+      "all": "Alle",
+      "today": "Heute",
+      "last7": "Letzte 7 Tage",
+      "last30": "Letzte 30 Tage",
+      "never": "Nie"
+    },
+    "columns": {
+      "client": "Klient",
+      "age": "Alter",
+      "tags": "Tags",
+      "lastMeasurement": "Letzte Messung",
+      "alerts": "Warnungen"
+    }
+  },
+  "form": {
+    "newClient": "Neuer Klient",
+    "title": "Neuer Klient",
+    "createdTitle": "Klient erstellt",
+    "intro": "Vorname, Nachname und E-Mail sind erforderlich. Die übrigen Felder können später ergänzt werden.",
+    "openRecord": "Profil öffnen",
+    "creating": "Wird erstellt…",
+    "create": "Klient erstellen",
+    "checkFields": "Prüfen Sie die markierten Felder.",
+    "createFailed": "Erstellung fehlgeschlagen.",
+    "networkError": "Netzwerkfehler.",
+    "copyFailed": "Der Browser hat das Kopieren nicht erlaubt: Markieren Sie den Text von Hand.",
+    "thisClient": "dieser Klient",
+    "duplicate": "Es gibt bereits ein Profil mit dieser E-Mail: {name}.",
+    "openExisting": "<link>Öffnen Sie das vorhandene Profil</link>, statt ein zweites anzulegen.",
+    "tempPasswordNotice": "Temporäres Passwort: Es wird nicht erneut angezeigt",
+    "copied": "Kopiert",
+    "copy": "Kopieren",
+    "generate": "Generieren",
+    "outcome": {
+      "existingLinked": "Ein Konto mit dieser E-Mail existierte bereits: Es wurde mit diesem Profil verknüpft, ohne eine neue Einladung zu senden. Seine Messungen sind sofort sichtbar.",
+      "inviteSent": "Einladung gesendet: Der Klient legt sein Passwort selbst über den Link in der E-Mail fest.",
+      "passwordSet": "Konto mit dem temporären Passwort erstellt. Teilen Sie es dem Klienten mit: Bei der ersten Anmeldung fordert die App ihn auf, es zu ändern.",
+      "recordOnly": "Profil erstellt. Der App-Zugang kann später aus dem Klientenprofil erstellt werden.",
+      "merged": "Ein doppeltes Profil mit derselben E-Mail wurde mit diesem zusammengeführt.",
+      "linkWarning": "Verknüpfung fehlgeschlagen: {detail}"
+    },
+    "sections": {
+      "personal": "Persönliche Daten",
+      "lifestyle": "Lebensstil",
+      "contacts": "Kontakte",
+      "access": "App-Zugang",
+      "notes": "Notizen",
+      "sport": "Sportdaten"
+    },
+    "fields": {
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "birthDate": "Geburtsdatum",
+      "sex": "Geschlecht",
+      "weight": "Gewicht (kg)",
+      "height": "Größe (cm)",
+      "smoker": "Raucher",
+      "athlete": "Sportler",
+      "activityLevel": "Aktivitätsniveau",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "sport": "Sportart",
+      "competitiveLevel": "Leistungsniveau",
+      "hrMax": "Max. HF (bpm)",
+      "ftp": "Geschätzte FTP (Watt)",
+      "currentGoal": "Aktuelles Ziel",
+      "tempPassword": "Temporäres Passwort (mind. {min} Zeichen)"
+    },
+    "placeholders": {
+      "weight": "z. B. 75",
+      "height": "z. B. 178",
+      "password": "Passwort generieren oder eingeben",
+      "hrMax": "z. B. 185",
+      "ftp": "z. B. 280 Watt"
+    },
+    "access": {
+      "inviteTitle": "Klienten zur Anmeldung einladen",
+      "inviteDesc": "Er erhält eine Einladungs-E-Mail und legt sein Passwort selbst fest. Seine Messungen werden mit diesem Profil verknüpft.",
+      "passwordTitle": "Temporäres Passwort festlegen",
+      "passwordDesc": "Für den Fall, dass der Klient vor Ihnen sitzt oder keine E-Mail nutzt. Bei der ersten Anmeldung fordert die App ihn auf, es zu ändern.",
+      "noneTitle": "Vorerst nur das Profil",
+      "noneDesc": "Kein Konto: Sie können es später aus dem Klientenprofil erstellen."
+    },
+    "sex": {
+      "M": "Männlich",
+      "F": "Weiblich"
+    },
+    "activity": {
+      "sedentario": "Sitzend",
+      "moderato": "Mäßig aktiv",
+      "attivo": "Aktiv",
+      "atleta": "Sportler"
+    },
+    "competitive": {
+      "amateur": "Amateur",
+      "semi_pro": "Semiprofessionell",
+      "professional": "Profi",
+      "elite": "Elite"
+    },
+    "validation": {
+      "firstNameRequired": "Vorname ist erforderlich",
+      "lastNameRequired": "Nachname ist erforderlich",
+      "emailRequired": "E-Mail ist erforderlich",
+      "emailInvalid": "Ungültige E-Mail",
+      "range": "Geben Sie einen Wert zwischen {min} und {max} ein",
+      "notAllowed": "Wert nicht zulässig",
+      "passwordMin": "Das Passwort muss mindestens {min} Zeichen haben"
+    }
+  },
+  "noteCategories": {
+    "assessment": "Bewertung",
+    "followUp": "Follow-up",
+    "postSession": "Nach der Sitzung",
+    "background": "Vorgeschichte",
+    "other": "Sonstiges"
+  }
+}

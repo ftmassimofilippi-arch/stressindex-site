@@ -1,0 +1,197 @@
+{
+  "mockup": {
+    "measuring": "Stress Index · Messung läuft",
+    "ecgLive": "65 bpm · EKG live"
+  },
+  "hero": {
+    "eyebrow": "HRV-Software für Wellness-Fachkräfte",
+    "titleLead": "Ihr Klient ist gestresst.",
+    "titleEm": "Jetzt können Sie es belegen.",
+    "body": "Stress Index misst das autonome Nervensystem in 10 Minuten und liefert Ihnen 4 Indizes, die Sie direkt in der Sitzung nutzen. Schluss mit Einschätzungen nach Gefühl. Schluss mit Erklärungen ohne Daten.",
+    "ctaHow": "So funktioniert es"
+  },
+  "trust": {
+    "params": "24 HRV-Parameter",
+    "platforms": "Android und iOS",
+    "eu": "EU-Server · DSGVO",
+    "pdf": "Professioneller PDF-Bericht",
+    "pros": "Für Wellness-Fachkräfte"
+  },
+  "problem": {
+    "eyebrow": "Das eigentliche Problem",
+    "titleLead": "Sie wissen längst, dass Stress alles verändert.",
+    "titleEm": "Aber können Sie ihn wirklich messen?",
+    "body": "Jeden Tag arbeiten Sie mit Menschen, die schlecht schlafen, sich langsam erholen, sich immer zur gleichen Zeit verletzen und nicht so auf das Programm ansprechen, wie sie sollten. Sie wissen, dass das Nervensystem dahintersteckt. Aber Sie haben keine Zahl, die Sie zeigen können.",
+    "cards": [
+      {
+        "title": "Ich verlasse mich auf meine Erfahrung",
+        "body": "Das funktioniert. Bis der Klient fragt, warum es nicht besser wird, oder ein Kollege ihm einen Bericht mit Daten vorlegt. Ein Bauchgefühl lässt sich nicht verteidigen, Zahlen schon."
+      },
+      {
+        "title": "HRV-Tools gibt es doch schon",
+        "body": "Ja, die gibt es. Sie sind für Forscher gemacht, kosten Tausende von Euro, liefern unverständliche Berichte und erfordern wochenlange Einarbeitung. Für Ihre Praxis wurden sie nie gebaut."
+      },
+      {
+        "title": "Ich zeige meinen Klienten die Fortschritte",
+        "body": "Wie? Mit Worten? Ihr Klient will seine eigene Kurve sehen, die sich mit der Zeit verbessert. Er will ein PDF, das er seinem Arzt zeigen kann. Er will verstehen, warum er sich heute anders fühlt als vor drei Wochen."
+      }
+    ]
+  },
+  "solution": {
+    "eyebrow": "Die Antwort",
+    "titleLead": "4 Zahlen.",
+    "titleEm": "Alles, was Sie brauchen.",
+    "body": "Stress Index verarbeitet 24 HRV-Parameter und übersetzt sie in 4 Indizes auf einer Skala von 0 bis 100. Sie lesen sie in einer Sekunde. Ihr Klient versteht sie ohne lange Erklärungen.",
+    "features": [
+      {
+        "title": "Stressindex",
+        "body": "Sie wissen genau, wie stark der Sympathikus dominiert. Sie greifen ein, bevor der Klient zusammenbricht, nicht danach."
+      },
+      {
+        "title": "Erholungsindex",
+        "body": "Kein Raten mehr, ob er für eine höhere Belastung bereit ist. Die Zahl sagt Ihnen, wann Sie Gas geben und wann Sie bremsen sollten."
+      },
+      {
+        "title": "Gleichgewichtsindex",
+        "body": "Die Signatur des autonomen Nervensystems. Auf einen Blick sehen Sie, ob das Verhältnis von Sympathikus und Parasympathikus dort ist, wo es sein sollte."
+      },
+      {
+        "title": "Energieindex",
+        "body": "Die tatsächlichen Reserven, nicht die gefühlten. Unverzichtbar, wenn Sie mit Burnout, sportlicher Leistung oder Energiemanagement arbeiten."
+      }
+    ],
+    "adaptation": {
+      "label": "Anpassung",
+      "value": "58/100",
+      "text": "Erholungs- und Anpassungsfähigkeit im Normbereich für die demografische Gruppe. Wöchentliches Monitoring empfohlen."
+    }
+  },
+  "how": {
+    "eyebrow": "So funktioniert es",
+    "titleLead": "Drei Schritte.",
+    "titleEm": "Dann haben Sie den Bericht.",
+    "steps": [
+      {
+        "title": "Brustgurt verbinden",
+        "body": "Jeder Bluetooth-Brustgurt. Der Polar H10 ist die Referenz für EKG-Qualität, viele andere Sensoren funktionieren ebenfalls. Eine Minute, und Sie sind startklar."
+      },
+      {
+        "title": "In 10 Minuten messen",
+        "body": "Der Klient setzt sich, Sie starten die Messung. Stress Index liest das Signal in Echtzeit und filtert Artefakte automatisch heraus. Keine Konfiguration nötig."
+      },
+      {
+        "title": "Bericht teilen",
+        "body": "Professionelles PDF mit den 4 Indizes, den HRV-Grafiken und der Analyse des autonomen Nervensystems. Mit einem Tipp an den Klienten senden. Ausdrucken. Im CRM ablegen."
+      }
+    ]
+  },
+  "benefits": {
+    "eyebrow": "Warum Stress Index",
+    "titleLead": "Gebaut für alle, die",
+    "titleEm": "im echten Wellness-Alltag arbeiten.",
+    "items": [
+      {
+        "title": "Läuft überall",
+        "body": "Android, iOS, Tablet, Smartphone. Bluetooth 4.0 oder neuer. Nehmen Sie es mit in die Praxis, ins Studio, auf den Platz. Keine proprietäre Hardware nötig."
+      },
+      {
+        "title": "Ihre Klienten, gut organisiert",
+        "body": "Integriertes CRM mit Stammdaten, Messhistorie und Vergleich zwischen Sitzungen. Sie sehen die Entwicklung über die Zeit und passen das Programm auf Basis von Daten an."
+      },
+      {
+        "title": "Datenschutz, gesetzlich garantiert",
+        "body": "Server in Deutschland, DSGVO-konform, Einwilligung des Klienten automatisch dokumentiert. Die Daten verlassen Europa nicht. Nie."
+      },
+      {
+        "title": "Ernsthafte Wissenschaft, einfache Sprache",
+        "body": "24 HRV-Parameter auf Basis internationaler Fachliteratur, demografische Normalisierung nach Alter und Geschlecht. Die wissenschaftliche Sorgfalt, die Sie erwarten, ohne die Komplexität, die Sie nicht brauchen."
+      }
+    ]
+  },
+  "explore": {
+    "eyebrow": "Mehr erfahren",
+    "titleLead": "Gehen Sie in die Tiefe.",
+    "titleEm": "Wo möchten Sie anfangen?",
+    "features": {
+      "title": "Alle Funktionen entdecken",
+      "body": "5 eigene Scores, über 25 Parameter, 3 Testarten, lange Sitzungen, PDF-Berichte, Klienten-CRM, Web-Dashboard.",
+      "cta": "Funktionen ansehen"
+    },
+    "sport": {
+      "title": "Sport-Modul für Fachkräfte",
+      "body": "DFA Alpha1 in Echtzeit, metabolische Zonen, Fragebogen nach dem Training, Sportler-Dashboard.",
+      "cta": "Pro-Tarif entdecken"
+    }
+  },
+  "pricing": {
+    "eyebrow": "Preise",
+    "titleLead": "Ein Abonnement.",
+    "titleEm": "Alles inklusive, für immer.",
+    "body": "Keine Kosten pro Klient, keine Zusatzgebühren für Berichte, keine Überraschungen. Sie zahlen einen festen Monatsbetrag und nutzen alles ohne Limit.",
+    "badge": "Founding-Members-Angebot · Die ersten 200 Anmeldungen",
+    "planName": "Stress Index Pro",
+    "planFor": "Für Physiotherapeuten, Osteopathen, Sportmediziner und Wellness-Coaches",
+    "perMonth": "/Monat",
+    "standardNote": "Standardpreis <s>{standard}/Monat</s> · Founding Members {price}/Monat für die ersten 200",
+    "lockNote": "Sie gehören zu den ersten 200? Dann bleibt Ihr Preis von <b>{price}/Monat</b> für immer fest.",
+    "features": [
+      "Unbegrenzt viele Klienten und Messungen",
+      "Unbegrenzt viele professionelle PDF-Berichte",
+      "Klienten-CRM mit vollständiger Historie",
+      "CSV-Export der Daten",
+      "Android und iOS inklusive",
+      "Automatische Updates, für immer",
+      "Bevorzugter Support per E-Mail"
+    ],
+    "cta": "60 Tage kostenlos starten",
+    "note": "Kreditkarte erforderlich · 60 Tage ohne Abbuchung · Danach {price}/Monat · Jederzeit kündbar"
+  },
+  "faq": {
+    "eyebrow": "Häufige Fragen",
+    "titleLead": "Alles klar,",
+    "titleEm": "bevor Sie loslegen.",
+    "items": [
+      {
+        "q": "Brauche ich einen Polar H10?",
+        "a": "Nein. Es funktioniert mit jedem Bluetooth-Brustgurt. Den Polar H10 empfehlen wir wegen der EKG-Signalqualität, vor allem unter Android, aber Pflicht ist er nicht."
+      },
+      {
+        "q": "Funktioniert es auf dem iPhone?",
+        "a": "Ja. Android und iOS, Tablet und Smartphone. Jedes Gerät mit Bluetooth 4.0."
+      },
+      {
+        "q": "Sind die Daten meiner Klienten sicher?",
+        "a": "Server in Deutschland, DSGVO-konform. Die Daten werden nie an Dritte weitergegeben. Die App dokumentiert die Einwilligung des Klienten automatisch bei jeder Messung."
+      },
+      {
+        "q": "Kann ich es ohne Internet nutzen?",
+        "a": "Die Messung läuft komplett offline. Sobald Sie wieder online sind, werden die Daten automatisch synchronisiert. Keine Sitzung geht verloren."
+      },
+      {
+        "q": "Was passiert nach den 60 Tagen?",
+        "a": "Sie erhalten vor Ablauf eine Benachrichtigung. Wenn Sie weitermachen möchten, startet das Abonnement automatisch. Wenn nicht, kündigen Sie und wir buchen nichts ab. Null Bürokratie."
+      },
+      {
+        "q": "Wie lange gilt der Founding-Members-Preis?",
+        "a": "Für immer. Die ersten 200 Fachkräfte, die sich anmelden, sichern sich {price}/Monat auf Lebenszeit, auch wenn der Standardpreis auf {standard}/Monat steigt."
+      }
+    ]
+  },
+  "finalCta": {
+    "eyebrow": "Starten Sie heute",
+    "titleLead": "Der nächste Klient, der hereinkommt:",
+    "titleEm": "messen Sie ihn wirklich.",
+    "body": "60 Tage kostenlos. Keine Bindung. Aufhören, wann Sie wollen.",
+    "note": "Kreditkarte erforderlich · Danach {price}/Monat · Jederzeit kündbar"
+  },
+  "footer": {
+    "tagline": "Professionelle HRV-Software für Physiotherapeuten, Osteopathen, Sportmediziner und Wellness-Coaches. Messen Sie den Stress des autonomen Nervensystems in 10 Minuten.",
+    "product": "Produkt",
+    "support": "Support",
+    "legal": "Rechtliches",
+    "vat": "USt-IdNr. {vat}"
+  },
+  "jsonLd": {
+    "appDescription": "Professionelle HRV-Software zur Analyse des autonomen Nervensystems"
+  }
+}

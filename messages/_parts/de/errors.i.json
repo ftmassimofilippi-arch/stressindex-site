@@ -1,0 +1,17 @@
+{
+  "api": {
+    "generic": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "invalid_json": "Ungültige Anfrage.",
+    "pdf_missing_params": "Erforderliche Parameter fehlen.",
+    "invalid_date_format": "Datumsangaben müssen im Format JJJJ-MM-TT vorliegen.",
+    "invalid_date_range": "Das Startdatum muss vor dem Enddatum liegen.",
+    "session_expired": "Sitzung abgelaufen: Laden Sie die Seite neu und melden Sie sich erneut an.",
+    "client_read_failed": "Die Klientendaten konnten nicht gelesen werden. Bitte versuchen Sie es in Kürze erneut.",
+    "measurement_read_failed": "Die Messung konnte nicht gelesen werden. Bitte versuchen Sie es in Kürze erneut.",
+    "measurement_not_linked": "Diese Messung ist nicht mit dem ausgewählten Klienten verknüpft: Ein PDF in seinem Namen kann nicht erstellt werden.",
+    "measurement_not_found": "Messung nicht gefunden. Wenn der Klient sie über seine App erfasst hat, prüfen Sie, ob die Verknüpfung mit der Praxis noch aktiv ist.",
+    "pdf_render_failed": "Die Messung wurde gefunden, das Dokument konnte jedoch nicht erstellt werden. Versuchen Sie es erneut; falls das Problem bestehen bleibt, melden Sie es uns.",
+    "report_read_failed": "Die Messungen des Zeitraums konnten nicht gelesen werden. Bitte versuchen Sie es in Kürze erneut.",
+    "report_render_failed": "Die Daten wurden gelesen, das Dokument konnte jedoch nicht erstellt werden. Versuchen Sie es erneut; falls das Problem bestehen bleibt, melden Sie es uns."
+  }
+}

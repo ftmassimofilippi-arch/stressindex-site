@@ -1,0 +1,27 @@
+{
+  "registration": {
+    "title": "60 Tage kostenlos testen | Stress Index",
+    "description": "Registrieren Sie sich und testen Sie Stress Index 60 Tage lang kostenlos. Alle Funktionen, keine Verpflichtung. Für Physiotherapeuten und Wellness-Fachkräfte.",
+    "shortDescription": "Registrieren Sie sich und testen Sie Stress Index 60 Tage lang kostenlos. Alle Funktionen, keine Verpflichtung."
+  },
+  "registrationConfirm": {
+    "title": "Registrierung abgeschlossen"
+  },
+  "login": {
+    "title": "Anmelden"
+  },
+  "recoverPassword": {
+    "title": "Passwort zurücksetzen"
+  },
+  "setPassword": {
+    "title": "Passwort festlegen"
+  },
+  "suspended": {
+    "title": "Konto vorübergehend gesperrt"
+  },
+  "proArea": {
+    "title": "Bereich für Fachkräfte",
+    "template": "%s | Stress Index Bereich für Fachkräfte",
+    "description": "Professionelles Stress Index Dashboard, geschützter Bereich"
+  }
+}
