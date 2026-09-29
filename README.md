@@ -3,7 +3,7 @@
 Sito pubblico e area riservata di **Stress Index** (The Performance Lab
 S.r.l.): la dashboard web dove il professionista vede clienti, misurazioni,
 monitoraggi, sport e avvisi raccolti dall'app Flutter (repo `hrv_app`).
-Aggiornato al 27 settembre 2026 (tag `site-2026-09-27`).
+Aggiornato al 30 settembre 2026 (tag `site-2026-09-30`).
 
 ## Stack
 
@@ -39,6 +39,28 @@ Secret delle Edge Function (`supabase secrets set`): `NOTIFY_SECRET`,
 `SITE_URL`, le `SMTP_*`; `SUPABASE_URL`, `SUPABASE_ANON_KEY` e
 `SUPABASE_SERVICE_ROLE_KEY` li inietta Supabase.
 
+## Lingue (i18n)
+
+Sito in **italiano** (default, senza prefisso), **inglese** (`/en/...`) e
+**tedesco** (`/de/...`) con `next-intl`: tutte le pagine stanno in
+`src/app/[locale]/`, gli slug restano italiani in ogni lingua. Il middleware
+sceglie la lingua da prefisso URL, poi cookie `NEXT_LOCALE`, poi
+`Accept-Language` alla prima visita; switcher IT / EN / DE in navbar, footer,
+login e top bar della dashboard. I messaggi finali `messages/{it,en,de}.json`
+sono **generati** dai frammenti `messages/_parts/<lingua>/<namespace>.<pacchetto>.json`:
+
+```bash
+node scripts/i18n-merge.mjs     # rigenera messages/*.json dai frammenti
+node scripts/i18n-check.mjs     # chiavi allineate nelle 3 lingue, termini vietati, trattini lunghi
+node scripts/i18n-residui.mjs   # euristica: stringhe italiane rimaste nei sorgenti
+```
+
+Convenzioni in `docs/i18n-convenzioni.md`, glossario dall'app in
+`docs/i18n-glossario.md`, template email Supabase trilingue in
+`docs/email-templates/`. La lingua scelta alla registrazione finisce in
+`user_metadata.locale`; le route API la leggono con `getRequestLocale`
+(`?locale=`, cookie, Referer, Accept-Language).
+
 ## Struttura delle pagine
 
 ### Pubbliche
@@ -47,7 +69,7 @@ Secret delle Edge Function (`supabase secrets set`): `NOTIFY_SECRET`,
 (+ `/conferma`, trial 60 giorni), `/imposta-password` (atterraggio dei link
 Supabase, fuori dal middleware), `robots`, `sitemap`, immagine OpenGraph.
 
-### Area professionisti (`/area-professionisti`, `src/app/area-professionisti/`)
+### Area professionisti (`/area-professionisti`, `src/app/[locale]/area-professionisti/`)
 Middleware: senza sessione → login; con sessione chiama `my_account_access`:
 account `bloccato` → logout, `sospeso` → ogni pagina riscritta su `/sospeso`.
 

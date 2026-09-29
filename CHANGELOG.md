@@ -3,6 +3,46 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-09-30 — tag `site-2026-09-30`
+
+### Sito trilingue (i18n)
+- **Italiano, inglese e tedesco** con `next-intl`: pagine spostate in
+  `src/app/[locale]/`, italiano senza prefisso (URL invariate), `/en/...` e
+  `/de/...` con gli stessi slug italiani. Middleware unico: routing per lingua
+  (prefisso, poi cookie `NEXT_LOCALE`, poi `Accept-Language`) composto con la
+  protezione Supabase di `/area-professionisti`, redirect che conservano la
+  lingua. Switcher IT / EN / DE in navbar, footer, login, top bar della
+  dashboard. 404 ed errore localizzati.
+- **Tutte le stringhe visibili estratte** (~2.900 chiavi per lingua) in
+  `messages/{it,en,de}.json`, generati dai frammenti
+  `messages/_parts/<lingua>/<namespace>.<pacchetto>.json` con
+  `scripts/i18n-merge.mjs`; `scripts/i18n-check.mjs` verifica chiavi allineate,
+  termini vietati e trattini lunghi; `scripts/i18n-residui.mjs` cerca stringhe
+  italiane residue. La guida è contenuto data-driven nel JSON con un renderer.
+- **Glossario dall'app** (`docs/i18n-glossario.md`, ~600 voci) e convenzioni
+  (`docs/i18n-convenzioni.md`). Terminologia allineata all'app: fascia stress
+  85-100 "Affaticamento", score `score_modulazione_infiammatoria` mostrato come
+  Adattamento / Adaptation / Anpassung.
+- **Date, numeri e prezzi** per lingua con `Intl` (it-IT, en-US, de-DE) in
+  `src/lib/format.ts` (parametro `locale` finale), anche su assi e tooltip
+  Recharts e nei date picker; `formatEur` per i prezzi.
+- **SEO**: `generateMetadata` per pagina e lingua (`src/lib/seo.ts`), hreflang
+  it/en/de + x-default, sitemap con le tre lingue, `<html lang>` corretto,
+  immagine OpenGraph tradotta.
+- **Registrazione e auth**: lingua salvata in `user_metadata.locale`; errori
+  Supabase Auth mappati su chiavi (`errors.supabase.*`); reset password verso
+  `/imposta-password` nella lingua dell'utente. Template email Supabase IT/EN/DE
+  con blocchi condizionali Go su `{{ .Data.locale }}` in `docs/email-templates/`
+  (da incollare a mano nella dashboard).
+- **Route API**: errori come codici stabili (`apiError`) tradotti lato client
+  (`apiErrorMessage`); PDF, CSV ed email nella lingua della richiesta
+  (`getRequestLocale`: `?locale=`, cookie, Referer, Accept-Language).
+- **Linguaggio wellness** corretto anche in italiano (niente "clinico",
+  "diagnosi", "paziente" fuori dai disclaimer legali); "Rischio infortunio" →
+  "Rischio sovraccarico"; LF/HF sempre come "rapporto LF/HF".
+- `.eslintrc.json` (`next/core-web-vitals`) per rendere `npm run lint` non
+  interattivo.
+
 ## 2026-09-27 — tag `site-2026-09-27`
 
 Allineato all'app 2.9.0+52.

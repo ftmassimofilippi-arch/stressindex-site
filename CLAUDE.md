@@ -1,7 +1,7 @@
 # CLAUDE.md — Stress Index, sito e dashboard (Next.js)
 
 Istruzioni per le sessioni Claude Code in questo repo. Aggiornate al
-27 settembre 2026 (tag `site-2026-09-27`).
+30 settembre 2026 (tag `site-2026-09-30`).
 
 ## Da leggere per primi
 
@@ -45,11 +45,18 @@ Istruzioni per le sessioni Claude Code in questo repo. Aggiornate al
   `alert-rules.ts` e `alert-rules-server.ts` separati).
 - Linguaggio wellness: mai diagnosi, paziente, clinico, medico, terapia,
   biomarcatore; "Adattamento" in UI per `score_modulazione_infiammatoria`.
+- **i18n**: sito IT/EN/DE con next-intl, pagine in `src/app/[locale]/`,
+  slug italiani in tutte le lingue. Nessuna stringa visibile hardcoded: le
+  stringhe vanno nei frammenti `messages/_parts/<lingua>/<ns>.<pacchetto>.json`
+  e si rigenerano i file finali con `node scripts/i18n-merge.mjs`; prima di
+  chiudere `node scripts/i18n-check.mjs` deve passare. Link e router solo da
+  `@/i18n/navigation`; date e numeri con la `locale` (`src/lib/format.ts`).
+  Convenzioni in `docs/i18n-convenzioni.md`, glossario in `docs/i18n-glossario.md`.
 - Mai fare push forzato su `main`; `supabase/.temp/` è locale e ignorato.
 
 ## Prima di chiudere una sessione
 
-- `npm run build`, `npm run lint`, `npm test` puliti.
+- `npm run build`, `npm run lint`, `npm test`, `node scripts/i18n-check.mjs` puliti.
 - Aggiornare `CHANGELOG.md` e, se cambiano pagine/API/migrazioni, `README.md`.
 - `git push`; a fine blocco di lavoro un tag `site-AAAA-MM-GG`.
 
