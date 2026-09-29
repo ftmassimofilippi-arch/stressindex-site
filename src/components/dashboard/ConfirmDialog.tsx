@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Modal } from './Modal'
 
 type Props = {
@@ -17,9 +18,11 @@ type Props = {
 
 export function ConfirmDialog({
   open, onClose, onConfirm, title, description,
-  confirmText = 'Conferma', cancelText = 'Annulla',
+  confirmText, cancelText,
   destructive = false, requireTypedConfirmation,
 }: Props) {
+  const tc = useTranslations('common')
+  const t = useTranslations('dashboard.dialog')
   const [typed, setTyped] = useState('')
   const [loading, setLoading] = useState(false)
   const canConfirm = !requireTypedConfirmation || typed === requireTypedConfirmation
@@ -33,22 +36,24 @@ export function ConfirmDialog({
   return (
     <Modal open={open} onClose={onClose} title={title} description={description} size="sm"
       footer={
-        <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="btn-secondary text-sm">{cancelText}</button>
+        <div className="flex justify-end gap-2 flex-wrap">
+          <button type="button" onClick={onClose} className="btn-secondary text-sm">{cancelText ?? tc('cancel')}</button>
           <button
             type="button"
             disabled={!canConfirm || loading}
             onClick={handle}
             className={`text-sm px-5 py-2.5 rounded-xl font-medium transition-colors disabled:opacity-50 ${destructive ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-teal hover:bg-teal-dark text-white'}`}
           >
-            {loading ? 'Attendere…' : confirmText}
+            {loading ? t('wait') : (confirmText ?? tc('confirm'))}
           </button>
         </div>
       }
     >
       {requireTypedConfirmation && (
         <div>
-          <label className="input-label">Digita <b>{requireTypedConfirmation}</b> per confermare</label>
+          <label className="input-label">
+            {t.rich('typeToConfirm', { text: requireTypedConfirmation, b: (c) => <b>{c}</b> })}
+          </label>
           <input
             type="text"
             value={typed}

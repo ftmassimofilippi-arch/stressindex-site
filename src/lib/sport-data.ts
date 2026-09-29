@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import { getTranslations } from 'next-intl/server'
 import { getMyAccountAccess, hasModule } from './account-access'
 import { createClient } from './supabase-server'
 import { resolveViewingProfessional, type ViewingProfessional } from './dashboard-data'
@@ -259,17 +260,24 @@ function periodFrom(period?: SportSessionFilters['period']): string | null {
 
 // ── Query principali ─────────────────────────────────────────────────────────
 
+// Nome da mostrare quando l'anagrafica del cliente è vuota ("Atleta" tradotto).
+async function athleteFallback(): Promise<string> {
+  const t = await getTranslations('sport')
+  return t('athlete')
+}
+
 // Mappa athlete_id → nome completo per un set di sessioni.
 async function athleteNames(athleteIds: string[]): Promise<Map<string, string>> {
   const map = new Map<string, string>()
   if (athleteIds.length === 0) return map
+  const fallback = await athleteFallback()
   const supabase = await createClient()
   const { data } = await supabase
     .from('clients')
     .select('id, nome, cognome')
     .in('id', athleteIds)
   for (const c of (data ?? []) as Array<{ id: string; nome: string | null; cognome: string | null }>) {
-    map.set(c.id, `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || 'Atleta')
+    map.set(c.id, `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || fallback)
   }
   return map
 }
@@ -299,8 +307,8 @@ export async function listSportSessions(
     return []
   }
   const rows = (data ?? []) as SportSessionRow[]
-  const names = await athleteNames(Array.from(new Set(rows.map((r) => r.athlete_id))))
-  return rows.map((r) => ({ ...mapSession(r), athlete_name: names.get(r.athlete_id) ?? 'Atleta' }))
+  const [names, fallback] = await Promise.all([athleteNames(Array.from(new Set(rows.map((r) => r.athlete_id)))), athleteFallback()])
+  return rows.map((r) => ({ ...mapSession(r), athlete_name: names.get(r.athlete_id) ?? fallback }))
 }
 
 export async function getSportSessionsCount(
@@ -328,8 +336,8 @@ export async function getSportSession(sessionId: string): Promise<SportSessionWi
     .maybeSingle()
   if (!data) return null
   const session = mapSession(data as SportSessionRow)
-  const names = await athleteNames([session.athlete_id])
-  return { ...session, athlete_name: names.get(session.athlete_id) ?? 'Atleta' }
+  const [names, fallback] = await Promise.all([athleteNames([session.athlete_id]), athleteFallback()])
+  return { ...session, athlete_name: names.get(session.athlete_id) ?? fallback }
 }
 
 export async function getDfaWindows(sessionId: string): Promise<DfaWindow[]> {
@@ -497,6 +505,7 @@ export async function listSportAthletes(professionalId: string | null): Promise<
     .in('id', athleteIds)
   const clients = new Map<string, SportAthleteProfile>()
   for (const c of (clientRows ?? []) as SportAthleteProfile[]) clients.set(c.id, c)
+  const fallback = await athleteFallback()
 
   const now = Date.now()
   const DAY = 86_400_000
@@ -521,7 +530,7 @@ export async function listSportAthletes(professionalId: string | null): Promise<
       .reduce((acc, s) => acc + (s.trimp ?? 0), 0)
     cards.push({
       ...profile,
-      full_name: `${profile.nome ?? ''} ${profile.cognome ?? ''}`.trim() || 'Atleta',
+      full_name: `${profile.nome ?? ''} ${profile.cognome ?? ''}`.trim() || fallback,
       sessions_30d: sessions30d,
       // Istante NORMALIZZATO, non il grezzo: viene confrontato con Date.now()
       // nell'ordinamento qui sotto e formattato con formatIstante nella UI.
@@ -595,9 +604,10 @@ export async function getSportLiveSnapshot(professionalId: string | null): Promi
     .select('id, nome, cognome, hr_max')
     .eq('professionista_id', professionalId)
   const athletes: Record<string, AthleteMeta> = {}
+  const fallback = await athleteFallback()
   for (const c of (clientRows ?? []) as Array<{ id: string; nome: string | null; cognome: string | null; hr_max: number | null }>) {
     athletes[c.id] = {
-      name: `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || 'Atleta',
+      name: `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || fallback,
       hr_max: c.hr_max ?? null,
     }
   }

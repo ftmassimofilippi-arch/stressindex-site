@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { apiError } from '@/lib/api-error'
+import { getRequestLocale, getTranslator } from '@/lib/i18n-server'
 import { getMonitoringSession, saveEventsFromWeb } from '@/lib/monitoring-data'
 import { getCurrentUser, resolveViewingProfessional } from '@/lib/dashboard-data'
-import { EVENT_TYPE_LABEL } from '@/lib/monitoring-format'
+import { eventTypeLabel } from '@/lib/monitoring-format'
 import { getMyAccountAccess, hasModule } from '@/lib/account-access'
 import type { MonitoringEvent } from '@/lib/monitoring-types'
 
@@ -12,7 +14,8 @@ export const dynamic = 'force-dynamic'
 // PUT /api/monitoring/[id]/events — sostituisce gli eventi di un monitoraggio
 // 24h dal sito. Il sito NON ricalcola la reazione: gli eventi nuovi o spostati
 // arrivano con response null e la riga viene marcata events_modified_on_web,
-// così l'app sa che deve rielaborare.
+// così l'app sa che deve rielaborare. L'etichetta di default di un evento
+// senza testo segue la lingua della richiesta.
 
 const EventSchema = z.object({
   id: z.string().min(1).max(80),
@@ -26,37 +29,39 @@ const BodySchema = z.object({ events: z.array(EventSchema).max(200) })
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: 'Sessione scaduta: ricarica la pagina e accedi di nuovo.' }, { status: 401 })
+  if (!user) return apiError('session_expired', 401)
 
   let body: unknown
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: 'JSON non valido' }, { status: 400 })
+    return apiError('invalid_json', 400)
   }
   const parsed = BodySchema.safeParse(body)
-  if (!parsed.success) return NextResponse.json({ error: 'Eventi non validi' }, { status: 400 })
+  if (!parsed.success) return apiError('monitoring_invalid_events', 400)
 
   const { currentUserId } = await resolveViewingProfessional(undefined)
   const session = await getMonitoringSession(params.id, currentUserId)
-  if (!session) return NextResponse.json({ error: 'Monitoraggio non trovato o non accessibile.' }, { status: 404 })
-  if (session.monitoring_type === 'sleep') return NextResponse.json({ error: 'Le notti del modulo Sonno non hanno eventi modificabili.' }, { status: 400 })
-  if (!hasModule(await getMyAccountAccess(), 'monitoring')) return NextResponse.json({ error: 'Modulo Monitoraggio non attivo per questo account.' }, { status: 403 })
+  if (!session) return apiError('monitoring_not_found', 404)
+  if (session.monitoring_type === 'sleep') return apiError('monitoring_sleep_events_readonly', 400)
+  if (!hasModule(await getMyAccountAccess(), 'monitoring')) return apiError('monitoring_module_not_active', 403)
 
+  const locale = await getRequestLocale(req)
+  const t = await getTranslator(locale, 'monitoring')
   const startMs = new Date(session.start_time).getTime()
   const endMs = new Date(session.end_time).getTime()
   const existing = new Map(session.events.map((e) => [e.id, e]))
   const next: MonitoringEvent[] = []
   for (const e of parsed.data.events) {
-    const t = new Date(e.timestamp).getTime()
-    if (t < startMs || t > endMs) return NextResponse.json({ error: 'Un evento cade fuori dal periodo della registrazione.' }, { status: 400 })
+    const at = new Date(e.timestamp).getTime()
+    if (at < startMs || at > endMs) return apiError('monitoring_event_outside_period', 400)
     const prev = existing.get(e.id)
-    const untouched = prev && prev.type === e.type && new Date(prev.timestamp).getTime() === t
+    const untouched = prev && prev.type === e.type && new Date(prev.timestamp).getTime() === at
     next.push({
       id: e.id,
       type: e.type,
-      timestamp: new Date(t).toISOString(),
-      label: e.label.trim() || EVENT_TYPE_LABEL[e.type],
+      timestamp: new Date(at).toISOString(),
+      label: e.label.trim() || eventTypeLabel(e.type, t),
       note: e.note?.trim() ? e.note.trim() : null,
       // La reazione resta solo se l'evento non è cambiato: mai calcolata qui.
       response: untouched ? prev.response : null,
@@ -64,6 +69,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 
   const res = await saveEventsFromWeb(session.id, next)
-  if (!res.ok) return NextResponse.json({ error: res.error }, { status: 500 })
+  if (!res.ok) return apiError('monitoring_save_failed', 500, { detail: res.error })
   return NextResponse.json({ ok: true, events: next })
 }

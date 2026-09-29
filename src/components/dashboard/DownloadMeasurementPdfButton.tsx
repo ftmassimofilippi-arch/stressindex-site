@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { AlertCircle, Download, FileText, Loader2, X } from 'lucide-react'
+import { apiErrorMessage } from '@/lib/api-error'
 
 type Variant = 'button' | 'icon'
 
@@ -14,9 +16,6 @@ type Props = {
   className?: string
 }
 
-const GENERIC_ERROR =
-  'Non è stato possibile generare il PDF. Controlla la connessione e riprova.'
-
 export function DownloadMeasurementPdfButton({
   sessionId,
   clientId,
@@ -24,6 +23,9 @@ export function DownloadMeasurementPdfButton({
   variant = 'button',
   className = '',
 }: Props) {
+  const t = useTranslations('pdf.download')
+  const tErr = useTranslations('errors.api')
+  const locale = useLocale()
   const [loading, setLoading] = useState(false)
   // L'alert nativo del browser mostrava il solo messaggio del server ("Accesso
   // negato") fuori dal contesto della pagina: sostituito da un riquadro in-page
@@ -35,23 +37,25 @@ export function DownloadMeasurementPdfButton({
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/measurement-pdf', {
+      // `?locale=` dice alla route in che lingua generare il PDF (testi, date, numeri).
+      const res = await fetch(`/api/measurement-pdf?locale=${encodeURIComponent(locale)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, clientId }),
       })
       if (!res.ok) {
-        let message = GENERIC_ERROR
+        let message = t('genericError')
         try {
+          // La route risponde con un codice (`errors.api.<codice>`): lo traduciamo qui.
           const j = await res.json()
-          if (typeof j?.error === 'string' && j.error.trim()) message = j.error
+          message = apiErrorMessage(j, tErr, t('genericError'))
         } catch { /* risposta non JSON: resta il messaggio generico */ }
         throw new Error(message)
       }
       const blob = await res.blob()
 
       // Estrai filename dal Content-Disposition (lato server è autoritativo).
-      let filename = filenameHint ?? 'misurazione.pdf'
+      let filename = filenameHint ?? 'StressIndex_measurement.pdf'
       const cd = res.headers.get('Content-Disposition')
       const match = cd?.match(/filename="?([^"]+)"?/i)
       if (match?.[1]) filename = match[1]
@@ -65,7 +69,7 @@ export function DownloadMeasurementPdfButton({
       a.remove()
       URL.revokeObjectURL(url)
     } catch (err) {
-      setError(err instanceof Error ? err.message : GENERIC_ERROR)
+      setError(err instanceof Error ? err.message : t('genericError'))
     } finally {
       setLoading(false)
     }
@@ -81,11 +85,11 @@ export function DownloadMeasurementPdfButton({
       }
     >
       <AlertCircle size={15} className="flex-shrink-0 mt-0.5 text-red-500" />
-      <p className="text-[13px] leading-relaxed text-red-800 flex-1">{error}</p>
+      <p className="text-[13px] leading-relaxed text-red-800 flex-1 min-w-0">{error}</p>
       <button
         type="button"
         onClick={() => setError(null)}
-        aria-label="Chiudi messaggio"
+        aria-label={t('closeMessage')}
         className="flex-shrink-0 text-red-400 hover:text-red-700 transition-colors"
       >
         <X size={14} />
@@ -100,8 +104,8 @@ export function DownloadMeasurementPdfButton({
           type="button"
           onClick={handleDownload}
           disabled={loading}
-          aria-label="Scarica PDF misurazione"
-          title="Scarica PDF"
+          aria-label={t('ariaDownload')}
+          title={t('button')}
           className="inline-flex items-center justify-center w-8 h-8 rounded-md text-teal-dark hover:bg-teal-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />}
@@ -117,17 +121,17 @@ export function DownloadMeasurementPdfButton({
         type="button"
         onClick={handleDownload}
         disabled={loading}
-        className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-teal text-teal-dark bg-transparent hover:bg-teal-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-teal text-teal-dark bg-transparent hover:bg-teal-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
       >
         {loading ? (
           <>
             <Loader2 size={15} className="animate-spin" />
-            Generazione…
+            {t('generating')}
           </>
         ) : (
           <>
             <Download size={15} />
-            Scarica PDF
+            {t('button')}
           </>
         )}
       </button>

@@ -2,6 +2,7 @@
 
 import { Link } from '@/i18n/navigation'
 import { usePathname } from '@/i18n/navigation'
+import { useTranslations } from 'next-intl'
 import { Home, Users, BarChart3, Settings, LogOut, Menu, X, Building2, ShieldCheck, Dumbbell, Radio, SunMoon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
@@ -22,27 +23,27 @@ type SidebarProps = {
 
 type NavItem = {
   href: string
-  label: string
+  labelKey: string // chiave in dashboard.nav
   icon: typeof Home
   exact?: boolean
-  badge?: string
+  badge?: string // nome proprio del piano ("Pro"): non si traduce
   live?: boolean // mostra il pallino "live" quando ci sono sessioni attive
   accent?: string // colore accento della voce (Monitoraggio: blu notte)
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/area-professionisti', label: 'Oggi', icon: Home, exact: true },
-  { href: '/area-professionisti/clienti', label: 'Clienti', icon: Users },
-  { href: '/area-professionisti/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/area-professionisti/impostazioni', label: 'Impostazioni', icon: Settings },
-  { href: '/area-professionisti/organizzazione', label: 'Organizzazione', icon: Building2 },
+  { href: '/area-professionisti', labelKey: 'today', icon: Home, exact: true },
+  { href: '/area-professionisti/clienti', labelKey: 'clients', icon: Users },
+  { href: '/area-professionisti/analytics', labelKey: 'analytics', icon: BarChart3 },
+  { href: '/area-professionisti/impostazioni', labelKey: 'settings', icon: Settings },
+  { href: '/area-professionisti/organizzazione', labelKey: 'organization', icon: Building2 },
 ]
 
 // Voce Sport: visibile solo con il modulo sport attivo (o superadmin). Inserita
 // dopo "Analytics" e prima di "Impostazioni".
 const SPORT_ITEM: NavItem = {
   href: '/area-professionisti/sport',
-  label: 'Sport',
+  labelKey: 'sport',
   icon: Dumbbell,
   badge: 'Pro',
 }
@@ -50,7 +51,7 @@ const SPORT_ITEM: NavItem = {
 // Team Live: monitoraggio real-time degli atleti in sessione (subito sotto Sport).
 const TEAM_LIVE_ITEM: NavItem = {
   href: '/area-professionisti/sport/team-live',
-  label: 'Team Live',
+  labelKey: 'teamLive',
   icon: Radio,
   live: true,
 }
@@ -59,18 +60,20 @@ const TEAM_LIVE_ITEM: NavItem = {
 // modulo (blu notte #3D5A80). Visibile con il modulo monitoring o sleep.
 const MONITORING_ITEM: NavItem = {
   href: '/area-professionisti/monitoraggio',
-  label: 'Monitoraggio',
+  labelKey: 'monitoring',
   icon: SunMoon,
   accent: '#3D5A80',
 }
 
 const SUPERADMIN_ITEM: NavItem = {
   href: '/area-professionisti/professionisti',
-  label: 'Super Admin',
+  labelKey: 'superadmin',
   icon: ShieldCheck,
 }
 
 export function Sidebar({ professional, isSuperadmin, isPro, hasMonitoring = true }: SidebarProps) {
+  const t = useTranslations('dashboard.nav')
+  const tc = useTranslations('common')
   const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -122,7 +125,7 @@ export function Sidebar({ professional, isSuperadmin, isPro, hasMonitoring = tru
     <>
       <button
         type="button"
-        aria-label="Apri menu"
+        aria-label={open ? tc('menuClose') : tc('menuOpen')}
         className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-xl bg-white border border-surface-border shadow-card flex items-center justify-center"
         onClick={() => setOpen((v) => !v)}
       >
@@ -143,14 +146,14 @@ export function Sidebar({ professional, isSuperadmin, isPro, hasMonitoring = tru
       >
         <div className="p-6 border-b border-surface-border">
           <Link href="/area-professionisti" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-teal flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-teal flex items-center justify-center flex-shrink-0">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M3.5 12H6.5L9 6L12 18L15 9L17.5 12H20.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <div>
-              <div className="text-sm font-semibold text-anthracite leading-tight">Stress Index</div>
-              <div className="text-[11px] text-anthracite-lighter">Area Professionisti</div>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-anthracite leading-tight">{tc('brand')}</div>
+              <div className="text-[11px] text-anthracite-lighter truncate">{tc('proArea')}</div>
             </div>
           </Link>
         </div>
@@ -159,7 +162,7 @@ export function Sidebar({ professional, isSuperadmin, isPro, hasMonitoring = tru
           <ul className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon
-              const active = isActive(item.href, (item as { exact?: boolean }).exact)
+              const active = isActive(item.href, item.exact)
               return (
                 <li key={item.href}>
                   <Link
@@ -171,10 +174,10 @@ export function Sidebar({ professional, isSuperadmin, isPro, hasMonitoring = tru
                         : 'text-anthracite hover:bg-surface'}`}
                     style={active && item.accent ? { backgroundColor: '#E4EBF3', color: item.accent } : undefined}
                   >
-                    <Icon size={18} strokeWidth={active ? 2.2 : 1.8} style={item.accent && !active ? { color: item.accent } : undefined} />
-                    <span className="flex-1">{item.label}</span>
+                    <Icon size={18} strokeWidth={active ? 2.2 : 1.8} className="flex-shrink-0" style={item.accent && !active ? { color: item.accent } : undefined} />
+                    <span className="flex-1 min-w-0 truncate">{t(item.labelKey)}</span>
                     {item.live && liveActive && (
-                      <span className="relative inline-flex h-2.5 w-2.5" aria-label="Sessioni attive">
+                      <span className="relative inline-flex h-2.5 w-2.5" aria-label={t('liveActive')}>
                         <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
                         <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
                       </span>
@@ -193,7 +196,7 @@ export function Sidebar({ professional, isSuperadmin, isPro, hasMonitoring = tru
 
         <div className="p-4 border-t border-surface-border">
           <div className="flex items-center gap-3 px-2 py-2">
-            <div className="w-9 h-9 rounded-full bg-teal-light text-teal-dark flex items-center justify-center text-sm font-semibold">
+            <div className="w-9 h-9 rounded-full bg-teal-light text-teal-dark flex items-center justify-center text-sm font-semibold flex-shrink-0">
               {initials(professional)}
             </div>
             <div className="min-w-0 flex-1">
@@ -201,14 +204,15 @@ export function Sidebar({ professional, isSuperadmin, isPro, hasMonitoring = tru
                 {professional?.nome || ''} {professional?.cognome || ''}
               </div>
               <div className="text-[11px] text-anthracite-lighter truncate">
-                {professional?.professione || 'Professionista'}
+                {professional?.professione || tc('professional')}
               </div>
             </div>
             <button
               type="button"
               onClick={handleLogout}
-              aria-label="Esci"
-              className="w-9 h-9 rounded-lg hover:bg-surface flex items-center justify-center text-anthracite-lighter hover:text-anthracite transition-colors"
+              aria-label={tc('logout')}
+              title={tc('logout')}
+              className="w-9 h-9 rounded-lg hover:bg-surface flex items-center justify-center text-anthracite-lighter hover:text-anthracite transition-colors flex-shrink-0"
             >
               <LogOut size={18} />
             </button>

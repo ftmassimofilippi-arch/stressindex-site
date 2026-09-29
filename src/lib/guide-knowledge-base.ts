@@ -136,7 +136,7 @@ Misurazione standard (test tonico):
 - Cos'è: fotografia dello stato attuale del sistema nervoso
   autonomo a riposo.
 - Quando usarla: è il default, va bene nel 70% dei casi.
-  Valutazioni periodiche, monitoraggio, prima visita.
+  Valutazioni periodiche, monitoraggio, prima valutazione.
 - Durata: 5 o 10 minuti.
 - Posizione: seduto o supino, sempre uguale per lo stesso
   cliente.
@@ -147,9 +147,9 @@ Test ortostatico (test fasico):
 - Come funziona: 5 minuti supino, poi l'app ti avvisa con suono
   e vibrazione di alzarti, poi 5 minuti in piedi. L'app
   analizza entrambe le fasi e le confronta.
-- Quando usarlo: disautonomie, sindromi post-infettive (long
-  COVID), atleti sovrallenati, valutazione iniziale
-  approfondita. Ogni 4-6 settimane come stress test del sistema
+- Quando usarlo: ridotta reattività autonomica, recupero dopo
+  periodi di malattia (es. sindromi post-infettive), atleti
+  sovrallenati, valutazione iniziale approfondita. Ogni 4-6 settimane come stress test del sistema
   nervoso.
 - Il report mostra: Indice di Reattività Ortostatica (0-100) e
   confronto supino vs in piedi per ogni parametro.
@@ -187,7 +187,7 @@ I 5 score proprietari:
 
 Indice di Stress (0-100): quanto è sotto pressione il sistema
 nervoso. Range: 0-30 basso, 30-50 in equilibrio, 50-70 medio,
-70-85 alto, 85-100 esaurimento. Se è alto cronicamente indica
+70-85 alto, 85-100 affaticamento. Se è alto cronicamente indica
 stress accumulato nel tempo, non solo il momento della
 misurazione.
 
@@ -257,7 +257,7 @@ Storico: ogni misurazione viene salvata e associata al cliente.
 Puoi rivedere qualsiasi sessione passata in qualsiasi momento.
 
 Note: puoi aggiungere note libere a ogni cliente. Usale per
-annotare contesto clinico, eventi rilevanti, obiettivi.
+annotare contesto, eventi rilevanti, obiettivi.
 
 ================================================================
 SEZIONE 8 — REPORT PDF (#report-pdf)
@@ -266,7 +266,7 @@ Come generarlo: nei risultati della misurazione, tappa l'icona
 PDF in alto a destra.
 
 Cosa contiene: 4 pagine con score, parametri completi, grafici
-(Poincaré, ritmogramma, spettro PSD) e disclaimer medico.
+(Poincaré, ritmogramma, spettro PSD) e disclaimer.
 
 Per le sessioni lunghe: pagine extra con trend dei segmenti e
 confronto pre/post trattamento.

@@ -1,0 +1,14 @@
+{
+  "api": {
+    "invalid_action": "Azione non valida.",
+    "no_account": "Questo cliente non ha ancora un account per l'app.",
+    "rate_limited": "Hai raggiunto il limite di interventi sull'accesso di questo cliente nelle ultime 24 ore. Riprova più tardi.",
+    "account_not_found": "Account non trovato.",
+    "account_in_use": "Questo cliente ha già usato il suo account: la password è sua e non puoi impostarla. Usa \"Reinvia email di reset\" oppure \"Copia link di reset\".",
+    "access_password_too_short": "La password deve avere almeno 8 caratteri.",
+    "set_password_failed": "Non è stato possibile impostare la password.",
+    "access_no_email": "Questo cliente non ha un indirizzo email.",
+    "reset_failed": "Invio dell'email di ripristino non riuscito.",
+    "access_link_failed": "Link non generato."
+  }
+}

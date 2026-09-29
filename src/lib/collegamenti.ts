@@ -21,9 +21,11 @@ export type LinkRpcResult = {
   source?: string
 }
 
+// In caso di errore `error` è un codice (errors.api.<codice>) e `params` i valori
+// di interpolazione: `migration_required` {migration}, `link_failed` {detail}.
 export type LinkOutcome =
   | { ok: true; result: LinkRpcResult }
-  | { ok: false; error: string; status: number; result?: LinkRpcResult }
+  | { ok: false; error: string; status: number; params?: Record<string, string>; result?: LinkRpcResult }
 
 export async function linkViaRpc(admin: SupabaseClient, clientUserId: string, professionalId: string, source: string): Promise<LinkOutcome> {
   const { data, error } = await admin.rpc('link_client_to_professional', {
@@ -33,12 +35,12 @@ export async function linkViaRpc(admin: SupabaseClient, clientUserId: string, pr
   })
   if (error) {
     if (error.code === 'PGRST202' || error.code === '42883') {
-      return { ok: false, status: 501, error: 'Applica la migration 019 su Supabase (link_client_to_professional mancante).' }
+      return { ok: false, status: 501, error: 'migration_required', params: { migration: '019' } }
     }
-    return { ok: false, status: 500, error: error.message }
+    return { ok: false, status: 500, error: 'link_failed', params: { detail: error.message } }
   }
   const result = (data ?? {}) as LinkRpcResult
-  if (!result.ok) return { ok: false, status: 422, error: result.error ?? 'collegamento non riuscito', result }
+  if (!result.ok) return { ok: false, status: 422, error: 'link_failed', params: { detail: result.error ?? 'link_failed' }, result }
   return { ok: true, result }
 }
 

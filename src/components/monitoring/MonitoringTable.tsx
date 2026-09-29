@@ -1,5 +1,6 @@
 'use client'
 
+import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { ArrowRight, RefreshCw } from 'lucide-react'
 import type { MonitoringSession } from '@/lib/monitoring-types'
@@ -19,6 +20,7 @@ type Props = {
   sessions: MonitoringSession[]
   showClient?: boolean
   baseQuery?: string
+  /** Testo dello stato vuoto (default: "Nessun monitoraggio" tradotto). */
   emptyText?: string
   compact?: boolean
   /** Colonna "Professionista" (pannello Super Admin). */
@@ -27,23 +29,25 @@ type Props = {
   hrefFor?: (s: MonitoringSession) => string
 }
 
-export function MonitoringTable({ sessions, showClient = true, baseQuery = '', emptyText = 'Nessun monitoraggio', compact = false, showProfessional = false, hrefFor }: Props) {
+export function MonitoringTable({ sessions, showClient = true, baseQuery = '', emptyText, compact = false, showProfessional = false, hrefFor }: Props) {
+  const t = useTranslations('monitoring')
+  const locale = useLocale()
   if (sessions.length === 0) {
-    return <div className="px-6 py-8 text-center text-sm text-anthracite-lighter">{emptyText}</div>
+    return <div className="px-6 py-8 text-center text-sm text-anthracite-lighter">{emptyText ?? t('table.empty')}</div>
   }
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm min-w-[720px]">
         <thead className="bg-surface text-anthracite-lighter">
           <tr>
-            {showClient && <Th>Cliente</Th>}
-            {showProfessional && <Th>Professionista</Th>}
-            <Th>Inizio</Th>
-            <Th>Durata</Th>
-            <Th>Tipo</Th>
-            {!compact && <Th>Profilo</Th>}
-            {!compact && <Th>Segnale</Th>}
-            <Th>Numeri chiave</Th>
+            {showClient && <Th>{t('table.client')}</Th>}
+            {showProfessional && <Th>{t('table.professional')}</Th>}
+            <Th>{t('table.start')}</Th>
+            <Th>{t('table.duration')}</Th>
+            <Th>{t('table.type')}</Th>
+            {!compact && <Th>{t('table.profile')}</Th>}
+            {!compact && <Th>{t('table.signal')}</Th>}
+            <Th>{t('table.keyNumbers')}</Th>
             <th className="px-3 py-2.5" />
           </tr>
         </thead>
@@ -51,7 +55,7 @@ export function MonitoringTable({ sessions, showClient = true, baseQuery = '', e
           {sessions.map((s) => {
             const sleep = isSleepSession(s)
             const prof = sleep ? null : effectiveProfile(s)
-            const nums = keyNumbers(s)
+            const nums = keyNumbers(s, locale, t)
             const tz = s.tz_offset_minutes
             return (
               <tr key={s.id} className="border-t border-surface-border hover:bg-surface transition-colors align-middle">
@@ -59,7 +63,7 @@ export function MonitoringTable({ sessions, showClient = true, baseQuery = '', e
                   <td className="px-4 py-3 font-medium text-anthracite whitespace-nowrap">
                     {s.client_id ? (
                       <Link href={`/area-professionisti/clienti/${s.client_id}${baseQuery}`} className="hover:underline">
-                        {s.client_name ?? 'Cliente'}
+                        {s.client_name ?? t('client')}
                       </Link>
                     ) : (
                       <span className="text-anthracite-lighter">{s.client_name ?? '—'}</span>
@@ -68,10 +72,10 @@ export function MonitoringTable({ sessions, showClient = true, baseQuery = '', e
                 )}
                 {showProfessional && <td className="px-3 py-3 text-anthracite-lighter whitespace-nowrap">{s.professional_name ?? '—'}</td>}
                 <td className="px-3 py-3 text-anthracite whitespace-nowrap">
-                  <div>{periodLabel(s.start_time, s.end_time, tz)}</div>
+                  <div>{periodLabel(s.start_time, s.end_time, tz, locale)}</div>
                   {s.events_modified_on_web && (
                     <div className="text-[10.5px] text-amber-700 inline-flex items-center gap-1 mt-0.5">
-                      <RefreshCw size={10} /> eventi in attesa di ricalcolo
+                      <RefreshCw size={10} /> {t('table.pendingRecalc')}
                     </div>
                   )}
                 </td>
@@ -86,7 +90,7 @@ export function MonitoringTable({ sessions, showClient = true, baseQuery = '', e
                   <td className="px-3 py-3">
                     {sleep ? (
                       <Chip
-                        label={`${sleepCoverageLabel(s.night?.sleep?.signal.coverage_label ?? null)}${s.night?.sleep ? ` · ${Math.round(s.night.sleep.signal.coverage_pct)}%` : ''}`}
+                        label={`${sleepCoverageLabel(s.night?.sleep?.signal.coverage_label ?? null, locale, t)}${s.night?.sleep ? ` · ${Math.round(s.night.sleep.signal.coverage_pct)}%` : ''}`}
                         color={sleepCoverageColor(s.night?.sleep?.signal.coverage_label ?? null)}
                         size="sm"
                       />
@@ -107,7 +111,7 @@ export function MonitoringTable({ sessions, showClient = true, baseQuery = '', e
                 </td>
                 <td className="px-3 py-3 text-right whitespace-nowrap">
                   <Link href={hrefFor ? hrefFor(s) : monitoringHref(s, baseQuery)} className="text-sm hover:underline inline-flex items-center gap-1" style={{ color: '#2B4160' }}>
-                    Apri <ArrowRight size={14} />
+                    {t('table.open')} <ArrowRight size={14} />
                   </Link>
                 </td>
               </tr>

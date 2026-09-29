@@ -1,32 +1,45 @@
 'use client'
 
 import { Bell } from 'lucide-react'
+import { Suspense, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import { usePathname } from '@/i18n/navigation'
 import { Link } from '@/i18n/navigation'
-import { useMemo } from 'react'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { GlobalSearch } from './GlobalSearch'
 
-const SEGMENT_LABEL: Record<string, string> = {
-  'area-professionisti': 'Area Professionisti',
-  clienti: 'Clienti',
-  analytics: 'Analytics',
-  impostazioni: 'Impostazioni',
-  misurazione: 'Misurazione',
-  monitoraggio: 'Monitoraggio',
-  sport: 'Sport',
+// Segmento di URL → chiave in dashboard.breadcrumb. Gli slug restano italiani
+// in tutte le lingue; i segmenti non elencati (id di clienti e sessioni)
+// si mostrano com'è.
+const SEGMENT_KEY: Record<string, string> = {
+  'area-professionisti': 'areaProfessionisti',
+  clienti: 'clienti',
+  analytics: 'analytics',
+  impostazioni: 'impostazioni',
+  misurazione: 'misurazione',
+  monitoraggio: 'monitoraggio',
+  sport: 'sport',
+  'team-live': 'teamLive',
+  atleta: 'atleta',
+  sessione: 'sessione',
+  organizzazione: 'organizzazione',
+  professionisti: 'professionisti',
 }
 
 export function TopBar({ alertCount = 0 }: { alertCount?: number }) {
+  const t = useTranslations('dashboard.breadcrumb')
+  const tt = useTranslations('dashboard.topbar')
+  // `usePathname` di @/i18n/navigation restituisce il percorso senza prefisso di lingua.
   const pathname = usePathname()
 
   const breadcrumbs = useMemo(() => {
     const parts = pathname.split('/').filter(Boolean)
     return parts.map((seg, i) => {
       const href = '/' + parts.slice(0, i + 1).join('/')
-      const label = SEGMENT_LABEL[seg] ?? seg
-      return { href, label }
+      const key = SEGMENT_KEY[seg]
+      return { href, label: key ? t(key) : seg }
     })
-  }, [pathname])
+  }, [pathname, t])
 
   return (
     <div className="sticky top-0 z-20 bg-white/85 backdrop-blur-md border-b border-surface-border">
@@ -52,7 +65,8 @@ export function TopBar({ alertCount = 0 }: { alertCount?: number }) {
 
           <button
             type="button"
-            aria-label={`Notifiche${alertCount ? ` (${alertCount} nuove)` : ''}`}
+            aria-label={alertCount ? tt('notificationsNew', { count: alertCount }) : tt('notifications')}
+            title={alertCount ? tt('notificationsNew', { count: alertCount }) : tt('notifications')}
             className="relative w-10 h-10 rounded-xl hover:bg-surface flex items-center justify-center text-anthracite-lighter hover:text-anthracite transition-colors flex-shrink-0"
           >
             <Bell size={18} />
@@ -62,6 +76,12 @@ export function TopBar({ alertCount = 0 }: { alertCount?: number }) {
               </span>
             )}
           </button>
+
+          {/* Lo switcher legge i query param: Suspense evita il bail-out del
+              rendering statico quando la TopBar finisce in una pagina non dinamica. */}
+          <Suspense fallback={null}>
+            <LanguageSwitcher className="flex-shrink-0 pl-1" />
+          </Suspense>
         </div>
       </div>
     </div>

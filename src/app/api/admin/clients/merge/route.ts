@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/admin-audit'
@@ -23,8 +24,8 @@ export async function POST(req: NextRequest) {
   const keepId = typeof body.keep_id === 'string' ? body.keep_id : ''
   const mergeIds = Array.isArray(body.merge_ids) ? body.merge_ids.filter((x: unknown): x is string => typeof x === 'string') : []
   const dryRun = body.dry_run !== false // default: anteprima
-  if (!keepId || mergeIds.length === 0) return NextResponse.json({ error: 'missing_params' }, { status: 400 })
-  if (mergeIds.includes(keepId)) return NextResponse.json({ error: 'keep_in_merge_list' }, { status: 400 })
+  if (!keepId || mergeIds.length === 0) return apiError('missing_params', 400)
+  if (mergeIds.includes(keepId)) return apiError('keep_in_merge_list', 400)
 
   const admin = createAdminClient()
 
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest) {
   if (error) {
     // RPC assente → migration 017 non ancora applicata su Supabase.
     if (error.code === 'PGRST202' || error.code === '42883') {
-      return NextResponse.json({ error: 'migration_required', message: 'Applica la migration 017 su Supabase per abilitare l’unione doppioni.' }, { status: 501 })
+      return apiError('migration_required', 501, { migration: '017' })
     }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

@@ -1,9 +1,11 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { RotateCcw, Save } from 'lucide-react'
 import { createClient } from '@/lib/supabase-browser'
+import { num } from '@/lib/format'
 import {
   PREDEFINED_ALERT_RULES,
   resolveRulesForClient,
@@ -25,6 +27,8 @@ export function AlertRulesSection({
   rules: AlertRule[]
   professionalId: string | null
 }) {
+  const t = useTranslations('alerts')
+  const locale = useLocale()
   const router = useRouter()
   const globals = useMemo(() => resolveRulesForClient(rules.filter((r) => r.client_id == null), '__none__'), [rules])
   const initialOverrides = useMemo(
@@ -71,7 +75,7 @@ export function AlertRulesSection({
   // migrazione alert_rules_client_override.sql).
   async function save() {
     if (!professionalId) {
-      setMsg('Sessione non valida: ricarica la pagina.')
+      setMsg(t('rules.sessionInvalid'))
       return
     }
     setSaving(true)
@@ -103,9 +107,9 @@ export function AlertRulesSection({
     }
     setSaving(false)
     if (error) {
-      setMsg(`Errore di salvataggio: ${error}`)
+      setMsg(t('rules.saveError', { detail: error }))
     } else {
-      setMsg('Soglie del cliente salvate')
+      setMsg(t('rules.saved'))
       router.refresh()
       setTimeout(() => setMsg(null), 3000)
     }
@@ -118,12 +122,12 @@ export function AlertRulesSection({
     const { error } = await supabase.from('alert_rules').delete().eq('client_id', clientId)
     setSaving(false)
     if (error) {
-      setMsg(`Errore: ${error.message}`)
+      setMsg(t('rules.error', { detail: error.message }))
       return
     }
     setUseGlobal(true)
     fillFromGlobals()
-    setMsg('Il cliente segue di nuovo le soglie generali')
+    setMsg(t('rules.restored'))
     router.refresh()
     setTimeout(() => setMsg(null), 3000)
   }
@@ -131,11 +135,9 @@ export function AlertRulesSection({
   return (
     <section className="card p-6">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-1">
-        <div>
-          <h3 className="font-serif text-lg text-anthracite">Soglie avvisi</h3>
-          <p className="text-xs text-anthracite-lighter mt-1 max-w-prose">
-            Le stesse regole dell&apos;app. Una soglia del cliente sostituisce quella generale dello stesso tipo, non si somma.
-          </p>
+        <div className="min-w-0">
+          <h3 className="font-serif text-lg text-anthracite">{t('rules.title')}</h3>
+          <p className="text-xs text-anthracite-lighter mt-1 max-w-prose">{t('rules.description')}</p>
         </div>
         <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none">
           <input
@@ -145,34 +147,32 @@ export function AlertRulesSection({
             disabled={saving}
             onChange={(e) => toggleUseGlobal(e.target.checked)}
           />
-          Usa soglie generali
+          {t('rules.useGlobal')}
         </label>
       </div>
 
       {useGlobal ? (
-        <p className="text-sm text-anthracite-lighter mt-3">
-          Il cliente segue le soglie generali del professionista. Spegni l&apos;interruttore per personalizzarle.
-        </p>
+        <p className="text-sm text-anthracite-lighter mt-3">{t('rules.followsGlobal')}</p>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 mt-4">
             {PREDEFINED_ALERT_RULES.map((p) => {
               const d = draft[p.id]
               return (
-                <div key={p.id} className="rounded-xl border border-surface-border px-4 py-3">
+                <div key={p.id} className="rounded-xl border border-surface-border px-4 py-3 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-sm font-medium text-anthracite">{p.title}</div>
-                    <label className="inline-flex items-center gap-1.5 text-xs text-anthracite-lighter cursor-pointer">
+                    <div className="text-sm font-medium text-anthracite min-w-0">{t(p.titleKey)}</div>
+                    <label className="inline-flex items-center gap-1.5 text-xs text-anthracite-lighter cursor-pointer whitespace-nowrap">
                       <input
                         type="checkbox"
                         className="w-3.5 h-3.5 rounded text-teal"
                         checked={d.enabled}
                         onChange={(e) => setDraft({ ...draft, [p.id]: { ...d, enabled: e.target.checked } })}
                       />
-                      attiva
+                      {t('rules.active')}
                     </label>
                   </div>
-                  <div className="text-[11px] text-anthracite-lighter mt-1">{p.thresholdLabel}</div>
+                  <div className="text-[11px] text-anthracite-lighter mt-1">{t(p.thresholdKey)}</div>
                   <div className="flex items-center gap-3 mt-1.5">
                     <input
                       type="range"
@@ -184,8 +184,8 @@ export function AlertRulesSection({
                       className="w-full accent-teal"
                       disabled={!d.enabled}
                     />
-                    <span className="text-sm text-anthracite tabular-nums w-16 text-right">
-                      {p.step < 1 ? d.threshold.toFixed(2) : Math.round(d.threshold)}{p.suffix}
+                    <span className="text-sm text-anthracite tabular-nums w-16 text-right whitespace-nowrap">
+                      {p.step < 1 ? num(d.threshold, 2, locale) : Math.round(d.threshold)}{p.suffix}
                     </span>
                   </div>
                 </div>
@@ -195,10 +195,10 @@ export function AlertRulesSection({
           <div className="flex items-center justify-end gap-3 flex-wrap mt-4">
             {msg && <span className="text-sm text-emerald-600">{msg}</span>}
             <button type="button" onClick={restoreGlobals} disabled={saving} className="btn-secondary text-sm inline-flex items-center gap-1.5">
-              <RotateCcw size={14} /> Ripristina soglie generali
+              <RotateCcw size={14} className="flex-shrink-0" /> {t('rules.restore')}
             </button>
             <button type="button" onClick={save} disabled={saving} className="btn-primary text-sm inline-flex items-center gap-1.5">
-              <Save size={14} /> {saving ? 'Salvataggio…' : 'Salva soglie del cliente'}
+              <Save size={14} className="flex-shrink-0" /> {saving ? t('rules.saving') : t('rules.save')}
             </button>
           </div>
         </>

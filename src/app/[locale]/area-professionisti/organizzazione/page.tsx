@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import {
   getOrganizationContext,
@@ -10,14 +11,19 @@ import { CreateOrganizationForm } from './CreateOrganizationForm'
 import { OrganizationTabs } from './OrganizationTabs'
 import { MemberView } from './MemberView'
 
-export const metadata = { title: 'Organizzazione' }
 export const dynamic = 'force-dynamic'
 
+export async function generateMetadata({ params }: { params: { locale: string } }) {
+  const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
+  return { title: t('organization.title'), robots: { index: false, follow: false } }
+}
+
 export default async function OrganizationPage() {
-  const [professional, alerts, ctx] = await Promise.all([
+  const [professional, alerts, ctx, t] = await Promise.all([
     getProfessionalProfile(),
     listAlerts({ status: ['new'] }),
     getOrganizationContext(),
+    getTranslations('organization'),
   ])
 
   if (!ctx.organization) {
@@ -25,12 +31,9 @@ export default async function OrganizationPage() {
       <DashboardLayout professional={professional} alertCount={alerts.length}>
         <header className="mb-6">
           <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
-            Crea la tua <em className="italic text-teal-dark">organizzazione</em>
+            {t.rich('createTitle', { em: (c) => <em className="italic text-teal-dark">{c}</em> })}
           </h1>
-          <p className="mt-1.5 text-sm text-anthracite-lighter max-w-2xl">
-            Gestisci il tuo team di professionisti da un&apos;unica dashboard. Invita i tuoi
-            collaboratori e monitora l&apos;attività di tutti i clienti.
-          </p>
+          <p className="mt-1.5 text-sm text-anthracite-lighter max-w-2xl">{t('createIntro')}</p>
         </header>
         <CreateOrganizationForm />
       </DashboardLayout>
@@ -45,9 +48,7 @@ export default async function OrganizationPage() {
           <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
             {ctx.organization.name}
           </h1>
-          <p className="mt-1.5 text-sm text-anthracite-lighter">
-            Gestisci il tuo team e monitora l&apos;attività dei professionisti
-          </p>
+          <p className="mt-1.5 text-sm text-anthracite-lighter">{t('adminIntro')}</p>
         </header>
         <OrganizationTabs
           organization={ctx.organization}
@@ -66,7 +67,7 @@ export default async function OrganizationPage() {
         <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
           {ctx.organization.name}
         </h1>
-        <p className="mt-1.5 text-sm text-anthracite-lighter">Il tuo team</p>
+        <p className="mt-1.5 text-sm text-anthracite-lighter">{t('memberIntro')}</p>
       </header>
       <MemberView members={ctx.members} />
     </DashboardLayout>

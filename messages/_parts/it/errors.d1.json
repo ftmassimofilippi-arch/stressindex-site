@@ -1,0 +1,12 @@
+{
+  "api": {
+    "generic": "Si è verificato un errore. Riprova.",
+    "validation_failed": "Controlla i campi segnalati.",
+    "duplicate_check_failed": "Controllo dei doppioni non riuscito.",
+    "profile_failed": "Creazione del profilo non riuscita",
+    "client_failed": "Creazione della scheda non riuscita",
+    "invite_failed": "Invio dell'invito non riuscito.",
+    "account_create_failed": "Creazione dell'account non riuscita.",
+    "migration_027_missing": "Applica la migration 027: senza must_change_password l'app non chiederà al cliente di cambiare la password temporanea."
+  }
+}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { createClient } from '@/lib/supabase-server'
 
 export const runtime = 'nodejs'
@@ -27,10 +28,10 @@ async function resolveAuthorizedOrgId(userId: string, supabase: Awaited<ReturnTy
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (!user) return apiError('unauthorized', 401)
 
   const auth = await resolveAuthorizedOrgId(user.id, supabase)
-  if (!auth) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  if (!auth) return apiError('forbidden', 403)
 
   const { data: members } = await supabase
     .from('organization_members')
@@ -44,16 +45,16 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (!user) return apiError('unauthorized', 401)
 
   const auth = await resolveAuthorizedOrgId(user.id, supabase)
-  if (!auth) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  if (!auth) return apiError('forbidden', 403)
 
   const body = await req.json().catch(() => ({}))
   const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : ''
   const role = body?.role === 'admin' ? 'admin' : 'member'
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    return NextResponse.json({ error: 'invalid_email' }, { status: 400 })
+    return apiError('invalid_email', 400)
   }
 
   const { data: existing } = await supabase
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
     .eq('email', email)
     .maybeSingle()
   if (existing && existing.status !== 'revoked') {
-    return NextResponse.json({ error: 'already_invited' }, { status: 409 })
+    return apiError('already_invited', 409)
   }
 
   const payload = {

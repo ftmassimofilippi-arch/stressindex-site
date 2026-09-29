@@ -10,31 +10,35 @@
 //
 // Riferimento: hrv_app/lib/screens/client_form_screen.dart (validator dei
 // campi) e lib/models/client.dart (valori ammessi degli elenchi). I messaggi
-// d'errore sono le stesse frasi degli ARB italiani dell'app, così il
-// professionista legge le parole che conosce già.
+// d'errore sono chiavi del namespace `clients.form.validation` (le stesse
+// frasi degli ARB dell'app, così il professionista legge le parole che
+// conosce già): questo modulo non traduce, perché gira anche nella route.
+
+import type { Tr } from '@/i18n/types'
 
 export const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 
-/** Solo M e F: nell'app il menu "Sesso" ha esattamente questi due valori. */
+/** Solo M e F: nell'app il menu "Sesso" ha esattamente questi due valori.
+ *  `labelKey` è relativa al namespace `clients.form`. */
 export const SESSI = [
-  { value: 'M', label: 'Maschio' },
-  { value: 'F', label: 'Femmina' },
+  { value: 'M', labelKey: 'sex.M' },
+  { value: 'F', labelKey: 'sex.F' },
 ] as const
 
 /** Client.livelliAttivita */
 export const LIVELLI_ATTIVITA = [
-  { value: 'sedentario', label: 'Sedentario' },
-  { value: 'moderato', label: 'Moderato' },
-  { value: 'attivo', label: 'Attivo' },
-  { value: 'atleta', label: 'Atleta' },
+  { value: 'sedentario', labelKey: 'activity.sedentario' },
+  { value: 'moderato', labelKey: 'activity.moderato' },
+  { value: 'attivo', labelKey: 'activity.attivo' },
+  { value: 'atleta', labelKey: 'activity.atleta' },
 ] as const
 
 /** Client.competitiveLevels */
 export const LIVELLI_COMPETITIVI = [
-  { value: 'amateur', label: 'Amatoriale' },
-  { value: 'semi_pro', label: 'Semi-professionista' },
-  { value: 'professional', label: 'Professionista' },
-  { value: 'elite', label: 'Elite' },
+  { value: 'amateur', labelKey: 'competitive.amateur' },
+  { value: 'semi_pro', labelKey: 'competitive.semi_pro' },
+  { value: 'professional', labelKey: 'competitive.professional' },
+  { value: 'elite', labelKey: 'competitive.elite' },
 ] as const
 
 /** Come il cliente riceverà l'accesso all'app, se lo riceve. */
@@ -85,15 +89,27 @@ export function parseIntero(v: string): number | null {
   return Number.isInteger(n) ? n : null
 }
 
-/** Un errore per campo, con la chiave del campo. Vuoto = si può salvare. */
-export type ErroriForm = Partial<Record<keyof ClientFormData, string>>
+/** Errore di un campo: chiave in `clients.form.validation` più i valori da
+ *  interpolare (es. `{ key: 'range', values: { min: 20, max: 300 } }`). */
+export type ErroreCampo = { key: string; values?: Record<string, number> }
 
-function range(v: string, min: number, max: number, intero: boolean): string | null {
+/** Un errore per campo, con la chiave del campo. Vuoto = si può salvare. */
+export type ErroriForm = Partial<Record<keyof ClientFormData, ErroreCampo>>
+
+/** Testo tradotto di un errore di campo (`t = useTranslations('clients.form')`). */
+export function testoErroreCampo(e: ErroreCampo | undefined, t: Tr): string | undefined {
+  if (!e) return undefined
+  return t(`validation.${e.key}`, e.values)
+}
+
+function range(v: string, min: number, max: number, intero: boolean): ErroreCampo | null {
   if (!v.trim()) return null
   const n = intero ? parseIntero(v) : parseDecimale(v)
-  if (n === null || n < min || n > max) return `Inserisci un valore tra ${min} e ${max}`
+  if (n === null || n < min || n > max) return { key: 'range', values: { min, max } }
   return null
 }
+
+const NON_AMMESSO: ErroreCampo = { key: 'notAllowed' }
 
 /**
  * Le stesse condizioni dei validator Flutter, nello stesso ordine.
@@ -103,8 +119,8 @@ function range(v: string, min: number, max: number, intero: boolean): string | n
 export function validaClientForm(d: ClientFormData): ErroriForm {
   const e: ErroriForm = {}
 
-  if (!d.nome.trim()) e.nome = 'Il nome è obbligatorio'
-  if (!d.cognome.trim()) e.cognome = 'Il cognome è obbligatorio'
+  if (!d.nome.trim()) e.nome = { key: 'firstNameRequired' }
+  if (!d.cognome.trim()) e.cognome = { key: 'lastNameRequired' }
 
   const peso = range(d.peso, 20, 300, false)
   if (peso) e.peso = peso
@@ -112,24 +128,24 @@ export function validaClientForm(d: ClientFormData): ErroriForm {
   if (altezza) e.altezza = altezza
 
   const email = d.email.trim()
-  if (!email) e.email = "L'email è obbligatoria"
-  else if (!EMAIL_RE.test(email)) e.email = 'Email non valida'
+  if (!email) e.email = { key: 'emailRequired' }
+  else if (!EMAIL_RE.test(email)) e.email = { key: 'emailInvalid' }
 
   const hr = range(d.hr_max, 80, 230, true)
   if (hr) e.hr_max = hr
   const ftp = range(d.ftp_estimated, 50, 600, true)
   if (ftp) e.ftp_estimated = ftp
 
-  if (d.sesso && !SESSI.some((s) => s.value === d.sesso)) e.sesso = 'Valore non ammesso'
+  if (d.sesso && !SESSI.some((s) => s.value === d.sesso)) e.sesso = NON_AMMESSO
   if (d.livello_attivita && !LIVELLI_ATTIVITA.some((s) => s.value === d.livello_attivita)) {
-    e.livello_attivita = 'Valore non ammesso'
+    e.livello_attivita = NON_AMMESSO
   }
   if (d.competitive_level && !LIVELLI_COMPETITIVI.some((s) => s.value === d.competitive_level)) {
-    e.competitive_level = 'Valore non ammesso'
+    e.competitive_level = NON_AMMESSO
   }
 
   if (d.accessMode === 'password' && d.password.length < 8) {
-    e.password = 'La password deve avere almeno 8 caratteri'
+    e.password = { key: 'passwordMin', values: { min: 8 } }
   }
 
   return e

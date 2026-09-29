@@ -1,20 +1,29 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from '@/i18n/navigation'
+import { useLocale, useTranslations } from 'next-intl'
+import { Link, useRouter } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase-browser'
-import { validateRegistrationForm, hasErrors, type FormErrors } from '@/lib/validation'
+import {
+  validateRegistrationForm,
+  translateFormErrors,
+  hasErrors,
+  supabaseAuthErrorKey,
+  type FormErrors,
+} from '@/lib/validation'
 
-const PROFESSIONI = [
-  { value: '', label: 'Seleziona la tua professione' },
-  { value: 'medico', label: 'Medico' },
-  { value: 'fisioterapista', label: 'Fisioterapista' },
-  { value: 'osteopata', label: 'Osteopata' },
-  { value: 'coach', label: 'Coach' },
-  { value: 'altro', label: 'Altro' },
-]
+// I `value` sono salvati in professional_profiles.professione: non cambiano
+// con la lingua, si traducono solo le etichette (registration.form.professions.*).
+const PROFESSION_VALUES = ['medico', 'fisioterapista', 'osteopata', 'coach', 'altro'] as const
+
+const inputErrorClass = 'border-red-400 focus:ring-red-200 focus:border-red-400'
 
 export function RegistrationForm() {
+  const t = useTranslations('registration.form')
+  const tValidation = useTranslations('registration.validation')
+  const tSupabase = useTranslations('errors.supabase')
+  const tCommon = useTranslations('common')
+  const locale = useLocale()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
@@ -47,7 +56,7 @@ export function RegistrationForm() {
     // Validate
     const validationErrors = validateRegistrationForm(formData)
     if (hasErrors(validationErrors)) {
-      setErrors(validationErrors)
+      setErrors(translateFormErrors(validationErrors, tValidation))
       return
     }
 
@@ -60,7 +69,8 @@ export function RegistrationForm() {
       const trialExpiresAt = new Date()
       trialExpiresAt.setDate(trialExpiresAt.getDate() + 60)
 
-      // 1. Create auth user
+      // 1. Create auth user. La lingua scelta viene salvata nei metadata
+      //    utente: serve alle email (template Supabase) e all'app.
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
@@ -70,24 +80,26 @@ export function RegistrationForm() {
             cognome: formData.cognome.trim(),
             professione: formData.professione,
             nome_studio: formData.nomeStudio.trim() || null,
+            locale,
           },
         },
       })
 
       if (authError) {
-        if (authError.message.includes('already registered')) {
-          setErrors({ email: 'Questa email è già registrata. Prova ad accedere.' })
-        } else if (authError.message.includes('password')) {
-          setErrors({ password: 'La password deve avere almeno 8 caratteri.' })
+        const key = supabaseAuthErrorKey(authError)
+        if (key === 'alreadyRegistered') {
+          setErrors({ email: tSupabase(key) })
+        } else if (key === 'weakPassword') {
+          setErrors({ password: tSupabase(key) })
         } else {
-          setErrors({ general: authError.message })
+          setErrors({ general: tSupabase(key) })
         }
         setLoading(false)
         return
       }
 
       if (!authData.user) {
-        setErrors({ general: 'Errore nella creazione dell\'account. Riprova.' })
+        setErrors({ general: t('createFailed') })
         setLoading(false)
         return
       }
@@ -127,17 +139,19 @@ export function RegistrationForm() {
 
     } catch (err) {
       console.error('Registration error:', err)
-      setErrors({ general: 'Si è verificato un errore. Riprova tra qualche istante.' })
+      setErrors({ general: tSupabase('generic') })
     } finally {
       setLoading(false)
     }
   }
 
+  const required = <span className="text-red-400" aria-hidden="true">*</span>
+
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5 stagger-children">
       {/* General error */}
       {errors.general && (
-        <div className="px-4 py-3 bg-red-50 border-l-4 border-red-400 rounded-lg text-sm text-red-700 flex items-start gap-3">
+        <div className="px-4 py-3 bg-red-50 border-l-4 border-red-400 rounded-lg text-sm text-red-700 flex items-start gap-3" role="alert">
           <span aria-hidden="true" className="text-lg leading-none mt-0.5">⚠️</span>
           <span>{errors.general}</span>
         </div>
@@ -147,31 +161,33 @@ export function RegistrationForm() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label htmlFor="nome" className="input-label">
-            Nome <span className="text-red-400">*</span>
+            {t('firstName')} {required}
           </label>
           <input
             id="nome"
             type="text"
             autoComplete="given-name"
+            required
             value={formData.nome}
             onChange={e => updateField('nome', e.target.value)}
-            className={`input-field ${errors.nome ? 'border-red-400 focus:ring-red-200 focus:border-red-400' : ''}`}
-            placeholder="Mario"
+            className={`input-field ${errors.nome ? inputErrorClass : ''}`}
+            placeholder={t('firstNamePlaceholder')}
           />
           {errors.nome && <p className="input-error">{errors.nome}</p>}
         </div>
         <div>
           <label htmlFor="cognome" className="input-label">
-            Cognome <span className="text-red-400">*</span>
+            {t('lastName')} {required}
           </label>
           <input
             id="cognome"
             type="text"
             autoComplete="family-name"
+            required
             value={formData.cognome}
             onChange={e => updateField('cognome', e.target.value)}
-            className={`input-field ${errors.cognome ? 'border-red-400 focus:ring-red-200 focus:border-red-400' : ''}`}
-            placeholder="Rossi"
+            className={`input-field ${errors.cognome ? inputErrorClass : ''}`}
+            placeholder={t('lastNamePlaceholder')}
           />
           {errors.cognome && <p className="input-error">{errors.cognome}</p>}
         </div>
@@ -180,16 +196,17 @@ export function RegistrationForm() {
       {/* Email */}
       <div>
         <label htmlFor="email" className="input-label">
-          Email professionale <span className="text-red-400">*</span>
+          {t('email')} {required}
         </label>
         <input
           id="email"
           type="email"
           autoComplete="email"
+          required
           value={formData.email}
           onChange={e => updateField('email', e.target.value)}
-          className={`input-field ${errors.email ? 'border-red-400 focus:ring-red-200 focus:border-red-400' : ''}`}
-          placeholder="mario.rossi@studio.it"
+          className={`input-field ${errors.email ? inputErrorClass : ''}`}
+          placeholder={t('emailPlaceholder')}
         />
         {errors.email && <p className="input-error">{errors.email}</p>}
       </div>
@@ -197,16 +214,17 @@ export function RegistrationForm() {
       {/* Password */}
       <div>
         <label htmlFor="password" className="input-label">
-          Password <span className="text-red-400">*</span>
+          {t('password')} {required}
         </label>
         <input
           id="password"
           type="password"
           autoComplete="new-password"
+          required
           value={formData.password}
           onChange={e => updateField('password', e.target.value)}
-          className={`input-field ${errors.password ? 'border-red-400 focus:ring-red-200 focus:border-red-400' : ''}`}
-          placeholder="Minimo 8 caratteri"
+          className={`input-field ${errors.password ? inputErrorClass : ''}`}
+          placeholder={t('passwordPlaceholder')}
         />
         {errors.password && <p className="input-error">{errors.password}</p>}
       </div>
@@ -214,16 +232,17 @@ export function RegistrationForm() {
       {/* Conferma Password */}
       <div>
         <label htmlFor="confermaPassword" className="input-label">
-          Conferma password <span className="text-red-400">*</span>
+          {t('confirmPassword')} {required}
         </label>
         <input
           id="confermaPassword"
           type="password"
           autoComplete="new-password"
+          required
           value={formData.confermaPassword}
           onChange={e => updateField('confermaPassword', e.target.value)}
-          className={`input-field ${errors.confermaPassword ? 'border-red-400 focus:ring-red-200 focus:border-red-400' : ''}`}
-          placeholder="Ripeti la password"
+          className={`input-field ${errors.confermaPassword ? inputErrorClass : ''}`}
+          placeholder={t('confirmPasswordPlaceholder')}
         />
         {errors.confermaPassword && <p className="input-error">{errors.confermaPassword}</p>}
       </div>
@@ -231,17 +250,21 @@ export function RegistrationForm() {
       {/* Professione */}
       <div>
         <label htmlFor="professione" className="input-label">
-          Professione <span className="text-red-400">*</span>
+          {t('profession')} {required}
         </label>
         <select
           id="professione"
+          required
           value={formData.professione}
           onChange={e => updateField('professione', e.target.value)}
-          className={`input-field ${!formData.professione ? 'text-anthracite-lighter' : ''} ${errors.professione ? 'border-red-400 focus:ring-red-200 focus:border-red-400' : ''}`}
+          className={`input-field ${!formData.professione ? 'text-anthracite-lighter' : ''} ${errors.professione ? inputErrorClass : ''}`}
         >
-          {PROFESSIONI.map(p => (
-            <option key={p.value} value={p.value} disabled={p.value === ''}>
-              {p.label}
+          <option value="" disabled>
+            {t('professionPlaceholder')}
+          </option>
+          {PROFESSION_VALUES.map(value => (
+            <option key={value} value={value}>
+              {t(`professions.${value}`)}
             </option>
           ))}
         </select>
@@ -251,7 +274,7 @@ export function RegistrationForm() {
       {/* Nome Studio (opzionale) */}
       <div>
         <label htmlFor="nomeStudio" className="input-label">
-          Nome studio <span className="text-anthracite-lighter font-normal">(opzionale)</span>
+          {t('studioName')} <span className="text-anthracite-lighter font-normal">({tCommon('optional')})</span>
         </label>
         <input
           id="nomeStudio"
@@ -260,21 +283,24 @@ export function RegistrationForm() {
           value={formData.nomeStudio}
           onChange={e => updateField('nomeStudio', e.target.value)}
           className="input-field"
-          placeholder="Studio Benessere Milano"
+          placeholder={t('studioNamePlaceholder')}
         />
       </div>
 
       {/* Privacy consent */}
       <p className="text-xs text-anthracite-lighter leading-relaxed">
-        Registrandoti accetti i{' '}
-        <a href="/termini" className="text-teal hover:text-teal-dark underline underline-offset-2">
-          Termini di Servizio
-        </a>{' '}
-        e la{' '}
-        <a href="/privacy" className="text-teal hover:text-teal-dark underline underline-offset-2">
-          Privacy Policy
-        </a>
-        . I tuoi dati sono protetti e conservati su server EU in conformità al GDPR.
+        {t.rich('consent', {
+          terms: (chunks) => (
+            <Link href="/termini" className="text-teal hover:text-teal-dark underline underline-offset-2">
+              {chunks}
+            </Link>
+          ),
+          privacy: (chunks) => (
+            <Link href="/privacy" className="text-teal hover:text-teal-dark underline underline-offset-2">
+              {chunks}
+            </Link>
+          ),
+        })}
       </p>
 
       {/* Submit */}
@@ -284,15 +310,15 @@ export function RegistrationForm() {
         className="btn-primary w-full text-base py-3.5"
       >
         {loading ? (
-          <span className="flex items-center gap-2">
-            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <span className="flex items-center justify-center gap-2">
+            <svg className="animate-spin h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
             </svg>
-            Creazione account in corso...
+            {t('submitting')}
           </span>
         ) : (
-          'Crea il tuo account gratuito'
+          t('submit')
         )}
       </button>
     </form>

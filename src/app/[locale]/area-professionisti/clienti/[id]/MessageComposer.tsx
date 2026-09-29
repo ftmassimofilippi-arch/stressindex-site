@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Modal } from '@/components/dashboard/Modal'
 import { createClient } from '@/lib/supabase-browser'
 import type { Client, Message } from '@/lib/types'
@@ -13,6 +14,8 @@ type Props = {
 }
 
 export function MessageComposer({ open, onClose, client, onSent }: Props) {
+  const t = useTranslations('messages.composer')
+  const tCommon = useTranslations('common')
   const [subject, setSubject] = useState('')
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(false)
@@ -22,7 +25,7 @@ export function MessageComposer({ open, onClose, client, onSent }: Props) {
   async function send() {
     setError(null)
     if (!subject.trim() || !content.trim()) {
-      setError('Compila oggetto e contenuto')
+      setError(t('missingFields'))
       return
     }
     setLoading(true)
@@ -59,45 +62,45 @@ export function MessageComposer({ open, onClose, client, onSent }: Props) {
     onClose()
   }
 
+  const recipient = `${client.nome ?? ''} ${client.cognome ?? ''} ${client.email ? `· ${client.email}` : ''}`.trim()
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="Invia messaggio"
-      description={`Destinatario: ${client.nome ?? ''} ${client.cognome ?? ''} ${client.email ? `· ${client.email}` : ''}`.trim()}
+      title={t('title')}
+      description={t('recipient', { name: recipient })}
       size="lg"
       footer={
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 flex-wrap">
           <button type="button" onClick={() => setPreview((p) => !p)} className="btn-secondary text-sm">
-            {preview ? 'Modifica' : 'Anteprima'}
+            {preview ? t('edit') : t('preview')}
           </button>
-          <button type="button" onClick={onClose} className="btn-secondary text-sm">Annulla</button>
+          <button type="button" onClick={onClose} className="btn-secondary text-sm">{tCommon('cancel')}</button>
           <button type="button" onClick={send} disabled={loading} className="btn-primary text-sm">
-            {loading ? 'Invio…' : 'Invia'}
+            {loading ? t('sending') : t('send')}
           </button>
         </div>
       }
     >
       {preview ? (
         <div className="bg-surface p-5 rounded-xl">
-          <div className="text-xs text-anthracite-lighter mb-2">Anteprima email</div>
-          <div className="font-medium text-anthracite mb-3">{subject || '(senza oggetto)'}</div>
-          <p className="text-sm text-anthracite whitespace-pre-wrap leading-relaxed">{content || '(vuoto)'}</p>
+          <div className="text-xs text-anthracite-lighter mb-2">{t('previewLabel')}</div>
+          <div className="font-medium text-anthracite mb-3">{subject || t('noSubject')}</div>
+          <p className="text-sm text-anthracite whitespace-pre-wrap leading-relaxed">{content || t('empty')}</p>
         </div>
       ) : (
         <div className="space-y-4">
           <div>
-            <label className="input-label">Oggetto</label>
-            <input value={subject} onChange={(e) => setSubject(e.target.value)} className="input-field" placeholder="Es. Promemoria misurazione settimanale" />
+            <label className="input-label">{t('subject')}</label>
+            <input value={subject} onChange={(e) => setSubject(e.target.value)} className="input-field" placeholder={t('subjectPlaceholder')} />
           </div>
           <div>
-            <label className="input-label">Messaggio</label>
-            <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={8} className="input-field resize-y" placeholder={`Ciao ${client.nome ?? ''},\n\n…`} />
+            <label className="input-label">{t('body')}</label>
+            <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={8} className="input-field resize-y" placeholder={t('bodyPlaceholder', { name: client.nome ?? '' })} />
           </div>
           {error && <div className="px-3 py-2 rounded-xl bg-red-50 text-red-700 text-sm">{error}</div>}
-          <p className="text-xs text-anthracite-lighter">
-            L&apos;invio email passa da una Edge Function dedicata (in arrivo). Per ora il messaggio viene archiviato in cronologia.
-          </p>
+          <p className="text-xs text-anthracite-lighter">{t('note')}</p>
         </div>
       )}
     </Modal>

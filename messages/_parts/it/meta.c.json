@@ -1,0 +1,27 @@
+{
+  "registration": {
+    "title": "Prova gratis 60 giorni | Stress Index",
+    "description": "Registrati e prova Stress Index gratis per 60 giorni. Tutte le funzionalità, nessun vincolo. Per fisioterapisti e professionisti del benessere.",
+    "shortDescription": "Registrati e prova Stress Index gratis per 60 giorni. Tutte le funzionalità, nessun vincolo."
+  },
+  "registrationConfirm": {
+    "title": "Registrazione completata"
+  },
+  "login": {
+    "title": "Accedi"
+  },
+  "recoverPassword": {
+    "title": "Recupera password"
+  },
+  "setPassword": {
+    "title": "Imposta password"
+  },
+  "suspended": {
+    "title": "Account sospeso"
+  },
+  "proArea": {
+    "title": "Area Professionisti",
+    "template": "%s | Area Professionisti Stress Index",
+    "description": "Dashboard professionale Stress Index, area riservata"
+  }
+}

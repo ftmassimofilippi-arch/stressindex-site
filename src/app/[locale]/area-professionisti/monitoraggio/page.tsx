@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
@@ -9,10 +10,15 @@ import { MonitoringIndex } from './MonitoringIndex'
 import { ModuleLocked } from '@/components/dashboard/ModuleLocked'
 import { filterMonitoringByModules, getMyAccountAccess, hasModule } from '@/lib/account-access'
 
-export const metadata = { title: 'Monitoraggio' }
 export const dynamic = 'force-dynamic'
 
-export default async function MonitoringPage({ searchParams }: { searchParams?: { professionista?: string } }) {
+export async function generateMetadata({ params }: { params: { locale: string } }) {
+  const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
+  return { title: t('monitoring.title'), robots: { index: false, follow: false } }
+}
+
+export default async function MonitoringPage({ searchParams }: { params: { locale: string }; searchParams?: { professionista?: string } }) {
+  const t = await getTranslations('monitoring')
   const { viewing, currentUserId } = await resolveViewingProfessional(searchParams?.professionista)
   const professionalId = viewing?.user_id ?? currentUserId
   const [professional, alerts, allSessions, clients, access] = await Promise.all([
@@ -25,7 +31,7 @@ export default async function MonitoringPage({ searchParams }: { searchParams?: 
   if (!hasModule(access, 'monitoring') && !hasModule(access, 'sleep')) {
     return (
       <DashboardLayout professional={professional} alertCount={alerts.length}>
-        <ModuleLocked title="Monitoraggio e Sonno" description="I moduli Monitoraggio 24h e Sonno non sono attivi per il tuo account." />
+        <ModuleLocked title={t('index.lockedTitle')} description={t('index.lockedDescription')} />
       </DashboardLayout>
     )
   }
@@ -33,7 +39,7 @@ export default async function MonitoringPage({ searchParams }: { searchParams?: 
   const isSuperadminView = viewing?.access === 'superadmin'
   const baseQuery = viewing ? `?professionista=${viewing.user_id}` : ''
   const clientOptions = clients
-    .map((c) => ({ id: c.id, name: `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || 'Cliente' }))
+    .map((c) => ({ id: c.id, name: `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || t('client') }))
     .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
@@ -44,25 +50,22 @@ export default async function MonitoringPage({ searchParams }: { searchParams?: 
       {viewing && (
         <div className="mb-6 flex items-center gap-3 flex-wrap px-5 py-3.5 rounded-2xl bg-amber-50 border border-amber-200">
           <div className="text-sm text-amber-800">
-            Stai visualizzando i monitoraggi di <strong>{viewing.full_name}</strong>
-            {isSuperadminView ? ' — Modalità supporto' : ' in sola lettura'}
+            {t.rich(isSuperadminView ? 'index.viewingSupport' : 'index.viewingReadOnly', { name: viewing.full_name, b: (chunks) => <strong>{chunks}</strong> })}
           </div>
           <Link
             href={isSuperadminView ? '/area-professionisti/professionisti' : '/area-professionisti/organizzazione'}
             className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-amber-900 hover:underline"
           >
-            <ArrowLeft size={14} /> {isSuperadminView ? 'Torna ai professionisti' : 'Torna al tuo team'}
+            <ArrowLeft size={14} /> {isSuperadminView ? t('index.backToProfessionals') : t('index.backToTeam')}
           </Link>
         </div>
       )}
 
       <header className="mb-6">
         <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
-          <em className="italic" style={{ color: MON.accentDark }}>Monitoraggio</em>
+          <em className="italic" style={{ color: MON.accentDark }}>{t('index.title')}</em>
         </h1>
-        <p className="mt-1.5 text-sm text-anthracite-lighter">
-          Registrazioni lunghe (24 ore, notte) e notti con il pulsossimetro dei tuoi clienti, analizzate dall&apos;app
-        </p>
+        <p className="mt-1.5 text-sm text-anthracite-lighter">{t('index.subtitle')}</p>
       </header>
 
       <MonitoringIndex sessions={sessions} clients={clientOptions} baseQuery={baseQuery} />

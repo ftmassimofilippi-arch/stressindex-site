@@ -1,8 +1,10 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
+import type { Tr } from '@/i18n/types'
 import type { MonitoringEvent, MonitoringNight, MonitoringWindow, ReserveCurve } from '@/lib/monitoring-types'
-import { MON, STATE_COLOR, STATE_LABEL, STATE_ORDER, hm, wallDate } from '@/lib/monitoring-format'
+import { MON, STATE_COLOR, STATE_ORDER, hm, stateLabel, wallDate } from '@/lib/monitoring-format'
 import { EventIcon } from './EventIcon'
 
 // Timeline orizzontale dell'intero periodo (MonitoringTimeline dell'app):
@@ -25,6 +27,8 @@ type Props = {
 const W = 1000 // larghezza logica dell'SVG (viewBox)
 
 export function MonitoringTimeline({ windows, start, end, tz, events = [], night, reserve, height = 34 }: Props) {
+  const t = useTranslations('monitoring')
+  const locale = useLocale()
   const startMs = new Date(start).getTime()
   const totalMs = Math.max(1, new Date(end).getTime() - startMs)
   const x = (iso: string) => Math.min(W, Math.max(0, ((new Date(iso).getTime() - startMs) / totalMs) * W))
@@ -51,14 +55,14 @@ export function MonitoringTimeline({ windows, start, end, tz, events = [], night
     const s = wallDate(start, tz)
     if (!s) return out
     // prima ora piena dopo l'inizio (orologio del dispositivo)
-    let t = Date.UTC(s.getUTCFullYear(), s.getUTCMonth(), s.getUTCDate(), s.getUTCHours()) + 3_600_000
-    while (new Date(t).getUTCHours() % step !== 0) t += 3_600_000
-    const endWall = t + totalMs // limite approssimato
+    let tk = Date.UTC(s.getUTCFullYear(), s.getUTCMonth(), s.getUTCDate(), s.getUTCHours()) + 3_600_000
+    while (new Date(tk).getUTCHours() % step !== 0) tk += 3_600_000
+    const endWall = tk + totalMs // limite approssimato
     const endMs = (wallDate(end, tz)?.getTime() ?? endWall)
-    while (t <= endMs) {
-      const instantMs = t - tz * 60_000
-      out.push({ x: ((instantMs - startMs) / totalMs) * W, label: String(new Date(t).getUTCHours()).padStart(2, '0') })
-      t += step * 3_600_000
+    while (tk <= endMs) {
+      const instantMs = tk - tz * 60_000
+      out.push({ x: ((instantMs - startMs) / totalMs) * W, label: String(new Date(tk).getUTCHours()).padStart(2, '0') })
+      tk += step * 3_600_000
     }
     return out
   }, [start, end, tz, startMs, totalMs])
@@ -89,17 +93,17 @@ export function MonitoringTimeline({ windows, start, end, tz, events = [], night
   function pick(clientX: number, target: SVGSVGElement) {
     const rect = target.getBoundingClientRect()
     const frac = (clientX - rect.left) / rect.width
-    const t = startMs + frac * totalMs
+    const at = startMs + frac * totalMs
     const w = windows.find((win) => {
       const a = new Date(win.s).getTime()
-      return a <= t && t < a + 60_000
+      return a <= at && at < a + 60_000
     })
     setPicked(w ?? null)
   }
 
   const visibleEvents = events.filter((e) => {
-    const t = new Date(e.timestamp).getTime()
-    return t >= startMs && t <= startMs + totalMs
+    const at = new Date(e.timestamp).getTime()
+    return at >= startMs && at <= startMs + totalMs
   })
 
   return (
@@ -120,7 +124,7 @@ export function MonitoringTimeline({ windows, start, end, tz, events = [], night
         </div>
 
         {reservePath && (
-          <svg viewBox={`0 0 ${W} ${reservePath.H}`} preserveAspectRatio="none" className="w-full block" style={{ height: reservePath.H }} aria-label="Curva della Riserva">
+          <svg viewBox={`0 0 ${W} ${reservePath.H}`} preserveAspectRatio="none" className="w-full block" style={{ height: reservePath.H }} aria-label={t('timeline.reserveAria')}>
             <line x1={0} x2={W} y1={reservePath.zero} y2={reservePath.zero} stroke={MON.borderMedium} strokeWidth={1} />
             <path d={reservePath.up} fill={STATE_COLOR.recovery} fillOpacity={0.22} />
             <path d={reservePath.down} fill={STATE_COLOR.stress} fillOpacity={0.22} />
@@ -139,7 +143,7 @@ export function MonitoringTimeline({ windows, start, end, tz, events = [], night
           onMouseLeave={() => setPicked(null)}
           onClick={(ev) => pick(ev.clientX, ev.currentTarget)}
           role="img"
-          aria-label="Timeline degli stati"
+          aria-label={t('timeline.statesAria')}
         >
           <defs>
             <pattern id="mon-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -169,10 +173,10 @@ export function MonitoringTimeline({ windows, start, end, tz, events = [], night
         </svg>
 
         <div className="relative h-4 mt-1 text-[10px] text-anthracite-lighter">
-          {ticks.map((t) => (
-            <span key={t.label + t.x} className="absolute -translate-x-1/2" style={{ left: `${(t.x / W) * 100}%` }}>
+          {ticks.map((tk) => (
+            <span key={tk.label + tk.x} className="absolute -translate-x-1/2" style={{ left: `${(tk.x / W) * 100}%` }}>
               <span className="block w-px h-1 bg-surface-border mx-auto" />
-              {t.label}
+              {tk.label}
             </span>
           ))}
         </div>
@@ -180,10 +184,10 @@ export function MonitoringTimeline({ windows, start, end, tz, events = [], night
         <div className="mt-2 min-h-[28px]">
           {picked ? (
             <div className="inline-block px-2.5 py-1.5 rounded-lg text-[11px] font-medium" style={{ backgroundColor: MON.accentLight, color: MON.accentDark }}>
-              {pickedLabel(picked, tz)}
+              {pickedLabel(picked, tz, locale, t)}
             </div>
           ) : (
-            <div className="text-[10.5px] text-anthracite-lighter">Passa il mouse (o tocca) sulla barra per leggere ora e valori di quel minuto.</div>
+            <div className="text-[10.5px] text-anthracite-lighter">{t('timeline.hint')}</div>
           )}
         </div>
       </div>
@@ -191,20 +195,27 @@ export function MonitoringTimeline({ windows, start, end, tz, events = [], night
   )
 }
 
-function pickedLabel(p: MonitoringWindow, tz: number): string {
+function pickedLabel(p: MonitoringWindow, tz: number, locale: string, t: Tr): string {
   const when = `${hm(p.s, tz)}–${hm(p.e, tz)}`
-  if (!p.valid) return `${when} · dato non valido (fascia staccata o segnale disturbato)`
-  return `${when} · ${STATE_LABEL[p.state]} · HR ${p.hr == null ? '—' : Math.round(p.hr)} bpm · RMSSD ${p.rmssd == null ? '—' : Math.round(p.rmssd)} ms${p.br == null ? '' : ` · respiro ~${Math.round(p.br)}/min`}`
+  if (!p.valid) return t('timeline.invalid', { when })
+  const base = t('timeline.picked', {
+    when,
+    state: stateLabel(p.state, locale),
+    hr: p.hr == null ? '—' : Math.round(p.hr),
+    rmssd: p.rmssd == null ? '—' : Math.round(p.rmssd),
+  })
+  return p.br == null ? base : `${base} · ${t('timeline.breathing', { br: Math.round(p.br) })}`
 }
 
 /** Legenda degli stati (MonitoringStateLegend). */
 export function StateLegend({ compact = false }: { compact?: boolean }) {
+  const locale = useLocale()
   return (
     <div className={`flex flex-wrap gap-x-3 gap-y-1 ${compact ? 'text-[10px]' : 'text-[11px]'} text-anthracite-lighter`}>
       {STATE_ORDER.map((s) => (
         <span key={s} className="inline-flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: STATE_COLOR[s], border: s === 'invalid' ? `1px solid ${MON.borderMedium}` : undefined }} />
-          {STATE_LABEL[s]}
+          <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: STATE_COLOR[s], border: s === 'invalid' ? `1px solid ${MON.borderMedium}` : undefined }} />
+          {stateLabel(s, locale)}
         </span>
       ))}
     </div>

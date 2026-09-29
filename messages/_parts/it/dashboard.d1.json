@@ -1,0 +1,97 @@
+{
+  "nav": {
+    "today": "Oggi",
+    "clients": "Clienti",
+    "analytics": "Analytics",
+    "sport": "Sport",
+    "teamLive": "Team Live",
+    "monitoring": "Monitoraggio",
+    "settings": "Impostazioni",
+    "organization": "Organizzazione",
+    "superadmin": "Super Admin",
+    "liveActive": "Sessioni attive"
+  },
+  "breadcrumb": {
+    "areaProfessionisti": "Area Professionisti",
+    "clienti": "Clienti",
+    "analytics": "Analytics",
+    "impostazioni": "Impostazioni",
+    "misurazione": "Misurazione",
+    "monitoraggio": "Monitoraggio",
+    "sport": "Sport",
+    "teamLive": "Team Live",
+    "atleta": "Atleta",
+    "sessione": "Sessione",
+    "organizzazione": "Organizzazione",
+    "professionisti": "Professionisti"
+  },
+  "topbar": {
+    "notifications": "Notifiche",
+    "notificationsNew": "Notifiche ({count, plural, one {# nuova} other {# nuove}})"
+  },
+  "search": {
+    "placeholder": "Cerca clienti, professionisti…",
+    "clear": "Pulisci ricerca",
+    "searching": "Ricerca in corso…",
+    "noResults": "Nessun risultato per “{query}”"
+  },
+  "invites": {
+    "invited": "<org>{name}</org> ti ha invitato a unirti al team",
+    "unknownOrg": "Un'organizzazione",
+    "asAdmin": "Come amministratore",
+    "asProfessional": "Come professionista",
+    "accept": "Accetta",
+    "reject": "Rifiuta"
+  },
+  "home": {
+    "priorityAlerts": "Alert prioritari",
+    "noAlertsTitle": "Nessun alert oggi",
+    "noAlertsBody": "Tutto sotto controllo.",
+    "todaysMeasurements": "Misurazioni di oggi",
+    "noMeasurementsToday": "Nessuna misurazione registrata oggi",
+    "colTime": "Ora",
+    "recentMonitoring": "Monitoraggi recenti",
+    "noMonitoring": "Nessun monitoraggio registrato",
+    "toContact": "Da contattare",
+    "noContactTitle": "Nessun cliente da risollecitare",
+    "noContactBody": "Tutti i tuoi clienti misurano regolarmente.",
+    "lastMeasurementDaysAgo": "Ultima misurazione {count, plural, one {# giorno fa} other {# giorni fa}}",
+    "daysShort": "{count}gg",
+    "reminder": "Promemoria",
+    "activeClients": "Clienti attivi",
+    "totalHint": "totali",
+    "measurementsToday": "Mis. oggi",
+    "alertsResolved": "Alert risolti",
+    "weekHint": "settimana",
+    "trend": "Trend",
+    "vsLastMonth": "vs mese scorso",
+    "aggregateTrend": "Andamento medio aggregato",
+    "latestNotes": "Ultime note",
+    "noRecentNotes": "Nessuna nota recente",
+    "daysAgoShort": "{count}gg fa"
+  },
+  "table": {
+    "results": "{count, plural, one {# risultato} other {# risultati}}",
+    "page": "pagina {page} di {pages}",
+    "prev": "Precedente",
+    "next": "Successiva"
+  },
+  "dateRange": {
+    "presets": "Preset",
+    "last7": "7 giorni",
+    "last30": "30 giorni",
+    "last90": "90 giorni",
+    "months6": "6 mesi",
+    "year1": "1 anno",
+    "custom": "Personalizzato",
+    "from": "Dal",
+    "to": "Al"
+  },
+  "dialog": {
+    "wait": "Attendere…",
+    "typeToConfirm": "Digita <b>{text}</b> per confermare"
+  },
+  "moduleLocked": {
+    "contact": "Per attivarlo scrivi a <link>support@stressindex.io</link>"
+  }
+}

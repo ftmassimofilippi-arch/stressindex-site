@@ -1,16 +1,19 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { CalendarDays, Download, FileBarChart, Loader2, Mail } from 'lucide-react'
 import { formatDate, fullName } from '@/lib/format'
+import { apiErrorMessage } from '@/lib/api-error'
 import type { Client } from '@/lib/types'
 
 type Preset = '7' | '30' | '90'
 
-const PRESETS: Array<{ value: Preset; label: string; days: number }> = [
-  { value: '7', label: 'Ultima settimana', days: 7 },
-  { value: '30', label: 'Ultimo mese', days: 30 },
-  { value: '90', label: 'Ultimi 3 mesi', days: 90 },
+// Etichetta in clients.report.preset*.
+const PRESETS: Array<{ value: Preset; key: 'presetWeek' | 'presetMonth' | 'presetQuarter'; days: number }> = [
+  { value: '7', key: 'presetWeek', days: 7 },
+  { value: '30', key: 'presetMonth', days: 30 },
+  { value: '90', key: 'presetQuarter', days: 90 },
 ]
 
 function defaultFrom(days: number): string {
@@ -32,6 +35,9 @@ type GeneratedReport = {
 }
 
 export function ReportTab({ client }: { client: Client }) {
+  const t = useTranslations('clients.report')
+  const tErr = useTranslations('errors.api')
+  const locale = useLocale()
   const [from, setFrom] = useState(() => defaultFrom(30))
   const [to, setTo] = useState(() => todayIso())
   const [loading, setLoading] = useState(false)
@@ -56,16 +62,17 @@ export function ReportTab({ client }: { client: Client }) {
     setLoading(true)
     resetReport()
     try {
-      const res = await fetch('/api/client-report', {
+      // ?locale= → il PDF (e i suoi commenti automatici) escono nella lingua della pagina.
+      const res = await fetch(`/api/client-report?locale=${encodeURIComponent(locale)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientId: client.id, dateFrom: from, dateTo: to }),
       })
       if (!res.ok) {
-        let message = 'Errore generazione report'
+        let message = t('genericError')
         try {
           const j = await res.json()
-          if (j?.error) message = j.error
+          message = apiErrorMessage(j, tErr, t('genericError'))
         } catch { /* ignore */ }
         throw new Error(message)
       }
@@ -78,7 +85,7 @@ export function ReportTab({ client }: { client: Client }) {
       const blobUrl = URL.createObjectURL(blob)
       setReport({ blobUrl, filename, measurementCount: count, dateFrom: from, dateTo: to })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Errore generazione report')
+      setError(err instanceof Error ? err.message : t('genericError'))
     } finally {
       setLoading(false)
     }
@@ -96,19 +103,20 @@ export function ReportTab({ client }: { client: Client }) {
 
   function mailtoHref(): string {
     if (!client.email) return ''
-    const periodLabel = `${formatDate(report?.dateFrom ?? from, 'd MMMM yyyy')} – ${formatDate(report?.dateTo ?? to, 'd MMMM yyyy')}`
-    const subject = `Report Stress Index ${periodLabel}`
+    const periodLabel = `${formatDate(report?.dateFrom ?? from, 'd MMMM yyyy', locale)} – ${formatDate(report?.dateTo ?? to, 'd MMMM yyyy', locale)}`
+    const subject = t('mailSubject', { period: periodLabel })
+    const name = (client.nome ?? '').trim()
     const body = [
-      `Ciao ${client.nome ?? ''},`.trim(),
+      name ? t('mailGreeting', { name }) : t('mailGreetingNoName'),
       '',
-      `In allegato il report del periodo ${formatDate(report?.dateFrom ?? from, 'd MMMM yyyy')} – ${formatDate(report?.dateTo ?? to, 'd MMMM yyyy')}.`,
+      t('mailBody', { period: periodLabel }),
       '',
-      'A presto.',
+      t('mailClosing'),
     ].join('\n')
     return `mailto:${encodeURIComponent(client.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   }
 
-  const periodLabel = `${formatDate(from, 'd MMM yyyy')} → ${formatDate(to, 'd MMM yyyy')}`
+  const periodLabel = `${formatDate(from, undefined, locale)} → ${formatDate(to, undefined, locale)}`
   const hasEmail = !!client.email
 
   return (
@@ -119,18 +127,14 @@ export function ReportTab({ client }: { client: Client }) {
             <FileBarChart size={18} />
           </div>
           <div>
-            <h2 className="font-serif text-lg text-anthracite">Report periodico</h2>
-            <p className="text-sm text-anthracite-lighter mt-0.5 max-w-prose">
-              Genera un PDF riassuntivo con score medi, trend e commento automatico per il periodo selezionato.
-            </p>
+            <h2 className="font-serif text-lg text-anthracite">{t('title')}</h2>
+            <p className="text-sm text-anthracite-lighter mt-0.5 max-w-prose">{t('subtitle')}</p>
           </div>
         </div>
 
         <div className="space-y-5">
           <div>
-            <label className="block text-xs font-medium uppercase tracking-wide text-anthracite-lighter mb-2">
-              Preset rapidi
-            </label>
+            <label className="block text-xs font-medium uppercase tracking-wide text-anthracite-lighter mb-2">{t('presetsLabel')}</label>
             <div className="flex flex-wrap gap-2">
               {PRESETS.map((p) => (
                 <button
@@ -139,7 +143,7 @@ export function ReportTab({ client }: { client: Client }) {
                   onClick={() => applyPreset(p.value)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-surface-border bg-white text-anthracite hover:bg-teal-light hover:border-teal hover:text-teal-dark transition-colors"
                 >
-                  <CalendarDays size={13} /> {p.label}
+                  <CalendarDays size={13} /> {t(p.key)}
                 </button>
               ))}
             </div>
@@ -147,7 +151,7 @@ export function ReportTab({ client }: { client: Client }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="input-label">Dal</label>
+              <label className="input-label">{t('from')}</label>
               <input
                 type="date"
                 value={from}
@@ -157,7 +161,7 @@ export function ReportTab({ client }: { client: Client }) {
               />
             </div>
             <div>
-              <label className="input-label">Al</label>
+              <label className="input-label">{t('to')}</label>
               <input
                 type="date"
                 value={to}
@@ -170,7 +174,7 @@ export function ReportTab({ client }: { client: Client }) {
           </div>
 
           <div className="bg-surface rounded-xl p-4 text-sm text-anthracite-light">
-            Periodo selezionato: <span className="font-medium text-anthracite">{periodLabel}</span>
+            {t('selectedPeriod')} <span className="font-medium text-anthracite">{periodLabel}</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -183,12 +187,12 @@ export function ReportTab({ client }: { client: Client }) {
               {loading ? (
                 <>
                   <Loader2 size={15} className="animate-spin" />
-                  Generazione…
+                  {t('generating')}
                 </>
               ) : (
                 <>
                   <FileBarChart size={15} />
-                  Genera Report PDF
+                  {t('generate')}
                 </>
               )}
             </button>
@@ -204,10 +208,13 @@ export function ReportTab({ client }: { client: Client }) {
               <FileBarChart size={18} />
             </div>
             <div className="flex-1">
-              <h3 className="font-serif text-base text-anthracite">Report pronto</h3>
+              <h3 className="font-serif text-base text-anthracite">{t('ready')}</h3>
               <p className="text-sm text-anthracite-lighter mt-0.5">
-                {report.measurementCount} {report.measurementCount === 1 ? 'misurazione' : 'misurazioni'} ·{' '}
-                {formatDate(report.dateFrom, 'd MMM yyyy')} → {formatDate(report.dateTo, 'd MMM yyyy')}
+                {t('readySummary', {
+                  count: report.measurementCount,
+                  from: formatDate(report.dateFrom, undefined, locale),
+                  to: formatDate(report.dateTo, undefined, locale),
+                })}
               </p>
             </div>
           </div>
@@ -218,7 +225,7 @@ export function ReportTab({ client }: { client: Client }) {
               onClick={downloadGenerated}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-teal text-white hover:bg-teal-dark transition-colors"
             >
-              <Download size={15} /> Scarica PDF
+              <Download size={15} /> {t('download')}
             </button>
 
             {hasEmail ? (
@@ -226,24 +233,21 @@ export function ReportTab({ client }: { client: Client }) {
                 href={mailtoHref()}
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-teal text-teal-dark bg-transparent hover:bg-teal-light transition-colors"
               >
-                <Mail size={15} /> Invia al cliente via email
+                <Mail size={15} /> {t('sendEmail')}
               </a>
             ) : (
               <span className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-dashed border-surface-border text-anthracite-lighter">
-                <Mail size={15} /> Email cliente non disponibile
+                <Mail size={15} /> {t('noEmail')}
               </span>
             )}
           </div>
 
           {hasEmail ? (
             <p className="text-xs text-anthracite-lighter mt-3 max-w-prose">
-              L&apos;email apre il client di posta con oggetto e corpo pre-compilati per {fullName(client)}
-              {client.email ? ` (${client.email})` : ''}. Allega manualmente il PDF scaricato prima di inviare.
+              {t('emailHint', { name: fullName(client), email: client.email ?? '' })}
             </p>
           ) : (
-            <p className="text-xs text-anthracite-lighter mt-3 max-w-prose">
-              Aggiungi un indirizzo email al profilo del cliente per attivare l&apos;invio diretto.
-            </p>
+            <p className="text-xs text-anthracite-lighter mt-3 max-w-prose">{t('noEmailHint')}</p>
           )}
         </section>
       ) : null}

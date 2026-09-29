@@ -1,6 +1,9 @@
 // Helper e tipi del Team Live (monitoraggio real-time multi-atleta).
-// File "client-safe": nessun import server (solo `import type` da sport-format).
-import { DFA_ZONES } from './sport-format'
+// File "client-safe": nessun import server. Le etichette visibili si leggono
+// dal namespace `sport` in visualizzazione (`connLabel`, `dfaZoneLabel`).
+import type { Tr } from '@/i18n/types'
+import { intlTag } from './format'
+import { DFA_ZONES, type DfaZoneKey } from './sport-format'
 
 // ── Riga della tabella sport_live_data (snake_case, come arriva da Supabase) ──
 
@@ -64,10 +67,9 @@ export const CONN_COLOR: Record<ConnStatus, string> = {
   disconnected: '#9CA3AF',
 }
 
-export const CONN_LABEL: Record<ConnStatus, string> = {
-  connected: 'Connesso',
-  stale: 'Dato in ritardo',
-  disconnected: 'Disconnesso',
+/** Etichetta dello stato di connessione (`sport.teamLive.conn.*`). */
+export function connLabel(status: ConnStatus, t: Tr): string {
+  return t(`teamLive.conn.${status}`)
 }
 
 // Atleta "in sessione": connesso e aggiornato negli ultimi 30 secondi.
@@ -80,21 +82,13 @@ export function isVisible(row: SportLiveRow, nowMs: number): boolean {
   return row.is_connected === true || rowAgeMs(row, nowMs) <= VISIBLE_MAX_MS
 }
 
-// ── Zone DFA (etichette "live" + colori vividi riusati da DFA_ZONES) ─────────
+// ── Zone DFA (chiavi + colori vividi riusati da DFA_ZONES) ───────────────────
 // 5 zone allineate all'app: 1=blu Recupero · 2=verde Aerobica · 3=giallo
 // Transizione · 4=arancio Anaerobica · 5=rosso Massimale.
 
-const LIVE_ZONE_LABEL: Record<number, string> = {
-  1: 'Recupero',
-  2: 'Aerobica',
-  3: 'Transizione',
-  4: 'Anaerobica',
-  5: 'Massimale',
-}
-
 export interface LiveZone {
   id: number
-  label: string
+  key: DfaZoneKey
   color: string
   bg: string
 }
@@ -103,7 +97,7 @@ export function liveZone(id: number | null | undefined): LiveZone | null {
   if (id == null) return null
   const z = DFA_ZONES.find((zone) => zone.id === id)
   if (!z) return null
-  return { id: z.id, label: LIVE_ZONE_LABEL[z.id] ?? z.label, color: z.color, bg: z.bg }
+  return { id: z.id, key: z.key, color: z.color, bg: z.bg }
 }
 
 // Bande orizzontali (per valore alpha1) per i grafici live.
@@ -140,11 +134,16 @@ export function formatElapsed(seconds: number | null | undefined): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
-// Orario (HH:MM) dell'ultimo aggiornamento ricevuto.
-export function formatUpdatedClock(iso: string): string {
+// Orario dell'ultimo aggiornamento ricevuto, nel formato della lingua
+// (ora locale del browser: è un "adesso", non un timestamp di misurazione).
+export function formatUpdatedClock(iso: string, locale?: string, withSeconds = false): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return '--:--'
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  return new Intl.DateTimeFormat(intlTag(locale), {
+    hour: '2-digit',
+    minute: '2-digit',
+    ...(withSeconds ? { second: '2-digit' } : {}),
+  }).format(d)
 }
 
 // Artifact rate → percentuale (gestisce sia frazione 0..1 sia valore già in %).
@@ -168,9 +167,10 @@ export function parseLiveTags(raw: unknown): string[] {
   return out
 }
 
-// Nome completo dell'atleta a partire da una riga + mappa anagrafica.
-export function athleteName(row: SportLiveRow, meta: Record<string, AthleteMeta>): string {
-  return meta[row.athlete_id]?.name ?? 'Atleta'
+// Nome completo dell'atleta a partire da una riga + mappa anagrafica;
+// `fallback` è il testo tradotto da mostrare se l'anagrafica manca.
+export function athleteName(row: SportLiveRow, meta: Record<string, AthleteMeta>, fallback: string): string {
+  return meta[row.athlete_id]?.name ?? fallback
 }
 
 // HR max anagrafico dell'atleta (per le zone HR); fallback all'hr_max sessione.

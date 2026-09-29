@@ -44,7 +44,8 @@ async function loadRows(filter?: (q: ReturnType<ReturnType<typeof createAdminCli
   return (data ?? []) as RawRow[]
 }
 
-async function enrich(rows: RawRow[]): Promise<AdminMonitoringRow[]> {
+// `clientFallback`: etichetta per una scheda senza nome (tradotta dalla route chiamante).
+async function enrich(rows: RawRow[], clientFallback: string): Promise<AdminMonitoringRow[]> {
   const admin = createAdminClient()
   const sessions = rows.map((r) => parseMonitoringRow({ ...r, windows: undefined }))
   const clientIds = Array.from(new Set(sessions.map((s) => s.client_id).filter((v): v is string => !!v)))
@@ -55,7 +56,7 @@ async function enrich(rows: RawRow[]): Promise<AdminMonitoringRow[]> {
     userIds.length ? admin.from('professional_profiles').select('id, nome, cognome').in('id', userIds) : Promise.resolve({ data: [] }),
   ])
   const clientName = new Map<string, string>()
-  for (const c of (clientsRes.data ?? []) as Array<{ id: string; nome: string | null; cognome: string | null }>) clientName.set(c.id, `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || 'Cliente')
+  for (const c of (clientsRes.data ?? []) as Array<{ id: string; nome: string | null; cognome: string | null }>) clientName.set(c.id, `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || clientFallback)
   const profile = new Map<string, { nome: string | null; cognome: string | null; email: string | null }>()
   for (const p of (profilesRes.data ?? []) as Array<{ id: string; nome: string | null; cognome: string | null; email: string | null }>) profile.set(p.id, p)
   const pp = new Map<string, { nome: string | null; cognome: string | null }>()
@@ -67,22 +68,22 @@ async function enrich(rows: RawRow[]): Promise<AdminMonitoringRow[]> {
   }
   return sessions.map((s) => ({
     ...s,
-    client_name: (s.client_id && clientName.get(s.client_id)) || name(s.user_id) || 'Cliente',
+    client_name: (s.client_id && clientName.get(s.client_id)) || name(s.user_id) || clientFallback,
     professional_name: name(s.professionista_id),
     user_email: profile.get(s.user_id)?.email ?? null,
   }))
 }
 
 /** Tutti i monitoraggi del database (senza finestre), più recenti prima. */
-export async function getAdminMonitoringSessions(limit = 2000): Promise<AdminMonitoringRow[]> {
+export async function getAdminMonitoringSessions(clientFallback: string, limit = 2000): Promise<AdminMonitoringRow[]> {
   const rows = await loadRows((q) => (q as unknown as { limit: (n: number) => unknown }).limit(limit))
-  return enrich(rows)
+  return enrich(rows, clientFallback)
 }
 
 /** Monitoraggi di un utente: registrati da lui (user_id) o con lui come professionista di riferimento. */
-export async function getAdminMonitoringForUser(userId: string): Promise<AdminMonitoringRow[]> {
+export async function getAdminMonitoringForUser(userId: string, clientFallback: string): Promise<AdminMonitoringRow[]> {
   const rows = await loadRows((q) => (q as unknown as { or: (f: string) => unknown }).or(`user_id.eq.${userId},professionista_id.eq.${userId}`))
-  return enrich(rows)
+  return enrich(rows, clientFallback)
 }
 
 /** Conteggi per utente registrante, per professionista di riferimento e per scheda CRM. */

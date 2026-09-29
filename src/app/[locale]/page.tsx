@@ -1,35 +1,50 @@
-import { Link } from '@/i18n/navigation'
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { Link } from '@/i18n/navigation'
+import type { Locale } from '@/i18n/routing'
+import { pageMetadata } from '@/lib/seo'
+import { formatEur } from '@/lib/format'
 import { HomeNavbar } from './HomeNavbar'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { RecoveryLinkRedirect } from '@/components/RecoveryLinkRedirect'
 
-export const metadata: Metadata = {
-  title: 'Stress Index | Software HRV Professionale per Fisioterapisti',
-  description:
-    'Misura lo stress del sistema nervoso autonomo in 10 minuti. 5 score clinici, 25+ parametri HRV, report PDF. Per fisioterapisti e professionisti del benessere.',
-  alternates: { canonical: 'https://stressindex.io' },
-  openGraph: {
-    title: 'Stress Index | Software HRV Professionale per Fisioterapisti',
-    description:
-      'Misura lo stress del sistema nervoso autonomo in 10 minuti. 5 score clinici, 25+ parametri HRV, report PDF. Per fisioterapisti e professionisti del benessere.',
-    url: 'https://stressindex.io',
-    siteName: 'Stress Index',
-    locale: 'it_IT',
-    type: 'website',
-    images: [{ url: 'https://stressindex.io/og-image.png', width: 1200, height: 630 }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Stress Index | Software HRV Professionale per Fisioterapisti',
-    description:
-      'Misura lo stress del sistema nervoso autonomo in 10 minuti. 5 score clinici, 25+ parametri HRV, report PDF.',
-    images: ['https://stressindex.io/og-image.png'],
-  },
+// Prezzi mostrati nella landing (EUR al mese).
+const PRICE_FOUNDING = 49.9
+const PRICE_STANDARD = 69.9
+
+export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
+  const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
+  return pageMetadata({
+    locale: params.locale as Locale,
+    path: '/',
+    title: t('home.title'),
+    description: t('home.description'),
+    shortDescription: t('home.shortDescription'),
+  })
+}
+
+type FaqItem = { q: string; a: string }
+type TitledItem = { title: string; body: string }
+
+/** Legge le FAQ dai messaggi e sostituisce i segnaposto dei prezzi (t.raw non interpola). */
+function useFaqItems(): FaqItem[] {
+  const t = useTranslations('home')
+  const locale = useLocale()
+  const price = formatEur(PRICE_FOUNDING, locale)
+  const standard = formatEur(PRICE_STANDARD, locale)
+  const items = t.raw('faq.items') as FaqItem[]
+  return items.map((it) => ({
+    q: it.q,
+    a: it.a.replaceAll('{price}', price).replaceAll('{standard}', standard),
+  }))
 }
 
 function Logo({ light = false }: { light?: boolean }) {
+  const t = useTranslations('common')
   return (
-    <Link href="/" className="inline-flex items-center gap-2.5 group" aria-label="Stress Index — Home">
+    <Link href="/" className="inline-flex items-center gap-2.5 group" aria-label={t('logoAria')}>
       <div className="w-8 h-8 rounded-lg bg-teal flex items-center justify-center">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path
@@ -42,28 +57,29 @@ function Logo({ light = false }: { light?: boolean }) {
         </svg>
       </div>
       <span className={`text-lg font-semibold tracking-tight ${light ? 'text-white' : 'text-anthracite'}`}>
-        Stress Index
+        {t('brand')}
       </span>
     </Link>
   )
 }
 
-
 function HeroMockup() {
+  const t = useTranslations('home.mockup')
+  const ts = useTranslations('scores.names')
   const scores = [
-    { label: 'Stress', value: 72, barClass: 'bg-[#E85D4A]' },
-    { label: 'Recupero', value: 68, barClass: 'bg-teal' },
-    { label: 'Equilibrio', value: 55, barClass: 'bg-[#F59E0B]' },
-    { label: 'Energia', value: 63, barClass: 'bg-[#6366F1]' },
+    { label: ts('stress'), value: 72, barClass: 'bg-[#E85D4A]' },
+    { label: ts('recovery'), value: 68, barClass: 'bg-teal' },
+    { label: ts('balance'), value: 55, barClass: 'bg-[#F59E0B]' },
+    { label: ts('energy'), value: 63, barClass: 'bg-[#6366F1]' },
   ]
   return (
     <div className="relative mx-auto w-full max-w-[460px]">
       <div className="rounded-2xl bg-white border border-gray-200 p-4">
         <div className="rounded-xl bg-surface overflow-hidden border border-gray-100">
-          <div className="bg-teal text-white px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-white/80" />
-              <span className="text-[13px] font-medium tracking-tight">Stress Index · Misura in corso</span>
+          <div className="bg-teal text-white px-4 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-2 h-2 rounded-full bg-white/80 flex-shrink-0" />
+              <span className="text-[13px] font-medium tracking-tight truncate">{t('measuring')}</span>
             </div>
             <span className="text-[12px] font-mono opacity-80">08:32</span>
           </div>
@@ -71,7 +87,7 @@ function HeroMockup() {
           <div className="p-4 grid grid-cols-2 gap-3">
             {scores.map((s) => (
               <div key={s.label} className="bg-white rounded-lg p-3.5 border border-gray-200">
-                <div className="text-[11px] uppercase tracking-wider text-anthracite-lighter font-medium">{s.label}</div>
+                <div className="text-[11px] uppercase tracking-wider text-anthracite-lighter font-medium truncate">{s.label}</div>
                 <div className="mt-1 flex items-baseline gap-1">
                   <span className="text-3xl font-semibold text-anthracite tabular-nums">{s.value}</span>
                   <span className="text-xs text-anthracite-lighter">/100</span>
@@ -90,7 +106,7 @@ function HeroMockup() {
             </span>
             <span className="text-[12px] font-medium text-anthracite">Polar H10</span>
             <span className="text-[12px] text-anthracite-lighter">·</span>
-            <span className="text-[12px] text-anthracite-lighter tabular-nums">65 bpm · ECG live</span>
+            <span className="text-[12px] text-anthracite-lighter tabular-nums">{t('ecgLive')}</span>
           </div>
         </div>
       </div>
@@ -99,40 +115,41 @@ function HeroMockup() {
 }
 
 function Hero() {
+  const t = useTranslations('home.hero')
+  const tc = useTranslations('common')
   return (
     <section className="pt-32 md:pt-36 pb-16 md:pb-20 px-6">
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 md:gap-16 items-center">
         <div>
           <div className="inline-flex items-center gap-2 text-[13px] font-medium text-teal-dark">
             <span aria-hidden="true">🩺</span>
-            <span>Software HRV per professionisti del benessere</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h1 className="mt-4 font-serif text-[36px] md:text-[52px] leading-[1.08] tracking-tight text-anthracite">
-            Il tuo cliente è stressato.{' '}
-            <em className="italic text-teal">Adesso puoi dimostrarlo.</em>
+            {t('titleLead')}{' '}
+            <em className="italic text-teal">{t('titleEm')}</em>
           </h1>
           <p className="mt-5 text-[17px] md:text-lg text-anthracite-light leading-relaxed max-w-xl">
-            Stress Index misura il sistema nervoso autonomo in 10 minuti e ti consegna 4 indici clinici
-            pronti da usare in seduta. Basta valutazioni a occhio. Basta spiegare senza dati.
+            {t('body')}
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-4">
             <Link
               href="/registrazione"
               className="inline-flex items-center justify-center px-6 py-3 bg-teal text-white font-medium rounded-lg hover:bg-teal-dark transition-colors"
             >
-              Prova gratis 60 giorni
+              {tc('trial60')}
               <span className="ml-2" aria-hidden="true">→</span>
             </Link>
             <a
               href="#come-funziona"
               className="inline-flex items-center px-2 py-3 text-anthracite font-medium hover:text-teal transition-colors"
             >
-              Guarda come funziona
+              {t('ctaHow')}
               <span className="ml-1" aria-hidden="true">↓</span>
             </a>
           </div>
           <p className="mt-4 text-sm text-anthracite-lighter">
-            Carta di credito richiesta · Nessun addebito per 60 giorni · Disdici quando vuoi
+            {tc('trialNote')}
           </p>
         </div>
 
@@ -145,12 +162,13 @@ function Hero() {
 }
 
 function TrustBar() {
+  const t = useTranslations('home.trust')
   const items = [
-    { icon: '🔬', text: '24 parametri HRV' },
-    { icon: '📱', text: 'Android e iOS' },
-    { icon: '🇪🇺', text: 'Server EU · GDPR' },
-    { icon: '📄', text: 'Report PDF clinico' },
-    { icon: '🩺', text: 'Per professionisti della salute' },
+    { icon: '🔬', text: t('params') },
+    { icon: '📱', text: t('platforms') },
+    { icon: '🇪🇺', text: t('eu') },
+    { icon: '📄', text: t('pdf') },
+    { icon: '🩺', text: t('pros') },
   ]
   return (
     <section className="border-y border-gray-100 py-5 px-6">
@@ -167,51 +185,32 @@ function TrustBar() {
 }
 
 function Problem() {
-  const cards = [
-    {
-      icon: '🎯',
-      title: 'Valuto tutto clinicamente',
-      body:
-        "Funziona. Finché il cliente non ti chiede perché non migliora, o finché un collega non gli porta un report con i dati. L'impressione clinica non si difende, i numeri sì.",
-    },
-    {
-      icon: '⏳',
-      title: 'Gli strumenti HRV esistono già',
-      body:
-        'Sì, esistono. Sono pensati per ricercatori, costano migliaia di euro, producono report incomprensibili e richiedono settimane di formazione. Non sono stati costruiti per il tuo studio.',
-    },
-    {
-      icon: '🔁',
-      title: 'Faccio vedere i miglioramenti al cliente',
-      body:
-        'Come? A parole? Il cliente vuole vedere il suo grafico che migliora nel tempo. Vuole il PDF da mostrare al medico. Vuole capire perché oggi si sente diverso da tre settimane fa.',
-    },
-  ]
+  const t = useTranslations('home.problem')
+  const icons = ['🎯', '⏳', '🔁']
+  const cards = t.raw('cards') as TitledItem[]
   return (
     <section className="py-16 md:py-24 px-6 border-b border-gray-100">
       <div className="max-w-5xl mx-auto">
         <div className="max-w-3xl">
           <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">
             <span aria-hidden="true">⚡</span>
-            <span>Il problema reale</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
-            Sai già che lo stress cambia tutto. <em className="italic text-teal">Ma riesci a misurarlo davvero?</em>
+            {t('titleLead')} <em className="italic text-teal">{t('titleEm')}</em>
           </h2>
           <p className="mt-5 text-[17px] text-anthracite-light leading-relaxed">
-            Ogni giorno lavori con persone che dormono male, recuperano lentamente, si infortunano sempre
-            nello stesso periodo, non rispondono come dovrebbero al protocollo. Tu sai che dietro c&apos;è il
-            sistema nervoso. Ma non hai un numero da mostrare.
+            {t('body')}
           </p>
         </div>
 
         <div className="mt-12 grid md:grid-cols-3 gap-5">
-          {cards.map((c) => (
+          {cards.map((c, i) => (
             <div
               key={c.title}
               className="rounded-xl border border-gray-200 bg-white p-6"
             >
-              <div className="text-2xl" aria-hidden="true">{c.icon}</div>
+              <div className="text-2xl" aria-hidden="true">{icons[i]}</div>
               <h3 className="mt-3 text-lg font-semibold text-anthracite tracking-tight">{c.title}</h3>
               <p className="mt-2 text-[15px] text-anthracite-light leading-relaxed">{c.body}</p>
             </div>
@@ -233,7 +232,7 @@ function ScoreCard({
 }) {
   return (
     <div className="bg-white rounded-lg p-5 border border-gray-200">
-      <div className="text-[11px] uppercase tracking-wider text-anthracite-lighter font-medium">{label}</div>
+      <div className="text-[11px] uppercase tracking-wider text-anthracite-lighter font-medium truncate">{label}</div>
       <div className="mt-1.5 flex items-baseline gap-1">
         <span className="text-4xl font-semibold text-anthracite tabular-nums">{value}</span>
         <span className="text-sm text-anthracite-lighter">/100</span>
@@ -246,42 +245,22 @@ function ScoreCard({
 }
 
 function Solution() {
-  const features = [
-    {
-      title: 'Indice di Stress',
-      body:
-        'Sai esattamente quanto il simpatico sta dominando. Intervieni prima che il cliente arrivi al collasso, non dopo.',
-    },
-    {
-      title: 'Indice di Recupero',
-      body:
-        'Smetti di indovinare se è pronto per un carico maggiore. Il numero ti dice quando spingere e quando fermarsi.',
-    },
-    {
-      title: 'Indice di Equilibrio',
-      body:
-        "La firma del sistema nervoso autonomo. In un colpo d'occhio vedi se il bilanciamento simpatico-parasimpatico è dove deve essere.",
-    },
-    {
-      title: 'Indice di Energia',
-      body:
-        'Le riserve reali, non quelle percepite. Fondamentale per chi lavora su burnout, performance sportiva o gestione delle energie.',
-    },
-  ]
+  const t = useTranslations('home.solution')
+  const ts = useTranslations('scores.names')
+  const features = t.raw('features') as TitledItem[]
   return (
     <section className="py-16 md:py-24 px-6 border-b border-gray-100">
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-14 md:gap-20 items-center">
         <div>
           <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">
             <span aria-hidden="true">📊</span>
-            <span>La risposta</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
-            4 numeri. <em className="italic text-teal">Tutto quello che ti serve.</em>
+            {t('titleLead')} <em className="italic text-teal">{t('titleEm')}</em>
           </h2>
           <p className="mt-5 text-[17px] text-anthracite-light leading-relaxed">
-            Stress Index elabora 24 parametri HRV e li traduce in 4 indici su scala 0-100.
-            Tu li leggi in un secondo. Il cliente li capisce senza spiegazioni.
+            {t('body')}
           </p>
           <ul className="mt-8 space-y-5">
             {features.map((f) => (
@@ -301,18 +280,17 @@ function Solution() {
         <div>
           <div className="rounded-2xl bg-white border border-gray-200 p-6 md:p-7">
             <div className="grid grid-cols-2 gap-4">
-              <ScoreCard label="Stress" value={72} color="#E85D4A" />
-              <ScoreCard label="Recupero" value={68} color="#4FA39A" />
-              <ScoreCard label="Equilibrio" value={55} color="#F59E0B" />
-              <ScoreCard label="Energia" value={63} color="#6366F1" />
+              <ScoreCard label={ts('stress')} value={72} color="#E85D4A" />
+              <ScoreCard label={ts('recovery')} value={68} color="#4FA39A" />
+              <ScoreCard label={ts('balance')} value={55} color="#F59E0B" />
+              <ScoreCard label={ts('energy')} value={63} color="#6366F1" />
             </div>
             <div className="mt-5 rounded-lg border-l-4 border-teal bg-teal-light/50 px-4 py-3.5">
               <div className="text-[11px] uppercase tracking-wider text-teal-dark font-semibold">
-                💡 Adattamento
+                💡 {t('adaptation.label')}
               </div>
               <div className="mt-1 text-[14px] text-anthracite leading-relaxed">
-                <span className="font-semibold">58/100</span> · Capacità di recupero e adattamento nella norma
-                per fascia demografica. Consigliato monitoraggio settimanale.
+                <span className="font-semibold">{t('adaptation.value')}</span> · {t('adaptation.text')}
               </div>
             </div>
           </div>
@@ -323,52 +301,32 @@ function Solution() {
 }
 
 function HowItWorks() {
-  const steps = [
-    {
-      num: '01',
-      icon: '🩺',
-      title: 'Collega la fascia',
-      body:
-        'Qualsiasi fascia cardio Bluetooth. Il Polar H10 è il riferimento per qualità ECG, ma funziona con molti altri sensori. Un minuto e sei pronto.',
-    },
-    {
-      num: '02',
-      icon: '⏱️',
-      title: 'Misura in 10 minuti',
-      body:
-        'Il cliente si siede, tu avvii la misurazione. Stress Index legge il segnale in tempo reale e filtra automaticamente gli artefatti. Zero configurazioni.',
-    },
-    {
-      num: '03',
-      icon: '📋',
-      title: 'Condividi il report',
-      body:
-        "PDF professionale con i 4 indici, i grafici clinici e l'analisi del sistema nervoso autonomo. Lo invii al cliente con un tap. Lo stampi. Lo archivi nel CRM.",
-    },
-  ]
+  const t = useTranslations('home.how')
+  const icons = ['🩺', '⏱️', '📋']
+  const steps = t.raw('steps') as TitledItem[]
   return (
     <section id="come-funziona" className="py-16 md:py-24 px-6 scroll-mt-20 border-b border-gray-100">
       <div className="max-w-5xl mx-auto">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">
             <span aria-hidden="true">🎯</span>
-            <span>Come funziona</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
-            Tre passi. <em className="italic text-teal">Poi hai il report.</em>
+            {t('titleLead')} <em className="italic text-teal">{t('titleEm')}</em>
           </h2>
         </div>
 
         <div className="mt-12 grid md:grid-cols-3 gap-5">
-          {steps.map((s) => (
+          {steps.map((s, i) => (
             <div
-              key={s.num}
+              key={s.title}
               className="relative bg-white rounded-xl p-6 border border-gray-200"
             >
               <div className="flex items-center justify-between">
-                <span className="text-2xl" aria-hidden="true">{s.icon}</span>
+                <span className="text-2xl" aria-hidden="true">{icons[i]}</span>
                 <span className="font-mono text-[13px] text-anthracite-lighter tabular-nums" aria-hidden="true">
-                  {s.num}
+                  {String(i + 1).padStart(2, '0')}
                 </span>
               </div>
               <h3 className="mt-4 text-lg font-semibold text-anthracite tracking-tight">{s.title}</h3>
@@ -382,53 +340,30 @@ function HowItWorks() {
 }
 
 function Benefits() {
-  const items = [
-    {
-      icon: '📱',
-      title: 'Funziona su tutto',
-      body:
-        'Android, iOS, tablet, smartphone. Bluetooth 4.0 o superiore. Portalo in studio, in palestra, in campo. Nessun hardware proprietario da comprare.',
-    },
-    {
-      icon: '👥',
-      title: 'I tuoi clienti, organizzati',
-      body:
-        "CRM integrato con anagrafica, storico misurazioni e confronto tra sessioni. Vedi l'evoluzione nel tempo e aggiusti il protocollo con dati alla mano.",
-    },
-    {
-      icon: '🇪🇺',
-      title: 'Privacy garantita per legge',
-      body:
-        "Server in Germania, GDPR compliant, consenso del cliente registrato automaticamente. I dati non escono dall'Europa. Mai.",
-    },
-    {
-      icon: '🔬',
-      title: 'Scienza seria, linguaggio semplice',
-      body:
-        '24 parametri HRV su letteratura internazionale, normalizzazione demografica per età e sesso. Il rigore clinico che ti aspetti, senza la complessità che non ti serve.',
-    },
-  ]
+  const t = useTranslations('home.benefits')
+  const icons = ['📱', '👥', '🇪🇺', '🔬']
+  const items = t.raw('items') as TitledItem[]
   return (
     <section id="benefici" className="py-16 md:py-24 px-6 scroll-mt-20 border-b border-gray-100">
       <div className="max-w-5xl mx-auto">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">
             <span aria-hidden="true">💡</span>
-            <span>Perché Stress Index</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
-            Costruito per chi lavora <em className="italic text-teal">nel benessere reale.</em>
+            {t('titleLead')} <em className="italic text-teal">{t('titleEm')}</em>
           </h2>
         </div>
 
         <div className="mt-12 grid md:grid-cols-2 gap-5">
-          {items.map((b) => (
+          {items.map((b, i) => (
             <div
               key={b.title}
               className="bg-white rounded-xl p-6 border border-gray-200"
             >
               <div className="text-2xl" aria-hidden="true">
-                {b.icon}
+                {icons[i]}
               </div>
               <h3 className="mt-3 text-lg font-semibold text-anthracite tracking-tight">{b.title}</h3>
               <p className="mt-2 text-[15px] text-anthracite-light leading-relaxed">{b.body}</p>
@@ -441,16 +376,18 @@ function Benefits() {
 }
 
 function ExplorePages() {
+  const t = useTranslations('home.explore')
+  const tc = useTranslations('common')
   return (
     <section className="py-16 md:py-24 px-6 border-b border-gray-100">
       <div className="max-w-5xl mx-auto">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">
             <span aria-hidden="true">🧭</span>
-            <span>Scopri di più</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
-            Vai in profondità. <em className="italic text-teal">Da dove vuoi partire?</em>
+            {t('titleLead')} <em className="italic text-teal">{t('titleEm')}</em>
           </h2>
         </div>
 
@@ -461,14 +398,13 @@ function ExplorePages() {
           >
             <div className="text-3xl" aria-hidden="true">🔬</div>
             <h3 className="mt-4 text-xl font-semibold text-anthracite tracking-tight">
-              Scopri tutte le funzionalità
+              {t('features.title')}
             </h3>
             <p className="mt-3 text-[15px] text-anthracite-light leading-relaxed">
-              5 score proprietari, 25+ parametri, 3 tipi di test, sessioni lunghe, report PDF,
-              CRM clienti, dashboard web.
+              {t('features.body')}
             </p>
             <span className="mt-5 inline-flex items-center text-teal-dark font-medium group-hover:text-teal transition-colors">
-              Esplora le funzionalità
+              {t('features.cta')}
               <span className="ml-1.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true">
                 →
               </span>
@@ -480,17 +416,17 @@ function ExplorePages() {
             className="group rounded-xl border border-gray-200 bg-white p-6 md:p-7 transition-all hover:shadow-md hover:border-gray-300 relative"
           >
             <div className="absolute top-5 right-5 inline-flex items-center px-2 py-0.5 rounded-full bg-teal text-white text-[10px] font-semibold uppercase tracking-wider">
-              Nuovo
+              {tc('new')}
             </div>
             <div className="text-3xl" aria-hidden="true">🏋️</div>
-            <h3 className="mt-4 text-xl font-semibold text-anthracite tracking-tight">
-              Modulo Sport per professionisti
+            <h3 className="mt-4 text-xl font-semibold text-anthracite tracking-tight pr-16">
+              {t('sport.title')}
             </h3>
             <p className="mt-3 text-[15px] text-anthracite-light leading-relaxed">
-              DFA Alpha1 real-time, zone metaboliche, questionario post-allenamento, dashboard atleta.
+              {t('sport.body')}
             </p>
             <span className="mt-5 inline-flex items-center text-teal-dark font-medium group-hover:text-teal transition-colors">
-              Scopri il Piano Pro
+              {t('sport.cta')}
               <span className="ml-1.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true">
                 →
               </span>
@@ -503,61 +439,55 @@ function ExplorePages() {
 }
 
 function Pricing() {
-  const features = [
-    'Clienti e misurazioni illimitati',
-    'Report PDF professionali illimitati',
-    'CRM clienti con storico completo',
-    'Export CSV dei dati',
-    'Android e iOS inclusi',
-    'Aggiornamenti automatici per sempre',
-    'Supporto prioritario via email',
-  ]
+  const t = useTranslations('home.pricing')
+  const locale = useLocale()
+  const price = formatEur(PRICE_FOUNDING, locale)
+  const standard = formatEur(PRICE_STANDARD, locale)
+  const features = t.raw('features') as string[]
   return (
     <section id="prezzi" className="py-16 md:py-24 px-6 scroll-mt-20 border-b border-gray-100">
       <div className="max-w-5xl mx-auto">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">
             <span aria-hidden="true">💰</span>
-            <span>Pricing</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
-            Un abbonamento. <em className="italic text-teal">Tutto incluso, per sempre.</em>
+            {t('titleLead')} <em className="italic text-teal">{t('titleEm')}</em>
           </h2>
           <p className="mt-5 text-[17px] text-anthracite-light leading-relaxed">
-            Niente costi per cliente, niente report extra, niente sorprese. Paghi una cifra fissa ogni mese
-            e usi tutto senza limiti.
+            {t('body')}
           </p>
         </div>
 
         <div className="mt-12 mx-auto max-w-[640px] bg-white rounded-xl border border-gray-200 p-8 md:p-10">
           <div className="flex justify-center">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium">
-              <span aria-hidden="true">⭐</span> Offerta Founding Members · Primi 200 iscritti
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium text-center">
+              <span aria-hidden="true">⭐</span> {t('badge')}
             </span>
           </div>
 
           <div className="mt-6 text-center">
-            <h3 className="font-serif text-2xl md:text-3xl text-anthracite tracking-tight">Stress Index Pro</h3>
+            <h3 className="font-serif text-2xl md:text-3xl text-anthracite tracking-tight">{t('planName')}</h3>
             <p className="mt-2 text-anthracite-light text-[15px]">
-              Per fisioterapisti, osteopati, medici sportivi e coach del benessere
+              {t('planFor')}
             </p>
           </div>
 
           <div className="mt-6 text-center">
             <div className="font-serif text-5xl text-anthracite tracking-tight">
-              € 49,90
-              <span className="text-xl text-anthracite-light font-sans font-normal"> /mese</span>
+              {price}
+              <span className="text-xl text-anthracite-light font-sans font-normal"> {t('perMonth')}</span>
             </div>
             <p className="mt-3 text-sm text-anthracite-lighter">
-              Prezzo standard <s>69,90€/mese</s> · Founding Members 49,90€/mese per i primi 200
+              {t.rich('standardNote', { s: (chunks) => <s>{chunks}</s>, standard, price })}
             </p>
           </div>
 
           <div className="mt-6 rounded-lg border-l-4 border-teal bg-teal-light/50 px-4 py-3 flex items-start gap-3">
             <span aria-hidden="true" className="text-lg leading-none mt-0.5">🎯</span>
             <p className="text-[14px] text-anthracite leading-relaxed">
-              Sei tra i primi 200 iscritti? Il prezzo di{' '}
-              <strong>49,90€/mese</strong> è bloccato per sempre.
+              {t.rich('lockNote', { b: (chunks) => <strong>{chunks}</strong>, price })}
             </p>
           </div>
 
@@ -576,12 +506,12 @@ function Pricing() {
             href="/registrazione"
             className="mt-8 w-full inline-flex items-center justify-center px-6 py-3 bg-teal text-white font-medium rounded-lg hover:bg-teal-dark transition-colors"
           >
-            Inizia 60 giorni gratis
+            {t('cta')}
             <span className="ml-2" aria-hidden="true">→</span>
           </Link>
 
           <p className="mt-4 text-center text-sm text-anthracite-lighter">
-            Carta di credito richiesta · Nessun addebito per 60 giorni · Poi 49,90€/mese · Disdici quando vuoi
+            {t('note', { price })}
           </p>
         </div>
       </div>
@@ -589,45 +519,19 @@ function Pricing() {
   )
 }
 
-const FAQ_ITEMS = [
-  {
-    q: 'Ho bisogno del Polar H10?',
-    a: 'No. Funziona con qualsiasi fascia cardio Bluetooth. Il Polar H10 è quello che consigliamo per la qualità del segnale ECG, specialmente su Android, ma non è obbligatorio.',
-  },
-  {
-    q: 'Funziona su iPhone?',
-    a: 'Sì. Android e iOS, tablet e smartphone. Qualsiasi dispositivo con Bluetooth 4.0.',
-  },
-  {
-    q: 'I dati dei miei clienti sono al sicuro?',
-    a: "Server in Germania, GDPR compliant. I dati non vengono mai condivisi con terzi. Il consenso del cliente viene registrato automaticamente dall'app ad ogni misurazione.",
-  },
-  {
-    q: 'Posso usarlo senza internet?',
-    a: 'La misurazione è completamente offline. I dati si sincronizzano automaticamente quando torni online. Non perdi nessuna sessione.',
-  },
-  {
-    q: 'Cosa succede dopo i 60 giorni?',
-    a: "Ti arriva una notifica prima della scadenza. Se vuoi continuare, l'abbonamento parte in automatico. Se no, annulli e non ti addebitiamo niente. Zero burocrazia.",
-  },
-  {
-    q: 'Il prezzo Founding Members dura quanto?',
-    a: 'Per sempre. I primi 200 professionisti che si iscrivono bloccano 49,90€/mese a vita, anche quando il prezzo standard salirà a 69,90€/mese.',
-  },
-]
-
 function Faq() {
-  const items = FAQ_ITEMS
+  const t = useTranslations('home.faq')
+  const items = useFaqItems()
   return (
     <section id="faq" className="py-16 md:py-24 px-6 scroll-mt-20 border-b border-gray-100">
       <div className="max-w-5xl mx-auto">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">
             <span aria-hidden="true">❓</span>
-            <span>Domande frequenti</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
-            Tutto chiaro, <em className="italic text-teal">prima di iniziare.</em>
+            {t('titleLead')} <em className="italic text-teal">{t('titleEm')}</em>
           </h2>
         </div>
 
@@ -660,31 +564,34 @@ function Faq() {
 }
 
 function FinalCta() {
+  const t = useTranslations('home.finalCta')
+  const tc = useTranslations('common')
+  const locale = useLocale()
   return (
     <section className="py-16 md:py-24 px-6 border-b border-gray-100">
       <div className="max-w-3xl mx-auto">
         <div className="rounded-2xl bg-teal-light/50 border border-teal-mid/40 p-8 md:p-12 text-center">
           <div className="inline-flex items-center gap-2 text-[13px] font-medium text-teal-dark uppercase tracking-wider">
             <span aria-hidden="true">🚀</span>
-            <span>Inizia oggi</span>
+            <span>{t('eyebrow')}</span>
           </div>
           <h2 className="mt-4 font-serif text-3xl md:text-4xl leading-tight tracking-tight text-anthracite">
-            Il prossimo cliente che entra, <em className="italic text-teal">misuralo davvero.</em>
+            {t('titleLead')} <em className="italic text-teal">{t('titleEm')}</em>
           </h2>
           <p className="mt-4 text-[17px] text-anthracite-light leading-relaxed">
-            60 giorni gratis. Nessun vincolo. Smetti quando vuoi.
+            {t('body')}
           </p>
           <div className="mt-8 flex justify-center">
             <Link
               href="/registrazione"
               className="inline-flex items-center justify-center px-6 py-3 bg-teal text-white font-medium rounded-lg hover:bg-teal-dark transition-colors"
             >
-              Prova gratis 60 giorni
+              {tc('trial60')}
               <span className="ml-2" aria-hidden="true">→</span>
             </Link>
           </div>
           <p className="mt-4 text-sm text-anthracite-lighter">
-            Carta di credito richiesta · Poi 49,90€/mese · Disdici in qualsiasi momento
+            {t('note', { price: formatEur(PRICE_FOUNDING, locale) })}
           </p>
         </div>
       </div>
@@ -693,6 +600,10 @@ function FinalCta() {
 }
 
 function Footer() {
+  const t = useTranslations('home.footer')
+  const tc = useTranslations('common')
+  const currentYear = new Date().getFullYear()
+  const linkClass = 'text-anthracite-light hover:text-teal transition-colors'
   return (
     <footer className="bg-white px-6 pt-16 pb-10">
       <div className="max-w-6xl mx-auto">
@@ -700,36 +611,35 @@ function Footer() {
           <div>
             <Logo />
             <p className="mt-4 text-[14px] text-anthracite-light leading-relaxed max-w-sm">
-              Software HRV professionale per fisioterapisti, osteopati, medici sportivi e coach del benessere.
-              Misura lo stress del sistema nervoso autonomo in 10 minuti.
+              {t('tagline')}
             </p>
           </div>
 
           <div>
-            <h3 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">Prodotto</h3>
+            <h3 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">{t('product')}</h3>
             <ul className="mt-4 space-y-2.5 text-[14px]">
-              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="#come-funziona">Come funziona</a></li>
-              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="#benefici">Funzionalità</a></li>
-              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="#prezzi">Prezzi</a></li>
-              <li><Link className="text-anthracite-light hover:text-teal transition-colors" href="/registrazione">Inizia gratis</Link></li>
+              <li><a className={linkClass} href="#come-funziona">{tc('nav.howItWorks')}</a></li>
+              <li><a className={linkClass} href="#benefici">{tc('nav.features')}</a></li>
+              <li><a className={linkClass} href="#prezzi">{tc('nav.pricing')}</a></li>
+              <li><Link className={linkClass} href="/registrazione">{tc('startFree')}</Link></li>
             </ul>
           </div>
 
           <div>
-            <h3 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">Supporto</h3>
+            <h3 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">{t('support')}</h3>
             <ul className="mt-4 space-y-2.5 text-[14px]">
-              <li><Link className="text-anthracite-light hover:text-teal transition-colors" href="/guide">Guide e Supporto</Link></li>
-              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="#faq">FAQ</a></li>
-              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="mailto:support@stressindex.io">Contattaci</a></li>
+              <li><Link className={linkClass} href="/guide">{tc('nav.guidesAndSupport')}</Link></li>
+              <li><a className={linkClass} href="#faq">{tc('nav.faq')}</a></li>
+              <li><a className={linkClass} href="mailto:support@stressindex.io">{tc('nav.contactUs')}</a></li>
             </ul>
           </div>
 
           <div>
-            <h3 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">Legale</h3>
+            <h3 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">{t('legal')}</h3>
             <ul className="mt-4 space-y-2.5 text-[14px]">
-              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="/privacy">Privacy Policy</a></li>
-              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="/termini">Termini di Servizio</a></li>
-              <li><a className="text-anthracite-light hover:text-teal transition-colors" href="/cookie">Cookie Policy</a></li>
+              <li><Link className={linkClass} href="/privacy">{tc('nav.privacyPolicy')}</Link></li>
+              <li><Link className={linkClass} href="/termini">{tc('nav.termsOfService')}</Link></li>
+              <li><Link className={linkClass} href="/cookie">{tc('nav.cookie')}</Link></li>
             </ul>
           </div>
         </div>
@@ -738,12 +648,15 @@ function Footer() {
           <div className="leading-relaxed">
             <div className="font-medium text-anthracite-light">Minimax Srl</div>
             <div>Via Francesco Baracca, 88 · 36100 Vicenza (VI) · Italy</div>
-            <div>P.IVA 04496840242</div>
+            <div>{t('vat', { vat: '04496840242' })}</div>
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 md:justify-end">
-            <span>© 2026 Minimax Srl · Tutti i diritti riservati</span>
-            <a className="hover:text-teal transition-colors" href="/privacy">Privacy Policy</a>
-            <a className="hover:text-teal transition-colors" href="/termini">Termini</a>
+            <span>© {currentYear} Minimax Srl · {tc('allRightsReserved')}</span>
+            <Link className="hover:text-teal transition-colors" href="/privacy">{tc('nav.privacyPolicy')}</Link>
+            <Link className="hover:text-teal transition-colors" href="/termini">{tc('nav.terms')}</Link>
+            <Suspense fallback={null}>
+              <LanguageSwitcher />
+            </Suspense>
           </div>
         </div>
       </div>
@@ -751,29 +664,29 @@ function Footer() {
   )
 }
 
-const softwareApplicationJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'Stress Index',
-  applicationCategory: 'HealthApplication',
-  operatingSystem: 'Android, iOS',
-  description:
-    "Software HRV professionale per l'analisi del sistema nervoso autonomo",
-}
-
-const faqJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: FAQ_ITEMS.map((it) => ({
-    '@type': 'Question',
-    name: it.q,
-    acceptedAnswer: { '@type': 'Answer', text: it.a },
-  })),
-}
-
-export default function Home() {
+/** Dati strutturati (SoftwareApplication + FAQPage) con i testi nella lingua della pagina. */
+function JsonLd() {
+  const t = useTranslations('home')
+  const faq = useFaqItems()
+  const softwareApplicationJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'Stress Index',
+    applicationCategory: 'HealthApplication',
+    operatingSystem: 'Android, iOS',
+    description: t('jsonLd.appDescription'),
+  }
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faq.map((it) => ({
+      '@type': 'Question',
+      name: it.q,
+      acceptedAnswer: { '@type': 'Answer', text: it.a },
+    })),
+  }
   return (
-    <main className="bg-white text-anthracite">
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd) }}
@@ -782,6 +695,15 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
+    </>
+  )
+}
+
+export default function Home({ params }: { params: { locale: string } }) {
+  setRequestLocale(params.locale)
+  return (
+    <main className="bg-white text-anthracite">
+      <JsonLd />
       {/* La home è la Site URL del progetto Supabase: i link email che non
           passano l'allowlist dei redirect atterrano qui. Montato prima di
           tutto il resto, e comunque nessun componente della home crea un

@@ -1,9 +1,11 @@
 'use client'
 
 import { useMemo } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { Brush, CartesianGrid, Line, LineChart, ReferenceArea, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { SleepDesaturationEvent, SleepWindow } from '@/lib/monitoring-types'
-import { MON, SLEEP_PARAMS, SLEEP_STATE_COLOR, SLEEP_STATE_LABEL, SLEEP_STATE_ORDER, STATE_COLOR, hm } from '@/lib/monitoring-format'
+import { MON, SLEEP_PARAMS, SLEEP_STATE_COLOR, SLEEP_STATE_ORDER, STATE_COLOR, fmtNum, hm, sleepStateLabel } from '@/lib/monitoring-format'
+import { sleepT } from '@/lib/sleep-strings'
 
 // Grafici del modulo Sonno (Spo2NightChart, PrNightChart, DesaturationStrip
 // dell'app) sulle finestre da 1 minuto già calcolate dall'app: le finestre
@@ -36,8 +38,9 @@ const TIP = { background: '#fff', borderRadius: 12, border: `1px solid ${MON.bor
 
 /** SpO₂ media per minuto; banda rossa sotto il 90 %; punti rossi sui nadir degli eventi. */
 export function Spo2NightChart({ windows, events, tz, height = 220 }: { windows: SleepWindow[]; events: SleepDesaturationEvent[]; tz: number; height?: number }) {
+  const tc = useTranslations('common')
   const { pts, start, total } = usePoints(windows, (w) => w.spo2)
-  if (pts.length === 0) return <div className="text-sm text-anthracite-lighter">Nessun dato</div>
+  if (pts.length === 0) return <div className="text-sm text-anthracite-lighter">{tc('noData')}</div>
   const toIso = (m: number) => new Date(start + m * 60_000).toISOString()
   let minY = 100
   for (const p of pts) { const v = p.min ?? p.v; if (v != null && v < minY) minY = v }
@@ -68,8 +71,11 @@ export function Spo2NightChart({ windows, events, tz, height = 220 }: { windows:
 
 /** Polso medio per minuto; linea verde tratteggiata = polso basale; punti gialli = eventi con surge ≥ 6 bpm. */
 export function PrNightChart({ windows, events, prBasal, tz, height = 200 }: { windows: SleepWindow[]; events: SleepDesaturationEvent[]; prBasal: number | null; tz: number; height?: number }) {
+  const t = useTranslations('monitoring')
+  const tc = useTranslations('common')
+  const locale = useLocale()
   const { pts, start, total } = usePoints(windows, (w) => w.pr)
-  if (pts.length === 0) return <div className="text-sm text-anthracite-lighter">Nessun dato</div>
+  if (pts.length === 0) return <div className="text-sm text-anthracite-lighter">{tc('noData')}</div>
   const toIso = (m: number) => new Date(start + m * 60_000).toISOString()
   const vals = pts.map((p) => p.v).filter((v): v is number => v != null)
   let minY = vals.length ? Math.min(...vals) : 40
@@ -85,11 +91,11 @@ export function PrNightChart({ windows, events, prBasal, tz, height = 200 }: { w
           <LineChart data={pts} margin={{ top: 8, right: 16, bottom: 4, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={MON.borderLight} vertical={false} />
             {prBasal != null && (
-              <ReferenceLine y={prBasal} stroke={STATE_COLOR.recovery} strokeOpacity={0.7} strokeDasharray="4 4" label={{ value: `basale ${Math.round(prBasal)}`, position: 'insideTopRight', fontSize: 9, fill: STATE_COLOR.recovery }} />
+              <ReferenceLine y={prBasal} stroke={STATE_COLOR.recovery} strokeOpacity={0.7} strokeDasharray="4 4" label={{ value: t('sleep.basalLine', { v: Math.round(prBasal) }), position: 'insideTopRight', fontSize: 9, fill: STATE_COLOR.recovery }} />
             )}
             <XAxis dataKey="t" type="number" domain={[0, total]} ticks={hourTicks(total)} tickFormatter={(v) => hm(toIso(Number(v)), tz)} stroke={MON.textSecondary} fontSize={10} />
             <YAxis domain={[yMin, yMax]} stroke={MON.textSecondary} fontSize={10} width={34} tickFormatter={(v) => `${Math.round(Number(v))}`} />
-            <Tooltip contentStyle={TIP} labelFormatter={(v) => hm(toIso(Number(v)), tz)} formatter={(v: unknown) => [v == null ? '—' : `${Math.round(Number(v))} bpm`, 'Polso']} />
+            <Tooltip contentStyle={TIP} labelFormatter={(v) => hm(toIso(Number(v)), tz)} formatter={(v: unknown) => [v == null ? '—' : `${Math.round(Number(v))} bpm`, sleepT('pr', locale as 'it' | 'en' | 'de')]} />
             <Line type="linear" dataKey="v" stroke={STATE_COLOR.stress} strokeWidth={1.6} dot={false} connectNulls={false} isAnimationActive={false} />
             {markers.map((e, i) => (
               <ReferenceDot key={i} x={(new Date(e.nadir_time).getTime() - start) / 60_000} y={prBasal ?? yMin + 1} r={markers.length > 120 ? 1.4 : 2.2} fill={MON.warning} stroke="none" ifOverflow="hidden" />
@@ -104,6 +110,8 @@ export function PrNightChart({ windows, events, prBasal, tz, height = 200 }: { w
 
 /** Striscia della notte: sfondo per stato del minuto e tacche sugli eventi, alte in proporzione al calo. */
 export function DesaturationStrip({ windows, events, tz, height = 64 }: { windows: SleepWindow[]; events: SleepDesaturationEvent[]; tz: number; height?: number }) {
+  const t = useTranslations('monitoring')
+  const locale = useLocale()
   if (windows.length === 0) return null
   const W = 1000
   const labelH = 14
@@ -122,19 +130,23 @@ export function DesaturationStrip({ windows, events, tz, height = 64 }: { window
   const ticks: Array<{ x: number; label: string }> = []
   const step = total > 10 * 3_600_000 ? 2 : 1
   const startWall = startMs + tz * 60_000
-  let t = Math.ceil(startWall / 3_600_000) * 3_600_000
-  while (t - tz * 60_000 < endMs) {
-    ticks.push({ x: ((t - tz * 60_000 - startMs) / total) * W, label: String(new Date(t).getUTCHours()).padStart(2, '0') + ':00' })
-    t += step * 3_600_000
+  let tk = Math.ceil(startWall / 3_600_000) * 3_600_000
+  while (tk - tz * 60_000 < endMs) {
+    ticks.push({ x: ((tk - tz * 60_000 - startMs) / total) * W, label: String(new Date(tk).getUTCHours()).padStart(2, '0') + ':00' })
+    tk += step * 3_600_000
   }
   return (
     <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${height}`} className="w-full min-w-[520px] block" style={{ height }} role="img" aria-label="Timeline della notte">
+      <svg viewBox={`0 0 ${W} ${height}`} className="w-full min-w-[520px] block" style={{ height }} role="img" aria-label={t('sleep.nightTimeline')}>
         {runs.map((r, i) => <rect key={i} x={r.x0} y={0} width={Math.max(0.5, r.x1 - r.x0)} height={plotH} fill={SLEEP_STATE_COLOR[r.state]} />)}
         {events.map((e, i) => {
           const h = Math.max(0.35, Math.min(1, 0.35 + (((e.drop ?? 3) - 3) / 7) * 0.65)) * plotH
           const px = x(e.start)
-          return <line key={`e${i}`} x1={px} x2={px} y1={plotH} y2={plotH - h} stroke={STATE_COLOR.stress} strokeWidth={events.length > 200 ? 1 : 1.5}><title>{`${hm(e.start, tz)} · calo ${e.drop?.toFixed(1) ?? '—'} punti · nadir ${e.nadir} % · ${e.duration_sec} s`}</title></line>
+          return (
+            <line key={`e${i}`} x1={px} x2={px} y1={plotH} y2={plotH - h} stroke={STATE_COLOR.stress} strokeWidth={events.length > 200 ? 1 : 1.5}>
+              <title>{t('sleep.eventTitle', { time: hm(e.start, tz), drop: fmtNum(e.drop, 1, locale), nadir: e.nadir, sec: e.duration_sec })}</title>
+            </line>
+          )
         })}
         <rect x={0.4} y={0.4} width={W - 0.8} height={plotH - 0.8} rx={4} fill="none" stroke={MON.borderMedium} strokeWidth={0.8} />
         {ticks.map((tk, i) => (
@@ -149,12 +161,13 @@ export function DesaturationStrip({ windows, events, tz, height = 64 }: { window
 }
 
 export function SleepStateLegend({ compact = false }: { compact?: boolean }) {
+  const t = useTranslations('monitoring')
   return (
     <div className={`flex flex-wrap gap-x-3 gap-y-1 ${compact ? 'text-[10px]' : 'text-[11px]'} text-anthracite-lighter`}>
       {SLEEP_STATE_ORDER.map((s) => (
         <span key={s} className="inline-flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: SLEEP_STATE_COLOR[s], border: s === 'nonValido' || s === 'normale' ? `1px solid ${MON.borderMedium}` : undefined }} />
-          {SLEEP_STATE_LABEL[s]}
+          <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: SLEEP_STATE_COLOR[s], border: s === 'nonValido' || s === 'normale' ? `1px solid ${MON.borderMedium}` : undefined }} />
+          {sleepStateLabel(s, t)}
         </span>
       ))}
     </div>

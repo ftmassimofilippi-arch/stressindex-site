@@ -1,0 +1,166 @@
+{
+  "hero": {
+    "eyebrow": "Tutte le funzionalità di Stress Index",
+    "titleLead": "Tutto quello che ti serve per misurare lo stress.",
+    "titleEm": "In un’unica app.",
+    "body": "Stress Index è il software HRV professionale più completo sul mercato italiano. Ecco cosa puoi fare.",
+    "ctaHow": "Scopri come funziona"
+  },
+  "scores": {
+    "eyebrow": "Score proprietari",
+    "titleLead": "5 numeri.",
+    "titleEm": "Tutto chiaro a colpo d’occhio.",
+    "description": "Non devi essere un esperto di HRV per usare Stress Index. I 5 score proprietari ti danno una fotografia immediata del tuo cliente: quanto è stressato, come recupera, se il sistema nervoso è in equilibrio, quanta energia ha e come si adatta ai carichi.",
+    "items": [
+      {
+        "name": "Indice di Stress",
+        "description": "Quanto il sistema nervoso è sotto pressione. Basato su 5 parametri pesati: Stress Index Baevsky, SDNN, Total Power, DFA Alpha1, HF norm."
+      },
+      {
+        "name": "Recupero",
+        "description": "La capacità del parasimpatico di rigenerare. Se è basso cronicamente, il cliente non recupera tra una sessione e l’altra."
+      },
+      {
+        "name": "Equilibrio",
+        "description": "Il bilanciamento simpatico-parasimpatico. Non è più alto = meglio. Il valore ottimale è al centro."
+      },
+      {
+        "name": "Energia",
+        "description": "Le risorse energetiche complessive del sistema nervoso. Basato sulla potenza totale dello spettro."
+      },
+      {
+        "name": "Adattamento",
+        "description": "La capacità di recupero e adattamento del sistema nervoso autonomo alle sollecitazioni quotidiane. Unico nel mercato."
+      }
+    ]
+  },
+  "params": {
+    "eyebrow": "Parametri scientifici",
+    "titleLead": "25+ parametri HRV.",
+    "titleEm": "Tutta la letteratura, sempre con te.",
+    "description": "Per il professionista che vuole andare in profondità, Stress Index calcola tutti i parametri validati dalla letteratura scientifica.",
+    "groups": {
+      "time": "Time Domain",
+      "frequency": "Frequency Domain",
+      "nonlinear": "Non-linear",
+      "geometric": "Geometric"
+    },
+    "calloutLead": "Range normativi automatici.",
+    "calloutBody": "Ogni parametro ha un semaforo colorato basato sui range normativi per età e sesso del cliente (Nunan 2010, Voss 2015). Non devi ricordare i valori di riferimento, l’app lo fa per te."
+  },
+  "tests": {
+    "eyebrow": "Tipi di test",
+    "titleLead": "Un test per ogni esigenza.",
+    "titleEm": "Dal protocollo standard alla seduta lunga.",
+    "description": "Quattro modalità di misurazione pensate per coprire il 100% delle situazioni in studio e sul campo.",
+    "items": [
+      {
+        "title": "Misurazione Standard",
+        "body": "La fotografia dello stato attuale. 5 o 10 minuti, seduto o supino. Il 70% delle valutazioni le farai con questa."
+      },
+      {
+        "title": "Test Ortostatico",
+        "body": "Misura la reattività del sistema nervoso. 5 minuti supino, poi 5 minuti in piedi. L’app ti guida con suono e vibrazione alla transizione. Perfetto per chi recupera lentamente, per l’affaticamento persistente e per gli atleti sovrallenati."
+      },
+      {
+        "title": "Respirazione di Coerenza",
+        "body": "Guida visiva animata per il respiro. Trova la frequenza di risonanza personale del tuo cliente. Score di coerenza in tempo reale. Ideale per chi lavora su rilassamento, qualità del sonno e gestione della tensione."
+      },
+      {
+        "title": "Sessioni Lunghe",
+        "body": "Durata libera per misurare durante le sedute. Tag in tempo reale, analisi ogni 2 minuti, confronto automatico prima/dopo la seduta. Dimostra ai tuoi clienti che la seduta funziona, con i dati."
+      }
+    ],
+    "athletesNote": "Lavori con atleti? Esiste un modulo dedicato con DFA Alpha1 in tempo reale e zone metaboliche live.",
+    "athletesCta": "Scopri il Modulo Sport"
+  },
+  "pdf": {
+    "eyebrow": "Report PDF",
+    "titleLead": "Un PDF professionale.",
+    "titleEm": "Pronto in seduta.",
+    "body": "Un PDF di 4 pagine che puoi stampare, inviare per email o mostrare al cliente in seduta. Include tutti gli score, i parametri dettagliati, i grafici HRV (Poincaré, ritmogramma, spettro PSD) e il disclaimer legale. Personalizzabile con il tuo nome, titolo e studio.",
+    "items": [
+      "Header personalizzato con nome, titolo e studio",
+      "5 score proprietari con grafico a barre colorato",
+      "25+ parametri HRV con range normativi e semaforo",
+      "Grafici HRV: Poincaré, ritmogramma RR, spettro PSD",
+      "Disclaimer legale e generazione tracciata"
+    ],
+    "mockReport": "Report cliente",
+    "mockFooter": "Pagina 1 di 4 · Generato da Stress Index"
+  },
+  "crm": {
+    "eyebrow": "CRM Clienti",
+    "titleLead": "I tuoi clienti, organizzati.",
+    "titleEm": "In un solo posto.",
+    "description": "Gestisci tutti i tuoi clienti in un unico posto. Anagrafica completa, storico misurazioni, confronto sessioni, note del professionista. Tutto sincronizzato tra app e dashboard web.",
+    "items": [
+      "Anagrafica estesa (sesso, età, fumatore, atleta)",
+      "Storico misurazioni con trend",
+      "Confronto fino a 29 parametri tra sessioni",
+      "Note libere per cliente",
+      "Tag misurazioni per categorizzare"
+    ]
+  },
+  "dashboard": {
+    "eyebrow": "Dashboard Web",
+    "titleLead": "Non solo app.",
+    "titleEm": "Anche dal computer.",
+    "body": "Accedi ai dati dei tuoi clienti anche dal computer su stressindex.io. Grafici interattivi, trend nel tempo, alert automatici, report periodici PDF. Perfetto quando sei in studio davanti al PC.",
+    "items": [
+      "Grafici interattivi con doppio asse Y",
+      "Trend di 30 / 60 / 90 giorni",
+      "Alert automatici su stress e recupero",
+      "Report periodici PDF con commento automatico",
+      "CRM completo accessibile da browser"
+    ],
+    "trendLabel": "Trend ultimi 30 giorni"
+  },
+  "privacy": {
+    "eyebrow": "Sicurezza e Privacy",
+    "titleLead": "Privacy garantita.",
+    "titleEm": "Per legge.",
+    "description": "I dati sensibili dei tuoi clienti sono protetti dalla normativa europea più rigorosa. Niente tracking nascosto, niente terze parti, nessuna sorpresa.",
+    "items": [
+      { "title": "Server in Europa", "body": "Datacenter a Francoforte, Germania." },
+      { "title": "GDPR compliant", "body": "Consenso registrato per ogni cliente." },
+      { "title": "Crittografia", "body": "Dati in transito e a riposo cifrati." },
+      { "title": "Nessuna condivisione", "body": "I dati non escono dall’Europa. Mai." }
+    ]
+  },
+  "sensors": {
+    "eyebrow": "Sensori",
+    "titleLead": "Funziona con la tua fascia.",
+    "titleEm": "O con quella che consigliamo.",
+    "description": "Nessun hardware proprietario. Stress Index si connette via Bluetooth con i principali sensori HR del mercato.",
+    "calloutLead": "La nostra scelta.",
+    "calloutBody": "Consigliamo Polar H10: ECG, precisione al millisecondo. È quello che usiamo internamente per ogni test e validazione. Per la configurazione passo-passo, vedi le <link>guide al sensore</link>.",
+    "table": {
+      "sensor": "Sensore",
+      "status": "Stato",
+      "notes": "Note"
+    },
+    "status": {
+      "ok": "Compatibile",
+      "limit": "Con limiti",
+      "no": "Non compatibile"
+    },
+    "items": {
+      "h10": { "name": "Polar H10", "note": "Il nostro standard, ECG, precisione massima. Consigliato." },
+      "h9": { "name": "Polar H9", "note": "Stessa qualità ECG del H10, ottimo rapporto qualità prezzo." },
+      "oh1": { "name": "Polar OH1 / Verity Sense", "note": "Sensore ottico da braccio, funziona ma meno preciso di una fascia ECG." },
+      "tickr": { "name": "Wahoo TICKR", "note": "Funziona, buona stabilità BLE. Da testare con la propria unità." },
+      "coospo": { "name": "CooSpo H808S", "note": "Funziona, economico ({price}), qualità inferiore al Polar." },
+      "whoop": { "name": "Whoop 4.0", "note": "Trasmette solo BPM, non gli intervalli RR necessari per l’analisi HRV." },
+      "garmin": { "name": "Fasce Garmin (HRM-Dual, HRM-Pro)", "note": "Non trasmettono gli intervalli RR via BLE standard." },
+      "watch": { "name": "Apple Watch", "note": "Non trasmette dati ECG via BLE." }
+    }
+  },
+  "cta": {
+    "eyebrow": "Inizia oggi",
+    "titleLead": "Prova Stress Index gratis",
+    "titleEm": "per 60 giorni.",
+    "body": "Tutte le funzionalità. Nessun vincolo. Disdici quando vuoi.",
+    "button": "Inizia la prova gratuita"
+  }
+}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { getRequestLocale, getTranslator } from '@/lib/i18n-server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -12,11 +13,13 @@ export const dynamic = 'force-dynamic'
 // (professionista_id = suo uid, client_id NULL), attribuite ai professionisti
 // con cui ha un link active. Prima si passava da client_professional_links.
 // client_id, colonna mai valorizzata dall'app: per i clienti usciva sempre [].
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireSuperadmin()
   if (guard.error) return guard.error
   const userId = params.id
   const admin = createAdminClient()
+  // Etichette di fallback nella lingua della richiesta (namespace admin.sessionsApi).
+  const t = await getTranslator(await getRequestLocale(req), 'admin.sessionsApi')
 
   const { data: profile } = await admin.from('profiles').select('role').eq('id', userId).maybeSingle()
   const role = (profile as { role?: string } | null)?.role ?? null
@@ -79,11 +82,11 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   ])
   const clientName = new Map<string, string>()
   for (const c of (clientsRes.data ?? []) as Array<{ id: string; nome: string | null; cognome: string | null }>) {
-    clientName.set(c.id, `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || 'Cliente')
+    clientName.set(c.id, `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || t('client'))
   }
   const profName = new Map<string, string>()
   for (const p of (profilesRes.data ?? []) as Array<{ id: string; nome: string | null; cognome: string | null; email: string | null }>) {
-    profName.set(p.id, `${p.nome ?? ''} ${p.cognome ?? ''}`.trim() || p.email || 'Professionista')
+    profName.set(p.id, `${p.nome ?? ''} ${p.cognome ?? ''}`.trim() || p.email || t('professional'))
   }
 
   return NextResponse.json({
@@ -93,13 +96,13 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       test_type: s.test_type,
       duration_seconds: s.duration_seconds,
       client_id: s.client_id,
-      client_name: s.remote ? 'Misurazione remota (dalla sua app)' : (s.client_id && clientName.get(s.client_id)) || 'Cliente',
+      client_name: s.remote ? t('remoteMeasurement') : (s.client_id && clientName.get(s.client_id)) || t('client'),
       professional_id: s.remote ? (s.linked_professionals?.[0] ?? null) : s.professionista_id,
       professional_name: s.remote
         ? s.linked_professionals?.length
           ? s.linked_professionals.map((id) => profName.get(id) ?? id.slice(0, 8)).join(', ')
-          : 'nessun professionista collegato: invisibile'
-        : profName.get(s.professionista_id) ?? 'Professionista',
+          : t('noLinkedProfessional')
+        : profName.get(s.professionista_id) ?? t('professional'),
       remote: !!s.remote,
     })),
   })

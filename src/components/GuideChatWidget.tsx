@@ -1,27 +1,20 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
+import { intlTag } from '@/lib/format'
+import { apiErrorMessage } from '@/lib/api-error'
 
 type Role = 'user' | 'assistant'
 type Message = { role: Role; content: string; at: number }
 
-const INITIAL_BOT_MESSAGE =
-  "Ciao! Sono l'assistente di Stress Index. Posso aiutarti con la connessione dei sensori, i tipi di test, la lettura dei risultati e qualsiasi altra domanda sull'app. Cosa ti serve?"
-
-const ERROR_MESSAGE =
-  "Mi dispiace, c'è stato un problema. Riprova o scrivi a support@stressindex.io"
-
-function formatTime(at: number) {
-  const d = new Date(at)
-  return d.toLocaleTimeString('it-IT', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+function formatTime(at: number, locale: string) {
+  return new Intl.DateTimeFormat(intlTag(locale), { hour: '2-digit', minute: '2-digit' }).format(new Date(at))
 }
 
-function TypingDots() {
+function TypingDots({ label }: { label: string }) {
   return (
-    <div className="inline-flex items-center gap-1" aria-label="Sta scrivendo">
+    <div className="inline-flex items-center gap-1" aria-label={label}>
       <span className="w-1.5 h-1.5 rounded-full bg-anthracite-lighter typing-dot" />
       <span className="w-1.5 h-1.5 rounded-full bg-anthracite-lighter typing-dot" />
       <span className="w-1.5 h-1.5 rounded-full bg-anthracite-lighter typing-dot" />
@@ -30,9 +23,12 @@ function TypingDots() {
 }
 
 export default function GuideChatWidget() {
+  const t = useTranslations('guide.chat')
+  const tErr = useTranslations('errors.api')
+  const locale = useLocale()
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: INITIAL_BOT_MESSAGE, at: Date.now() },
+  const [messages, setMessages] = useState<Message[]>(() => [
+    { role: 'assistant', content: t('initial'), at: Date.now() },
   ])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -121,12 +117,21 @@ export default function GuideChatWidget() {
         body: JSON.stringify({
           message: trimmed,
           history: payloadHistory,
+          locale,
         }),
       })
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = (await res.json()) as { reply?: string; error?: string }
-      const reply = data.reply?.trim()
+      const data = (await res.json().catch(() => null)) as
+        | { reply?: string; error?: string; code?: string }
+        | null
+      if (!res.ok) {
+        // Il codice della route viene tradotto lato client; fallback generico.
+        const fallback = t('error')
+        const msg = data?.code ? apiErrorMessage(data, tErr, fallback) : fallback
+        setMessages((prev) => [...prev, { role: 'assistant', content: msg, at: Date.now() }])
+        return
+      }
+      const reply = data?.reply?.trim()
       if (!reply) throw new Error('empty reply')
 
       setMessages((prev) => [
@@ -137,12 +142,12 @@ export default function GuideChatWidget() {
       console.error('[GuideChatWidget] send error', err)
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: ERROR_MESSAGE, at: Date.now() },
+        { role: 'assistant', content: t('error'), at: Date.now() },
       ])
     } finally {
       setSending(false)
     }
-  }, [input, messages, sending])
+  }, [input, messages, sending, locale, t, tErr])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -213,7 +218,7 @@ export default function GuideChatWidget() {
           setHasInteracted(true)
           setOpen((v) => !v)
         }}
-        aria-label={open ? 'Chiudi assistente' : 'Apri assistente'}
+        aria-label={open ? t('close') : t('open')}
         aria-expanded={open}
         className={`fixed bottom-6 right-6 z-[60] w-14 h-14 rounded-full bg-teal text-white flex items-center justify-center shadow-elevated hover:bg-teal-dark transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 ${
           pulse && !open ? 'pulse' : ''
@@ -246,7 +251,7 @@ export default function GuideChatWidget() {
         <div
           ref={panelRef}
           role="dialog"
-          aria-label="Assistente Stress Index"
+          aria-label={t('dialogLabel')}
           aria-modal="false"
           className="panel-in fixed z-[59] bg-white border border-surface-border rounded-2xl shadow-elevated overflow-hidden flex flex-col
                      bottom-24 right-6 w-[400px] max-w-[calc(100vw-2rem)] h-[500px] max-h-[calc(100vh-8rem)]
@@ -269,17 +274,17 @@ export default function GuideChatWidget() {
               </div>
               <div className="min-w-0">
                 <p className="text-[14.5px] font-semibold leading-tight truncate">
-                  Assistente Stress Index
+                  {t('title')}
                 </p>
-                <p className="text-[12px] text-white/80 leading-tight">
-                  In linea
+                <p className="text-[12px] text-white/80 leading-tight truncate">
+                  {t('online')}
                 </p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              aria-label="Chiudi"
+              aria-label={t('close')}
               className="w-8 h-8 rounded-lg hover:bg-white/15 flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -315,17 +320,17 @@ export default function GuideChatWidget() {
                   {m.content}
                 </div>
                 <span className="mt-1 text-[11px] text-anthracite-lighter px-1 tabular-nums">
-                  {formatTime(m.at)}
+                  {formatTime(m.at, locale)}
                 </span>
               </div>
             ))}
             {sending && (
               <div className="flex flex-col items-start">
                 <div className="bg-[#F0F0F0] text-anthracite rounded-2xl rounded-bl-md px-4 py-3">
-                  <TypingDots />
+                  <TypingDots label={t('typingLabel')} />
                 </div>
                 <span className="mt-1 text-[11px] text-anthracite-lighter px-1">
-                  sta scrivendo…
+                  {t('typing')}
                 </span>
               </div>
             )}
@@ -347,14 +352,14 @@ export default function GuideChatWidget() {
               disabled={sending}
               rows={1}
               maxLength={2000}
-              placeholder="Scrivi la tua domanda…"
-              className="flex-1 resize-none bg-surface/60 border border-surface-border rounded-xl px-3 py-2.5 text-[14.5px] text-anthracite placeholder:text-anthracite-lighter focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal disabled:opacity-60 disabled:cursor-not-allowed max-h-32"
-              aria-label="Messaggio"
+              placeholder={t('placeholder')}
+              className="flex-1 min-w-0 resize-none bg-surface/60 border border-surface-border rounded-xl px-3 py-2.5 text-[14.5px] text-anthracite placeholder:text-anthracite-lighter focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal disabled:opacity-60 disabled:cursor-not-allowed max-h-32"
+              aria-label={t('messageLabel')}
             />
             <button
               type="submit"
               disabled={sending || !input.trim()}
-              aria-label="Invia"
+              aria-label={t('send')}
               className="w-10 h-10 rounded-xl bg-teal text-white flex-shrink-0 flex items-center justify-center hover:bg-teal-dark transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-teal"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">

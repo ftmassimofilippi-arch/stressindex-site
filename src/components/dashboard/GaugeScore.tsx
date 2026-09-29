@@ -7,13 +7,15 @@
 //              nel colore della zona + ago
 //              (replica _MiniGaugePainter di proprietary_score_card.dart)
 //  Sotto l'arco: numero grande, "/ 100", badge della zona
-//  (soglie e label da proprietary_scores.dart).
+//  (soglie da proprietary_scores.dart; etichette dal namespace `scores.bands`).
+
+import { useTranslations } from 'next-intl'
 
 export type GaugeColorScheme = 'stress' | 'recovery' | 'balance' | 'energy' | 'adaptation'
 
 type Props = {
   value?: number | null // 0–100
-  label: string // "STRESS", "RECUPERO", ...
+  label: string // nome dello score, già tradotto (es. t('scores.names.stress'))
   colorScheme: GaugeColorScheme
 }
 
@@ -25,44 +27,45 @@ const RED = '#C44E4E' // AppColors.error
 const DARK_RED = '#A93226'
 const TRACK = '#E2E6EA' // AppColors.borderLight
 
-type Zone = { max: number; label: string; color: string }
+// `labelKey` è la chiave in `scores.bands.<scheme>`.
+type Zone = { max: number; labelKey: string; color: string }
 
 // Soglie identiche a proprietary_scores.dart (_stressZone, _recoveryZone, ...)
 const ZONES: Record<GaugeColorScheme, Zone[]> = {
   stress: [
-    { max: 30, label: 'Basso', color: GREEN },
-    { max: 50, label: 'Equilibrio', color: YELLOW },
-    { max: 70, label: 'Medio', color: ORANGE },
-    { max: 85, label: 'Alto', color: RED },
-    { max: Infinity, label: 'Esaurimento', color: DARK_RED },
+    { max: 30, labelKey: 'low', color: GREEN },
+    { max: 50, labelKey: 'balance', color: YELLOW },
+    { max: 70, labelKey: 'medium', color: ORANGE },
+    { max: 85, labelKey: 'high', color: RED },
+    { max: Infinity, labelKey: 'fatigue', color: DARK_RED },
   ],
   recovery: [
-    { max: 25, label: 'Insufficiente', color: RED },
-    { max: 45, label: 'Scarso', color: ORANGE },
-    { max: 65, label: 'Moderato', color: YELLOW },
-    { max: 85, label: 'Buono', color: GREEN },
-    { max: Infinity, label: 'Ottimale', color: GREEN },
+    { max: 25, labelKey: 'insufficient', color: RED },
+    { max: 45, labelKey: 'poor', color: ORANGE },
+    { max: 65, labelKey: 'moderate', color: YELLOW },
+    { max: 85, labelKey: 'good', color: GREEN },
+    { max: Infinity, labelKey: 'optimal', color: GREEN },
   ],
   balance: [
-    { max: 25, label: 'Squilibrio marcato', color: RED },
-    { max: 45, label: 'Squilibrio moderato', color: ORANGE },
-    { max: 65, label: 'Sufficiente', color: YELLOW },
-    { max: 85, label: 'Buono', color: GREEN },
-    { max: Infinity, label: 'Ottimale', color: GREEN },
+    { max: 25, labelKey: 'strongImbalance', color: RED },
+    { max: 45, labelKey: 'moderateImbalance', color: ORANGE },
+    { max: 65, labelKey: 'sufficient', color: YELLOW },
+    { max: 85, labelKey: 'good', color: GREEN },
+    { max: Infinity, labelKey: 'optimal', color: GREEN },
   ],
   energy: [
-    { max: 25, label: 'Esaurita', color: RED },
-    { max: 45, label: 'Bassa', color: ORANGE },
-    { max: 65, label: 'Moderata', color: YELLOW },
-    { max: 85, label: 'Buona', color: GREEN },
-    { max: Infinity, label: 'Piena', color: GREEN },
+    { max: 25, labelKey: 'depleted', color: RED },
+    { max: 45, labelKey: 'low', color: ORANGE },
+    { max: 65, labelKey: 'moderate', color: YELLOW },
+    { max: 85, labelKey: 'good', color: GREEN },
+    { max: Infinity, labelKey: 'full', color: GREEN },
   ],
   adaptation: [
-    { max: 20, label: 'Fragile', color: RED },
-    { max: 40, label: 'Compromessa', color: ORANGE },
-    { max: 60, label: 'Ridotta', color: YELLOW },
-    { max: 80, label: 'Buona', color: GREEN },
-    { max: Infinity, label: 'Eccellente', color: GREEN },
+    { max: 20, labelKey: 'fragile', color: RED },
+    { max: 40, labelKey: 'toImprove', color: ORANGE },
+    { max: 60, labelKey: 'reduced', color: YELLOW },
+    { max: 80, labelKey: 'good', color: GREEN },
+    { max: Infinity, labelKey: 'excellent', color: GREEN },
   ],
 }
 
@@ -72,7 +75,7 @@ const STRESS_ARC_SEGMENTS = [
   { start: 20, end: 40, color: '#2ECC71' }, // Basso
   { start: 40, end: 60, color: '#F39C12' }, // Medio
   { start: 60, end: 80, color: '#E67E22' }, // Alto
-  { start: 80, end: 100, color: '#E74C3C' }, // Esaurimento
+  { start: 80, end: 100, color: '#E74C3C' }, // Affaticamento
 ]
 
 function zoneFor(scheme: GaugeColorScheme, v: number): Zone {
@@ -93,9 +96,12 @@ function arcPath(cx: number, cy: number, r: number, fromFrac: number, toFrac: nu
 }
 
 export function GaugeScore({ value, label, colorScheme }: Props) {
+  const t = useTranslations('scores')
+  const tCommon = useTranslations('common')
   const hasValue = value != null && Number.isFinite(value)
   const v = hasValue ? Math.max(0, Math.min(100, value as number)) : 0
   const zone = zoneFor(colorScheme, v)
+  const zoneLabel = t(`bands.${colorScheme}.${zone.labelKey}`)
 
   // Geometria (stesse proporzioni dei painter dell'app)
   const W = 200
@@ -109,9 +115,15 @@ export function GaugeScore({ value, label, colorScheme }: Props) {
 
   return (
     <div className="card p-5 flex flex-col items-center">
-      <div className="text-xs font-medium text-anthracite-lighter uppercase tracking-wide">{label}</div>
+      <div className="text-xs font-medium text-anthracite-lighter uppercase tracking-wide text-center">{label}</div>
 
-      <svg width="100%" viewBox={`0 0 ${W} ${H}`} className="mt-2 max-w-[200px]" role="img" aria-label={`${label}: ${hasValue ? Math.round(v) : '—'} su 100`}>
+      <svg
+        width="100%"
+        viewBox={`0 0 ${W} ${H}`}
+        className="mt-2 max-w-[200px]"
+        role="img"
+        aria-label={`${label}: ${t('outOf100', { n: hasValue ? Math.round(v) : '—' })}`}
+      >
         {colorScheme === 'stress' ? (
           <>
             {/* Arco a segmenti colorati fissi (come GaugePainter) */}
@@ -180,7 +192,7 @@ export function GaugeScore({ value, label, colorScheme }: Props) {
 
       {/* Badge zona */}
       <div
-        className="mt-2 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border"
+        className="mt-2 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border max-w-full truncate text-center"
         style={
           hasValue
             ? {
@@ -191,7 +203,7 @@ export function GaugeScore({ value, label, colorScheme }: Props) {
             : { color: '#8A94A0', backgroundColor: '#F2F4F6', borderColor: '#E2E6EA' }
         }
       >
-        {hasValue ? zone.label : 'Nessun dato'}
+        {hasValue ? zoneLabel : tCommon('noData')}
       </div>
     </div>
   )

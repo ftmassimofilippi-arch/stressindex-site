@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getAdminClients } from '@/lib/admin-data'
@@ -16,7 +17,7 @@ export async function GET() {
     const clients = await getAdminClients()
     return NextResponse.json({ clients })
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'errore'
+    const message = e instanceof Error ? e.message : 'generic'
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -42,23 +43,23 @@ export async function POST(req: NextRequest) {
   const professionalId = typeof body.professional_id === 'string' ? body.professional_id : ''
   const nome = typeof body.nome === 'string' ? body.nome.trim() : ''
   const cognome = typeof body.cognome === 'string' ? body.cognome.trim() : ''
-  if (!professionalId) return NextResponse.json({ error: 'missing_professional' }, { status: 400 })
-  if (!nome && !cognome) return NextResponse.json({ error: 'missing_name' }, { status: 400 })
+  if (!professionalId) return apiError('missing_professional', 400)
+  if (!nome && !cognome) return apiError('missing_name', 400)
 
   const email = typeof body.email === 'string' && body.email.trim() ? body.email.trim().toLowerCase() : null
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    return NextResponse.json({ error: 'invalid_email' }, { status: 400 })
+    return apiError('invalid_email', 400)
   }
 
   // Verifica che il professionista esista.
   const { data: prof } = await admin.from('profiles').select('id').eq('id', professionalId).maybeSingle()
-  if (!prof) return NextResponse.json({ error: 'professional_not_found' }, { status: 404 })
+  if (!prof) return apiError('professional_not_found', 404)
 
   // Doppione sotto lo stesso professionista (stessa email, schede non archiviate)?
   if (email) {
     const { data: dup } = await admin.from('clients').select('id').eq('professionista_id', professionalId).ilike('email', email).is('merged_into_client_id', null).limit(1)
     if ((dup ?? []).length > 0) {
-      return NextResponse.json({ error: 'duplicate_client', message: 'Questo professionista ha già una scheda con questa email.' }, { status: 409 })
+      return apiError('duplicate_client', 409)
     }
   }
 
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest) {
         cognome: cognome || null,
         role: 'client',
       })
-      if (profErr) accessError = `profilo: ${profErr.message}`
+      if (profErr) accessError = `profiles: ${profErr.message}`
     }
   }
 
@@ -110,23 +111,26 @@ export async function POST(req: NextRequest) {
   if (body.sesso === 'M' || body.sesso === 'F' || body.sesso === 'X') clientRow.sesso = body.sesso
 
   const { error: clientErr } = await admin.from('clients').insert(clientRow)
-  if (clientErr) return NextResponse.json({ error: `client: ${clientErr.message}` }, { status: 500 })
+  if (clientErr) return apiError('client_insert_failed', 500, { detail: clientErr.message })
 
   // 3. Collegamento account↔professionista (solo se c'è un account): la RPC
   //    trova la scheda appena creata dal ponte e crea/riattiva il link.
+  //    In caso di errore il codice e i parametri vanno al client come `warning`
+  //    (+ `warning_params`), tradotti con errors.api.*.
   let linkId: string | null = null
   let linkWarning: string | null = null
+  let linkWarningParams: Record<string, string> | undefined
   if (clientUserId) {
     const rpc = await linkViaRpc(admin, clientUserId, professionalId, 'admin:crea_scheda')
     if (rpc.ok) linkId = rpc.result.link_id ?? null
-    else linkWarning = `link: ${rpc.error}`
+    else { linkWarning = rpc.error; linkWarningParams = rpc.params }
   }
 
   await logAdminAction(admin, guard.user, {
     action: 'create_client',
     target_type: 'client',
     target_id: clientId,
-    details: { professional_id: professionalId, email, client_user_id: clientUserId, account_created: accountCreated, link_id: linkId, link_warning: linkWarning },
+    details: { professional_id: professionalId, email, client_user_id: clientUserId, account_created: accountCreated, link_id: linkId, link_warning: linkWarning, link_warning_params: linkWarningParams ?? null },
   })
 
   return NextResponse.json({
@@ -136,6 +140,7 @@ export async function POST(req: NextRequest) {
     account_created: accountCreated,
     linked: !!linkId,
     warning: linkWarning,
+    warning_params: linkWarningParams ?? null,
     accessError,
   })
 }

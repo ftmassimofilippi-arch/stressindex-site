@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { Search } from 'lucide-react'
 import { DataTable, type Column } from '@/components/dashboard/DataTable'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
@@ -11,15 +12,20 @@ import { useRouter } from '@/i18n/navigation'
 
 type Props = { clients: ClientWithLastMeasurement[]; professionistaId?: string }
 
+// I valori sono stabili (stato del filtro); le etichette vengono da
+// clients.list.periods.<labelKey>.
 const FILTER_PERIODS = [
-  { value: 'all', label: 'Tutti' },
-  { value: 'today', label: 'Oggi' },
-  { value: '7d', label: 'Ultimi 7 giorni' },
-  { value: '30d', label: 'Ultimi 30 giorni' },
-  { value: 'never', label: 'Mai' },
+  { value: 'all', labelKey: 'all' },
+  { value: 'today', labelKey: 'today' },
+  { value: '7d', labelKey: 'last7' },
+  { value: '30d', labelKey: 'last30' },
+  { value: 'never', labelKey: 'never' },
 ] as const
 
 export function ClientsTable({ clients, professionistaId }: Props) {
+  const t = useTranslations('clients.list')
+  const tScores = useTranslations('scores')
+  const locale = useLocale()
   const router = useRouter()
   const qs = professionistaId ? `?professionista=${professionistaId}` : ''
   const [search, setSearch] = useState('')
@@ -60,7 +66,7 @@ export function ClientsTable({ clients, professionistaId }: Props) {
   const columns: Column<ClientWithLastMeasurement>[] = [
     {
       key: 'name',
-      header: 'Cliente',
+      header: t('columns.client'),
       accessor: (c) => fullName(c).toLowerCase(),
       sortable: true,
       render: (c) => (
@@ -69,7 +75,7 @@ export function ClientsTable({ clients, professionistaId }: Props) {
             {initials(c)}
           </div>
           <div className="min-w-0">
-            <div className="font-medium text-anthracite truncate">{fullName(c) || 'Senza nome'}</div>
+            <div className="font-medium text-anthracite truncate">{fullName(c) || t('noName')}</div>
             <div className="text-xs text-anthracite-lighter truncate">{c.email ?? ''}</div>
           </div>
         </div>
@@ -77,43 +83,43 @@ export function ClientsTable({ clients, professionistaId }: Props) {
     },
     {
       key: 'age',
-      header: 'Età',
+      header: t('columns.age'),
       accessor: (c) => age(c.data_nascita) ?? 0,
       sortable: true,
       render: (c) => <span className="text-anthracite-lighter">{age(c.data_nascita) ?? '—'}</span>,
     },
     {
       key: 'tags',
-      header: 'Tag',
+      header: t('columns.tags'),
       render: (c) => (
         <div className="flex flex-wrap gap-1">
-          {(c.settings?.tags ?? []).slice(0, 3).map((t) => (
-            <span key={t} className="px-2 py-0.5 rounded-full text-[11px] bg-teal-light text-teal-dark">{t}</span>
+          {(c.settings?.tags ?? []).slice(0, 3).map((tag) => (
+            <span key={tag} className="px-2 py-0.5 rounded-full text-[11px] bg-teal-light text-teal-dark">{tag}</span>
           ))}
         </div>
       ),
     },
     {
       key: 'last',
-      header: 'Ultima misurazione',
+      header: t('columns.lastMeasurement'),
       accessor: (c) => c.last_measurement_at ?? '',
       sortable: true,
       render: (c) => (
-        <span className="text-anthracite-lighter text-sm">
-          {c.last_measurement_at ? formatRelative(c.last_measurement_at) : 'Mai'}
+        <span className="text-anthracite-lighter text-sm whitespace-nowrap">
+          {c.last_measurement_at ? formatRelative(c.last_measurement_at, locale) : t('never')}
         </span>
       ),
     },
     {
       key: 'stress',
-      header: 'Stress',
+      header: tScores('names.stress'),
       accessor: (c) => c.lastMeasurement?.score_stress ?? -1,
       sortable: true,
       render: (c) => <ScoreBar value={c.lastMeasurement?.score_stress} inverted />,
     },
     {
       key: 'alerts',
-      header: 'Alert',
+      header: t('columns.alerts'),
       accessor: (c) => c.activeAlerts ?? 0,
       sortable: true,
       render: (c) => (c.activeAlerts ? <CountBadge count={c.activeAlerts} /> : <span className="text-anthracite-lighter text-xs">—</span>),
@@ -129,7 +135,8 @@ export function ClientsTable({ clients, professionistaId }: Props) {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cerca per nome, cognome, email…"
+            placeholder={t('searchPlaceholder')}
+            aria-label={t('searchPlaceholder')}
             className="w-full pl-9 pr-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal"
           />
         </div>
@@ -137,18 +144,20 @@ export function ClientsTable({ clients, professionistaId }: Props) {
           <select
             value={tagFilter}
             onChange={(e) => setTagFilter(e.target.value)}
-            className="px-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30"
+            aria-label={t('columns.tags')}
+            className="px-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30 max-w-full"
           >
-            <option value="">Tutti i tag</option>
-            {allTags.map((t) => <option key={t} value={t}>{t}</option>)}
+            <option value="">{t('allTags')}</option>
+            {allTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
           </select>
         )}
         <select
           value={periodFilter}
           onChange={(e) => setPeriodFilter(e.target.value as typeof periodFilter)}
-          className="px-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30"
+          aria-label={t('columns.lastMeasurement')}
+          className="px-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30 max-w-full"
         >
-          {FILTER_PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+          {FILTER_PERIODS.map((p) => <option key={p.value} value={p.value}>{t(`periods.${p.labelKey}`)}</option>)}
         </select>
       </div>
 

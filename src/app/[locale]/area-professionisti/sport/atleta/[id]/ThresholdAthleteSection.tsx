@@ -1,7 +1,8 @@
 import { Link } from '@/i18n/navigation'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { formatIstante, formatMeasuredDate } from '@/lib/format'
 import type { ThresholdTestSummary } from '@/lib/sport-data'
-import { formatIntensity, THRESHOLD_MODE_LABEL, THRESHOLD_MODE_UNIT, type AthleteThresholds } from '@/lib/threshold-types'
+import { formatIntensity, thresholdModeLabel, THRESHOLD_MODE_UNIT, type AthleteThresholds } from '@/lib/threshold-types'
 import { ThresholdTrendChart } from '../../ThresholdCharts'
 import { ZoneList } from '../../sessione/[id]/ThresholdTestView'
 
@@ -9,7 +10,7 @@ import { ZoneList } from '../../sessione/[id]/ThresholdTestView'
 // provenienza e avviso dopo 90 giorni), storico dei test con VT1/VT2/HRR60 e
 // andamento nel tempo (con l'intensità se la modalità è la stessa).
 
-export function ThresholdAthleteSection({
+export async function ThresholdAthleteSection({
   thresholds,
   tests,
   baseQuery,
@@ -18,33 +19,35 @@ export function ThresholdAthleteSection({
   tests: ThresholdTestSummary[]
   baseQuery: string
 }) {
+  const t = await getTranslations('sport')
+  const locale = await getLocale()
   const ageDays = thresholds?.vt_test_date ? Math.floor((Date.now() - new Date(thresholds.vt_test_date).getTime()) / 86_400_000) : null
   const stale = ageDays != null && ageDays > 90
-  const sameMode = tests.length >= 2 && tests.every((t) => t.record.config.mode === tests[0].record.config.mode)
+  const sameMode = tests.length >= 2 && tests.every((x) => x.record.config.mode === tests[0].record.config.mode)
   const chrono = tests.slice().reverse()
 
   const intensity = (mode: AthleteThresholds['vt_mode'], power: number | null, speed: number | null): string | null => {
     if (!mode) return null
     if (mode === 'bike') return power == null ? null : `${power} W`
-    return speed == null ? null : formatIntensity(mode, speed)
+    return speed == null ? null : formatIntensity(mode, speed, true, locale)
   }
+
+  const zonesTitle = thresholds?.hr_zones_manual
+    ? t('threshold.zonesManual')
+    : thresholds?.vt_test_date
+      ? t('threshold.zonesFromTest', { date: formatIstante(thresholds.vt_test_date, undefined, locale) })
+      : t('threshold.zonesSaved')
 
   return (
     <section className="card p-5 mb-6">
-      <h2 className="font-serif text-lg text-anthracite mb-3">Test soglie</h2>
+      <h2 className="font-serif text-lg text-anthracite mb-3">{t('threshold.sectionTitle')}</h2>
 
       {/* Zone attuali */}
       {thresholds ? (
         <div className="rounded-xl border border-surface-border bg-surface p-4 mb-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="text-sm font-medium text-teal-dark">
-              {thresholds.hr_zones_manual
-                ? 'Zone modificate a mano dal professionista'
-                : thresholds.vt_test_date
-                  ? `Zone dal test del ${formatIstante(thresholds.vt_test_date, 'dd/MM/yyyy')}`
-                  : 'Zone salvate'}
-            </div>
-            {thresholds.vt_mode && <span className="text-xs text-anthracite-lighter">{THRESHOLD_MODE_LABEL[thresholds.vt_mode]}</span>}
+            <div className="text-sm font-medium text-teal-dark">{zonesTitle}</div>
+            {thresholds.vt_mode && <span className="text-xs text-anthracite-lighter">{thresholdModeLabel(thresholds.vt_mode, t)}</span>}
           </div>
           <div className="flex flex-wrap gap-6 mt-2">
             <Kv k="VT1" v={thresholds.hr_vt1 == null ? '—' : `${thresholds.hr_vt1} bpm`} sub={intensity(thresholds.vt_mode, thresholds.power_vt1, thresholds.speed_vt1)} />
@@ -52,28 +55,28 @@ export function ThresholdAthleteSection({
           </div>
           {thresholds.hr_zones.length > 0 && <div className="mt-3"><ZoneList zones={thresholds.hr_zones} /></div>}
           {stale && (
-            <div className="mt-3 text-xs font-medium text-amber-700">Il test ha più di 90 giorni ({ageDays}): conviene ripeterlo.</div>
+            <div className="mt-3 text-xs font-medium text-amber-700">{t('threshold.stale', { days: ageDays as number })}</div>
           )}
         </div>
       ) : (
-        <p className="text-sm text-anthracite-lighter mb-4">Nessuna soglia salvata sul profilo: si salvano dall&apos;app, dai risultati di un test con stima affidabile.</p>
+        <p className="text-sm text-anthracite-lighter mb-4">{t('threshold.noneSaved')}</p>
       )}
 
       {tests.length === 0 ? (
-        <p className="text-sm text-anthracite-lighter">Nessun test incrementale con stima delle soglie ancora eseguito.</p>
+        <p className="text-sm text-anthracite-lighter">{t('threshold.noTests')}</p>
       ) : (
         <>
-          <div className="text-xs font-medium text-anthracite-lighter mb-1">Andamento di VT1 e VT2 (bpm)</div>
+          <div className="text-xs font-medium text-anthracite-lighter mb-1">{t('threshold.trendTitle')}</div>
           <ThresholdTrendChart
             unit="bpm"
-            points={chrono.map((t) => ({ date: t.session.start_time, vt1: t.record.analysis?.vt1?.hr ?? null, vt2: t.record.analysis?.vt2?.hr ?? null }))}
+            points={chrono.map((x) => ({ date: x.session.start_time, vt1: x.record.analysis?.vt1?.hr ?? null, vt2: x.record.analysis?.vt2?.hr ?? null }))}
           />
           {sameMode && (
             <>
-              <div className="text-xs font-medium text-anthracite-lighter mt-3 mb-1">Intensità alle soglie ({THRESHOLD_MODE_UNIT[tests[0].record.config.mode]})</div>
+              <div className="text-xs font-medium text-anthracite-lighter mt-3 mb-1">{t('threshold.intensityTitle', { unit: THRESHOLD_MODE_UNIT[tests[0].record.config.mode] })}</div>
               <ThresholdTrendChart
                 unit={THRESHOLD_MODE_UNIT[tests[0].record.config.mode]}
-                points={chrono.map((t) => ({ date: t.session.start_time, vt1: t.record.analysis?.vt1?.intensity ?? null, vt2: t.record.analysis?.vt2?.intensity ?? null }))}
+                points={chrono.map((x) => ({ date: x.session.start_time, vt1: x.record.analysis?.vt1?.intensity ?? null, vt2: x.record.analysis?.vt2?.intensity ?? null }))}
               />
             </>
           )}
@@ -81,8 +84,8 @@ export function ThresholdAthleteSection({
             <table className="w-full text-sm">
               <thead className="bg-surface text-anthracite-lighter">
                 <tr>
-                  <th className="text-left px-4 py-2.5 text-[11px] uppercase tracking-wide font-medium">Data</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">Modalità</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('threshold.colDate')}</th>
+                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('threshold.colMode')}</th>
                   <th className="text-right px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">VT1</th>
                   <th className="text-right px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">VT2</th>
                   <th className="text-right px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">HRR60</th>
@@ -90,19 +93,19 @@ export function ThresholdAthleteSection({
                 </tr>
               </thead>
               <tbody>
-                {tests.map((t) => {
-                  const a = t.record.analysis
-                  const current = thresholds?.threshold_session_id === t.session.id
+                {tests.map((x) => {
+                  const a = x.record.analysis
+                  const current = thresholds?.threshold_session_id === x.session.id
                   return (
-                    <tr key={t.session.id} className={`border-t border-surface-border ${current ? 'bg-teal-light/30' : ''}`}>
-                      <td className="px-4 py-2.5 text-anthracite font-medium">{formatMeasuredDate(t.session)}{current && <span className="ml-1 text-[10px] text-teal-dark">· in uso</span>}</td>
-                      <td className="px-3 py-2.5">{THRESHOLD_MODE_LABEL[t.record.config.mode]}</td>
+                    <tr key={x.session.id} className={`border-t border-surface-border ${current ? 'bg-teal-light/30' : ''}`}>
+                      <td className="px-4 py-2.5 text-anthracite font-medium">{formatMeasuredDate(x.session, undefined, locale)}{current && <span className="ml-1 text-[10px] text-teal-dark">· {t('threshold.inUse')}</span>}</td>
+                      <td className="px-3 py-2.5">{thresholdModeLabel(x.record.config.mode, t)}</td>
                       <td className="px-3 py-2.5 text-right tabular-nums">{a?.vt1 ? `${Math.round(a.vt1.hr)} bpm` : '—'}</td>
                       <td className="px-3 py-2.5 text-right tabular-nums">{a?.vt2 ? `${Math.round(a.vt2.hr)} bpm` : '—'}</td>
-                      <td className="px-3 py-2.5 text-right tabular-nums">{t.record.recovery?.hrr60 ?? '—'}</td>
-                      <td className="px-3 py-2.5 text-right">
-                        {a && !a.reliable && <span className="text-[10px] text-amber-700 mr-2">stima non affidabile</span>}
-                        <Link href={`/area-professionisti/sport/sessione/${t.session.id}${baseQuery}`} className="text-teal-dark text-sm hover:underline">Apri →</Link>
+                      <td className="px-3 py-2.5 text-right tabular-nums">{x.record.recovery?.hrr60 ?? '—'}</td>
+                      <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                        {a && !a.reliable && <span className="text-[10px] text-amber-700 mr-2">{t('threshold.unreliableShort')}</span>}
+                        <Link href={`/area-professionisti/sport/sessione/${x.session.id}${baseQuery}`} className="text-teal-dark text-sm hover:underline">{t('sessions.open')} →</Link>
                       </td>
                     </tr>
                   )

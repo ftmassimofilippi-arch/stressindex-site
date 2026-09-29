@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server'
+import type { NextResponse } from 'next/server'
+import { apiError } from './api-error'
 import { createClient } from './supabase-server'
 import type { User } from '@supabase/supabase-js'
 
@@ -19,7 +20,7 @@ export async function requireSuperadmin(): Promise<
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) {
-    return { error: NextResponse.json({ error: 'unauthorized' }, { status: 401 }), user: null }
+    return { error: apiError('unauthorized', 401), user: null }
   }
   const { data, error } = await supabase
     .from('profiles')
@@ -27,7 +28,7 @@ export async function requireSuperadmin(): Promise<
     .eq('id', user.id)
     .maybeSingle()
   if (error || !(data as { is_superadmin?: boolean } | null)?.is_superadmin) {
-    return { error: NextResponse.json({ error: 'forbidden' }, { status: 403 }), user: null }
+    return { error: apiError('forbidden', 403), user: null }
   }
   return { error: null, user }
 }

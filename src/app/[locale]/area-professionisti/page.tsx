@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { Link } from '@/i18n/navigation'
 import { Activity, AlertTriangle, ArrowRight, Calendar, NotebookPen, SunMoon, TrendingUp, UserCheck } from 'lucide-react'
 import { MonitoringTable } from '@/components/monitoring/MonitoringTable'
@@ -22,14 +23,39 @@ import {
   listRecentNotes,
   todaysMeasurements,
 } from '@/lib/dashboard-data'
-import { alertTypeLabel, mergeAlerts } from '@/lib/alert-rules'
+import { alertMessage, alertTypeLabel, mergeAlerts } from '@/lib/alert-rules'
 import { listAlertEvents } from '@/lib/alert-rules-server'
-import { formatGreeting, formatMeasuredTime, todayLongIt, daysSince } from '@/lib/format'
+import { noteCategoryLabel } from '@/lib/types'
+import { formatGreeting, formatMeasuredTime, num, todayLong, daysSince } from '@/lib/format'
+import { getLocale, getTranslations } from 'next-intl/server'
 
-export const metadata = { title: 'Oggi' }
+type Params = { params: { locale: string } }
+
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
+  return { title: t('dashboardHome.title'), robots: { index: false, follow: false } }
+}
+
 export const dynamic = 'force-dynamic'
 
+// Numeri estratti dai messaggi dell'app: si conservano i decimali che hanno
+// (0.45 → "0,45", 32 → "32"), al massimo due.
+function decimalsOf(v: number): number {
+  const s = String(v)
+  const i = s.indexOf('.')
+  return i < 0 ? 0 : Math.min(2, s.length - i - 1)
+}
+
 export default async function DashboardHome() {
+  const locale = await getLocale()
+  const [tGreeting, t, tAlerts, tScores, tClients, tc] = await Promise.all([
+    getTranslations('dashboard.greeting'),
+    getTranslations('dashboard.home'),
+    getTranslations('alerts'),
+    getTranslations('scores'),
+    getTranslations('clients'),
+    getTranslations('common'),
+  ])
   const user = await getCurrentUser()
   const [professional, cronAlerts, appEvents, measurements, contacts, trend, allClients, notes, invites, monitoring] = await Promise.all([
     getProfessionalProfile(),
@@ -51,33 +77,38 @@ export default async function DashboardHome() {
   const clientMap = new Map(allClients.map((c) => [c.id, c]))
   const newAlertCount = alerts.filter((a) => a.status === 'new').length
   const totalActive = allClients.length
+  const fmtNum = (v: number) => num(v, decimalsOf(v), locale)
+  const clientName = (id: string) => {
+    const c = clientMap.get(id)
+    return c ? `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || tc('client') : tc('client')
+  }
 
   return (
     <DashboardLayout professional={professional} alertCount={newAlertCount}>
       <InviteBanner invites={invites} />
       <header className="mb-8">
         <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
-          {formatGreeting()}, <em className="italic text-teal-dark">{professional?.nome ?? 'Dottore'}</em>
+          {formatGreeting(tGreeting)}, <em className="italic text-teal-dark">{professional?.nome ?? tc('professional')}</em>
         </h1>
-        <p className="mt-1.5 text-sm text-anthracite-lighter capitalize">{todayLongIt()}</p>
+        <p className="mt-1.5 text-sm text-anthracite-lighter capitalize">{todayLong(locale)}</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 space-y-6">
           <section className="card overflow-hidden">
-            <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <AlertTriangle size={18} className="text-amber-500" />
-                <h2 className="font-serif text-lg text-anthracite">Alert prioritari</h2>
+            <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 min-w-0">
+                <AlertTriangle size={18} className="text-amber-500 flex-shrink-0" />
+                <h2 className="font-serif text-lg text-anthracite">{t('priorityAlerts')}</h2>
               </div>
-              <Link href="/area-professionisti/clienti" className="text-sm text-teal-dark hover:underline">Vedi tutti</Link>
+              <Link href="/area-professionisti/clienti" className="text-sm text-teal-dark hover:underline whitespace-nowrap">{tc('seeAll')}</Link>
             </div>
             {alerts.length === 0 ? (
-              <EmptyState icon={UserCheck} title="Nessun alert oggi" description="Tutto sotto controllo." />
+              <EmptyState icon={UserCheck} title={t('noAlertsTitle')} description={t('noAlertsBody')} />
             ) : (
               <ul className="divide-y divide-surface-border">
                 {alerts.map((a) => {
-                  const c = clientMap.get(a.client_id)
+                  const detail = alertMessage(a, tAlerts, fmtNum)
                   return (
                     <li key={a.id}>
                       <Link
@@ -86,15 +117,12 @@ export default async function DashboardHome() {
                       >
                         <AlertBadge severity={a.severity} />
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-anthracite">
-                            {c ? `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() : 'Cliente'}
-                          </div>
+                          <div className="text-sm font-medium text-anthracite truncate">{clientName(a.client_id)}</div>
                           <div className="text-xs text-anthracite-lighter mt-0.5">
-                            {alertTypeLabel(a.type)}{a.triggering_value != null ? ` · valore ${Math.round(a.triggering_value)}` : ''}
-                            {a.source === 'app' && a.message ? ` · ${a.message}` : ''}
+                            {alertTypeLabel(a.type, tAlerts)}{detail ? ` · ${detail}` : ''}
                           </div>
                         </div>
-                        <ArrowRight size={16} className="text-anthracite-lighter" />
+                        <ArrowRight size={16} className="text-anthracite-lighter flex-shrink-0" />
                       </Link>
                     </li>
                   )
@@ -105,25 +133,25 @@ export default async function DashboardHome() {
 
           <section className="card overflow-hidden">
             <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Activity size={18} className="text-teal" />
-                <h2 className="font-serif text-lg text-anthracite">Misurazioni di oggi</h2>
+              <div className="flex items-center gap-2 min-w-0">
+                <Activity size={18} className="text-teal flex-shrink-0" />
+                <h2 className="font-serif text-lg text-anthracite">{t('todaysMeasurements')}</h2>
                 <span className="text-sm text-anthracite-lighter">({measurements.length})</span>
               </div>
             </div>
             {measurements.length === 0 ? (
               <div className="px-6 py-8 text-center text-sm text-anthracite-lighter">
-                Nessuna misurazione registrata oggi
+                {t('noMeasurementsToday')}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-surface text-anthracite-lighter">
                     <tr>
-                      <th className="text-left px-6 py-2.5 text-[11px] uppercase tracking-wide font-medium">Cliente</th>
-                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">Ora</th>
-                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">Stress</th>
-                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">Recupero</th>
+                      <th className="text-left px-6 py-2.5 text-[11px] uppercase tracking-wide font-medium">{tc('client')}</th>
+                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('colTime')}</th>
+                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{tScores('names.stress')}</th>
+                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{tScores('names.recovery')}</th>
                       <th className="px-3 py-2.5"></th>
                     </tr>
                   </thead>
@@ -135,12 +163,12 @@ export default async function DashboardHome() {
                           <td className="px-6 py-3 font-medium text-anthracite">
                             {c ? `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() : '—'}
                           </td>
-                          <td className="px-3 py-3 text-anthracite-lighter">{formatMeasuredTime(m)}</td>
+                          <td className="px-3 py-3 text-anthracite-lighter">{formatMeasuredTime(m, locale)}</td>
                           <td className="px-3 py-3 w-40"><ScoreBar value={m.score_stress} inverted /></td>
                           <td className="px-3 py-3 w-40"><ScoreBar value={m.score_recupero} /></td>
                           <td className="px-3 py-3 text-right">
-                            <Link href={`/area-professionisti/clienti/${m.client_id}/misurazione/${m.session_id}`} className="text-teal-dark text-sm hover:underline">
-                              Apri →
+                            <Link href={`/area-professionisti/clienti/${m.client_id}/misurazione/${m.session_id}`} className="text-teal-dark text-sm hover:underline whitespace-nowrap">
+                              {tc('open')} →
                             </Link>
                           </td>
                         </tr>
@@ -153,41 +181,41 @@ export default async function DashboardHome() {
           </section>
 
           <section className="card overflow-hidden">
-            <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <SunMoon size={18} style={{ color: MON.accent }} />
-                <h2 className="font-serif text-lg text-anthracite">Monitoraggi recenti</h2>
+            <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 min-w-0">
+                <SunMoon size={18} style={{ color: MON.accent }} className="flex-shrink-0" />
+                <h2 className="font-serif text-lg text-anthracite">{t('recentMonitoring')}</h2>
                 <span className="text-sm text-anthracite-lighter">({recentMonitoring.length})</span>
               </div>
-              <Link href="/area-professionisti/monitoraggio" className="text-sm hover:underline" style={{ color: MON.accentDark }}>Vedi tutti</Link>
+              <Link href="/area-professionisti/monitoraggio" className="text-sm hover:underline whitespace-nowrap" style={{ color: MON.accentDark }}>{tc('seeAll')}</Link>
             </div>
-            <MonitoringTable sessions={recentMonitoring} compact emptyText="Nessun monitoraggio registrato" />
+            <MonitoringTable sessions={recentMonitoring} compact emptyText={t('noMonitoring')} />
           </section>
 
           <section className="card overflow-hidden">
             <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Calendar size={18} className="text-anthracite" />
-                <h2 className="font-serif text-lg text-anthracite">Da contattare</h2>
+              <div className="flex items-center gap-2 min-w-0">
+                <Calendar size={18} className="text-anthracite flex-shrink-0" />
+                <h2 className="font-serif text-lg text-anthracite">{t('toContact')}</h2>
               </div>
             </div>
             {contacts.length === 0 ? (
-              <EmptyState icon={UserCheck} title="Nessun cliente da risollecitare" description="Tutti i tuoi clienti misurano regolarmente." />
+              <EmptyState icon={UserCheck} title={t('noContactTitle')} description={t('noContactBody')} />
             ) : (
               <ul className="divide-y divide-surface-border">
                 {contacts.map((c) => (
-                  <li key={c.client.id} className="px-6 py-3.5 flex items-center gap-4">
+                  <li key={c.client.id} className="px-6 py-3.5 flex items-center gap-4 flex-wrap">
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-anthracite">{c.client.nome} {c.client.cognome}</div>
+                      <div className="text-sm font-medium text-anthracite truncate">{c.client.nome} {c.client.cognome}</div>
                       <div className="text-xs text-anthracite-lighter mt-0.5">
-                        Ultima misurazione {c.daysSinceLast} giorni fa
+                        {t('lastMeasurementDaysAgo', { count: c.daysSinceLast })}
                       </div>
                     </div>
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
-                      {c.daysSinceLast}gg
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 whitespace-nowrap">
+                      {t('daysShort', { count: c.daysSinceLast })}
                     </span>
-                    <Link href={`/area-professionisti/clienti/${c.client.id}?tab=messaggi`} className="text-teal-dark text-sm hover:underline">
-                      Promemoria →
+                    <Link href={`/area-professionisti/clienti/${c.client.id}?tab=messaggi`} className="text-teal-dark text-sm hover:underline whitespace-nowrap">
+                      {t('reminder')} →
                     </Link>
                   </li>
                 ))}
@@ -198,16 +226,16 @@ export default async function DashboardHome() {
 
         <aside className="lg:col-span-4 space-y-6">
           <div className="grid grid-cols-2 gap-3">
-            <MetricCard label="Clienti attivi" value={totalActive} hint="totali" />
-            <MetricCard label="Mis. oggi" value={measurements.length} />
-            <MetricCard label="Alert risolti" value="—" hint="settimana" />
-            <MetricCard label="Trend" value="—" hint="vs mese scorso" />
+            <MetricCard label={t('activeClients')} value={totalActive} hint={t('totalHint')} />
+            <MetricCard label={t('measurementsToday')} value={measurements.length} />
+            <MetricCard label={t('alertsResolved')} value="—" hint={t('weekHint')} />
+            <MetricCard label={t('trend')} value="—" hint={t('vsLastMonth')} />
           </div>
 
           <section className="card p-5">
             <div className="flex items-center gap-2 mb-4">
-              <TrendingUp size={16} className="text-teal" />
-              <h3 className="font-serif text-base text-anthracite">Andamento medio aggregato</h3>
+              <TrendingUp size={16} className="text-teal flex-shrink-0" />
+              <h3 className="font-serif text-base text-anthracite">{t('aggregateTrend')}</h3>
             </div>
             <AdvancedTrendChart
               data={trend}
@@ -221,21 +249,22 @@ export default async function DashboardHome() {
 
           <section className="card overflow-hidden">
             <div className="px-5 py-4 border-b border-surface-border flex items-center gap-2">
-              <NotebookPen size={16} className="text-anthracite" />
-              <h3 className="font-serif text-base text-anthracite">Ultime note</h3>
+              <NotebookPen size={16} className="text-anthracite flex-shrink-0" />
+              <h3 className="font-serif text-base text-anthracite">{t('latestNotes')}</h3>
             </div>
             {notes.length === 0 ? (
-              <div className="px-5 py-6 text-sm text-anthracite-lighter text-center">Nessuna nota recente</div>
+              <div className="px-5 py-6 text-sm text-anthracite-lighter text-center">{t('noRecentNotes')}</div>
             ) : (
               <ul className="divide-y divide-surface-border">
                 {notes.map((n) => {
-                  const c = clientMap.get(n.client_id)
+                  const days = daysSince(n.data_creazione) ?? 0
+                  const category = noteCategoryLabel(n.categoria, tClients)
                   return (
                     <li key={n.id} className="px-5 py-3">
                       <Link href={`/area-professionisti/clienti/${n.client_id}?tab=note`} className="block hover:bg-surface -mx-5 px-5 py-1 transition-colors">
-                        <div className="text-xs font-medium text-anthracite-lighter mb-0.5">
-                          {c ? `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() : 'Cliente'} · {daysSince(n.data_creazione)}gg fa
-                          {n.categoria ? ` · ${n.categoria}` : ''}
+                        <div className="text-xs font-medium text-anthracite-lighter mb-0.5 truncate">
+                          {clientName(n.client_id)} · {t('daysAgoShort', { count: days })}
+                          {category ? ` · ${category}` : ''}
                         </div>
                         <p className="text-sm text-anthracite line-clamp-2">{n.testo}</p>
                       </Link>

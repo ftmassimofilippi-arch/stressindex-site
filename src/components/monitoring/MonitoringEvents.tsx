@@ -1,13 +1,17 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import { Modal } from '@/components/dashboard/Modal'
 import { ConfirmDialog } from '@/components/dashboard/ConfirmDialog'
+import { apiErrorMessage } from '@/lib/api-error'
 import type { MonitoringEvent, MonitoringEventType, MonitoringNight } from '@/lib/monitoring-types'
-import { EVENT_TYPES, EVENT_TYPE_LABEL, MON, dayPart, eventResponseColor, hm, isSleepMarker, rmssdFromLn, wallDate } from '@/lib/monitoring-format'
-import { indexText } from '@/lib/monitoring-strings'
+import {
+  EVENT_TYPES, MON, RESPONSE_INSUFFICIENT, dayPart, eventResponseColor, eventResponseLabel, eventTypeLabel, eventTypeLabels, hm, isSleepMarker, rmssdFromLn, wallDate,
+} from '@/lib/monitoring-format'
+import { indexText, monT, type Lang } from '@/lib/monitoring-strings'
 import { Chip } from './MonitoringChips'
 import { EventIcon } from './EventIcon'
 
@@ -30,30 +34,34 @@ type Props = {
 }
 
 export function MonitoringEvents({ sessionId, events, tz, start, end, night, readOnly = false, pendingRecalc = false, pro = true }: Props) {
+  const t = useTranslations('monitoring')
+  const tc = useTranslations('common')
+  const te = useTranslations('errors.api')
+  const locale = useLocale() as Lang
   const router = useRouter()
   const [editing, setEditing] = useState<MonitoringEvent | 'new' | null>(null)
   const [deleting, setDeleting] = useState<MonitoringEvent | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const text = indexText('event_response')
+  const text = indexText('event_response', locale)
   const sorted = [...events].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
 
   async function persist(next: MonitoringEvent[]) {
     setBusy(true)
     setError(null)
     try {
-      const res = await fetch(`/api/monitoring/${sessionId}/events`, {
+      const res = await fetch(`/api/monitoring/${sessionId}/events?locale=${locale}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ events: next }),
       })
       const j = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(j?.error ?? 'Salvataggio non riuscito')
+      if (!res.ok) throw new Error(apiErrorMessage(j, te, te('monitoring_save_failed')))
       setEditing(null)
       setDeleting(null)
       router.refresh()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Salvataggio non riuscito')
+      setError(e instanceof Error ? e.message : te('monitoring_save_failed'))
     } finally {
       setBusy(false)
     }
@@ -66,25 +74,23 @@ export function MonitoringEvents({ sessionId, events, tz, start, end, night, rea
       {pendingRecalc && (
         <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-amber-200 bg-amber-50 text-[12px] text-amber-800">
           <RefreshCw size={15} className="mt-0.5 flex-shrink-0" />
-          <span>Eventi modificati dal sito: la reazione agli eventi verrà ricalcolata dall&apos;app alla prossima apertura di questo monitoraggio. Fino ad allora i nuovi eventi sono &quot;in attesa di ricalcolo&quot;.</span>
+          <span>{t('events.pendingBanner')}</span>
         </div>
       )}
       {!readOnly && (
         <button type="button" onClick={() => setEditing('new')} className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white" style={{ backgroundColor: MON.accent }}>
-          <Plus size={16} /> Aggiungi evento
+          <Plus size={16} /> {t('events.add')}
         </button>
       )}
       {error && <div className="px-3 py-2 rounded-xl bg-red-50 text-red-700 text-sm">{error}</div>}
       {sorted.length === 0 && (
-        <p className="py-6 text-center text-sm text-anthracite-lighter leading-relaxed">
-          Nessun evento. Aggiungi caffè, pasti, allenamento, sonno: per ognuno vedrai la risposta dell&apos;organismo nell&apos;ora successiva e nelle due ore dopo.
-        </p>
+        <p className="py-6 text-center text-sm text-anthracite-lighter leading-relaxed">{t('events.empty')}</p>
       )}
       {sorted.map((e) => (
         <EventCard key={e.id} event={e} tz={tz} night={night} readOnly={readOnly} onEdit={() => setEditing(e)} onDelete={() => setDeleting(e)} />
       ))}
       {pro && (
-        <p className="text-[10.5px] text-anthracite-lighter leading-relaxed">Come si calcola: {text.method} Requisito: {text.req}</p>
+        <p className="text-[10.5px] text-anthracite-lighter leading-relaxed">{t('events.howComputed', { method: text.method, req: text.req })}</p>
       )}
 
       {editing && (
@@ -105,9 +111,10 @@ export function MonitoringEvents({ sessionId, events, tz, start, end, night, rea
         open={!!deleting}
         onClose={() => setDeleting(null)}
         onConfirm={() => { if (deleting) return persist(events.filter((x) => x.id !== deleting.id)) }}
-        title="Rimuovere l'evento?"
+        title={t('events.removeTitle')}
         description={deleting ? `${deleting.label} · ${hm(deleting.timestamp, tz)}` : undefined}
-        confirmText="Rimuovi"
+        confirmText={t('events.remove')}
+        cancelText={tc('cancel')}
         destructive
       />
     </div>
@@ -115,6 +122,8 @@ export function MonitoringEvents({ sessionId, events, tz, start, end, night, rea
 }
 
 function EventCard({ event, tz, night, readOnly, onEdit, onDelete }: { event: MonitoringEvent; tz: number; night: MonitoringNight | null; readOnly: boolean; onEdit: () => void; onDelete: () => void }) {
+  const t = useTranslations('monitoring')
+  const locale = useLocale() as Lang
   const r = event.response
   const marker = isSleepMarker(event.type)
   return (
@@ -125,36 +134,36 @@ function EventCard({ event, tz, night, readOnly, onEdit, onDelete }: { event: Mo
         </div>
         <div className="min-w-0 flex-1">
           <div className="font-extrabold text-anthracite text-sm">{event.label} · {hm(event.timestamp, tz)}</div>
-          <div className="text-[11px] text-anthracite-lighter">{dayPart(event.timestamp, tz, night)}{event.note ? ` · ${event.note}` : ''}</div>
+          <div className="text-[11px] text-anthracite-lighter">{dayPart(event.timestamp, tz, night, t)}{event.note ? ` · ${event.note}` : ''}</div>
         </div>
         {r ? (
-          <Chip label={r.label} color={eventResponseColor(r.label)} size="sm" />
+          <Chip label={eventResponseLabel(r.label, locale)} color={eventResponseColor(r.label)} size="sm" />
         ) : marker ? (
-          <Chip label="confine notte" color={MON.accent} size="sm" />
+          <Chip label={t('events.nightBoundary')} color={MON.accent} size="sm" />
         ) : (
-          <Chip label="in attesa di ricalcolo" color={MON.warning} size="sm" icon={RefreshCw} />
+          <Chip label={t('events.pendingChip')} color={MON.warning} size="sm" icon={RefreshCw} />
         )}
         {!readOnly && (
           <div className="flex items-center gap-0.5">
-            <button type="button" onClick={onEdit} aria-label="Modifica evento" className="w-7 h-7 rounded-lg hover:bg-surface flex items-center justify-center text-anthracite-lighter"><Pencil size={14} /></button>
-            <button type="button" onClick={onDelete} aria-label="Elimina evento" className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-anthracite-lighter hover:text-red-500"><Trash2 size={14} /></button>
+            <button type="button" onClick={onEdit} aria-label={t('events.edit')} className="w-7 h-7 rounded-lg hover:bg-surface flex items-center justify-center text-anthracite-lighter"><Pencil size={14} /></button>
+            <button type="button" onClick={onDelete} aria-label={t('events.delete')} className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-anthracite-lighter hover:text-red-500"><Trash2 size={14} /></button>
           </div>
         )}
       </div>
-      {r && r.label !== 'dati insufficienti' ? (
+      {r && r.label !== RESPONSE_INSUFFICIENT ? (
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-[11px] min-w-[360px]">
             <thead>
               <tr className="text-anthracite-lighter font-bold">
-                <th className="text-left py-1" /><th className="text-right py-1">Prima</th><th className="text-right py-1">Dopo</th><th className="text-right py-1">Dopo 1-3h</th>
+                <th className="text-left py-1" /><th className="text-right py-1">{monT('ev_before', locale)}</th><th className="text-right py-1">{monT('ev_after', locale)}</th><th className="text-right py-1">{monT('ev_late', locale)}</th>
               </tr>
             </thead>
             <tbody className="text-anthracite">
               <tr>
                 <td className="py-1 font-bold">HR (bpm)</td>
                 <td className="py-1 text-right tabular-nums">{r.hr_before == null ? '—' : Math.round(r.hr_before)}</td>
-                <td className="py-1 text-right tabular-nums">{r.hr_after == null ? '—' : Math.round(r.hr_after)}{delta(r.delta_hr, 0)}</td>
-                <td className="py-1 text-right tabular-nums">{r.hr_late == null ? '—' : Math.round(r.hr_late)}{delta(r.delta_hr_late, 0)}</td>
+                <td className="py-1 text-right tabular-nums">{r.hr_after == null ? '—' : Math.round(r.hr_after)}{delta(r.delta_hr)}</td>
+                <td className="py-1 text-right tabular-nums">{r.hr_late == null ? '—' : Math.round(r.hr_late)}{delta(r.delta_hr_late)}</td>
               </tr>
               <tr>
                 <td className="py-1 font-bold">RMSSD (ms)</td>
@@ -166,14 +175,14 @@ function EventCard({ event, tz, night, readOnly, onEdit, onDelete }: { event: Mo
           </table>
         </div>
       ) : r ? (
-        <p className="mt-2 text-[11px] text-anthracite-lighter">Dati insufficienti: l&apos;evento cade in attività, vicino a un buco o alla fine della registrazione.</p>
+        <p className="mt-2 text-[11px] text-anthracite-lighter">{t('events.insufficient')}</p>
       ) : null}
     </div>
   )
 }
 
-function delta(d: number | null, dec: number): string {
-  return d == null ? '' : ` (${d >= 0 ? '+' : ''}${d.toFixed(dec)})`
+function delta(d: number | null): string {
+  return d == null ? '' : ` (${d >= 0 ? '+' : ''}${Math.round(d)})`
 }
 function fmtRm(ln: number | null): string {
   const v = rmssdFromLn(ln)
@@ -196,6 +205,8 @@ function fromLocalInput(v: string, tz: number): string | null {
 }
 
 function EventForm({ initial, tz, start, end, busy, onClose, onSave }: { initial: MonitoringEvent | null; tz: number; start: string; end: string; busy: boolean; onClose: () => void; onSave: (e: MonitoringEvent) => void }) {
+  const t = useTranslations('monitoring')
+  const tc = useTranslations('common')
   const mid = new Date((new Date(start).getTime() + new Date(end).getTime()) / 2).toISOString()
   const [type, setType] = useState<MonitoringEventType>(initial?.type ?? 'coffee')
   const [when, setWhen] = useState(toLocalInput(initial?.timestamp ?? mid, tz))
@@ -205,15 +216,15 @@ function EventForm({ initial, tz, start, end, busy, onClose, onSave }: { initial
 
   function submit() {
     const iso = fromLocalInput(when, tz)
-    if (!iso) { setErr('Indica data e ora'); return }
-    const t = new Date(iso).getTime()
-    if (t < new Date(start).getTime() || t > new Date(end).getTime()) { setErr('L\'evento deve cadere dentro il periodo della registrazione'); return }
+    if (!iso) { setErr(t('events.form.errDate')); return }
+    const at = new Date(iso).getTime()
+    if (at < new Date(start).getTime() || at > new Date(end).getTime()) { setErr(t('events.form.errRange')); return }
     const changed = !initial || initial.type !== type || initial.timestamp !== iso
     onSave({
       id: initial?.id ?? (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `web-${Date.now()}`),
       type,
       timestamp: iso,
-      label: label.trim() || EVENT_TYPE_LABEL[type],
+      label: label.trim() || eventTypeLabel(type, t),
       note: note.trim() || null,
       // La reazione non si calcola sul sito: un evento nuovo o spostato la perde
       // finché l'app non rielabora.
@@ -225,35 +236,35 @@ function EventForm({ initial, tz, start, end, busy, onClose, onSave }: { initial
     <Modal
       open
       onClose={onClose}
-      title={initial ? 'Modifica evento' : 'Aggiungi evento'}
-      description="Inserimento a posteriori · la reazione verrà calcolata dall'app"
+      title={initial ? t('events.form.editTitle') : t('events.form.addTitle')}
+      description={t('events.form.description')}
       size="sm"
       footer={
-        <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="btn-secondary text-sm py-2">Annulla</button>
+        <div className="flex flex-wrap justify-end gap-2">
+          <button type="button" onClick={onClose} className="btn-secondary text-sm py-2">{tc('cancel')}</button>
           <button type="button" onClick={submit} disabled={busy} className="text-sm px-5 py-2 rounded-xl text-white font-medium disabled:opacity-50 inline-flex items-center gap-2" style={{ backgroundColor: MON.accent }}>
-            {busy && <Loader2 size={14} className="animate-spin" />} Salva
+            {busy && <Loader2 size={14} className="animate-spin" />} {tc('save')}
           </button>
         </div>
       }
     >
       <div className="space-y-3">
         <div>
-          <label className="input-label">Tipo</label>
-          <select className="select-field w-full" value={type} onChange={(e) => { const t = e.target.value as MonitoringEventType; setType(t); if (!label || Object.values(EVENT_TYPE_LABEL).includes(label)) setLabel(EVENT_TYPE_LABEL[t]) }}>
-            {EVENT_TYPES.map((t) => <option key={t} value={t}>{EVENT_TYPE_LABEL[t]}</option>)}
+          <label className="input-label">{t('events.form.type')}</label>
+          <select className="select-field w-full" value={type} onChange={(e) => { const next = e.target.value as MonitoringEventType; setType(next); if (!label || eventTypeLabels(t).includes(label)) setLabel(eventTypeLabel(next, t)) }}>
+            {EVENT_TYPES.map((k) => <option key={k} value={k}>{eventTypeLabel(k, t)}</option>)}
           </select>
         </div>
         <div>
-          <label className="input-label">Data e ora (orologio del dispositivo)</label>
+          <label className="input-label">{t('events.form.dateTime')}</label>
           <input type="datetime-local" className="input-field" value={when} min={toLocalInput(start, tz)} max={toLocalInput(end, tz)} onChange={(e) => setWhen(e.target.value)} />
         </div>
         <div>
-          <label className="input-label">Etichetta</label>
-          <input className="input-field" value={label} placeholder={EVENT_TYPE_LABEL[type]} onChange={(e) => setLabel(e.target.value)} />
+          <label className="input-label">{t('events.form.label')}</label>
+          <input className="input-field" value={label} placeholder={eventTypeLabel(type, t)} onChange={(e) => setLabel(e.target.value)} />
         </div>
         <div>
-          <label className="input-label">Nota (opzionale)</label>
+          <label className="input-label">{t('events.form.note')}</label>
           <input className="input-field" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
         {err && <div className="px-3 py-2 rounded-xl bg-red-50 text-red-700 text-sm">{err}</div>}

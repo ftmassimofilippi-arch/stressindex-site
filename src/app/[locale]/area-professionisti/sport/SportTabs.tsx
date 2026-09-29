@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { Link } from '@/i18n/navigation'
+import { useLocale, useTranslations } from 'next-intl'
 import { Activity, ArrowRight, ChevronLeft, ChevronRight, Dumbbell, TrendingDown, TrendingUp, Minus, Users } from 'lucide-react'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { EmptyState } from '@/components/dashboard/EmptyState'
@@ -27,30 +28,31 @@ type Props = {
 }
 
 export function SportTabs({ stats, sessions, athletes, sports, athleteOptions, baseQuery }: Props) {
+  const t = useTranslations('sport')
   const [tab, setTab] = useState<Tab>('dashboard')
 
   const tabs: Array<{ id: Tab; label: string }> = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'sessioni', label: 'Sessioni' },
-    { id: 'atleti', label: 'Atleti' },
+    { id: 'dashboard', label: t('tabs.dashboard') },
+    { id: 'sessioni', label: t('tabs.sessions') },
+    { id: 'atleti', label: t('tabs.athletes') },
   ]
 
   return (
     <div>
-      <div className="border-b border-surface-border mb-6">
-        <nav className="flex gap-1 -mb-px">
-          {tabs.map((t) => (
+      <div className="border-b border-surface-border mb-6 overflow-x-auto">
+        <nav className="flex gap-1 -mb-px min-w-max">
+          {tabs.map((tb) => (
             <button
-              key={t.id}
+              key={tb.id}
               type="button"
-              onClick={() => setTab(t.id)}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                tab === t.id
+              onClick={() => setTab(tb.id)}
+              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                tab === tb.id
                   ? 'border-teal text-teal-dark'
                   : 'border-transparent text-anthracite-lighter hover:text-anthracite'
               }`}
             >
-              {t.label}
+              {tb.label}
             </button>
           ))}
         </nav>
@@ -68,20 +70,21 @@ export function SportTabs({ stats, sessions, athletes, sports, athleteOptions, b
 // ── TAB DASHBOARD ────────────────────────────────────────────────────────────
 
 function DashboardTab({ stats, baseQuery }: { stats: SportDashboardStats; baseQuery: string }) {
+  const t = useTranslations('sport')
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <MetricCard label="Sessioni totali" value={stats.total_sessions} />
-        <MetricCard label="Questa settimana" value={stats.sessions_this_week} hint="ultimi 7gg" />
-        <MetricCard label="TRIMP medio" value={stats.avg_trimp_week == null ? '—' : Math.round(stats.avg_trimp_week)} hint="settimanale" />
-        <MetricCard label="Atleti attivi" value={stats.active_athletes} hint="ultimi 30gg" />
+        <MetricCard label={t('dashboard.totalSessions')} value={stats.total_sessions} />
+        <MetricCard label={t('dashboard.thisWeek')} value={stats.sessions_this_week} hint={t('dashboard.last7d')} />
+        <MetricCard label={t('dashboard.avgTrimp')} value={stats.avg_trimp_week == null ? '—' : Math.round(stats.avg_trimp_week)} hint={t('dashboard.weekly')} />
+        <MetricCard label={t('dashboard.activeAthletes')} value={stats.active_athletes} hint={t('dashboard.last30d')} />
       </div>
 
       <section className="card p-5">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
           <Activity size={16} className="text-teal" />
-          <h3 className="font-serif text-base text-anthracite">Sessioni per settimana</h3>
-          <span className="text-xs text-anthracite-lighter">ultime 12 settimane</span>
+          <h3 className="font-serif text-base text-anthracite">{t('dashboard.sessionsPerWeek')}</h3>
+          <span className="text-xs text-anthracite-lighter">{t('dashboard.last12Weeks')}</span>
         </div>
         <WeeklySessionsBar data={stats.weekly} />
       </section>
@@ -89,22 +92,22 @@ function DashboardTab({ stats, baseQuery }: { stats: SportDashboardStats; baseQu
       <section className="card overflow-hidden">
         <div className="px-6 py-4 border-b border-surface-border flex items-center gap-2">
           <Dumbbell size={18} className="text-teal" />
-          <h2 className="font-serif text-lg text-anthracite">Ultime sessioni</h2>
+          <h2 className="font-serif text-lg text-anthracite">{t('dashboard.recentSessions')}</h2>
         </div>
         {stats.recent.length === 0 ? (
-          <EmptyState icon={Dumbbell} title="Nessuna sessione sport" description="Le sessioni vengono sincronizzate dall'app mobile." />
+          <EmptyState icon={Dumbbell} title={t('dashboard.emptyTitle')} description={t('dashboard.emptyText')} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-surface text-anthracite-lighter">
                 <tr>
-                  <Th>Atleta</Th>
-                  <Th>Data</Th>
-                  <Th>Sport</Th>
-                  <Th>Durata</Th>
-                  <Th>TRIMP</Th>
-                  <Th>HR medio</Th>
-                  <Th>DFA α1</Th>
+                  <Th>{t('columns.athlete')}</Th>
+                  <Th>{t('columns.date')}</Th>
+                  <Th>{t('columns.sport')}</Th>
+                  <Th>{t('columns.duration')}</Th>
+                  <Th>{t('columns.trimp')}</Th>
+                  <Th>{t('columns.hrAvg')}</Th>
+                  <Th>{t('columns.dfa')}</Th>
                   <th className="px-3 py-2.5" />
                 </tr>
               </thead>
@@ -123,11 +126,11 @@ function DashboardTab({ stats, baseQuery }: { stats: SportDashboardStats; baseQu
 
 // ── TAB SESSIONI ─────────────────────────────────────────────────────────────
 
-const PERIODS: Array<{ value: string; label: string; days: number | null }> = [
-  { value: 'all', label: 'Tutto', days: null },
-  { value: '7', label: 'Ultimi 7gg', days: 7 },
-  { value: '30', label: 'Ultimi 30gg', days: 30 },
-  { value: '90', label: 'Ultimi 90gg', days: 90 },
+const PERIODS: Array<{ value: string; labelKey: 'periodAll' | 'period7' | 'period30' | 'period90'; days: number | null }> = [
+  { value: 'all', labelKey: 'periodAll', days: null },
+  { value: '7', labelKey: 'period7', days: 7 },
+  { value: '30', labelKey: 'period30', days: 30 },
+  { value: '90', labelKey: 'period90', days: 90 },
 ]
 const PAGE_SIZE = 20
 
@@ -142,6 +145,7 @@ function SessioniTab({
   athleteOptions: Array<{ id: string; name: string }>
   baseQuery: string
 }) {
+  const t = useTranslations('sport')
   const [athlete, setAthlete] = useState('')
   const [period, setPeriod] = useState('all')
   const [sport, setSport] = useState('')
@@ -170,49 +174,49 @@ function SessioniTab({
   return (
     <div className="space-y-4">
       <div className="card p-4 flex flex-wrap items-end gap-3">
-        <Filter label="Atleta">
+        <Filter label={t('sessions.filterAthlete')}>
           <select className="select-field" value={athlete} onChange={(e) => reset(setAthlete)(e.target.value)}>
-            <option value="">Tutti</option>
+            <option value="">{t('sessions.all')}</option>
             {athleteOptions.map((a) => (
               <option key={a.id} value={a.id}>{a.name}</option>
             ))}
           </select>
         </Filter>
-        <Filter label="Periodo">
+        <Filter label={t('sessions.filterPeriod')}>
           <select className="select-field" value={period} onChange={(e) => reset(setPeriod)(e.target.value)}>
             {PERIODS.map((p) => (
-              <option key={p.value} value={p.value}>{p.label}</option>
+              <option key={p.value} value={p.value}>{t(`sessions.${p.labelKey}`)}</option>
             ))}
           </select>
         </Filter>
-        <Filter label="Sport">
+        <Filter label={t('sessions.filterSport')}>
           <select className="select-field" value={sport} onChange={(e) => reset(setSport)(e.target.value)}>
-            <option value="">Tutti</option>
+            <option value="">{t('sessions.all')}</option>
             {sports.map((sp) => (
               <option key={sp} value={sp}>{sp}</option>
             ))}
           </select>
         </Filter>
-        <div className="ml-auto text-sm text-anthracite-lighter">{filtered.length} sessioni</div>
+        <div className="ml-auto text-sm text-anthracite-lighter">{t('sessions.count', { count: filtered.length })}</div>
       </div>
 
       <section className="card overflow-hidden">
         {filtered.length === 0 ? (
-          <EmptyState icon={Dumbbell} title="Nessuna sessione" description="Nessuna sessione corrisponde ai filtri selezionati." />
+          <EmptyState icon={Dumbbell} title={t('sessions.emptyTitle')} description={t('sessions.emptyText')} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-surface text-anthracite-lighter">
                 <tr>
-                  <Th>Data/ora</Th>
-                  <Th>Atleta</Th>
-                  <Th>Sport</Th>
-                  <Th>Durata</Th>
-                  <Th>HR medio</Th>
-                  <Th>HR max</Th>
-                  <Th>TRIMP</Th>
-                  <Th>DFA α1</Th>
-                  <Th>RPE</Th>
+                  <Th>{t('columns.dateTime')}</Th>
+                  <Th>{t('columns.athlete')}</Th>
+                  <Th>{t('columns.sport')}</Th>
+                  <Th>{t('columns.duration')}</Th>
+                  <Th>{t('columns.hrAvg')}</Th>
+                  <Th>{t('columns.hrMax')}</Th>
+                  <Th>{t('columns.trimp')}</Th>
+                  <Th>{t('columns.dfa')}</Th>
+                  <Th>{t('columns.rpe')}</Th>
                   <th className="px-3 py-2.5" />
                 </tr>
               </thead>
@@ -225,23 +229,23 @@ function SessioniTab({
           </div>
         )}
         {pageCount > 1 && (
-          <div className="flex items-center justify-between px-6 py-3 border-t border-surface-border text-sm">
+          <div className="flex items-center justify-between gap-3 flex-wrap px-6 py-3 border-t border-surface-border text-sm">
             <button
               type="button"
               disabled={safePage === 0}
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               className="inline-flex items-center gap-1 text-anthracite disabled:text-anthracite-lighter/50 disabled:cursor-not-allowed hover:text-teal-dark"
             >
-              <ChevronLeft size={16} /> Precedente
+              <ChevronLeft size={16} /> {t('pagination.prev')}
             </button>
-            <span className="text-anthracite-lighter">Pagina {safePage + 1} di {pageCount}</span>
+            <span className="text-anthracite-lighter">{t('pagination.page', { page: safePage + 1, total: pageCount })}</span>
             <button
               type="button"
               disabled={safePage >= pageCount - 1}
               onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
               className="inline-flex items-center gap-1 text-anthracite disabled:text-anthracite-lighter/50 disabled:cursor-not-allowed hover:text-teal-dark"
             >
-              Successiva <ChevronRight size={16} />
+              {t('pagination.next')} <ChevronRight size={16} />
             </button>
           </div>
         )}
@@ -253,10 +257,12 @@ function SessioniTab({
 // ── TAB ATLETI ───────────────────────────────────────────────────────────────
 
 function AtletiTab({ athletes, baseQuery }: { athletes: SportAthleteCard[]; baseQuery: string }) {
+  const t = useTranslations('sport')
+  const locale = useLocale()
   if (athletes.length === 0) {
     return (
       <div className="card">
-        <EmptyState icon={Users} title="Nessun atleta con sessioni sport" description="Gli atleti compaiono qui dopo la prima sessione sport sincronizzata." />
+        <EmptyState icon={Users} title={t('athletes.emptyTitle')} description={t('athletes.emptyText')} />
       </div>
     )
   }
@@ -272,23 +278,23 @@ function AtletiTab({ athletes, baseQuery }: { athletes: SportAthleteCard[]; base
             <div className="min-w-0">
               <div className="font-medium text-anthracite truncate">{a.full_name}</div>
               <div className="text-xs text-anthracite-lighter mt-0.5 truncate">
-                {[a.sport, competitiveLevelLabel(a.competitive_level)].filter(Boolean).join(' · ') || 'Sport non specificato'}
+                {[a.sport, competitiveLevelLabel(a.competitive_level, t)].filter(Boolean).join(' · ') || t('athletes.noSport')}
               </div>
             </div>
             <TrendBadge trend={a.ln_rmssd_trend} />
           </div>
 
           <div className="grid grid-cols-3 gap-2 mt-4 text-center">
-            <Stat label="Sessioni 30gg" value={a.sessions_30d} />
-            <Stat label="TRIMP 7gg" value={a.trimp_7d == null ? '—' : Math.round(a.trimp_7d)} />
-            <Stat label="Ultimo TRIMP" value={a.last_session_trimp == null ? '—' : Math.round(a.last_session_trimp)} />
+            <Stat label={t('athletes.sessions30d')} value={a.sessions_30d} />
+            <Stat label={t('athletes.trimp7d')} value={a.trimp_7d == null ? '—' : Math.round(a.trimp_7d)} />
+            <Stat label={t('athletes.lastTrimp')} value={a.last_session_trimp == null ? '—' : Math.round(a.last_session_trimp)} />
           </div>
 
-          <div className="mt-4 pt-3 border-t border-surface-border flex items-center justify-between text-xs">
-            <span className="text-anthracite-lighter">
-              {a.last_session_at ? `Ultima sessione ${formatIstante(a.last_session_at)}` : 'Nessuna sessione'}
+          <div className="mt-4 pt-3 border-t border-surface-border flex items-center justify-between gap-2 text-xs">
+            <span className="text-anthracite-lighter min-w-0 truncate">
+              {a.last_session_at ? t('athletes.lastSession', { date: formatIstante(a.last_session_at, undefined, locale) }) : t('athletes.noSession')}
             </span>
-            <ArrowRight size={14} className="text-teal-dark" />
+            <ArrowRight size={14} className="text-teal-dark shrink-0" />
           </div>
         </Link>
       ))}
@@ -297,15 +303,16 @@ function AtletiTab({ athletes, baseQuery }: { athletes: SportAthleteCard[]; base
 }
 
 function TrendBadge({ trend }: { trend: TrendDirection }) {
+  const t = useTranslations('sport')
   const map = {
-    up: { Icon: TrendingUp, cls: 'bg-emerald-50 text-emerald-700', label: 'ln(RMSSD) ↑' },
-    down: { Icon: TrendingDown, cls: 'bg-red-50 text-red-600', label: 'ln(RMSSD) ↓' },
-    stable: { Icon: Minus, cls: 'bg-surface text-anthracite-lighter', label: 'ln(RMSSD) stabile' },
+    up: { Icon: TrendingUp, cls: 'bg-emerald-50 text-emerald-700' },
+    down: { Icon: TrendingDown, cls: 'bg-red-50 text-red-600' },
+    stable: { Icon: Minus, cls: 'bg-surface text-anthracite-lighter' },
   } as const
-  const { Icon, cls, label } = map[trend]
+  const { Icon, cls } = map[trend]
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full whitespace-nowrap ${cls}`} title={label}>
-      <Icon size={12} /> {trend === 'stable' ? 'stabile' : trend === 'up' ? 'in salita' : 'in calo'}
+    <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full whitespace-nowrap shrink-0 ${cls}`} title={t(`athletes.trend.${trend}Title`)}>
+      <Icon size={12} /> {t(`athletes.trend.${trend}`)}
     </span>
   )
 }
@@ -313,34 +320,36 @@ function TrendBadge({ trend }: { trend: TrendDirection }) {
 // ── Riusabili ────────────────────────────────────────────────────────────────
 
 function SessionRow({ s, baseQuery, variant = 'recent' }: { s: SportSessionWithAthlete; baseQuery: string; variant?: 'recent' | 'full' }) {
+  const t = useTranslations('sport')
+  const locale = useLocale()
   return (
     <tr className="border-t border-surface-border hover:bg-surface transition-colors">
       {variant === 'recent' ? (
         <>
           <Td className="font-medium text-anthracite">{s.athlete_name}</Td>
-          <Td className="text-anthracite-lighter">{formatMeasuredDate(s)}</Td>
+          <Td className="text-anthracite-lighter">{formatMeasuredDate(s, undefined, locale)}</Td>
           <Td>{s.sport ?? '—'}</Td>
           <Td>{formatDuration(s.duration_s)}</Td>
           <Td>{s.trimp == null ? '—' : Math.round(s.trimp)}</Td>
           <Td>{s.hr_avg == null ? '—' : `${s.hr_avg} bpm`}</Td>
-          <Td>{num(s.dfa_alpha1_avg, 2)}</Td>
+          <Td>{num(s.dfa_alpha1_avg, 2, locale)}</Td>
         </>
       ) : (
         <>
-          <Td className="text-anthracite-lighter whitespace-nowrap">{formatMeasuredAt(s)}</Td>
+          <Td className="text-anthracite-lighter whitespace-nowrap">{formatMeasuredAt(s, locale)}</Td>
           <Td className="font-medium text-anthracite">{s.athlete_name}</Td>
-          <Td>{s.sport ?? '—'}{s.test_type === 'threshold_test' && <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] bg-orange-50 text-orange-700 border border-orange-200">Test soglie</span>}</Td>
+          <Td>{s.sport ?? '—'}{s.test_type === 'threshold_test' && <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap">{t('sessions.thresholdBadge')}</span>}</Td>
           <Td>{formatDuration(s.duration_s)}</Td>
           <Td>{s.hr_avg == null ? '—' : `${s.hr_avg}`}</Td>
           <Td>{s.hr_max == null ? '—' : `${s.hr_max}`}</Td>
           <Td>{s.trimp == null ? '—' : Math.round(s.trimp)}</Td>
-          <Td>{num(s.dfa_alpha1_avg, 2)}</Td>
+          <Td>{num(s.dfa_alpha1_avg, 2, locale)}</Td>
           <Td>{s.questionnaire?.rpe == null ? '—' : `${s.questionnaire.rpe}/10`}</Td>
         </>
       )}
       <td className="px-3 py-3 text-right whitespace-nowrap">
         <Link href={`/area-professionisti/sport/sessione/${s.id}${baseQuery}`} className="text-teal-dark text-sm hover:underline">
-          Apri →
+          {t('sessions.open')} →
         </Link>
       </td>
     </tr>
@@ -366,7 +375,7 @@ function Filter({ label, children }: { label: string; children: React.ReactNode 
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-lg bg-surface px-2 py-2">
+    <div className="rounded-lg bg-surface px-2 py-2 min-w-0">
       <div className="text-base font-serif text-anthracite">{value}</div>
       <div className="text-[10px] text-anthracite-lighter mt-0.5 leading-tight">{label}</div>
     </div>

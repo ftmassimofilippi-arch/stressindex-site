@@ -1,4 +1,6 @@
-import { NextResponse } from 'next/server'
+import type { NextResponse } from 'next/server'
+import { NextResponse as Res } from 'next/server'
+import { apiError } from './api-error'
 import { filterMonitoringByModules, getMyAccountAccess } from './account-access'
 import { createClient } from './supabase-server'
 import { getMonitoringSession } from './monitoring-data'
@@ -10,6 +12,9 @@ import type { ProfessionalProfile } from './types'
 // loggato). Restituisce anche il profilo del professionista TITOLARE della
 // riga (professionista_id), non dell'osservatore: i PDF restano intestati
 // allo studio giusto anche nella vista superadmin.
+//
+// Gli errori sono codici stabili (`apiError`): il client li traduce con
+// `errors.api.<codice>`.
 
 export type MonitoringAccess =
   | { error: NextResponse; session: null; professional: null; userId: null }
@@ -19,15 +24,15 @@ export async function loadMonitoringForRoute(sessionId: string): Promise<Monitor
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    return { error: NextResponse.json({ error: 'Sessione scaduta: ricarica la pagina e accedi di nuovo.' }, { status: 401 }), session: null, professional: null, userId: null }
+    return { error: apiError('session_expired', 401), session: null, professional: null, userId: null }
   }
   const session = await getMonitoringSession(sessionId, user.id)
   if (!session) {
-    return { error: NextResponse.json({ error: 'Monitoraggio non trovato o non accessibile con questo account.' }, { status: 404 }), session: null, professional: null, userId: null }
+    return { error: apiError('monitoring_not_found', 404), session: null, professional: null, userId: null }
   }
   const modules = await getMyAccountAccess()
   if (filterMonitoringByModules([session], modules).length === 0) {
-    return { error: NextResponse.json({ error: 'Modulo non attivo per questo account.' }, { status: 403 }), session: null, professional: null, userId: null }
+    return { error: apiError('monitoring_module_not_active', 403), session: null, professional: null, userId: null }
   }
   const ownerId = session.professionista_id ?? user.id
   const { data: professional } = await supabase
@@ -43,7 +48,7 @@ export function sanitizeFilename(s: string): string {
 }
 
 export function csvResponse(csv: string, filename: string): NextResponse {
-  return new NextResponse('﻿' + csv, {
+  return new Res('﻿' + csv, {
     status: 200,
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',

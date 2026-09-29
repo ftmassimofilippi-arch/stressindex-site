@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { Link } from '@/i18n/navigation'
 import { Activity, Mail, Pencil, Save, Trash2, UserPlus, Users } from 'lucide-react'
 import { formatRelative, formatMeasuredAt, initials } from '@/lib/format'
+import { apiErrorMessage } from '@/lib/api-error'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { ConfirmDialog } from '@/components/dashboard/ConfirmDialog'
@@ -24,29 +26,27 @@ type Props = {
   overview: OrgOverview | null
 }
 
-const TABS = [
-  { id: 'team', label: 'Team' },
-  { id: 'panoramica', label: 'Panoramica' },
-  { id: 'professionisti', label: 'Professionisti' },
-] as const
+const TAB_IDS = ['team', 'panoramica', 'professionisti'] as const
 
-type TabId = typeof TABS[number]['id']
+type TabId = typeof TAB_IDS[number]
 
 export function OrganizationTabs({ organization, members, role, stats, overview }: Props) {
+  const t = useTranslations('organization.tabs')
   const [tab, setTab] = useState<TabId>('team')
+  const labels: Record<TabId, string> = { team: t('team'), panoramica: t('overview'), professionisti: t('professionals') }
   return (
     <>
-      <div className="flex gap-1 border-b border-surface-border mb-6">
-        {TABS.map((t) => (
+      <div className="flex gap-1 border-b border-surface-border mb-6 overflow-x-auto">
+        {TAB_IDS.map((id) => (
           <button
-            key={t.id}
+            key={id}
             type="button"
-            onClick={() => setTab(t.id)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              tab === t.id ? 'border-teal text-teal-dark' : 'border-transparent text-anthracite-lighter hover:text-anthracite'
+            onClick={() => setTab(id)}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+              tab === id ? 'border-teal text-teal-dark' : 'border-transparent text-anthracite-lighter hover:text-anthracite'
             }`}
           >
-            {t.label}
+            {labels[id]}
           </button>
         ))}
       </div>
@@ -68,6 +68,8 @@ function TeamTab({
   role: 'owner' | 'admin' | 'member'
   stats: OrgMemberStats[]
 }) {
+  const t = useTranslations('organization')
+  const locale = useLocale()
   const router = useRouter()
   const [editingName, setEditingName] = useState(false)
   const [name, setName] = useState(organization.name)
@@ -115,15 +117,15 @@ function TeamTab({
   return (
     <div className="space-y-6">
       <section className="card p-6">
-        <h2 className="font-serif text-lg text-anthracite mb-3">Organizzazione</h2>
+        <h2 className="font-serif text-lg text-anthracite mb-3">{t('team.organization')}</h2>
         {editingName && role === 'owner' ? (
-          <div className="flex items-center gap-2">
-            <input value={name} onChange={(e) => setName(e.target.value)} className="input-field flex-1" />
+          <div className="flex items-center gap-2 flex-wrap">
+            <input value={name} onChange={(e) => setName(e.target.value)} className="input-field flex-1 min-w-[200px]" />
             <button onClick={saveName} disabled={savingName} className="btn-primary text-sm inline-flex items-center gap-1.5">
-              <Save size={15} /> Salva
+              <Save size={15} /> {t('team.save')}
             </button>
             <button onClick={() => { setName(organization.name); setEditingName(false) }} className="btn-secondary text-sm">
-              Annulla
+              {t('team.cancel')}
             </button>
           </div>
         ) : (
@@ -142,26 +144,26 @@ function TeamTab({
         <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2">
             <Users size={18} className="text-teal" />
-            <h2 className="font-serif text-lg text-anthracite">Membri del team</h2>
+            <h2 className="font-serif text-lg text-anthracite">{t('team.members')}</h2>
           </div>
           {(role === 'owner' || role === 'admin') && (
             <button onClick={() => setInviteOpen(true)} className="btn-primary text-sm inline-flex items-center gap-1.5">
-              <UserPlus size={15} /> Invita professionista
+              <UserPlus size={15} /> {t('team.invite')}
             </button>
           )}
         </div>
         <div className="px-6 py-3 bg-amber-50/40 border-b border-surface-border text-xs text-anthracite-lighter">
-          L&apos;invito verrà accettato quando il professionista accede alla dashboard.
+          {t('team.inviteNote')}
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[720px]">
             <thead className="bg-surface text-anthracite-lighter">
               <tr>
-                <th className="text-left px-6 py-2.5 text-[11px] uppercase tracking-wide font-medium">Professionista</th>
-                <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">Ruolo</th>
-                <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">Stato</th>
-                <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">Clienti</th>
-                <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">Ultima attività</th>
+                <th className="text-left px-6 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('team.thProfessional')}</th>
+                <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('team.thRole')}</th>
+                <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('team.thStatus')}</th>
+                <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('team.thClients')}</th>
+                <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('team.thLastActivity')}</th>
                 <th className="px-3 py-2.5"></th>
               </tr>
             </thead>
@@ -173,7 +175,7 @@ function TeamTab({
                   <tr key={m.id} className="border-t border-surface-border">
                     <td className="px-6 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-teal-light text-teal-dark flex items-center justify-center text-xs font-semibold">
+                        <div className="w-8 h-8 rounded-full bg-teal-light text-teal-dark flex items-center justify-center text-xs font-semibold flex-shrink-0">
                           {stat?.full_name ? initials({ nome: stat.full_name.split(' ')[0], cognome: stat.full_name.split(' ').slice(1).join(' ') }) : (m.email[0]?.toUpperCase() ?? '?')}
                         </div>
                         <div className="min-w-0">
@@ -190,12 +192,12 @@ function TeamTab({
                           disabled={busyMember === m.id}
                           className="px-2.5 py-1.5 text-xs bg-white border border-surface-border rounded-lg"
                         >
-                          <option value="member">Professionista</option>
-                          <option value="admin">Amministratore</option>
+                          <option value="member">{t('roles.member')}</option>
+                          <option value="admin">{t('roles.admin')}</option>
                         </select>
                       ) : (
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-teal-light text-teal-dark">
-                          {roleLabel(m.role)}
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-teal-light text-teal-dark whitespace-nowrap">
+                          {t(`roles.${m.role}`)}
                         </span>
                       )}
                     </td>
@@ -204,7 +206,7 @@ function TeamTab({
                     </td>
                     <td className="px-3 py-3 text-anthracite">{stat?.clients_count ?? '—'}</td>
                     <td className="px-3 py-3 text-anthracite-lighter text-xs">
-                      {stat?.last_activity ? formatRelative(stat.last_activity) : '—'}
+                      {stat?.last_activity ? formatRelative(stat.last_activity, locale) : '—'}
                     </td>
                     <td className="px-3 py-3 text-right">
                       {role === 'owner' && m.role !== 'owner' && !isMe && (
@@ -212,7 +214,7 @@ function TeamTab({
                           onClick={() => setRevokeId(m.id)}
                           disabled={busyMember === m.id}
                           className="text-red-600 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50"
-                          title="Rimuovi membro"
+                          title={t('team.remove')}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -231,9 +233,9 @@ function TeamTab({
         open={!!revokeId}
         onClose={() => setRevokeId(null)}
         onConfirm={revokeMember}
-        title="Rimuovere il membro?"
-        description="Il professionista perderà l'accesso all'organizzazione. I suoi clienti e misurazioni restano nel suo account."
-        confirmText="Rimuovi"
+        title={t('team.removeTitle')}
+        description={t('team.removeDescription')}
+        confirmText={t('team.removeConfirm')}
         destructive
       />
     </div>
@@ -241,20 +243,20 @@ function TeamTab({
 }
 
 function StatusBadge({ status }: { status: OrganizationMember['status'] }) {
-  const map: Record<OrganizationMember['status'], { label: string; cls: string }> = {
-    active: { label: 'Attivo', cls: 'bg-emerald-50 text-emerald-700' },
-    pending: { label: 'In attesa', cls: 'bg-amber-50 text-amber-700' },
-    revoked: { label: 'Revocato', cls: 'bg-surface text-anthracite-lighter' },
+  const t = useTranslations('organization.memberStatus')
+  const cls: Record<OrganizationMember['status'], string> = {
+    active: 'bg-emerald-50 text-emerald-700',
+    pending: 'bg-amber-50 text-amber-700',
+    revoked: 'bg-surface text-anthracite-lighter',
   }
-  const { label, cls } = map[status]
-  return <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${cls}`}>{label}</span>
-}
-
-function roleLabel(r: OrganizationMember['role']) {
-  return r === 'owner' ? 'Titolare' : r === 'admin' ? 'Amministratore' : 'Professionista'
+  return <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${cls[status]}`}>{t(status)}</span>
 }
 
 function InviteDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useTranslations('organization.inviteDialog')
+  const tr = useTranslations('organization.roles')
+  const tc = useTranslations('common')
+  const tErr = useTranslations('errors.api')
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<'admin' | 'member'>('member')
@@ -273,7 +275,7 @@ function InviteDialog({ open, onClose }: { open: boolean; onClose: () => void })
     setSaving(false)
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
-      setErr(translateError(data?.error))
+      setErr(apiErrorMessage(data, tErr))
       return
     }
     setEmail('')
@@ -282,35 +284,33 @@ function InviteDialog({ open, onClose }: { open: boolean; onClose: () => void })
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Invita professionista">
+    <Modal open={open} onClose={onClose} title={t('title')}>
       <form onSubmit={submit} className="space-y-4">
         <div>
-          <label className="input-label">Email</label>
+          <label className="input-label">{t('email')}</label>
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="collega@studio.it"
+            placeholder={t('placeholder')}
             className="input-field"
             autoFocus
           />
         </div>
         <div>
-          <label className="input-label">Ruolo</label>
+          <label className="input-label">{t('role')}</label>
           <select value={role} onChange={(e) => setRole(e.target.value as 'admin' | 'member')} className="input-field">
-            <option value="member">Professionista</option>
-            <option value="admin">Amministratore</option>
+            <option value="member">{tr('member')}</option>
+            <option value="admin">{tr('admin')}</option>
           </select>
-          <p className="text-xs text-anthracite-lighter mt-1">
-            Gli amministratori possono invitare altri professionisti.
-          </p>
+          <p className="text-xs text-anthracite-lighter mt-1">{t('roleHelp')}</p>
         </div>
         {err && <div className="px-3 py-2 rounded-xl bg-red-50 text-red-700 text-sm">{err}</div>}
-        <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="btn-secondary text-sm">Annulla</button>
+        <div className="flex justify-end gap-2 flex-wrap">
+          <button type="button" onClick={onClose} className="btn-secondary text-sm">{tc('cancel')}</button>
           <button type="submit" disabled={saving} className="btn-primary text-sm inline-flex items-center gap-1.5">
-            <Mail size={15} /> {saving ? 'Invio…' : 'Invita'}
+            <Mail size={15} /> {saving ? t('sending') : t('send')}
           </button>
         </div>
       </form>
@@ -318,44 +318,35 @@ function InviteDialog({ open, onClose }: { open: boolean; onClose: () => void })
   )
 }
 
-function translateError(err?: string) {
-  switch (err) {
-    case 'invalid_email': return 'Email non valida'
-    case 'already_invited': return 'Questo professionista è già stato invitato'
-    case 'forbidden': return 'Non hai i permessi per questa operazione'
-    default: return err ?? 'Errore'
-  }
-}
-
 function PanoramicaTab({ overview }: { overview: OrgOverview | null }) {
+  const t = useTranslations('organization.overview')
+  const locale = useLocale()
   if (!overview) return null
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <MetricCard label="Professionisti" value={overview.total_professionals} hint="attivi" />
-        <MetricCard label="Clienti totali" value={overview.total_clients} />
-        <MetricCard label="Misurazioni totali" value={overview.total_measurements} />
-        <MetricCard label="Misurazioni" value={overview.measurements_this_week} hint="ultimi 7 giorni" />
+        <MetricCard label={t('professionals')} value={overview.total_professionals} hint={t('professionalsHint')} />
+        <MetricCard label={t('totalClients')} value={overview.total_clients} />
+        <MetricCard label={t('totalMeasurements')} value={overview.total_measurements} />
+        <MetricCard label={t('measurements')} value={overview.measurements_this_week} hint={t('measurementsHint')} />
       </div>
 
       <section className="card overflow-hidden">
         <div className="px-6 py-4 border-b border-surface-border flex items-center gap-2">
           <Activity size={18} className="text-teal" />
-          <h2 className="font-serif text-lg text-anthracite">Attività recente</h2>
+          <h2 className="font-serif text-lg text-anthracite">{t('recent')}</h2>
         </div>
         {overview.recent.length === 0 ? (
-          <div className="px-6 py-8 text-center text-sm text-anthracite-lighter">
-            Nessuna misurazione ancora registrata
-          </div>
+          <div className="px-6 py-8 text-center text-sm text-anthracite-lighter">{t('empty')}</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[640px]">
               <thead className="bg-surface text-anthracite-lighter">
                 <tr>
-                  <th className="text-left px-6 py-2.5 text-[11px] uppercase tracking-wide font-medium">Professionista</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">Cliente</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">Data</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">Stress</th>
+                  <th className="text-left px-6 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('thProfessional')}</th>
+                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('thClient')}</th>
+                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('thDate')}</th>
+                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('thStress')}</th>
                   <th className="px-3 py-2.5"></th>
                 </tr>
               </thead>
@@ -364,14 +355,14 @@ function PanoramicaTab({ overview }: { overview: OrgOverview | null }) {
                   <tr key={r.session_id} className="border-t border-surface-border">
                     <td className="px-6 py-3 text-anthracite">{r.professional_name}</td>
                     <td className="px-3 py-3 font-medium text-anthracite">{r.client_name}</td>
-                    <td className="px-3 py-3 text-anthracite-lighter">{formatMeasuredAt(r)}</td>
+                    <td className="px-3 py-3 text-anthracite-lighter whitespace-nowrap">{formatMeasuredAt(r, locale)}</td>
                     <td className="px-3 py-3 w-40"><ScoreBar value={r.score_stress} inverted /></td>
                     <td className="px-3 py-3 text-right">
                       <Link
                         href={`/area-professionisti/clienti/${r.client_id}/misurazione/${r.session_id}?professionista=${r.professional_id}`}
-                        className="text-teal-dark text-sm hover:underline"
+                        className="text-teal-dark text-sm hover:underline whitespace-nowrap"
                       >
-                        Apri →
+                        {t('open')}
                       </Link>
                     </td>
                   </tr>
@@ -386,18 +377,16 @@ function PanoramicaTab({ overview }: { overview: OrgOverview | null }) {
 }
 
 function ProfessionistiTab({ stats }: { stats: OrgMemberStats[] }) {
+  const t = useTranslations('organization.professionals')
+  const locale = useLocale()
   return (
     <section className="card overflow-hidden">
       <div className="px-6 py-4 border-b border-surface-border">
-        <h2 className="font-serif text-lg text-anthracite">Professionisti</h2>
-        <p className="text-xs text-anthracite-lighter mt-1">
-          Clicca un professionista per vedere i suoi clienti e misurazioni (sola lettura).
-        </p>
+        <h2 className="font-serif text-lg text-anthracite">{t('title')}</h2>
+        <p className="text-xs text-anthracite-lighter mt-1">{t('help')}</p>
       </div>
       {stats.length === 0 ? (
-        <div className="px-6 py-12 text-center text-sm text-anthracite-lighter">
-          Nessun professionista attivo. Invita qualcuno dal tab Team.
-        </div>
+        <div className="px-6 py-12 text-center text-sm text-anthracite-lighter">{t('empty')}</div>
       ) : (
         <ul className="divide-y divide-surface-border">
           {stats.map((s) => (
@@ -406,7 +395,7 @@ function ProfessionistiTab({ stats }: { stats: OrgMemberStats[] }) {
                 href={`/area-professionisti/clienti?professionista=${s.user_id}`}
                 className="flex items-center gap-4 px-6 py-4 hover:bg-surface transition-colors"
               >
-                <div className="w-10 h-10 rounded-full bg-teal-light text-teal-dark flex items-center justify-center text-sm font-semibold">
+                <div className="w-10 h-10 rounded-full bg-teal-light text-teal-dark flex items-center justify-center text-sm font-semibold flex-shrink-0">
                   {s.full_name
                     .split(' ')
                     .map((p) => p[0])
@@ -420,15 +409,15 @@ function ProfessionistiTab({ stats }: { stats: OrgMemberStats[] }) {
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-medium text-anthracite">{s.clients_count}</div>
-                  <div className="text-[11px] text-anthracite-lighter">clienti</div>
+                  <div className="text-[11px] text-anthracite-lighter">{t('clients')}</div>
                 </div>
                 <div className="text-right ml-6 hidden sm:block">
                   <div className="text-sm font-medium text-anthracite">{s.measurements_count}</div>
-                  <div className="text-[11px] text-anthracite-lighter">misurazioni</div>
+                  <div className="text-[11px] text-anthracite-lighter">{t('measurements')}</div>
                 </div>
                 <div className="text-right ml-6 hidden md:block">
                   <div className="text-xs text-anthracite-lighter">
-                    {s.last_activity ? formatRelative(s.last_activity) : '—'}
+                    {s.last_activity ? formatRelative(s.last_activity, locale) : '—'}
                   </div>
                 </div>
               </Link>
@@ -439,4 +428,3 @@ function ProfessionistiTab({ stats }: { stats: OrgMemberStats[] }) {
     </section>
   )
 }
-

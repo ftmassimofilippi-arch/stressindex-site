@@ -336,22 +336,35 @@ export interface AiInsight {
   model_used?: string | null
 }
 
-// Etichette UI in italiano
-export const ALERT_TYPE_LABEL: Record<string, string> = {
-  high_stress: 'Stress elevato',
-  low_recovery: 'Recupero basso',
-  missed_measurement: 'Misurazione mancante',
-  abnormal_value: 'Valore anomalo',
-  trend_negative: 'Trend negativo',
+// Etichette UI: i valori (codici del database) restano; le etichette visibili
+// sono chiavi dei file messaggi, relative al namespace indicato.
+
+/** Tipi di alert del cron del sito → chiave nel namespace `alerts`
+ *  (`t = useTranslations('alerts')`, `t(ALERT_TYPE_KEY[type])`). Gli eventi
+ *  dell'app (alert_events) usano gli id delle regole predefinite, in
+ *  `PREDEFINED_ALERT_RULES` di alert-rules.ts. */
+export const ALERT_TYPE_KEY: Record<string, string> = {
+  high_stress: 'types.high_stress',
+  low_recovery: 'types.low_recovery',
+  missed_measurement: 'types.missed_measurement',
+  abnormal_value: 'types.abnormal_value',
+  trend_negative: 'types.trend_negative',
+  acwr_warning: 'types.acwr_warning',
+  acwr_danger: 'types.acwr_danger',
+  acwr_danger_hrv: 'types.acwr_danger_hrv',
+  undertraining: 'types.undertraining',
+  tsb_peak: 'types.tsb_peak',
 }
 
-export const SCORE_LABEL = {
-  score_stress: 'Stress',
-  score_recupero: 'Recupero',
-  score_equilibrio: 'Equilibrio',
-  score_energia: 'Energia',
+/** Colonna score → chiave nel namespace `scores` (`t = useTranslations('scores')`). */
+export const SCORE_KEY = {
+  score_stress: 'names.stress',
+  score_recupero: 'names.recovery',
+  score_equilibrio: 'names.balance',
+  score_energia: 'names.energy',
 } as const
 
+/** Categorie delle note come salvate in `client_notes.categoria`. */
 export const NOTE_CATEGORIES = [
   'valutazione',
   'follow-up',
@@ -361,3 +374,22 @@ export const NOTE_CATEGORIES = [
 ] as const
 
 export type NoteCategory = typeof NOTE_CATEGORIES[number]
+
+/** Categoria nota → chiave nel namespace `clients` (`t = useTranslations('clients')`). */
+export const NOTE_CATEGORY_KEY: Record<NoteCategory, string> = {
+  'valutazione': 'noteCategories.assessment',
+  'follow-up': 'noteCategories.followUp',
+  'post-trattamento': 'noteCategories.postSession',
+  'anamnesi': 'noteCategories.background',
+  'altro': 'noteCategories.other',
+}
+
+/** Etichetta tradotta di una categoria nota; le categorie libere restano com'è. */
+export function noteCategoryLabel(
+  categoria: string | null | undefined,
+  t: (key: string) => string,
+): string {
+  if (!categoria) return ''
+  const key = NOTE_CATEGORY_KEY[categoria as NoteCategory]
+  return key ? t(key) : categoria
+}

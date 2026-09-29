@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { requireProfessional } from '@/lib/professional-guard'
 import { linkViaRpc, nextClientCardId } from '@/lib/collegamenti'
 import { logAccessAction } from '@/lib/client-access'
+import { apiError } from '@/lib/api-error'
 import { rigaClients, validaClientForm, type ClientFormData, type ErroriForm } from '@/lib/client-form'
 
 export const runtime = 'nodejs'
@@ -101,7 +102,8 @@ export async function POST(req: NextRequest) {
   // ── 1. Validazione ─────────────────────────────────────────────────────────
   const errori: ErroriForm = validaClientForm(form)
   if (Object.keys(errori).length > 0) {
-    return NextResponse.json({ error: 'validation_failed', errors: errori }, { status: 400 })
+    // `errors`: per campo, chiave in clients.form.validation + valori (vedi client-form.ts).
+    return apiError('validation_failed', 400, { errors: errori })
   }
   const email = form.email.trim().toLowerCase()
 
@@ -116,20 +118,17 @@ export async function POST(req: NextRequest) {
     .is('merged_into_client_id', null)
     .limit(1)
   if (dupErr) {
-    return NextResponse.json({ error: 'duplicate_check_failed', message: dupErr.message }, { status: 500 })
+    return apiError('duplicate_check_failed', 500, { detail: dupErr.message })
   }
   const esistente = (doppioni ?? [])[0] as { id: string; nome: string | null; cognome: string | null } | undefined
   if (esistente) {
-    const nomeEsistente = [esistente.nome, esistente.cognome].filter(Boolean).join(' ').trim() || 'questo cliente'
-    return NextResponse.json(
-      {
-        error: 'duplicate_client',
-        message: `Esiste già una scheda con questa email: ${nomeEsistente}.`,
-        client_id: esistente.id,
-        client_name: nomeEsistente,
-      },
-      { status: 409 },
-    )
+    // Il testo lo compone il browser (clients.form.duplicate) con client_name;
+    // se la scheda non ha un nome il browser usa il proprio fallback.
+    const nomeEsistente = [esistente.nome, esistente.cognome].filter(Boolean).join(' ').trim()
+    return apiError('duplicate_client', 409, {
+      client_id: esistente.id,
+      client_name: nomeEsistente || null,
+    })
   }
 
   // ── 3. Account del cliente ─────────────────────────────────────────────────
@@ -137,6 +136,8 @@ export async function POST(req: NextRequest) {
   const emailGiaRegistrata = !!clientUserId
   let createdHere = false
   let inviteSent = false
+  // Codice di errors.api.* (tradotto dal browser) oppure il messaggio grezzo
+  // di Supabase quando non c'è un codice adatto.
   let accessError: string | null = null
   let passwordImpostata = false
 
@@ -157,7 +158,7 @@ export async function POST(req: NextRequest) {
           code === 'email_exists' || invErr?.status === 422 ||
           raw.includes('already') || raw.includes('registered') || raw.includes('exists')
         if (esisteGia) clientUserId = await trovaUtentePerEmail(admin, email)
-        if (!clientUserId) accessError = invErr?.message ?? 'Invio invito non riuscito.'
+        if (!clientUserId) accessError = invErr?.message ?? 'invite_failed'
       } else {
         clientUserId = invitato.user.id
         createdHere = true
@@ -177,7 +178,7 @@ export async function POST(req: NextRequest) {
           code === 'email_exists' || crErr?.status === 422 ||
           raw.includes('already') || raw.includes('registered') || raw.includes('exists')
         if (esisteGia) clientUserId = await trovaUtentePerEmail(admin, email)
-        if (!clientUserId) accessError = crErr?.message ?? 'Creazione account non riuscita.'
+        if (!clientUserId) accessError = crErr?.message ?? 'account_create_failed'
       } else {
         clientUserId = creato.user.id
         createdHere = true
@@ -204,21 +205,19 @@ export async function POST(req: NextRequest) {
       if (profErr?.code === '42703') {
         // Migration 027 non applicata: si riprova senza il flag.
         delete riga.must_change_password
-        accessError = 'Applica la migration 027: senza must_change_password l\'app non chiederà al cliente di cambiare la password temporanea.'
+        accessError = 'migration_027_missing'
         ;({ error: profErr } = await admin.from('profiles').upsert(riga, { onConflict: 'id' }))
       }
       if (profErr) {
         // Rollback di ciò che questa chiamata ha creato, altrimenti resta un
         // utente auth senza profilo che non riuscirebbe a entrare.
-        let rollback = 'nessun rollback (account preesistente)'
+        // `rollback` è diagnostico (log, non UI).
+        let rollback = 'none_preexisting_account'
         if (createdHere) {
           const { error: delErr } = await admin.auth.admin.deleteUser(clientUserId)
-          rollback = delErr ? `utente NON eliminato: ${delErr.message}` : 'utente eliminato'
+          rollback = delErr ? `user_not_deleted: ${delErr.message}` : 'user_deleted'
         }
-        return NextResponse.json(
-          { error: 'profile_failed', message: `Creazione profilo non riuscita: ${profErr.message}`, rollback },
-          { status: 500 },
-        )
+        return apiError('profile_failed', 500, { detail: profErr.message, rollback })
       }
     } else if (passwordImpostata) {
       const { error: flagErr } = await admin
@@ -226,7 +225,7 @@ export async function POST(req: NextRequest) {
         .update({ must_change_password: true })
         .eq('id', clientUserId)
       if (flagErr && flagErr.code === '42703') {
-        accessError = 'Applica la migration 027: senza must_change_password l\'app non chiederà al cliente di cambiare la password temporanea.'
+        accessError = 'migration_027_missing'
       }
     }
   }
@@ -238,13 +237,13 @@ export async function POST(req: NextRequest) {
 
   const { error: cardErr } = await admin.from('clients').insert(riga)
   if (cardErr) {
-    let rollback = 'nessun rollback (account preesistente)'
+    let rollback = 'none_preexisting_account'
     if (createdHere && clientUserId) {
       await admin.from('profiles').delete().eq('id', clientUserId)
       const { error: delErr } = await admin.auth.admin.deleteUser(clientUserId)
-      rollback = delErr ? `utente NON eliminato: ${delErr.message}` : 'profilo e utente eliminati'
+      rollback = delErr ? `user_not_deleted: ${delErr.message}` : 'profile_and_user_deleted'
     }
-    return NextResponse.json({ error: 'client_failed', message: cardErr.message, rollback }, { status: 500 })
+    return apiError('client_failed', 500, { detail: cardErr.message, rollback })
   }
 
   // ── 5. Collegamento ────────────────────────────────────────────────────────

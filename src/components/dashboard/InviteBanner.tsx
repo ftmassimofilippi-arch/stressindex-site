@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { Building2, Check, X } from 'lucide-react'
 import type { PendingInvite } from '@/lib/dashboard-data'
 
 export function InviteBanner({ invites }: { invites: PendingInvite[] }) {
+  const t = useTranslations('dashboard.invites')
   const router = useRouter()
   const [busy, setBusy] = useState<string | null>(null)
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
@@ -31,36 +33,40 @@ export function InviteBanner({ invites }: { invites: PendingInvite[] }) {
       {visible.map((inv) => (
         <div
           key={inv.id}
-          className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-teal-light/60 border border-teal/30"
+          className="flex items-center gap-4 flex-wrap px-5 py-4 rounded-2xl bg-teal-light/60 border border-teal/30"
         >
           <div className="w-10 h-10 rounded-xl bg-white text-teal-dark flex items-center justify-center flex-shrink-0">
             <Building2 size={18} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-sm font-medium text-anthracite">
-              <span className="text-teal-dark">{inv.organization_name ?? 'Un\'organizzazione'}</span>{' '}
-              ti ha invitato a unirti al team
+              {t.rich('invited', {
+                name: inv.organization_name ?? t('unknownOrg'),
+                org: (c) => <span className="text-teal-dark">{c}</span>,
+              })}
             </div>
             <div className="text-xs text-anthracite-lighter mt-0.5">
-              Come {inv.role === 'admin' ? 'amministratore' : 'professionista'}
+              {inv.role === 'admin' ? t('asAdmin') : t('asProfessional')}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => respond(inv.id, 'accept')}
-            disabled={busy === inv.id}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal hover:bg-teal-dark text-white text-sm font-medium disabled:opacity-50"
-          >
-            <Check size={15} /> Accetta
-          </button>
-          <button
-            type="button"
-            onClick={() => respond(inv.id, 'reject')}
-            disabled={busy === inv.id}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-surface-border bg-white hover:bg-surface text-sm text-anthracite disabled:opacity-50"
-          >
-            <X size={15} /> Rifiuta
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => respond(inv.id, 'accept')}
+              disabled={busy === inv.id}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal hover:bg-teal-dark text-white text-sm font-medium disabled:opacity-50 whitespace-nowrap"
+            >
+              <Check size={15} /> {t('accept')}
+            </button>
+            <button
+              type="button"
+              onClick={() => respond(inv.id, 'reject')}
+              disabled={busy === inv.id}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-surface-border bg-white hover:bg-surface text-sm text-anthracite disabled:opacity-50 whitespace-nowrap"
+            >
+              <X size={15} /> {t('reject')}
+            </button>
+          </div>
         </div>
       ))}
     </div>

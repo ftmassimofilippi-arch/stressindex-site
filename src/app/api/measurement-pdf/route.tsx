@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server'
 import { renderToBuffer } from '@react-pdf/renderer'
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns'
 import type { PostgrestError } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase-server'
 import { MeasurementPdfDocument } from '@/lib/measurement-pdf'
 import { loadAuthorizedClient, sameId } from '@/lib/measurement-access'
 import { findRemoteMeasurement } from '@/lib/remote-sessions'
 import { selectWithMissingColumnFallback } from '@/lib/safe-select'
-import { toStr } from '@/lib/format'
+import { apiError } from '@/lib/api-error'
+import { getRequestLocale, getTranslator } from '@/lib/i18n-server'
+import { measuredDayKey, toStr } from '@/lib/format'
 import type { MeasurementAnalytics, MeasurementWithSession, ProfessionalProfile } from '@/lib/types'
-import { measuredDayKey } from '@/lib/format'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -118,30 +119,36 @@ function sanitizeFilename(s: string): string {
   return s.replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')
 }
 
+// Gli errori escono come CODICE (`errors.api.<codice>` nei messaggi): il
+// componente li traduce con `apiErrorMessage`. Vedi src/lib/api-error.ts.
 export async function POST(req: Request) {
+  // Lingua: `?locale=` passato dal bottone, poi cookie / Referer / Accept-Language.
+  const locale = await getRequestLocale(req)
+
   let body: { sessionId?: string; clientId?: string }
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return apiError('invalid_json', 400)
   }
 
   const { sessionId, clientId } = body
   if (!sessionId || !clientId) {
-    return NextResponse.json({ error: 'sessionId e clientId obbligatori' }, { status: 400 })
+    return apiError('pdf_missing_params', 400)
   }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.json({ error: 'Sessione scaduta: ricarica la pagina e accedi di nuovo.' }, { status: 401 })
+    return apiError('session_expired', 401)
   }
 
   // 1. Cliente: la RLS decide chi può vederlo (proprietario, team, superadmin
   //    in sola lettura). Riga restituita = lettore autorizzato su questi dati.
+  //    `denied.error` è già un codice `errors.api.*`.
   const access = await loadAuthorizedClient(supabase, clientId)
   if ('denied' in access) {
-    return NextResponse.json({ error: access.denied.error }, { status: access.denied.status })
+    return apiError(access.denied.error, access.denied.status)
   }
   const { client } = access
 
@@ -158,7 +165,7 @@ export async function POST(req: Request) {
   )
   if (sessErr) {
     console.error('[measurement-pdf] sessions query error', sessErr)
-    return NextResponse.json({ error: 'Non è stato possibile leggere la misurazione. Riprova tra qualche istante.' }, { status: 500 })
+    return apiError('measurement_read_failed', 500)
   }
 
   const visible: SessionRow | null = sessionRows?.[0] ?? null
@@ -194,15 +201,9 @@ export async function POST(req: Request) {
         clientId,
         sessionClientId: visible.client_id,
       })
-      return NextResponse.json(
-        { error: 'Questa misurazione non risulta collegata al cliente selezionato: non è possibile generare un PDF a suo nome.' },
-        { status: 403 },
-      )
+      return apiError('measurement_not_linked', 403)
     }
-    return NextResponse.json(
-      { error: 'Misurazione non trovata. Se è stata registrata dal cliente dalla sua app, verifica che il collegamento con lo studio sia ancora attivo.' },
-      { status: 404 },
-    )
+    return apiError('measurement_not_found', 404)
   }
 
   // 3. measurement_analytics (preferito: contiene gli score proprietari).
@@ -232,7 +233,10 @@ export async function POST(req: Request) {
     .eq('id', client.professionista_id)
     .maybeSingle<ProfessionalProfile>()
 
-  // 5. Renderizza PDF.
+  // 5. Renderizza PDF nella lingua della richiesta. I componenti react-pdf
+  //    non stanno nell'albero next-intl: ricevono i traduttori come prop.
+  const t = await getTranslator(locale, 'pdf')
+  const tScores = await getTranslator(locale, 'scores')
   let pdfBuffer: Buffer
   try {
     pdfBuffer = await renderToBuffer(
@@ -240,21 +244,25 @@ export async function POST(req: Request) {
         measurement={measurement}
         client={client}
         professional={professional ?? null}
+        t={t}
+        tScores={tScores}
+        locale={locale}
       />,
     )
   } catch (err) {
     console.error('[measurement-pdf] render error', err)
-    return NextResponse.json({ error: 'La misurazione è stata trovata ma il documento non è stato generato. Riprova; se persiste, segnalacelo.' }, { status: 500 })
+    return apiError('pdf_render_failed', 500)
   }
 
+  // Nome file: prefisso "StressIndex_" invariato in tutte le lingue.
   const dateStr = (() => {
     try {
-      return (measuredDayKey(measurement) ?? 'data-ignota')
+      return measuredDayKey(measurement) ?? format(new Date(), 'yyyy-MM-dd')
     } catch {
       return format(new Date(), 'yyyy-MM-dd')
     }
   })()
-  const cognome = sanitizeFilename(client.cognome ?? 'cliente')
+  const cognome = sanitizeFilename(client.cognome ?? t('common.clientFallback'))
   const nome = sanitizeFilename(client.nome ?? '')
   const filename = `StressIndex_${cognome}${nome ? `_${nome}` : ''}_${dateStr}.pdf`
 

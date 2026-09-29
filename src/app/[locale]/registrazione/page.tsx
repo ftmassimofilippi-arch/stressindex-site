@@ -1,33 +1,28 @@
 import type { Metadata } from 'next'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { pageMetadata } from '@/lib/seo'
+import type { Locale } from '@/i18n/routing'
 import { RegistrationForm } from './RegistrationForm'
 
-export const metadata: Metadata = {
-  title: 'Prova Gratis 60 Giorni | Stress Index',
-  description:
-    'Registrati e prova Stress Index gratis per 60 giorni. Tutte le funzionalità, nessun vincolo. Per fisioterapisti e professionisti.',
-  alternates: { canonical: 'https://stressindex.io/registrazione' },
-  openGraph: {
-    title: 'Prova Gratis 60 Giorni | Stress Index',
-    description:
-      'Registrati e prova Stress Index gratis per 60 giorni. Tutte le funzionalità, nessun vincolo. Per fisioterapisti e professionisti.',
-    url: 'https://stressindex.io/registrazione',
-    siteName: 'Stress Index',
-    locale: 'it_IT',
-    type: 'website',
-    images: [{ url: 'https://stressindex.io/og-image.png', width: 1200, height: 630 }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Prova Gratis 60 Giorni | Stress Index',
-    description:
-      'Registrati e prova Stress Index gratis per 60 giorni. Tutte le funzionalità, nessun vincolo.',
-    images: ['https://stressindex.io/og-image.png'],
-  },
+type Params = { params: { locale: string } }
+
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
+  return pageMetadata({
+    locale: params.locale as Locale,
+    path: '/registrazione',
+    title: t('registration.title'),
+    description: t('registration.description'),
+    shortDescription: t('registration.shortDescription'),
+  })
 }
 
-export default function RegistrazionePage() {
+export default async function RegistrazionePage({ params }: Params) {
+  setRequestLocale(params.locale)
+  const t = await getTranslations('registration.page')
+
   return (
     <>
       <Header />
@@ -38,28 +33,22 @@ export default function RegistrazionePage() {
             <div className="mb-10">
               <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider mb-4">
                 <span aria-hidden="true">🚀</span>
-                <span>Trial gratuito 60 giorni</span>
+                <span>{t('eyebrow')}</span>
               </div>
 
               <h1 className="font-serif text-4xl sm:text-5xl font-normal text-anthracite tracking-tight mb-4">
-                Inizia a misurare
+                {t('title')}
               </h1>
 
-              <p className="text-anthracite-light text-lg leading-relaxed">
-                Crea il tuo account professionale e accedi a tutte le funzionalità
-                di Stress Index per 60 giorni, senza impegno.
-              </p>
+              <p className="text-anthracite-light text-lg leading-relaxed">{t('intro')}</p>
             </div>
 
             {/* Callout: cosa ottieni */}
             <div className="callout-teal mb-8">
               <span aria-hidden="true" className="text-lg leading-none mt-0.5">💡</span>
               <div className="text-[14.5px] text-anthracite leading-relaxed">
-                <p className="font-semibold text-teal-dark mb-1">Cosa ottieni subito</p>
-                <p>
-                  Accesso completo all&apos;app, CRM clienti illimitato, report PDF
-                  professionali e tutti i 24 parametri HRV. Nessuna carta richiesta.
-                </p>
+                <p className="font-semibold text-teal-dark mb-1">{t('calloutTitle')}</p>
+                <p>{t('calloutBody')}</p>
               </div>
             </div>
 
@@ -69,18 +58,18 @@ export default function RegistrazionePage() {
             </div>
 
             {/* Trust signals */}
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-anthracite-lighter">
+            <div className="mt-8 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-6 text-sm text-anthracite-lighter">
               <div className="flex items-center gap-2">
                 <span aria-hidden="true">🔒</span>
-                <span>Dati protetti GDPR</span>
+                <span>{t('trustGdpr')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span aria-hidden="true">🇪🇺</span>
-                <span>Server EU Frankfurt</span>
+                <span>{t('trustEu')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span aria-hidden="true">✓</span>
-                <span>Nessuna carta richiesta</span>
+                <span>{t('trustNoCard')}</span>
               </div>
             </div>
           </div>

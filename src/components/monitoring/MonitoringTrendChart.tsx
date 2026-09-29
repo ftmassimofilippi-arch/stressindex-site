@@ -1,9 +1,11 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { Brush, CartesianGrid, Line, LineChart, ReferenceArea, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import type { Tr } from '@/i18n/types'
 import type { MonitoringEvent, MonitoringNight, MonitoringState, MonitoringWindow } from '@/lib/monitoring-types'
-import { MON, STATE_COLOR, STATE_LABEL, hm } from '@/lib/monitoring-format'
+import { MON, STATE_COLOR, fmtNum, hm, stateLabel } from '@/lib/monitoring-format'
 import { StateLegend } from './MonitoringTimeline'
 
 // Andamento (MonitoringTrendChart dell'app): grafico a linee sull'intero
@@ -13,16 +15,19 @@ import { StateLegend } from './MonitoringTimeline'
 
 export interface ParamOption { key: keyof MonitoringWindow; label: string; unit: string; proOnly?: boolean; digits: number }
 
-export const PARAM_OPTIONS: ParamOption[] = [
-  { key: 'hr', label: 'HR', unit: 'bpm', digits: 0 },
-  { key: 'rmssd', label: 'RMSSD', unit: 'ms', digits: 1 },
-  { key: 'ln_rmssd', label: 'ln RMSSD', unit: '', proOnly: true, digits: 2 },
-  { key: 'sdnn', label: 'SDNN', unit: 'ms', proOnly: true, digits: 1 },
-  { key: 'lf_hf', label: 'LF/HF', unit: '', proOnly: true, digits: 2 },
-  { key: 'si', label: 'Baevsky', unit: '', proOnly: true, digits: 0 },
-  { key: 'dfa', label: 'DFA α1', unit: '', proOnly: true, digits: 2 },
-  { key: 'br', label: 'Respiro stimato', unit: 'atti/min', digits: 0 },
-]
+/** Parametri selezionabili: sigle invariate, "Respiro stimato" tradotto. */
+export function paramOptions(t: Tr): ParamOption[] {
+  return [
+    { key: 'hr', label: 'HR', unit: 'bpm', digits: 0 },
+    { key: 'rmssd', label: 'RMSSD', unit: 'ms', digits: 1 },
+    { key: 'ln_rmssd', label: 'ln RMSSD', unit: '', proOnly: true, digits: 2 },
+    { key: 'sdnn', label: 'SDNN', unit: 'ms', proOnly: true, digits: 1 },
+    { key: 'lf_hf', label: 'LF/HF', unit: '', proOnly: true, digits: 2 },
+    { key: 'si', label: 'Baevsky', unit: '', proOnly: true, digits: 0 },
+    { key: 'dfa', label: 'DFA α1', unit: '', proOnly: true, digits: 2 },
+    { key: 'br', label: t('trend.breathing'), unit: t('trend.breathsPerMin'), digits: 0 },
+  ]
+}
 
 type Props = {
   windows: MonitoringWindow[]
@@ -38,13 +43,16 @@ type Props = {
 type Point = { t: number; v: number | null; state: MonitoringState; valid: boolean }
 
 export function MonitoringTrendChart({ windows, start, end, tz, events = [], night, pro = true, height = 300 }: Props) {
-  const options = PARAM_OPTIONS.filter((o) => pro || !o.proOnly)
+  const t = useTranslations('monitoring')
+  const locale = useLocale()
+  const options = useMemo(() => paramOptions(t).filter((o) => pro || !o.proOnly), [t, pro])
   const [key, setKey] = useState<ParamOption['key']>('hr')
   const opt = options.find((o) => o.key === key) ?? options[0]
   const startMs = new Date(start).getTime()
   const totalMin = Math.max(1, (new Date(end).getTime() - startMs) / 60_000)
   const toMin = (iso: string) => (new Date(iso).getTime() - startMs) / 60_000
   const toIso = (min: number) => new Date(startMs + min * 60_000).toISOString()
+  const n = (v: number) => fmtNum(v, opt.digits, locale)
 
   const data = useMemo<Point[]>(() => {
     const pts = windows.map((w) => ({
@@ -83,6 +91,7 @@ export function MonitoringTrendChart({ windows, start, end, tz, events = [], nig
   const values = data.map((p) => p.v).filter((v): v is number => v != null)
   const yMax = values.length ? Math.max(...values) : 100
   const yMin = values.length ? Math.min(...values) : 0
+  const paramTitle = `${opt.label}${opt.unit ? ` (${opt.unit})` : ''}`
 
   return (
     <div>
@@ -92,7 +101,7 @@ export function MonitoringTrendChart({ windows, start, end, tz, events = [], nig
             key={o.key}
             type="button"
             onClick={() => setKey(o.key)}
-            className="px-3 py-1.5 rounded-full text-xs font-bold border transition-colors"
+            className="px-3 py-1.5 rounded-full text-xs font-bold border transition-colors max-w-full truncate"
             style={o.key === opt.key ? { backgroundColor: MON.accent, color: '#fff', borderColor: MON.accent } : { color: MON.textSecondary, borderColor: MON.borderLight, backgroundColor: '#fff' }}
           >
             {o.label}
@@ -100,7 +109,7 @@ export function MonitoringTrendChart({ windows, start, end, tz, events = [], nig
         ))}
       </div>
       <div className="text-xs font-bold text-anthracite mb-2">
-        {opt.label}{opt.unit ? ` (${opt.unit})` : ''} · finestre di 5 minuti{opt.key === 'dfa' ? ', una ogni 5' : ''}
+        {opt.key === 'dfa' ? t('trend.captionDfa', { param: paramTitle }) : t('trend.caption', { param: paramTitle })}
       </div>
       <div className="overflow-x-auto">
         <div className="min-w-[560px]">
@@ -122,24 +131,24 @@ export function MonitoringTrendChart({ windows, start, end, tz, events = [], nig
                 stroke={MON.textSecondary}
                 fontSize={10}
               />
-              <YAxis stroke={MON.textSecondary} fontSize={10} domain={['auto', 'auto']} width={44} tickFormatter={(v) => Number(v).toFixed(opt.digits)} />
+              <YAxis stroke={MON.textSecondary} fontSize={10} domain={['auto', 'auto']} width={44} tickFormatter={(v) => n(Number(v))} />
               <Tooltip
                 contentStyle={{ background: '#fff', borderRadius: 12, border: `1px solid ${MON.borderLight}`, fontSize: 11 }}
                 labelFormatter={(v) => hm(toIso(Number(v)), tz)}
                 formatter={(v: unknown, _name, item) => {
                   const p = item?.payload as Point | undefined
-                  const val = v == null ? '—' : `${Number(v).toFixed(opt.digits)}${opt.unit ? ' ' + opt.unit : ''}`
-                  return [`${val} · ${p ? STATE_LABEL[p.state] : ''}`, opt.label]
+                  const val = v == null ? '—' : `${n(Number(v))}${opt.unit ? ' ' + opt.unit : ''}`
+                  return [`${val} · ${p ? stateLabel(p.state, locale) : ''}`, opt.label]
                 }}
               />
               <Line type="monotone" dataKey="v" stroke={MON.accentDark} strokeWidth={1.6} dot={false} connectNulls={opt.key === 'dfa'} isAnimationActive={false} />
               {events.map((e) => {
-                const t = toMin(e.timestamp)
-                if (t < 0 || t > totalMin) return null
+                const at = toMin(e.timestamp)
+                if (at < 0 || at > totalMin) return null
                 return (
                   <ReferenceDot
                     key={e.id}
-                    x={t}
+                    x={at}
                     y={yMax}
                     r={0}
                     ifOverflow="extendDomain"
@@ -161,11 +170,9 @@ export function MonitoringTrendChart({ windows, start, end, tz, events = [], nig
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <StateLegend compact />
-        <span className="text-[10px] text-anthracite-lighter">valori {Number.isFinite(yMin) ? yMin.toFixed(opt.digits) : '—'}–{Number.isFinite(yMax) ? yMax.toFixed(opt.digits) : '—'}</span>
+        <span className="text-[10px] text-anthracite-lighter">{t('trend.range', { min: Number.isFinite(yMin) ? n(yMin) : '—', max: Number.isFinite(yMax) ? n(yMax) : '—' })}</span>
       </div>
-      <p className="mt-1 text-[10.5px] text-anthracite-lighter">
-        Passa sul grafico per leggere un valore, sull&apos;icona per l&apos;evento. La fascia scura è la notte; i tratti vuoti sono interruzioni. Trascina il selettore sotto il grafico per zoomare.
-      </p>
+      <p className="mt-1 text-[10.5px] text-anthracite-lighter">{t('trend.hint')}</p>
     </div>
   )
 }

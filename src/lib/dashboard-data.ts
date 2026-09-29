@@ -2,6 +2,7 @@ import type { PostgrestError } from '@supabase/supabase-js'
 import { createClient } from './supabase-server'
 import { selectWithMissingColumnFallback } from './safe-select'
 import { measuredDayKey, measuredInstant, toStr } from './format'
+import { getRequestLocale, getTranslator } from './i18n-server'
 import type {
   Alert,
   Client,
@@ -23,6 +24,14 @@ export async function getCurrentUser() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   return user
+}
+
+// Nomi di ripiego mostrati quando un profilo o una scheda non hanno un nome
+// ("Professionista" / "Cliente"), nella lingua della richiesta. Funziona anche
+// nelle route API, fuori dal segmento [locale].
+async function fallbackNames(): Promise<{ professional: string; client: string }> {
+  const t = await getTranslator(await getRequestLocale(), 'common')
+  return { professional: t('professional'), client: t('client') }
 }
 
 export async function getProfessionalProfile(): Promise<ProfessionalProfile | null> {
@@ -732,11 +741,12 @@ export async function getOrgMembersStats(): Promise<OrgMemberStats[]> {
     .map((m) => m.user_id as string)
   if (userIds.length === 0) return []
 
-  const [{ data: profilesRows }, { data: profProfilesRows }, { data: clientsRows }, { data: measurementsRows }] = await Promise.all([
+  const [{ data: profilesRows }, { data: profProfilesRows }, { data: clientsRows }, { data: measurementsRows }, names] = await Promise.all([
     supabase.from('profiles').select('id, nome, cognome, email').in('id', userIds),
     supabase.from('professional_profiles').select('id, nome, cognome').in('id', userIds),
     supabase.from('clients').select('id, professionista_id').in('professionista_id', userIds),
     supabase.from('measurement_analytics').select('user_id, measured_at, measured_at_utc, tz_offset_minutes').in('user_id', userIds),
+    fallbackNames(),
   ])
 
   const profileMap = new Map<string, { nome: string | null; cognome: string | null; email: string | null }>()
@@ -771,7 +781,7 @@ export async function getOrgMembersStats(): Promise<OrgMemberStats[]> {
     const nome = pp?.nome ?? p?.nome ?? ''
     const cognome = pp?.cognome ?? p?.cognome ?? ''
     const member = ctx.members.find((m) => m.user_id === uid)
-    const full = `${nome} ${cognome}`.trim() || member?.email || 'Professionista'
+    const full = `${nome} ${cognome}`.trim() || member?.email || names.professional
     return {
       user_id: uid,
       full_name: full,
@@ -842,7 +852,7 @@ export async function getOrgOverview(): Promise<OrgOverview | null> {
   }>
   const clientIds = Array.from(new Set(recent.map((r) => r.client_id)))
   const profIds = Array.from(new Set(recent.map((r) => r.user_id)))
-  const [{ data: clientRows }, { data: profileRows }, { data: profProfileRows }] = await Promise.all([
+  const [{ data: clientRows }, { data: profileRows }, { data: profProfileRows }, names] = await Promise.all([
     clientIds.length
       ? supabase.from('clients').select('id, nome, cognome').in('id', clientIds)
       : Promise.resolve({ data: [] }),
@@ -852,10 +862,11 @@ export async function getOrgOverview(): Promise<OrgOverview | null> {
     profIds.length
       ? supabase.from('professional_profiles').select('id, nome, cognome').in('id', profIds)
       : Promise.resolve({ data: [] }),
+    fallbackNames(),
   ])
   const clientMap = new Map<string, string>()
   for (const c of (clientRows ?? []) as Array<{ id: string; nome: string | null; cognome: string | null }>) {
-    clientMap.set(c.id, `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || 'Cliente')
+    clientMap.set(c.id, `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || names.client)
   }
   const profMap = new Map<string, string>()
   for (const p of (profileRows ?? []) as Array<{ id: string; nome: string | null; cognome: string | null }>) {
@@ -874,9 +885,9 @@ export async function getOrgOverview(): Promise<OrgOverview | null> {
     recent: recent.map((r) => ({
       session_id: r.session_id,
       client_id: r.client_id,
-      client_name: clientMap.get(r.client_id) ?? 'Cliente',
+      client_name: clientMap.get(r.client_id) ?? names.client,
       professional_id: r.user_id,
-      professional_name: profMap.get(r.user_id) || 'Professionista',
+      professional_name: profMap.get(r.user_id) || names.professional,
       measured_at: r.measured_at,
       score_stress: r.score_stress,
     })),
@@ -905,16 +916,17 @@ export async function getCurrentProfileFlags(): Promise<{ userId: string | null;
 
 async function getProfessionalDisplayName(userId: string): Promise<string> {
   const supabase = await createClient()
-  const [{ data: pp }, { data: p }] = await Promise.all([
+  const [{ data: pp }, { data: p }, names] = await Promise.all([
     supabase.from('professional_profiles').select('nome, cognome').eq('id', userId).maybeSingle(),
     supabase.from('profiles').select('nome, cognome, email').eq('id', userId).maybeSingle(),
+    fallbackNames(),
   ])
   const ppr = pp as { nome: string | null; cognome: string | null } | null
   const pr = p as { nome: string | null; cognome: string | null; email: string | null } | null
   const nome = ppr?.nome ?? pr?.nome ?? ''
   const cognome = ppr?.cognome ?? pr?.cognome ?? ''
   const full = `${nome} ${cognome}`.trim()
-  return full || pr?.email || 'Professionista'
+  return full || pr?.email || names.professional
 }
 
 export type ViewingAccess = 'org' | 'superadmin'
@@ -1010,11 +1022,12 @@ export async function listAllProfessionalsStats(): Promise<ProfessionalStats[]> 
   if (profs.length === 0) return []
   const ids = profs.map((p) => p.id)
 
-  const [{ data: ppRows }, { data: clientsRows }, { data: maRows }, planMap] = await Promise.all([
+  const [{ data: ppRows }, { data: clientsRows }, { data: maRows }, planMap, names] = await Promise.all([
     supabase.from('professional_profiles').select('id, nome, cognome').in('id', ids),
     supabase.from('clients').select('professionista_id').in('professionista_id', ids),
     supabase.from('measurement_analytics').select('user_id, measured_at, measured_at_utc, tz_offset_minutes').in('user_id', ids),
     getPlansAndCreatedAt(ids),
+    fallbackNames(),
   ])
 
   const ppMap = new Map<string, { nome: string | null; cognome: string | null }>()
@@ -1043,7 +1056,7 @@ export async function listAllProfessionalsStats(): Promise<ProfessionalStats[]> 
       const pp = ppMap.get(p.id)
       const nome = pp?.nome ?? p.nome ?? ''
       const cognome = pp?.cognome ?? p.cognome ?? ''
-      const full = `${nome} ${cognome}`.trim() || p.email || 'Professionista'
+      const full = `${nome} ${cognome}`.trim() || p.email || names.professional
       const planInfo = planMap.get(p.id)
       return {
         user_id: p.id,

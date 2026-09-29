@@ -1,6 +1,7 @@
 'use client'
 
 import { Link } from '@/i18n/navigation'
+import { useLocale, useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Timer, Heart, X, Activity, ArrowUpRight, Wifi, WifiOff } from 'lucide-react'
 import {
@@ -14,12 +15,13 @@ import {
 } from 'recharts'
 import { createClient } from '@/lib/supabase-browser'
 import { num } from '@/lib/format'
+import { dfaZoneLabel } from '@/lib/sport-format'
 import {
   artifactPct,
   athleteHrMax,
   athleteName,
   CONN_COLOR,
-  CONN_LABEL,
+  connLabel,
   connStatus,
   DFA_BANDS,
   formatElapsed,
@@ -37,12 +39,7 @@ import {
 
 type SortKey = 'zone' | 'name' | 'hr' | 'trimp'
 
-const SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
-  { key: 'zone', label: 'Intensità (zona)' },
-  { key: 'name', label: 'Nome' },
-  { key: 'hr', label: 'HR' },
-  { key: 'trimp', label: 'TRIMP' },
-]
+const SORT_KEYS: SortKey[] = ['zone', 'name', 'hr', 'trimp']
 
 // Punto storico accumulato lato client (per i mini-trend del drawer).
 interface HistPoint {
@@ -68,6 +65,9 @@ export function TeamLiveBoard({
   athletes: Record<string, AthleteMeta>
   baseQuery: string
 }) {
+  const t = useTranslations('sport')
+  const locale = useLocale()
+  const fallbackName = t('athlete')
   const [rows, setRows] = useState<RowMap>(() => {
     const m: RowMap = {}
     for (const r of initialRows) m[r.id] = r
@@ -217,7 +217,7 @@ export function TeamLiveBoard({
       if (rs !== 0) return rs
       switch (sortBy) {
         case 'name':
-          return athleteName(a, athletes).localeCompare(athleteName(b, athletes))
+          return athleteName(a, athletes, fallbackName).localeCompare(athleteName(b, athletes, fallbackName), locale)
         case 'hr':
           return (b.hr ?? -1) - (a.hr ?? -1)
         case 'trimp':
@@ -228,7 +228,7 @@ export function TeamLiveBoard({
       }
     })
     return arr
-  }, [rows, now, sortBy, athletes])
+  }, [rows, now, sortBy, athletes, fallbackName, locale])
 
   const inSessionCount = useMemo(
     () => visible.filter((r) => isInSession(r, now)).length,
@@ -254,7 +254,7 @@ export function TeamLiveBoard({
       <header className="mb-6 flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 className="font-serif text-3xl sm:text-4xl text-anthracite flex items-center gap-3">
-            Team <em className="italic text-teal-dark">Live</em>
+            <span>{t.rich('teamLive.heading', { em: (c) => <em className="italic text-teal-dark">{c}</em> })}</span>
             {mounted && anyInSession && (
               <span className="relative inline-flex h-3 w-3 align-middle" aria-hidden="true">
                 <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
@@ -263,41 +263,34 @@ export function TeamLiveBoard({
             )}
           </h1>
           <p className="mt-1.5 text-sm text-anthracite-lighter">
-            {mounted ? (
-              <>
-                <strong className="text-anthracite">{inSessionCount}</strong>{' '}
-                {inSessionCount === 1 ? 'atleta in sessione' : 'atleti in sessione'}
-              </>
-            ) : (
-              'Monitoraggio in tempo reale'
-            )}
+            {mounted ? t('teamLive.inSession', { count: inSessionCount }) : t('teamLive.realtimeSubtitle')}
           </p>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
           {mounted && (
             <span
-              className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg"
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap"
               style={{
                 color: realtimeOk ? '#0f766e' : '#92400e',
                 backgroundColor: realtimeOk ? '#E8F4F3' : '#FEF3C7',
               }}
-              title={realtimeOk ? 'Aggiornamenti in tempo reale via WebSocket' : 'WebSocket non disponibile — aggiornamento ogni 5s'}
+              title={realtimeOk ? t('teamLive.realtimeTitle') : t('teamLive.pollingTitle')}
             >
               {realtimeOk ? <Wifi size={13} /> : <WifiOff size={13} />}
-              {realtimeOk ? 'Realtime' : 'Polling 5s'}
+              {realtimeOk ? t('teamLive.realtime') : t('teamLive.polling')}
             </span>
           )}
           <div className="flex items-center gap-2">
-            <label htmlFor="team-live-sort" className="text-xs text-anthracite-lighter">Ordina per</label>
+            <label htmlFor="team-live-sort" className="text-xs text-anthracite-lighter whitespace-nowrap">{t('teamLive.sortBy')}</label>
             <select
               id="team-live-sort"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortKey)}
               className="select-field text-sm"
             >
-              {SORT_OPTIONS.map((o) => (
-                <option key={o.key} value={o.key}>{o.label}</option>
+              {SORT_KEYS.map((k) => (
+                <option key={k} value={k}>{t(`teamLive.sort.${k}`)}</option>
               ))}
             </select>
           </div>
@@ -306,7 +299,7 @@ export function TeamLiveBoard({
 
       {/* GRIGLIA / EMPTY STATE */}
       {!mounted ? (
-        <div className="card p-10 text-center text-sm text-anthracite-lighter">Caricamento…</div>
+        <div className="card p-10 text-center text-sm text-anthracite-lighter">{t('teamLive.loading')}</div>
       ) : visible.length === 0 ? (
         <EmptyState />
       ) : (
@@ -316,7 +309,7 @@ export function TeamLiveBoard({
               key={row.id}
               row={row}
               now={now}
-              name={athleteName(row, athletes)}
+              name={athleteName(row, athletes, fallbackName)}
               hrMax={athleteHrMax(row, athletes)}
               flash={!!flashIds[row.id]}
               onClick={() => setSelectedId(row.id)}
@@ -330,7 +323,7 @@ export function TeamLiveBoard({
         <LiveDrawer
           row={selected}
           now={now}
-          name={athleteName(selected, athletes)}
+          name={athleteName(selected, athletes, fallbackName)}
           hrMax={athleteHrMax(selected, athletes)}
           history={history[selected.athlete_id] ?? []}
           baseQuery={baseQuery}
@@ -358,6 +351,8 @@ function AthleteCard({
   flash: boolean
   onClick: () => void
 }) {
+  const t = useTranslations('sport')
+  const locale = useLocale()
   const status = connStatus(row, now)
   const offline = status === 'disconnected'
   const zone = liveZone(row.zone)
@@ -382,14 +377,14 @@ function AthleteCard({
         </span>
       </div>
 
-      <div className="mt-0.5 flex items-center justify-between">
-        <span className="text-xs text-anthracite-lighter">{row.sport || 'Sport'}</span>
-        <span className="text-[11px] text-anthracite-lighter">agg. {formatUpdatedClock(row.updated_at)}</span>
+      <div className="mt-0.5 flex items-center justify-between gap-2">
+        <span className="text-xs text-anthracite-lighter truncate">{row.sport || t('teamLive.card.sport')}</span>
+        <span className="text-[11px] text-anthracite-lighter whitespace-nowrap">{t('teamLive.card.updated', { time: formatUpdatedClock(row.updated_at, locale) })}</span>
       </div>
 
       {offline ? (
         <div className="mt-3 text-xs font-medium text-gray-500">
-          {row.is_connected === false ? 'Sessione terminata' : 'Disconnesso'} · ultimi dati ricevuti
+          {row.is_connected === false ? t('teamLive.card.ended') : t('teamLive.card.disconnected')} · {t('teamLive.card.lastData')}
         </div>
       ) : null}
 
@@ -403,7 +398,7 @@ function AthleteCard({
           <span className="text-sm text-anthracite-lighter">bpm</span>
         </div>
         <div className="text-right">
-          <div className="text-[10px] uppercase tracking-wide text-anthracite-lighter">HR Max</div>
+          <div className="text-[10px] uppercase tracking-wide text-anthracite-lighter whitespace-nowrap">{t('teamLive.card.hrMax')}</div>
           <div className="text-sm font-medium text-anthracite tabular-nums">{row.hr_max ?? '—'}</div>
         </div>
       </div>
@@ -416,23 +411,23 @@ function AthleteCard({
           backgroundColor: zone ? zone.bg : '#F6F7F8',
         }}
       >
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-bold uppercase tracking-wide" style={{ color: zone ? zone.color : '#9CA3AF' }}>
-            {zone ? `Zona ${zone.id} · ${zone.label}` : 'Zona n/d'}
+        <div className="flex items-center justify-between min-w-0">
+          <span className="text-sm font-bold uppercase tracking-wide truncate" style={{ color: zone ? zone.color : '#9CA3AF' }}>
+            {zone ? t('teamLive.card.zone', { id: zone.id, label: dfaZoneLabel(zone, t) }) : t('teamLive.card.zoneNa')}
           </span>
         </div>
         <div className="mt-0.5 text-xs" style={{ color: zone ? zone.color : '#9CA3AF' }}>
-          DFA α1: <span className="font-semibold tabular-nums">{num(row.dfa_alpha1, 2)}</span>
+          DFA α1: <span className="font-semibold tabular-nums">{num(row.dfa_alpha1, 2, locale)}</span>
         </div>
       </div>
 
       {/* Riga 4: RMSSD / TRIMP / Artifact */}
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-        <Metric label="RMSSD" value={row.rmssd == null ? '—' : num(row.rmssd, 1)} />
+        <Metric label="RMSSD" value={row.rmssd == null ? '—' : num(row.rmssd, 1, locale)} />
         <Metric label="TRIMP" value={row.trimp == null ? '—' : `${Math.round(row.trimp)}`} />
         <Metric
-          label="Artifact"
-          value={artifact == null ? '—' : `${num(artifact, 1)}%`}
+          label={t('teamLive.card.artifact')}
+          value={artifact == null ? '—' : `${num(artifact, 1, locale)}%`}
           danger={artifactHigh}
         />
       </div>
@@ -442,17 +437,19 @@ function AthleteCard({
 
 function Metric({ label, value, danger }: { label: string; value: string; danger?: boolean }) {
   return (
-    <div>
-      <div className="text-[10px] uppercase tracking-wide text-anthracite-lighter">{label}</div>
+    <div className="min-w-0">
+      <div className="text-[10px] uppercase tracking-wide text-anthracite-lighter truncate">{label}</div>
       <div className={`text-sm font-medium tabular-nums ${danger ? 'text-red-600' : 'text-anthracite'}`}>{value}</div>
     </div>
   )
 }
 
 function ConnDot({ status }: { status: ConnStatus }) {
+  const t = useTranslations('sport')
   const color = CONN_COLOR[status]
+  const label = connLabel(status, t)
   return (
-    <span className="relative inline-flex h-3 w-3 shrink-0" title={CONN_LABEL[status]} aria-label={CONN_LABEL[status]}>
+    <span className="relative inline-flex h-3 w-3 shrink-0" title={label} aria-label={label}>
       {status === 'connected' && (
         <span className="absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping" style={{ backgroundColor: color }} />
       )}
@@ -464,25 +461,20 @@ function ConnDot({ status }: { status: ConnStatus }) {
 // ── Empty state ───────────────────────────────────────────────────────────────
 
 function EmptyState() {
+  const t = useTranslations('sport')
+  const steps = [t('teamLive.empty.step1'), t('teamLive.empty.step2'), t('teamLive.empty.step3'), t('teamLive.empty.step4')]
   return (
     <div className="card p-10 sm:p-14 text-center max-w-2xl mx-auto mt-4">
       <div className="mx-auto w-16 h-16 rounded-2xl bg-teal-light text-teal-dark flex items-center justify-center mb-5">
         <Timer size={32} />
       </div>
-      <h2 className="font-serif text-2xl text-anthracite">Nessun atleta in sessione</h2>
-      <p className="mt-2 text-sm text-anthracite-lighter max-w-md mx-auto">
-        Quando i tuoi atleti avviano una sessione sport dall&apos;app, le card appariranno qui in tempo reale.
-      </p>
+      <h2 className="font-serif text-2xl text-anthracite">{t('teamLive.empty.title')}</h2>
+      <p className="mt-2 text-sm text-anthracite-lighter max-w-md mx-auto">{t('teamLive.empty.text')}</p>
 
       <div className="mt-8 text-left bg-surface rounded-xl p-5 border border-surface-border">
-        <div className="text-sm font-semibold text-anthracite mb-3">Come funziona</div>
+        <div className="text-sm font-semibold text-anthracite mb-3">{t('teamLive.empty.howTitle')}</div>
         <ol className="space-y-2.5">
-          {[
-            'Ogni atleta installa l’app Stress Index',
-            'Si collega al tuo account professionista',
-            'Indossa la fascia Polar e avvia una sessione sport dall’app',
-            'I dati appaiono qui automaticamente',
-          ].map((step, i) => (
+          {steps.map((step, i) => (
             <li key={i} className="flex items-start gap-3 text-sm text-anthracite">
               <span className="shrink-0 w-6 h-6 rounded-full bg-teal text-white text-xs font-semibold flex items-center justify-center">
                 {i + 1}
@@ -515,6 +507,8 @@ function LiveDrawer({
   baseQuery: string
   onClose: () => void
 }) {
+  const t = useTranslations('sport')
+  const locale = useLocale()
   const status = connStatus(row, now)
   const zone = liveZone(row.zone)
   const tags = parseLiveTags(row.tags)
@@ -529,7 +523,7 @@ function LiveDrawer({
       <aside
         className="absolute top-0 right-0 h-full w-full sm:w-[460px] bg-white shadow-2xl flex flex-col animate-fade-in"
         role="dialog"
-        aria-label={`Dettaglio live ${name}`}
+        aria-label={t('teamLive.drawer.aria', { name })}
       >
         <div className="flex items-start justify-between gap-3 p-5 border-b border-surface-border">
           <div className="min-w-0">
@@ -538,13 +532,13 @@ function LiveDrawer({
               <h2 className="font-serif text-xl text-anthracite truncate">{name}</h2>
             </div>
             <p className="mt-0.5 text-sm text-anthracite-lighter">
-              {row.sport || 'Sport'} · <Timer size={12} className="inline" /> {formatElapsed(row.elapsed_s)}
+              {row.sport || t('teamLive.card.sport')} · <Timer size={12} className="inline" /> {formatElapsed(row.elapsed_s)}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Chiudi"
+            aria-label={t('teamLive.drawer.close')}
             className="w-9 h-9 rounded-lg hover:bg-surface flex items-center justify-center text-anthracite-lighter hover:text-anthracite shrink-0"
           >
             <X size={18} />
@@ -555,8 +549,8 @@ function LiveDrawer({
           {/* Valori attuali */}
           <div className="grid grid-cols-3 gap-3">
             <BigStat label="HR" value={row.hr == null ? '—' : `${row.hr}`} unit="bpm" color={hrZoneColor(row.hr, hrMax) ?? '#2F343A'} />
-            <BigStat label="DFA α1" value={num(row.dfa_alpha1, 2)} color={zone?.color ?? '#2F343A'} />
-            <BigStat label="RMSSD" value={row.rmssd == null ? '—' : num(row.rmssd, 1)} unit="ms" />
+            <BigStat label="DFA α1" value={num(row.dfa_alpha1, 2, locale)} color={zone?.color ?? '#2F343A'} />
+            <BigStat label="RMSSD" value={row.rmssd == null ? '—' : num(row.rmssd, 1, locale)} unit="ms" />
           </div>
 
           {zone && (
@@ -564,31 +558,31 @@ function LiveDrawer({
               className="rounded-xl border-2 px-4 py-3 text-center"
               style={{ borderColor: zone.color, backgroundColor: zone.bg }}
             >
-              <span className="text-base font-bold uppercase tracking-wide" style={{ color: zone.color }}>
-                Zona {zone.id} · {zone.label}
+              <span className="text-base font-bold uppercase tracking-wide break-words" style={{ color: zone.color }}>
+                {t('teamLive.card.zone', { id: zone.id, label: dfaZoneLabel(zone, t) })}
               </span>
             </div>
           )}
 
           {/* Grafico HR live */}
-          <ChartBlock title="Frequenza cardiaca (ultimi 5 min)" icon={<Heart size={15} className="text-red-500" />}>
+          <ChartBlock title={t('teamLive.drawer.hrChart')} icon={<Heart size={15} className="text-red-500" />}>
             <MiniLine data={data} dataKey="hr" color="#EF4444" unit=" bpm" />
           </ChartBlock>
 
           {/* Grafico DFA Alpha1 con bande zone */}
-          <ChartBlock title="DFA Alpha1 con bande zone" icon={<Activity size={15} className="text-teal" />}>
+          <ChartBlock title={t('teamLive.drawer.dfaChart')} icon={<Activity size={15} className="text-teal" />}>
             <MiniLine data={data} dataKey="alpha1" color="#2E746C" domain={[0, 1.5]} bands />
           </ChartBlock>
 
           {/* Trend RMSSD */}
-          <ChartBlock title="RMSSD rolling" icon={<Activity size={15} className="text-amber-500" />}>
+          <ChartBlock title={t('teamLive.drawer.rmssdChart')} icon={<Activity size={15} className="text-amber-500" />}>
             <MiniLine data={data} dataKey="rmssd" color="#F59E0B" unit=" ms" />
           </ChartBlock>
 
           {/* Tag sessione */}
           {tags.length > 0 && (
             <div>
-              <div className="text-sm font-medium text-anthracite mb-2">Tag sessione</div>
+              <div className="text-sm font-medium text-anthracite mb-2">{t('teamLive.drawer.tags')}</div>
               <ul className="flex flex-wrap gap-2">
                 {tags.map((t, i) => (
                   <li key={`${t}-${i}`} className="text-sm px-3 py-1.5 rounded-full bg-teal-light text-teal-dark font-medium">
@@ -599,9 +593,7 @@ function LiveDrawer({
             </div>
           )}
 
-          <p className="text-xs text-anthracite-lighter">
-            I grafici mostrano i valori accumulati da quando questa pagina è aperta (la tabella live conserva solo l&apos;ultimo valore).
-          </p>
+          <p className="text-xs text-anthracite-lighter">{t('teamLive.drawer.note')}</p>
         </div>
 
         {row.session_id && (
@@ -610,7 +602,7 @@ function LiveDrawer({
               href={`/area-professionisti/sport/sessione/${row.session_id}${baseQuery}`}
               className="btn-primary text-sm w-full inline-flex items-center justify-center gap-2"
             >
-              {ended ? 'Apri dettaglio completo' : 'Apri sessione'} <ArrowUpRight size={16} />
+              {ended ? t('teamLive.drawer.openFull') : t('teamLive.drawer.openSession')} <ArrowUpRight size={16} />
             </Link>
           </div>
         )}
@@ -655,11 +647,13 @@ function MiniLine({
   domain?: [number, number]
   bands?: boolean
 }) {
+  const t = useTranslations('sport')
+  const locale = useLocale()
   const points = data.filter((p) => p[dataKey] != null)
   if (points.length < 2) {
     return (
       <div className="h-full flex items-center justify-center text-xs text-anthracite-lighter bg-surface rounded-lg">
-        In attesa di dati sufficienti…
+        {t('teamLive.drawer.waiting')}
       </div>
     )
   }
@@ -679,11 +673,8 @@ function MiniLine({
         />
         <Tooltip
           contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E2E6EA' }}
-          labelFormatter={(t) => {
-            const d = new Date(Number(t))
-            return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`
-          }}
-          formatter={(v) => [`${typeof v === 'number' ? v.toFixed(dataKey === 'alpha1' ? 2 : 1) : v}${unit}`, '']}
+          labelFormatter={(ts) => formatUpdatedClock(new Date(Number(ts)).toISOString(), locale, true)}
+          formatter={(v) => [`${typeof v === 'number' ? num(v, dataKey === 'alpha1' ? 2 : 1, locale) : v}${unit}`, '']}
         />
         <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
       </LineChart>

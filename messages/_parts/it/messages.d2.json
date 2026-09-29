@@ -1,0 +1,30 @@
+{
+  "composer": {
+    "title": "Invia messaggio",
+    "recipient": "Destinatario: {name}",
+    "edit": "Modifica",
+    "preview": "Anteprima",
+    "send": "Invia",
+    "sending": "Invio…",
+    "previewLabel": "Anteprima email",
+    "noSubject": "(senza oggetto)",
+    "empty": "(vuoto)",
+    "subject": "Oggetto",
+    "subjectPlaceholder": "Es. Promemoria misurazione settimanale",
+    "body": "Messaggio",
+    "bodyPlaceholder": "Ciao {name},\n\n…",
+    "note": "L'invio email passa da una Edge Function dedicata (in arrivo). Per ora il messaggio viene archiviato in cronologia.",
+    "missingFields": "Compila oggetto e contenuto"
+  },
+  "tab": {
+    "history": "Cronologia messaggi inviati al cliente",
+    "sendNew": "Invia nuovo",
+    "emptyTitle": "Nessun messaggio inviato",
+    "emptyBody": "Quando invierai un messaggio al cliente, lo troverai qui.",
+    "send": "Invia messaggio",
+    "channelEmail": "Email",
+    "channelPush": "Push",
+    "delivered": "Consegnato",
+    "queued": "In coda"
+  }
+}

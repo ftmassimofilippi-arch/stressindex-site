@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { moveClientToProfessional } from '@/lib/admin-links'
@@ -14,9 +15,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (guard.error) return guard.error
   const body = await req.json().catch(() => ({}))
   const professionalId = typeof body.professional_id === 'string' ? body.professional_id : ''
-  if (!professionalId) return NextResponse.json({ error: 'missing_params' }, { status: 400 })
+  if (!professionalId) return apiError('missing_params', 400)
 
   const result = await moveClientToProfessional(createAdminClient(), guard.user, { clientId: params.id, targetProfessionalId: professionalId })
-  if (!result.ok) return NextResponse.json({ error: result.error, message: result.message }, { status: result.status })
+  if (!result.ok) return apiError(result.error, result.status, result.params)
   return NextResponse.json(result)
 }

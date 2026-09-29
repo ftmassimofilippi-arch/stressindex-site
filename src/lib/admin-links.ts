@@ -19,9 +19,11 @@ import type { ClientRow, LinkRow } from './admin-data'
 // vecchio professionista.
 // ============================================================================
 
+// In caso di errore: `error` è un codice tradotto dal client (errors.api.<codice>),
+// `params` i valori di interpolazione ({who}, {detail}). Nessun testo in italiano.
 export type MoveOutcome =
   | { ok: true; client_id: string; from_professional_id: string | null; to_professional_id: string; link_id: string | null; client_user_id: string | null }
-  | { ok: false; status: number; error: string; message: string }
+  | { ok: false; status: number; error: string; params?: Record<string, string> }
 
 const LINK_COLUMNS = 'id, client_id, professional_id, client_user_id, status, created_at, updated_at'
 const CLIENT_COLUMNS = 'id, professionista_id, nome, cognome, email, client_user_id, created_at'
@@ -77,33 +79,33 @@ export async function moveClientToProfessional(
   opts: { clientId?: string; linkId?: string; targetProfessionalId: string },
 ): Promise<MoveOutcome> {
   const target = opts.targetProfessionalId
-  if (!target) return { ok: false, status: 400, error: 'missing_params', message: 'Professionista di destinazione mancante.' }
+  if (!target) return { ok: false, status: 400, error: 'missing_params' }
 
   // 0. Il professionista di destinazione deve esistere.
   const { data: pro } = await admin.from('profiles').select('id, role').eq('id', target).maybeSingle()
-  if (!pro) return { ok: false, status: 404, error: 'professional_not_found', message: 'Professionista di destinazione non trovato.' }
+  if (!pro) return { ok: false, status: 404, error: 'professional_not_found' }
 
   // 1. Punto di partenza: scheda CRM e/o link.
   let crm: ClientRow | null = null
   let startLink: LinkRow | null = null
   if (opts.linkId) {
     const { data } = await admin.from('client_professional_links').select(LINK_COLUMNS).eq('id', opts.linkId).maybeSingle()
-    if (!data) return { ok: false, status: 404, error: 'link_not_found', message: 'Collegamento non trovato.' }
+    if (!data) return { ok: false, status: 404, error: 'link_not_found' }
     startLink = data as LinkRow
     if (startLink.professional_id === target) {
-      return { ok: false, status: 400, error: 'same_professional', message: 'Il collegamento è già con questo professionista.' }
+      return { ok: false, status: 400, error: 'same_professional' }
     }
     crm = await resolveCrmForLink(admin, startLink)
   } else if (opts.clientId) {
     const { data } = await admin.from('clients').select(CLIENT_COLUMNS).eq('id', opts.clientId).maybeSingle()
-    if (!data) return { ok: false, status: 404, error: 'client_not_found', message: 'Scheda cliente non trovata.' }
+    if (!data) return { ok: false, status: 404, error: 'client_not_found' }
     crm = data as ClientRow
   } else {
-    return { ok: false, status: 400, error: 'missing_params', message: 'Indica una scheda cliente o un collegamento.' }
+    return { ok: false, status: 400, error: 'missing_params' }
   }
 
   if (crm && crm.professionista_id === target) {
-    return { ok: false, status: 400, error: 'same_professional', message: 'Il cliente è già di questo professionista.' }
+    return { ok: false, status: 400, error: 'same_professional' }
   }
 
   const fromProfessionalId = crm?.professionista_id ?? startLink?.professional_id ?? null
@@ -122,12 +124,7 @@ export async function moveClientToProfessional(
     const d = ((dup ?? []) as Array<{ id: string; nome: string | null; cognome: string | null; email: string | null }>)[0]
     if (d && d.id !== crm?.id) {
       const who = `${d.nome ?? ''} ${d.cognome ?? ''}`.trim() || d.email || d.id
-      return {
-        ok: false,
-        status: 409,
-        error: 'target_has_client',
-        message: `Il professionista di destinazione ha già una scheda per questo cliente (${who}). Unisci o elimina il doppione prima di spostare.`,
-      }
+      return { ok: false, status: 409, error: 'target_has_client', params: { who } }
     }
   }
 
@@ -139,7 +136,7 @@ export async function moveClientToProfessional(
     const patch: Record<string, unknown> = { professionista_id: target }
     if (!crm.client_user_id && clientUserId) patch.client_user_id = clientUserId
     const { error } = await admin.from('clients').update(patch).eq('id', crm.id)
-    if (error) return { ok: false, status: 500, error: 'client_update_failed', message: `Scheda: ${error.message}` }
+    if (error) return { ok: false, status: 500, error: 'client_update_failed', params: { detail: error.message } }
     clientId = crm.id
   } else if (clientUserId) {
     const { data: p } = await admin.from('profiles').select('nome, cognome, email').eq('id', clientUserId).maybeSingle()
@@ -154,9 +151,9 @@ export async function moveClientToProfessional(
       client_user_id: clientUserId,
       created_at: new Date().toISOString(),
     })
-    if (error) return { ok: false, status: 500, error: 'client_insert_failed', message: `Scheda: ${error.message}` }
+    if (error) return { ok: false, status: 500, error: 'client_insert_failed', params: { detail: error.message } }
   } else {
-    return { ok: false, status: 422, error: 'unresolvable', message: 'Collegamento senza scheda né account: impossibile spostarlo.' }
+    return { ok: false, status: 422, error: 'unresolvable' }
   }
 
   // 4. Collegamenti dell'account con il vecchio professionista (o per client_id).
@@ -197,13 +194,13 @@ export async function moveClientToProfessional(
         .from('client_professional_links')
         .update({ status, client_id: targetLink.client_id ?? clientId, updated_at: nowIso })
         .eq('id', targetLink.id)
-      if (error) return { ok: false, status: 500, error: 'link_update_failed', message: `Collegamento: ${error.message}` }
+      if (error) return { ok: false, status: 500, error: 'link_update_failed', params: { detail: error.message } }
       resultLinkId = targetLink.id
       const { error: revErr } = await admin
         .from('client_professional_links')
         .update({ status: 'revoked', updated_at: nowIso })
         .in('id', oldLinks.map((l) => l.id))
-      if (revErr) return { ok: false, status: 500, error: 'link_revoke_failed', message: `Collegamento: ${revErr.message}` }
+      if (revErr) return { ok: false, status: 500, error: 'link_revoke_failed', params: { detail: revErr.message } }
     } else {
       // Sposta il link migliore sul nuovo professionista, conservando lo stato;
       // eventuali doppioni con il vecchio professionista vengono revocati.
@@ -211,7 +208,7 @@ export async function moveClientToProfessional(
         .from('client_professional_links')
         .update({ professional_id: target, client_id: clientId, client_user_id: best.client_user_id ?? clientUserId, updated_at: nowIso })
         .eq('id', best.id)
-      if (error) return { ok: false, status: 500, error: 'link_update_failed', message: `Collegamento: ${error.message}` }
+      if (error) return { ok: false, status: 500, error: 'link_update_failed', params: { detail: error.message } }
       resultLinkId = best.id
       const others = oldLinks.filter((l) => l.id !== best.id)
       if (others.length > 0) {
@@ -219,7 +216,7 @@ export async function moveClientToProfessional(
           .from('client_professional_links')
           .update({ status: 'revoked', updated_at: nowIso })
           .in('id', others.map((l) => l.id))
-        if (revErr) return { ok: false, status: 500, error: 'link_revoke_failed', message: `Collegamento: ${revErr.message}` }
+        if (revErr) return { ok: false, status: 500, error: 'link_revoke_failed', params: { detail: revErr.message } }
       }
     }
   }

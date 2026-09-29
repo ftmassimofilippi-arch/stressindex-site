@@ -1,12 +1,23 @@
 import type { Metadata } from 'next'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { Link } from '@/i18n/navigation'
 
-export const metadata: Metadata = {
-  title: 'Registrazione completata',
+type Params = { params: { locale: string } }
+
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
+  return { title: t('registrationConfirm.title'), robots: { index: false, follow: false } }
 }
 
-export default function ConfermaPage() {
+export default async function ConfermaPage({ params }: Params) {
+  setRequestLocale(params.locale)
+  const t = await getTranslations('registration.confirm')
+
+  const storeButtonClass =
+    'inline-flex items-center gap-2 px-4 py-2.5 bg-anthracite text-white rounded-lg text-sm font-medium hover:bg-anthracite-light transition-colors'
+
   return (
     <>
       <Header />
@@ -21,19 +32,16 @@ export default function ConfermaPage() {
             </div>
 
             <h1 className="font-serif text-4xl sm:text-5xl font-normal text-anthracite tracking-tight mb-4 text-center">
-              Benvenuto in Stress Index
+              {t('title')}
             </h1>
 
-            <p className="text-lg text-anthracite-light leading-relaxed mb-10 text-center">
-              Il tuo account è stato creato con successo. Hai 60 giorni di accesso
-              completo a tutte le funzionalità.
-            </p>
+            <p className="text-lg text-anthracite-light leading-relaxed mb-10 text-center">{t('intro')}</p>
 
             {/* Next steps */}
             <div className="card p-6 sm:p-8 text-left space-y-6">
               <h2 className="text-xl font-bold text-anthracite flex items-center gap-2">
                 <span aria-hidden="true">📋</span>
-                <span>Prossimi passi</span>
+                <span>{t('nextSteps')}</span>
               </h2>
 
               <div className="space-y-5">
@@ -42,14 +50,9 @@ export default function ConfermaPage() {
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal text-white flex items-center justify-center text-sm font-semibold">
                     1
                   </div>
-                  <div>
-                    <p className="font-semibold text-anthracite mb-1">
-                      Controlla la tua email
-                    </p>
-                    <p className="text-[15px] text-anthracite-light leading-relaxed">
-                      Ti abbiamo inviato un&apos;email di conferma. Clicca sul link per
-                      attivare il tuo account.
-                    </p>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-anthracite mb-1">{t('step1Title')}</p>
+                    <p className="text-[15px] text-anthracite-light leading-relaxed">{t('step1Body')}</p>
                   </div>
                 </div>
 
@@ -58,28 +61,18 @@ export default function ConfermaPage() {
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal text-white flex items-center justify-center text-sm font-semibold">
                     2
                   </div>
-                  <div>
-                    <p className="font-semibold text-anthracite mb-1">
-                      Scarica l&apos;app
-                    </p>
-                    <p className="text-[15px] text-anthracite-light leading-relaxed mb-3">
-                      Scarica Stress Index sul tuo dispositivo.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <a
-                        href="#"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-anthracite text-white rounded-lg text-sm font-medium hover:bg-anthracite-light transition-colors"
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-anthracite mb-1">{t('step2Title')}</p>
+                    <p className="text-[15px] text-anthracite-light leading-relaxed mb-3">{t('step2Body')}</p>
+                    <div className="flex flex-col sm:flex-row flex-wrap gap-3">
+                      <a href="#" className={storeButtonClass}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                           <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
                         </svg>
                         App Store
                       </a>
-                      <a
-                        href="#"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-anthracite text-white rounded-lg text-sm font-medium hover:bg-anthracite-light transition-colors"
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <a href="#" className={storeButtonClass}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                           <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.199l2.302 2.302a1 1 0 010 1.38l-2.302 2.302L15.396 12l2.302-3.492zM5.864 2.658L16.8 8.99l-2.302 2.302L5.864 2.658z"/>
                         </svg>
                         Google Play
@@ -93,15 +86,9 @@ export default function ConfermaPage() {
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal text-white flex items-center justify-center text-sm font-semibold">
                     3
                   </div>
-                  <div>
-                    <p className="font-semibold text-anthracite mb-1">
-                      Collega il sensore
-                    </p>
-                    <p className="text-[15px] text-anthracite-light leading-relaxed">
-                      Accedi con le credenziali appena create e collega il tuo Polar H10
-                      (o altro sensore ECG compatibile) via Bluetooth per iniziare
-                      le tue prime misurazioni.
-                    </p>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-anthracite mb-1">{t('step3Title')}</p>
+                    <p className="text-[15px] text-anthracite-light leading-relaxed">{t('step3Body')}</p>
                   </div>
                 </div>
               </div>
@@ -109,10 +96,13 @@ export default function ConfermaPage() {
 
             {/* Help */}
             <p className="mt-8 text-center text-sm text-anthracite-lighter">
-              Hai bisogno di aiuto?{' '}
-              <a href="/contatti" className="text-teal hover:text-teal-dark underline underline-offset-2">
-                Contattaci
-              </a>
+              {t.rich('help', {
+                link: (chunks) => (
+                  <Link href="/contatti" className="text-teal hover:text-teal-dark underline underline-offset-2">
+                    {chunks}
+                  </Link>
+                ),
+              })}
             </p>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { createClient } from '@/lib/supabase-server'
 
 export const runtime = 'nodejs'
@@ -8,7 +9,7 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (!user) return apiError('unauthorized', 401)
   if (!user.email) return NextResponse.json({ invites: [] })
 
   const { data: invites } = await supabase
@@ -35,12 +36,12 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (!user) return apiError('unauthorized', 401)
 
   const body = await req.json().catch(() => ({}))
   const inviteId = typeof body?.inviteId === 'string' ? body.inviteId : null
   const action = body?.action === 'reject' ? 'reject' : 'accept'
-  if (!inviteId) return NextResponse.json({ error: 'invite_required' }, { status: 400 })
+  if (!inviteId) return apiError('invite_required', 400)
 
   if (action === 'accept') {
     const { error } = await supabase.rpc('accept_organization_invite', { p_invite_id: inviteId })
@@ -55,10 +56,10 @@ export async function POST(req: NextRequest) {
     .eq('id', inviteId)
     .maybeSingle()
   if (!invite || invite.status !== 'pending') {
-    return NextResponse.json({ error: 'not_found' }, { status: 404 })
+    return apiError('not_found', 404)
   }
   if (user.email && invite.email.toLowerCase() !== user.email.toLowerCase()) {
-    return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+    return apiError('forbidden', 403)
   }
   const { error } = await supabase
     .from('organization_members')

@@ -1,25 +1,32 @@
 'use client'
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { Activity, Bike, Moon, Puzzle, type LucideIcon } from 'lucide-react'
 import { Modal } from '@/components/dashboard/Modal'
 import type { AccountCommerciale, AccountModulo, AccountStato, ModuloCatalogo, PianoCatalogo } from '@/lib/admin-commerciale'
-import { formatDate } from '@/lib/format'
-import { api, type Toast } from './adminApi'
+import { intlTag } from '@/lib/format'
+import type { Tr } from '@/i18n/types'
+import { api, errorText, type ErrTr, type Toast } from './adminApi'
+
+/** Traduttore del namespace `admin` (da `useTranslations('admin')`). */
+export type AdminTr = ErrTr
 
 // ============================================================================
 // Pezzi comuni della gestione commerciale nel pannello Super Admin (stile
 // Notion: testo piccolo, pallini, pill leggere, bordi sottili). Nessuna logica
 // di accesso qui: attivo/fonte arrivano da modulo_accesso_dettaglio (DB).
+// Le etichette di stati, piani e moduli si traducono in visualizzazione
+// (namespace `admin`): i codici del database restano quelli.
 // ============================================================================
 
 export type Catalogo = { moduli: ModuloCatalogo[]; piani: PianoCatalogo[] }
 
-export const STATO_LABEL: Record<AccountStato, string> = {
-  attivo: 'Attivo',
-  prova: 'In prova',
-  sospeso: 'Sospeso',
-  bloccato: 'Bloccato',
+export const STATI: AccountStato[] = ['attivo', 'prova', 'sospeso', 'bloccato']
+
+/** Etichetta tradotta dello stato account (`t` = useTranslations('admin')). */
+export function statoLabel(stato: AccountStato, t: Tr): string {
+  return t(`status.${stato}`)
 }
 
 const STATO_DOT: Record<AccountStato, string> = {
@@ -29,21 +36,42 @@ const STATO_DOT: Record<AccountStato, string> = {
   bloccato: 'bg-red-500',
 }
 
+/** Data breve numerica nella lingua (es. 29/09/26, 09/29/26, 29.09.26), con ora facoltativa. */
+export function shortDate(iso: string | null | undefined, locale: string, withTime = false): string {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return '—'
+  return new Intl.DateTimeFormat(intlTag(locale), {
+    day: '2-digit', month: '2-digit', year: '2-digit',
+    ...(withTime ? { hour: '2-digit', minute: '2-digit' } : {}),
+  }).format(d)
+}
+
 export function StatoDot({ stato, withLabel = true }: { stato: AccountStato; withLabel?: boolean }) {
+  const t = useTranslations('admin')
   return (
     <span className="inline-flex items-center gap-1.5 text-[13px] text-anthracite whitespace-nowrap">
       <span className={`w-2 h-2 rounded-full ${STATO_DOT[stato]}`} aria-hidden />
-      {withLabel && STATO_LABEL[stato]}
+      {withLabel && statoLabel(stato, t)}
     </span>
   )
 }
 
-export function pianoNome(catalogo: Catalogo | null, codice: string | null): string {
+// Nome del piano: traduzione per codice se esiste, altrimenti il nome del catalogo.
+export function pianoNome(catalogo: Catalogo | null, codice: string | null, t: AdminTr): string {
   if (!codice) return '—'
+  if (t.has(`plans.${codice}`)) return t(`plans.${codice}`)
   return catalogo?.piani.find((p) => p.codice === codice)?.nome ?? codice
 }
 
+// Nome del modulo: traduzione per codice se esiste, altrimenti il nome del catalogo.
+export function moduloNome(catalogo: Catalogo | null, codice: string, t: AdminTr): string {
+  if (t.has(`modules.${codice}`)) return t(`modules.${codice}`)
+  return catalogo?.moduli.find((m) => m.codice === codice)?.nome ?? codice
+}
+
 export function PianoPill({ piano, catalogo }: { piano: string | null; catalogo: Catalogo | null }) {
+  const t = useTranslations('admin')
   if (!piano) return <span className="text-anthracite-lighter text-[13px]">—</span>
   const cls =
     piano === 'pro'
@@ -51,7 +79,7 @@ export function PianoPill({ piano, catalogo }: { piano: string | null; catalogo:
       : piano === 'prova'
         ? 'bg-sky-50 text-sky-700 border-sky-200'
         : 'bg-surface text-anthracite-light border-surface-border'
-  return <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md border text-[12px] ${cls}`}>{pianoNome(catalogo, piano)}</span>
+  return <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md border text-[12px] whitespace-nowrap ${cls}`}>{pianoNome(catalogo, piano, t)}</span>
 }
 
 // Soglie di avviso: 30, 7 e 1 giorno.
@@ -65,24 +93,26 @@ export function scadenzaLivello(giorni: number | null): 'scaduto' | '1' | '7' | 
 }
 
 export function ScadenzaCell({ c }: { c: AccountCommerciale | null }) {
-  if (!c?.data_scadenza) return <span className="text-anthracite-lighter text-[13px]">{c?.piano ? 'Nessuna' : '—'}</span>
+  const t = useTranslations('admin.commerciale')
+  const locale = useLocale()
+  if (!c?.data_scadenza) return <span className="text-anthracite-lighter text-[13px]">{c?.piano ? t('noExpiry') : '—'}</span>
   const lvl = scadenzaLivello(c.giorni_alla_scadenza)
   const g = c.giorni_alla_scadenza ?? 0
   const badge =
     lvl === 'scaduto'
-      ? { cls: 'bg-red-50 text-red-600', text: 'Scaduto' }
+      ? { cls: 'bg-red-50 text-red-600', text: t('expired') }
       : lvl === '1'
-        ? { cls: 'bg-red-50 text-red-600', text: g <= 0 ? 'Oggi' : 'Domani' }
+        ? { cls: 'bg-red-50 text-red-600', text: g <= 0 ? t('today') : t('tomorrow') }
         : lvl === '7'
-          ? { cls: 'bg-amber-50 text-amber-700', text: `${g} gg` }
+          ? { cls: 'bg-amber-50 text-amber-700', text: t('daysShort', { days: g }) }
           : lvl === '30'
-            ? { cls: 'bg-yellow-50 text-yellow-700', text: `${g} gg` }
+            ? { cls: 'bg-yellow-50 text-yellow-700', text: t('daysShort', { days: g }) }
             : null
   return (
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] text-anthracite">
-      {formatDate(c.data_scadenza, 'dd/MM/yy')}
+      {shortDate(c.data_scadenza, locale)}
       {badge && <span className={`px-1.5 py-0.5 rounded text-[11px] font-medium ${badge.cls}`}>{badge.text}</span>}
-      {c.rinnovo_automatico && <span className="text-[11px] text-anthracite-lighter" title="Rinnovo automatico">↻</span>}
+      {c.rinnovo_automatico && <span className="text-[11px] text-anthracite-lighter" title={t('autoRenew')}>↻</span>}
     </span>
   )
 }
@@ -94,23 +124,26 @@ export function moduleIcon(catalogo: Catalogo | null, codice: string): LucideIco
   return MODULE_ICONS[icona] ?? Puzzle
 }
 
-export function fonteLabel(m: AccountModulo, piano: string | null, catalogo: Catalogo | null): string {
+// Origine dell'accesso a un modulo, in forma leggibile (`t` = useTranslations('admin')).
+export function fonteLabel(m: AccountModulo, piano: string | null, catalogo: Catalogo | null, t: AdminTr, locale: string): string {
   switch (m.fonte) {
-    case 'superadmin': return 'Superadmin'
-    case 'stato': return 'Bloccato dallo stato dell’account'
-    case 'modulo_disattivato': return 'Modulo disattivato nel catalogo'
+    case 'superadmin': return t('commerciale.fonteSuperadmin')
+    case 'stato': return t('commerciale.fonteStato')
+    case 'modulo_disattivato': return t('commerciale.fonteModuloDisattivato')
     case 'eccezione':
-      return `${m.eccezione_abilitata ? 'Attivato' : 'Disattivato'} per eccezione${m.eccezione_scade_il ? ` fino al ${formatDate(m.eccezione_scade_il, 'dd/MM/yyyy')}` : ''}`
-    case 'piano': return `Incluso nel piano ${pianoNome(catalogo, piano)}`
-    case 'scaduto': return 'Incluso nel piano, ma abbonamento scaduto'
-    case 'professionista': return m.attivo ? 'Coperto da un professionista collegato' : 'Nessun professionista collegato con il modulo'
-    default: return `Non incluso nel piano ${pianoNome(catalogo, piano)}`
+      return `${t(m.eccezione_abilitata ? 'commerciale.fonteEccezioneOn' : 'commerciale.fonteEccezioneOff')}${m.eccezione_scade_il ? t('commerciale.fonteEccezioneUntil', { date: shortDate(m.eccezione_scade_il, locale) }) : ''}`
+    case 'piano': return t('commerciale.fontePiano', { plan: pianoNome(catalogo, piano, t) })
+    case 'scaduto': return t('commerciale.fonteScaduto')
+    case 'professionista': return t(m.attivo ? 'commerciale.fonteProfessionistaOn' : 'commerciale.fonteProfessionistaOff')
+    default: return t('commerciale.fonteNessuna', { plan: pianoNome(catalogo, piano, t) })
   }
 }
 
 // Icone dei moduli attivi: piene se ereditati dal piano, bordo tratteggiato se
 // per eccezione. I moduli tolti per eccezione compaiono barrati.
 export function ModuleIcons({ c, catalogo }: { c: AccountCommerciale | null; catalogo: Catalogo | null }) {
+  const t = useTranslations('admin')
+  const locale = useLocale()
   if (!c) return <span className="text-anthracite-lighter text-[13px]">—</span>
   const shown = c.moduli.filter((m) => m.attivo || (m.fonte === 'eccezione' && m.eccezione_abilitata === false))
   if (shown.length === 0) return <span className="text-anthracite-lighter text-[13px]">—</span>
@@ -118,7 +151,7 @@ export function ModuleIcons({ c, catalogo }: { c: AccountCommerciale | null; cat
     <span className="inline-flex items-center gap-1">
       {shown.map((m) => {
         const Icon = moduleIcon(catalogo, m.codice)
-        const nome = catalogo?.moduli.find((x) => x.codice === m.codice)?.nome ?? m.codice
+        const nome = moduloNome(catalogo, m.codice, t)
         const exc = m.fonte === 'eccezione'
         const cls = !m.attivo
           ? 'text-anthracite-lighter/60 border border-dashed border-surface-border line-through'
@@ -126,7 +159,7 @@ export function ModuleIcons({ c, catalogo }: { c: AccountCommerciale | null; cat
             ? 'text-amber-700 border border-dashed border-amber-400 bg-amber-50/60'
             : 'text-teal-dark bg-teal-50 border border-transparent'
         return (
-          <span key={m.codice} title={`${nome}: ${fonteLabel(m, c.piano, catalogo)}`} className={`w-6 h-6 rounded-md inline-flex items-center justify-center relative ${cls}`}>
+          <span key={m.codice} title={`${nome}: ${fonteLabel(m, c.piano, catalogo, t, locale)}`} className={`w-6 h-6 rounded-md inline-flex items-center justify-center relative ${cls}`}>
             <Icon size={13} />
             {!m.attivo && <span className="absolute w-4 h-px bg-anthracite-lighter rotate-45" aria-hidden />}
           </span>
@@ -143,13 +176,17 @@ export async function accountAction(
   body: Record<string, unknown>,
   showToast: (t: Toast) => void,
   okText: string,
+  tErr: ErrTr,
+  failedText: string,
 ): Promise<boolean> {
   const { ok, json } = await api('POST', `/api/admin/users/${userId}/account`, body)
   if (!ok) {
-    showToast({ kind: 'err', text: json?.message ?? json?.error ?? 'Operazione non riuscita' })
+    showToast({ kind: 'err', text: errorText(json, tErr, failedText) })
     return false
   }
-  showToast({ kind: json?.warning ? 'err' : 'ok', text: json?.warning ?? okText })
+  // `warning`: stato salvato ma ban/unban in auth non riuscito (codice + detail).
+  const warning = typeof json?.warning === 'string' ? errorText({ code: json.warning, detail: json.warning_detail }, tErr) : null
+  showToast({ kind: warning ? 'err' : 'ok', text: warning ?? okText })
   return true
 }
 
@@ -160,7 +197,7 @@ export function ReasonDialog({
   confirmText,
   destructive,
   withDate,
-  dateLabel = 'Scadenza (facoltativa)',
+  dateLabel,
   onCancel,
   onConfirm,
 }: {
@@ -173,6 +210,8 @@ export function ReasonDialog({
   onCancel: () => void
   onConfirm: (motivo: string, data: string | null) => Promise<void> | void
 }) {
+  const t = useTranslations('admin')
+  const tc = useTranslations('common')
   const [motivo, setMotivo] = useState('')
   const [data, setData] = useState('')
   const [busy, setBusy] = useState(false)
@@ -184,8 +223,8 @@ export function ReasonDialog({
       description={description}
       size="sm"
       footer={
-        <div className="flex justify-end gap-2">
-          <button type="button" onClick={onCancel} className="btn-secondary text-sm">Annulla</button>
+        <div className="flex justify-end gap-2 flex-wrap">
+          <button type="button" onClick={onCancel} className="btn-secondary text-sm">{tc('cancel')}</button>
           <button
             type="button"
             disabled={!motivo.trim() || busy}
@@ -195,16 +234,16 @@ export function ReasonDialog({
             }}
             className={`text-sm px-5 py-2.5 rounded-xl font-medium text-white disabled:opacity-50 ${destructive ? 'bg-red-500 hover:bg-red-600' : 'bg-teal hover:bg-teal-dark'}`}
           >
-            {busy ? 'Attendere…' : confirmText}
+            {busy ? t('wait') : confirmText}
           </button>
         </div>
       }
     >
-      <label className="input-label">Motivo (visibile solo al superadmin)</label>
+      <label className="input-label">{t('commerciale.reason')}</label>
       <input autoFocus className="input-field" value={motivo} onChange={(e) => setMotivo(e.target.value)} />
       {withDate && (
         <div className="mt-3">
-          <label className="input-label">{dateLabel}</label>
+          <label className="input-label">{dateLabel ?? t('commerciale.expiryOptional')}</label>
           <input type="date" className="input-field" value={data} onChange={(e) => setData(e.target.value)} />
         </div>
       )}
@@ -218,7 +257,7 @@ export function RowMenu({ anchor, onClose, children }: { anchor: HTMLElement; on
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
   useLayoutEffect(() => {
     const r = anchor.getBoundingClientRect()
-    const width = 240
+    const width = 260
     const height = ref.current?.offsetHeight ?? 280
     const top = r.bottom + 4 + height > window.innerHeight ? Math.max(8, r.top - height - 4) : r.bottom + 4
     setPos({ top, left: Math.max(8, Math.min(window.innerWidth - width - 8, r.right - width)) })
@@ -242,7 +281,7 @@ export function RowMenu({ anchor, onClose, children }: { anchor: HTMLElement; on
     <div
       ref={ref}
       style={{ top: pos?.top ?? -9999, left: pos?.left ?? -9999 }}
-      className="fixed z-[55] w-60 bg-white border border-surface-border rounded-xl shadow-elevated py-1.5 text-[13px]"
+      className="fixed z-[55] w-[260px] bg-white border border-surface-border rounded-xl shadow-elevated py-1.5 text-[13px]"
     >
       {children}
     </div>
@@ -250,7 +289,7 @@ export function RowMenu({ anchor, onClose, children }: { anchor: HTMLElement; on
 }
 
 export function MenuLabel({ children }: { children: React.ReactNode }) {
-  return <div className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-anthracite-lighter">{children}</div>
+  return <div className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-anthracite-lighter truncate">{children}</div>
 }
 
 export function MenuItem({ icon: Icon, children, onClick, danger, disabled, hint }: { icon?: LucideIcon; children: React.ReactNode; onClick: () => void; danger?: boolean; disabled?: boolean; hint?: string }) {
@@ -261,9 +300,9 @@ export function MenuItem({ icon: Icon, children, onClick, danger, disabled, hint
       onClick={onClick}
       className={`w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-surface disabled:opacity-40 disabled:hover:bg-transparent ${danger ? 'text-red-600' : 'text-anthracite'}`}
     >
-      {Icon && <Icon size={14} className={danger ? 'text-red-500' : 'text-anthracite-lighter'} />}
-      <span className="flex-1">{children}</span>
-      {hint && <span className="text-[11px] text-anthracite-lighter">{hint}</span>}
+      {Icon && <Icon size={14} className={`flex-shrink-0 ${danger ? 'text-red-500' : 'text-anthracite-lighter'}`} />}
+      <span className="flex-1 min-w-0 truncate">{children}</span>
+      {hint && <span className="text-[11px] text-anthracite-lighter flex-shrink-0">{hint}</span>}
     </button>
   )
 }

@@ -1,6 +1,6 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { createAdminClient } from './supabase-admin'
-import { type AdminIssue, ADMIN_ISSUE_LABELS, clientLinkStatusLabel, linkStatusRank, pickBestLink } from './admin-issues'
+import { type AdminIssue, clientLinkStatusKey, linkStatusRank, pickBestLink } from './admin-issues'
 import { getAdminMonitoringCounts } from './admin-monitoring'
 import { getCommercialeByUser, type AccountCommerciale } from './admin-commerciale'
 
@@ -49,10 +49,11 @@ export interface AdminUser {
   linked_professional_name: string | null
   link_status: string | null
   link_id: string | null
-  // diagnostica: al più una segnalazione, con etichetta leggibile
+  // diagnostica: al più una segnalazione (etichetta tradotta in UI con adminIssueLabel)
   issue: AdminIssue | null
-  issue_label: string | null
-  // stato piano/abbonamento testuale
+  issue_label: AdminIssue | null
+  // stato piano/abbonamento come codice (base, pro_active, trial_active, trial_expired
+  // o stato del collegamento per i clienti): la UI lo traduce
   subscription_status: string
   // stato account, abbonamento, moduli (migration 024); null se non applicata
   commerciale: AccountCommerciale | null
@@ -323,13 +324,13 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
       }
 
       // stato abbonamento / collegamento testuale
-      let subscription = 'Base'
+      let subscription = 'base'
       if (role === 'professional') {
-        if (plan === 'pro') subscription = 'Pro attivo'
-        else if (trial) subscription = new Date(trial).getTime() > now ? 'Trial attivo' : 'Trial scaduto'
-        else subscription = 'Base'
+        if (plan === 'pro') subscription = 'pro_active'
+        else if (trial) subscription = new Date(trial).getTime() > now ? 'trial_active' : 'trial_expired'
+        else subscription = 'base'
       } else if (role === 'client') {
-        subscription = clientLinkStatusLabel(link?.status ?? null)
+        subscription = clientLinkStatusKey(link?.status ?? null)
       }
 
       // segnalazione (una sola, la più rilevante)
@@ -369,7 +370,7 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
         link_status: link?.status ?? null,
         link_id: link?.id ?? null,
         issue,
-        issue_label: issue ? ADMIN_ISSUE_LABELS[issue] : null,
+        issue_label: issue,
         subscription_status: subscription,
         commerciale: commerciale?.get(u.id) ?? null,
       }

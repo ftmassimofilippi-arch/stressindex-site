@@ -1,9 +1,14 @@
 // Documento PDF report periodico cliente — solo server (renderToBuffer).
 // Stile coerente con measurement-pdf.tsx: teal #4FA39A, anthracite #2F343A.
+//
+// I18n: il componente NON è nell'albero next-intl, quindi riceve dalla route
+// `t` (namespace `pdf`), `tScores` (namespace `scores`) e la `locale` per
+// date e numeri. I commenti automatici sono messaggi ICU in `pdf.report.comments`.
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet, Svg, Rect, Polyline, Circle, Line } from '@react-pdf/renderer'
-import { format, parseISO } from 'date-fns'
-import { it } from 'date-fns/locale'
+import type { Tr } from '@/i18n/types'
+import type { Locale } from '@/i18n/routing'
+import { intlTag, measuredInstant, num } from './format'
 import type { Client, MeasurementAnalytics, ProfessionalProfile } from './types'
 
 const COLORS = {
@@ -28,13 +33,14 @@ const SCORE_COLORS: Record<ScoreKey, string> = {
   score_modulazione_infiammatoria: '#A855F7',
 }
 
-const SCORE_LABELS: Record<ScoreKey, string> = {
-  score_stress: 'Indice di Stress',
-  score_recupero: 'Recupero',
-  score_equilibrio: 'Equilibrio',
-  score_energia: 'Energia',
-  // Colonna DB score_modulazione_infiammatoria: nel report si chiama "Adattamento".
-  score_modulazione_infiammatoria: 'Adattamento',
+// Chiave in `scores.names` per ogni colonna. La colonna DB
+// score_modulazione_infiammatoria nel report si chiama "Adattamento".
+const SCORE_NAME_KEYS: Record<ScoreKey, string> = {
+  score_stress: 'names.stressLong',
+  score_recupero: 'names.recovery',
+  score_equilibrio: 'names.balance',
+  score_energia: 'names.energy',
+  score_modulazione_infiammatoria: 'names.adaptation',
 }
 
 export type ScoreKey =
@@ -51,6 +57,10 @@ const SCORE_KEYS: ScoreKey[] = [
   'score_energia',
   'score_modulazione_infiammatoria',
 ]
+
+// Segnaposto per valore assente: lo stesso di format.ts (`num`).
+const EMPTY = '—'
+const PDF_TZ = 'Europe/Rome'
 
 const styles = StyleSheet.create({
   page: {
@@ -81,12 +91,15 @@ const styles = StyleSheet.create({
     paddingTop: 9,
     borderRadius: 4,
   },
-  headerRight: { alignItems: 'flex-end' },
-  proName: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite },
-  proSub: { fontSize: 9, color: COLORS.anthraciteLighter, marginTop: 2 },
+  // Il tedesco è più lungo: la colonna destra può andare a capo, non uscire.
+  headerRight: { alignItems: 'flex-end', maxWidth: '65%', flexShrink: 1 },
+  proName: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite, textAlign: 'right' },
+  proSub: { fontSize: 9, color: COLORS.anthraciteLighter, marginTop: 2, textAlign: 'right' },
 
   h1: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite, marginBottom: 4 },
-  h2: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: COLORS.tealDark, marginTop: 18, marginBottom: 8 },
+  // Spaziature compatte: la prima pagina deve contenere 5 card score e i due
+  // giorni notevoli anche con i testi tedeschi, più lunghi.
+  h2: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: COLORS.tealDark, marginTop: 14, marginBottom: 8 },
   h3: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite, marginBottom: 6 },
   muted: { color: COLORS.anthraciteLighter, fontSize: 9 },
   small: { fontSize: 9 },
@@ -94,27 +107,28 @@ const styles = StyleSheet.create({
   infoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 14,
+    marginBottom: 8,
   },
-  infoCell: { width: '50%', paddingVertical: 4, flexDirection: 'row' },
-  infoLabel: { color: COLORS.anthraciteLighter, fontSize: 9, width: 90 },
-  infoValue: { color: COLORS.anthracite, fontSize: 10, fontFamily: 'Helvetica-Bold' },
+  infoCell: { width: '50%', paddingVertical: 4, paddingRight: 8, flexDirection: 'row' },
+  infoLabel: { color: COLORS.anthraciteLighter, fontSize: 9, width: 96, flexShrink: 0 },
+  infoValue: { color: COLORS.anthracite, fontSize: 10, fontFamily: 'Helvetica-Bold', flex: 1 },
 
   // Score cards (page 1)
   scoreGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 },
   scoreCard: {
     width: '50%',
     paddingHorizontal: 4,
-    paddingBottom: 8,
+    paddingBottom: 6,
   },
   scoreCardInner: {
     backgroundColor: COLORS.surface,
     borderLeft: `3pt solid ${COLORS.teal}`,
     borderRadius: 4,
-    padding: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
-  scoreCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  scoreCardTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite },
+  scoreCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  scoreCardTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite, flexShrink: 1, paddingRight: 6 },
   scoreCardTrend: { fontSize: 9, fontFamily: 'Helvetica-Bold' },
   // Valore grande centrato + caption "media · N mis." accanto, baseline-aligned.
   // lineHeight 1 evita che la line-box del numero grande invada la riga stat.
@@ -122,7 +136,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   scoreCardMean: { fontSize: 24, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite, lineHeight: 1 },
   scoreCardMeanUnit: { fontSize: 9, color: COLORS.anthraciteLighter, marginLeft: 6 },
@@ -131,19 +145,20 @@ const styles = StyleSheet.create({
   scoreCardStats: {
     flexDirection: 'row',
     borderTop: `0.5pt solid ${COLORS.border}`,
-    paddingTop: 8,
+    paddingTop: 6,
   },
   scoreCardStat: { width: '25%', alignItems: 'center' },
   scoreCardStatLabel: { fontSize: 7, color: COLORS.anthraciteLighter, textTransform: 'uppercase', marginBottom: 2, textAlign: 'center' },
   scoreCardStatValue: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite, textAlign: 'center' },
 
   // Best / worst day
-  daysRow: { flexDirection: 'row', gap: 12, marginTop: 10 },
+  daysRow: { flexDirection: 'row', gap: 12, marginTop: 6 },
   dayCard: {
     flex: 1,
     backgroundColor: COLORS.surface,
     borderRadius: 6,
-    padding: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     border: `1pt solid ${COLORS.border}`,
   },
   dayLabel: { fontSize: 9, color: COLORS.anthraciteLighter, marginBottom: 2 },
@@ -151,15 +166,15 @@ const styles = StyleSheet.create({
   dayValue: { fontSize: 9, color: COLORS.anthraciteLight, marginTop: 4 },
 
   // Trend section (page 2)
-  trendBlock: { marginBottom: 16 },
+  trendBlock: { marginTop: 10, marginBottom: 8 },
   trendHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
   },
-  trendTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite },
-  trendValues: { fontSize: 9, color: COLORS.anthraciteLighter },
+  trendTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: COLORS.anthracite, paddingRight: 8 },
+  trendValues: { fontSize: 9, color: COLORS.anthraciteLighter, flexShrink: 1, textAlign: 'right' },
   trendComment: {
     fontSize: 9,
     marginTop: 6,
@@ -195,51 +210,71 @@ const styles = StyleSheet.create({
     borderTop: `0.5pt solid ${COLORS.border}`,
     paddingTop: 8,
   },
+  footerLeft: { flexShrink: 1, paddingRight: 12 },
 })
 
 // ---------------------------------------------------------------------------
-// Formattazione
+// Formattazione (date e numeri nella lingua richiesta)
 // ---------------------------------------------------------------------------
 function fmtScore(v?: number | null): string {
-  if (v == null || Number.isNaN(v)) return '—'
+  if (v == null || Number.isNaN(v)) return EMPTY
   return Math.round(v).toString()
 }
 
-// Le date delle misurazioni sono ora locale salvata come UTC (vedi lib/format.ts):
-// leggiamo i componenti UTC verbatim. Le date di periodo (YYYY-MM-DD) restano
-// invariate perché prive di orario.
-function fmtDateShort(d?: string | null): string {
-  if (!d) return '—'
-  try {
-    const t = new Date(d)
-    const wc = new Date(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate(), t.getUTCHours(), t.getUTCMinutes(), t.getUTCSeconds())
-    return format(wc, 'd MMM yyyy', { locale: it })
-  } catch { return d }
+// Data breve di un istante già normalizzato (vedi `measuredInstant` in format.ts),
+// nel fuso italiano.
+function fmtInstantShort(d: Date | null, locale: Locale): string {
+  if (!d || Number.isNaN(d.getTime())) return EMPTY
+  return new Intl.DateTimeFormat(intlTag(locale), { day: 'numeric', month: 'short', year: 'numeric', timeZone: PDF_TZ }).format(d)
 }
 
-function fmtAge(birth?: string | null): string {
-  if (!birth) return '—'
-  try {
-    const d = parseISO(birth)
-    const today = new Date()
-    let years = today.getFullYear() - d.getFullYear()
-    const m = today.getMonth() - d.getMonth()
-    if (m < 0 || (m === 0 && today.getDate() < d.getDate())) years--
-    return `${years} anni`
-  } catch { return '—' }
+// Le date di periodo (YYYY-MM-DD) sono giorni di calendario senza orario: si
+// formattano in UTC per non farle slittare di un giorno sul server.
+function fmtIsoDay(day: string, locale: Locale): string {
+  const d = new Date(`${day}T00:00:00Z`)
+  if (Number.isNaN(d.getTime())) return day
+  return new Intl.DateTimeFormat(intlTag(locale), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(d)
 }
 
-function fmtSex(s?: string | null): string {
-  if (s === 'M') return 'Uomo'
-  if (s === 'F') return 'Donna'
-  if (s === 'X') return 'Altro'
-  return '—'
+function fmtDateTimeLong(d: Date, locale: Locale): string {
+  return new Intl.DateTimeFormat(intlTag(locale), {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: PDF_TZ,
+  }).format(d)
 }
 
-function fmtDelta(pct: number | null): string {
-  if (pct == null || Number.isNaN(pct)) return '—'
+function ageYears(birth?: string | null): number | null {
+  if (!birth) return null
+  const d = new Date(birth)
+  if (Number.isNaN(d.getTime())) return null
+  const today = new Date()
+  let years = today.getFullYear() - d.getFullYear()
+  const m = today.getMonth() - d.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < d.getDate())) years--
+  return years
+}
+
+function fmtAge(birth: string | null | undefined, t: Tr): string {
+  const years = ageYears(birth)
+  return years == null ? EMPTY : t('common.years', { count: years })
+}
+
+function fmtSex(s: string | null | undefined, t: Tr): string {
+  if (s === 'M') return t('common.sexMale')
+  if (s === 'F') return t('common.sexFemale')
+  if (s === 'X') return t('common.sexOther')
+  return EMPTY
+}
+
+// Variazione percentuale con segno, nel formato della lingua ("+12,5%").
+function fmtDelta(pct: number | null, locale: Locale): string {
+  if (pct == null || Number.isNaN(pct)) return EMPTY
   const sign = pct > 0 ? '+' : ''
-  return `${sign}${pct.toFixed(1)}%`
+  return `${sign}${num(pct, 1, locale)}%`
 }
 
 // ---------------------------------------------------------------------------
@@ -280,8 +315,9 @@ function computeScoreStats(measurements: MeasurementAnalytics[], key: ScoreKey):
 export type ReportAggregates = {
   count: number
   stats: Record<ScoreKey, ScoreStats>
-  bestDay: { date: string; score: number } | null // stress più basso = meglio
-  worstDay: { date: string; score: number } | null // stress più alto = peggio
+  // `date` è il measured_at grezzo, `instant` l'istante normalizzato per la stampa.
+  bestDay: { date: string; instant: Date | null; score: number } | null // stress più basso = meglio
+  worstDay: { date: string; instant: Date | null; score: number } | null // stress più alto = peggio
 }
 
 export function computeReportAggregates(measurements: MeasurementAnalytics[]): ReportAggregates {
@@ -290,37 +326,43 @@ export function computeReportAggregates(measurements: MeasurementAnalytics[]): R
     return acc
   }, {} as Record<ScoreKey, ScoreStats>)
 
-  let best: { date: string; score: number } | null = null
-  let worst: { date: string; score: number } | null = null
+  let best: ReportAggregates['bestDay'] = null
+  let worst: ReportAggregates['worstDay'] = null
   for (const m of measurements) {
     const s = m.score_stress
     if (s == null) continue
-    if (best == null || s < best.score) best = { date: m.measured_at, score: s }
-    if (worst == null || s > worst.score) worst = { date: m.measured_at, score: s }
+    if (best == null || s < best.score) best = { date: m.measured_at, instant: measuredInstant(m), score: s }
+    if (worst == null || s > worst.score) worst = { date: m.measured_at, instant: measuredInstant(m), score: s }
   }
   return { count: measurements.length, stats, bestDay: best, worstDay: worst }
 }
 
 // Commento automatico: stress in calo è positivo; recupero/energia in aumento è positivo.
-function commentFor(key: ScoreKey, deltaPct: number | null): { text: string; tone: 'positive' | 'warning' | 'neutral' } | null {
+// Le frasi sono messaggi ICU in `pdf.report.comments`, nella lingua della richiesta.
+function commentFor(
+  key: ScoreKey,
+  deltaPct: number | null,
+  t: Tr,
+  tScores: Tr,
+  locale: Locale,
+): { text: string; tone: 'positive' | 'warning' | 'neutral' } | null {
   if (deltaPct == null || Number.isNaN(deltaPct)) return null
-  const label = SCORE_LABELS[key].toLowerCase()
   const isInverted = key === 'score_stress' // stress inverso
 
   if (Math.abs(deltaPct) <= 10) {
-    return { text: `Situazione stabile nel periodo analizzato (variazione ${fmtDelta(deltaPct)}).`, tone: 'neutral' }
+    return { text: t('report.comments.stable', { delta: fmtDelta(deltaPct, locale) }), tone: 'neutral' }
   }
+  const pct = num(Math.abs(deltaPct), 1, locale)
   if (isInverted) {
-    if (deltaPct < -10) {
-      return { text: `Trend positivo: lo stress si è ridotto del ${Math.abs(deltaPct).toFixed(1)}% nel periodo.`, tone: 'positive' }
-    }
-    return { text: `Attenzione: lo stress è aumentato del ${deltaPct.toFixed(1)}% nel periodo.`, tone: 'warning' }
+    if (deltaPct < -10) return { text: t('report.comments.stressDown', { pct }), tone: 'positive' }
+    return { text: t('report.comments.stressUp', { pct }), tone: 'warning' }
   }
-  // recupero / energia / equilibrio / modulazione: aumento = positivo
-  if (deltaPct > 10) {
-    return { text: `Trend positivo: ${label} è aumentato del ${deltaPct.toFixed(1)}% nel periodo.`, tone: 'positive' }
-  }
-  return { text: `Attenzione: ${label} è diminuito del ${Math.abs(deltaPct).toFixed(1)}% nel periodo.`, tone: 'warning' }
+  // recupero / energia / equilibrio / adattamento: aumento = positivo.
+  // In tedesco i sostantivi restano maiuscoli anche a metà frase.
+  const name = tScores(SCORE_NAME_KEYS[key])
+  const score = locale === 'de' ? name : name.toLowerCase()
+  if (deltaPct > 10) return { text: t('report.comments.scoreUp', { score, pct }), tone: 'positive' }
+  return { text: t('report.comments.scoreDown', { score, pct }), tone: 'warning' }
 }
 
 // ---------------------------------------------------------------------------
@@ -394,29 +436,31 @@ function Sparkline({
 function Header({
   professional,
   periodLabel,
+  t,
 }: {
   professional: ProfessionalProfile | null
   periodLabel: string
+  t: Tr
 }) {
   const proName = professional ? [professional.titolo, professional.nome, professional.cognome].filter(Boolean).join(' ').trim() : ''
   const studio = professional?.nome_studio ?? ''
   return (
     <View style={styles.header} fixed>
-      <Text style={styles.logo}>Stress Index</Text>
+      <Text style={styles.logo}>{t('common.brand')}</Text>
       <View style={styles.headerRight}>
         {proName ? <Text style={styles.proName}>{proName}</Text> : null}
         {studio ? <Text style={styles.proSub}>{studio}</Text> : null}
-        <Text style={styles.proSub}>Report {periodLabel}</Text>
+        <Text style={styles.proSub}>{t('report.headerPeriod', { period: periodLabel })}</Text>
       </View>
     </View>
   )
 }
 
-function Footer({ generatedAt }: { generatedAt: string }) {
+function Footer({ generatedAt, t }: { generatedAt: string; t: Tr }) {
   return (
     <View style={styles.footer} fixed>
-      <Text>Generato il {generatedAt} · Stress Index</Text>
-      <Text render={({ pageNumber, totalPages }) => `Pagina ${pageNumber} di ${totalPages}`} />
+      <Text style={styles.footerLeft}>{t('common.generatedFooter', { date: generatedAt })}</Text>
+      <Text render={({ pageNumber, totalPages }) => t('common.pageOf', { page: pageNumber, total: totalPages })} />
     </View>
   )
 }
@@ -430,25 +474,34 @@ export function ClientReportPdfDocument({
   measurements,
   dateFrom,
   dateTo,
+  t,
+  tScores,
+  locale,
 }: {
   client: Client
   professional: ProfessionalProfile | null
   measurements: MeasurementAnalytics[]
   dateFrom: string // ISO date YYYY-MM-DD
   dateTo: string // ISO date YYYY-MM-DD
+  /** Traduttore del namespace `pdf` (getTranslator(locale, 'pdf')). */
+  t: Tr
+  /** Traduttore del namespace `scores` (nomi degli score). */
+  tScores: Tr
+  locale: Locale
 }) {
   const aggregates = computeReportAggregates(measurements)
-  const periodLabel = `${fmtDateShort(dateFrom)} → ${fmtDateShort(dateTo)}`
-  const generatedAt = format(new Date(), "dd MMMM yyyy 'alle' HH:mm", { locale: it })
+  const periodLabel = t('report.periodRange', { from: fmtIsoDay(dateFrom, locale), to: fmtIsoDay(dateTo, locale) })
+  const generatedAt = fmtDateTimeLong(new Date(), locale)
   const proName = professional ? [professional.titolo, professional.nome, professional.cognome].filter(Boolean).join(' ').trim() : ''
+  const clientName = [client.cognome, client.nome].filter(Boolean).join(' ').trim() || t('common.clientFallback')
 
   const trendKeys: ScoreKey[] = ['score_stress', 'score_recupero', 'score_energia']
 
   return (
     <Document
-      title={`Stress Index Report - ${client.cognome ?? ''} ${client.nome ?? ''} - ${dateFrom} ${dateTo}`}
-      author={proName || 'Stress Index'}
-      subject={`Report periodico HRV ${periodLabel}`}
+      title={t('report.docTitle', { client: clientName, from: dateFrom, to: dateTo })}
+      author={proName || t('common.brand')}
+      subject={t('report.subject', { period: periodLabel })}
       creator="Stress Index"
       producer="Stress Index"
     >
@@ -456,28 +509,28 @@ export function ClientReportPdfDocument({
           PAGINA 1 — RIEPILOGO PERIODO
       ==================================================================== */}
       <Page size="A4" style={styles.page}>
-        <Header professional={professional} periodLabel={periodLabel} />
+        <Header professional={professional} periodLabel={periodLabel} t={t} />
 
-        <Text style={styles.h1}>Report periodico HRV</Text>
+        <Text style={styles.h1}>{t('report.title')}</Text>
         <Text style={styles.muted}>{periodLabel}</Text>
 
-        <Text style={styles.h2}>Dati cliente</Text>
+        <Text style={styles.h2}>{t('common.clientData')}</Text>
         <View style={styles.infoGrid}>
           <View style={styles.infoCell}>
-            <Text style={styles.infoLabel}>Nome</Text>
-            <Text style={styles.infoValue}>{client.nome ?? '—'}</Text>
+            <Text style={styles.infoLabel}>{t('common.firstName')}</Text>
+            <Text style={styles.infoValue}>{client.nome ?? EMPTY}</Text>
           </View>
           <View style={styles.infoCell}>
-            <Text style={styles.infoLabel}>Cognome</Text>
-            <Text style={styles.infoValue}>{client.cognome ?? '—'}</Text>
+            <Text style={styles.infoLabel}>{t('common.lastName')}</Text>
+            <Text style={styles.infoValue}>{client.cognome ?? EMPTY}</Text>
           </View>
           <View style={styles.infoCell}>
-            <Text style={styles.infoLabel}>Età</Text>
-            <Text style={styles.infoValue}>{fmtAge(client.data_nascita)}</Text>
+            <Text style={styles.infoLabel}>{t('common.age')}</Text>
+            <Text style={styles.infoValue}>{fmtAge(client.data_nascita, t)}</Text>
           </View>
           <View style={styles.infoCell}>
-            <Text style={styles.infoLabel}>Sesso</Text>
-            <Text style={styles.infoValue}>{fmtSex(client.sesso)}</Text>
+            <Text style={styles.infoLabel}>{t('common.sex')}</Text>
+            <Text style={styles.infoValue}>{fmtSex(client.sesso, t)}</Text>
           </View>
         </View>
 
@@ -485,28 +538,26 @@ export function ClientReportPdfDocument({
           style={{
             backgroundColor: COLORS.tealLight,
             borderRadius: 6,
-            padding: 12,
-            marginBottom: 14,
+            paddingVertical: 9,
+            paddingHorizontal: 12,
+            marginBottom: 6,
           }}
         >
           <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', color: COLORS.tealDark }}>
-            {aggregates.count} {aggregates.count === 1 ? 'misurazione' : 'misurazioni'} nel periodo {periodLabel}
+            {t('report.measurementsInPeriod', { count: aggregates.count, period: periodLabel })}
           </Text>
         </View>
 
         {aggregates.count === 0 ? (
-          <Text style={styles.muted}>
-            Nessuna misurazione registrata nell&apos;intervallo selezionato. Modifica il periodo per generare il report.
-          </Text>
+          <Text style={styles.muted}>{t('report.noMeasurements')}</Text>
         ) : (
           <>
-            <Text style={styles.h2}>Score nel periodo</Text>
+            <Text style={styles.h2}>{t('report.scoresInPeriod')}</Text>
             <View style={styles.scoreGrid}>
               {SCORE_KEYS.map((key) => {
                 const s = aggregates.stats[key]
                 const color = SCORE_COLORS[key]
                 const inverted = key === 'score_stress'
-                const trendUp = s.deltaPct != null && s.deltaPct > 0
                 const trendOk = s.deltaPct != null
                   ? (inverted ? s.deltaPct < 0 : s.deltaPct > 0)
                   : null
@@ -515,35 +566,33 @@ export function ClientReportPdfDocument({
                   : trendOk
                     ? COLORS.emerald
                     : COLORS.red
-                const arrow = s.deltaPct == null ? '·' : trendUp ? '↑' : '↓'
                 return (
                   <View key={key} style={styles.scoreCard}>
                     <View style={[styles.scoreCardInner, { borderLeftColor: color }]}>
                       <View style={styles.scoreCardHeader}>
-                        <Text style={styles.scoreCardTitle}>{SCORE_LABELS[key]}</Text>
-                        <Text style={[styles.scoreCardTrend, { color: trendColor }]}>
-                          {arrow} {fmtDelta(s.deltaPct)}
-                        </Text>
+                        <Text style={styles.scoreCardTitle}>{tScores(SCORE_NAME_KEYS[key])}</Text>
+                        {/* Il segno della variazione indica la direzione; il colore dice se è favorevole. */}
+                        <Text style={[styles.scoreCardTrend, { color: trendColor }]}>{fmtDelta(s.deltaPct, locale)}</Text>
                       </View>
                       <View style={styles.scoreCardMain}>
                         <Text style={styles.scoreCardMean}>{fmtScore(s.mean)}</Text>
-                        <Text style={styles.scoreCardMeanUnit}>media · {s.count} mis.</Text>
+                        <Text style={styles.scoreCardMeanUnit}>{t('report.meanOf', { count: s.count })}</Text>
                       </View>
                       <View style={styles.scoreCardStats}>
                         <View style={styles.scoreCardStat}>
-                          <Text style={styles.scoreCardStatLabel}>Min</Text>
+                          <Text style={styles.scoreCardStatLabel}>{t('report.min')}</Text>
                           <Text style={styles.scoreCardStatValue}>{fmtScore(s.min)}</Text>
                         </View>
                         <View style={styles.scoreCardStat}>
-                          <Text style={styles.scoreCardStatLabel}>Max</Text>
+                          <Text style={styles.scoreCardStatLabel}>{t('report.max')}</Text>
                           <Text style={styles.scoreCardStatValue}>{fmtScore(s.max)}</Text>
                         </View>
                         <View style={styles.scoreCardStat}>
-                          <Text style={styles.scoreCardStatLabel}>Prima</Text>
+                          <Text style={styles.scoreCardStatLabel}>{t('report.first')}</Text>
                           <Text style={styles.scoreCardStatValue}>{fmtScore(s.first)}</Text>
                         </View>
                         <View style={styles.scoreCardStat}>
-                          <Text style={styles.scoreCardStatLabel}>Ultima</Text>
+                          <Text style={styles.scoreCardStatLabel}>{t('report.last')}</Text>
                           <Text style={styles.scoreCardStatValue}>{fmtScore(s.last)}</Text>
                         </View>
                       </View>
@@ -553,53 +602,53 @@ export function ClientReportPdfDocument({
               })}
             </View>
 
-            <Text style={styles.h2}>Giorni notevoli</Text>
+            {/* wrap={false}: le due card non vanno spezzate tra due pagine (il
+                testo si sovrapponeva al piè di pagina). */}
+            <View wrap={false}>
+            <Text style={styles.h2}>{t('report.notableDays')}</Text>
             <View style={styles.daysRow}>
               <View style={[styles.dayCard, { borderLeft: `3pt solid ${COLORS.emerald}` }]}>
-                <Text style={styles.dayLabel}>Giorno migliore (stress minimo)</Text>
+                <Text style={styles.dayLabel}>{t('report.bestDay')}</Text>
                 <Text style={styles.dayDate}>
-                  {aggregates.bestDay ? fmtDateShort(aggregates.bestDay.date) : '—'}
+                  {aggregates.bestDay ? fmtInstantShort(aggregates.bestDay.instant, locale) : EMPTY}
                 </Text>
                 <Text style={styles.dayValue}>
-                  Stress: {aggregates.bestDay ? fmtScore(aggregates.bestDay.score) : '—'} / 100
+                  {t('report.stressValue', { value: aggregates.bestDay ? fmtScore(aggregates.bestDay.score) : EMPTY })}
                 </Text>
               </View>
               <View style={[styles.dayCard, { borderLeft: `3pt solid ${COLORS.red}` }]}>
-                <Text style={styles.dayLabel}>Giorno peggiore (stress massimo)</Text>
+                <Text style={styles.dayLabel}>{t('report.worstDay')}</Text>
                 <Text style={styles.dayDate}>
-                  {aggregates.worstDay ? fmtDateShort(aggregates.worstDay.date) : '—'}
+                  {aggregates.worstDay ? fmtInstantShort(aggregates.worstDay.instant, locale) : EMPTY}
                 </Text>
                 <Text style={styles.dayValue}>
-                  Stress: {aggregates.worstDay ? fmtScore(aggregates.worstDay.score) : '—'} / 100
+                  {t('report.stressValue', { value: aggregates.worstDay ? fmtScore(aggregates.worstDay.score) : EMPTY })}
                 </Text>
               </View>
+            </View>
             </View>
           </>
         )}
 
-        <Footer generatedAt={generatedAt} />
+        <Footer generatedAt={generatedAt} t={t} />
       </Page>
 
       {/* ====================================================================
           PAGINA 2 — TREND
       ==================================================================== */}
       <Page size="A4" style={styles.page}>
-        <Header professional={professional} periodLabel={periodLabel} />
+        <Header professional={professional} periodLabel={periodLabel} t={t} />
 
-        <Text style={styles.h1}>Andamento nel periodo</Text>
-        <Text style={styles.muted}>
-          Sparkline e commento automatico per ciascuno score. Linea tratteggiata = baseline 50 / 100.
-        </Text>
+        <Text style={styles.h1}>{t('report.trendTitle')}</Text>
+        <Text style={styles.muted}>{t('report.trendIntro')}</Text>
 
         {aggregates.count === 0 ? (
-          <Text style={[styles.muted, { marginTop: 20 }]}>
-            Nessun dato disponibile per generare il trend.
-          </Text>
+          <Text style={[styles.muted, { marginTop: 20 }]}>{t('report.noTrendData')}</Text>
         ) : (
           SCORE_KEYS.map((key) => {
             const s = aggregates.stats[key]
             const color = SCORE_COLORS[key]
-            const commentary = trendKeys.includes(key) ? commentFor(key, s.deltaPct) : null
+            const commentary = trendKeys.includes(key) ? commentFor(key, s.deltaPct, t, tScores, locale) : null
             const commentaryBg = commentary
               ? commentary.tone === 'positive'
                 ? '#ECFDF5'
@@ -617,9 +666,14 @@ export function ClientReportPdfDocument({
             return (
               <View key={key} style={styles.trendBlock} wrap={false}>
                 <View style={styles.trendHeader}>
-                  <Text style={styles.trendTitle}>{SCORE_LABELS[key]}</Text>
+                  <Text style={styles.trendTitle}>{tScores(SCORE_NAME_KEYS[key])}</Text>
                   <Text style={styles.trendValues}>
-                    Media {fmtScore(s.mean)} · Min {fmtScore(s.min)} · Max {fmtScore(s.max)} · Δ {fmtDelta(s.deltaPct)}
+                    {t('report.trendStats', {
+                      mean: fmtScore(s.mean),
+                      min: fmtScore(s.min),
+                      max: fmtScore(s.max),
+                      delta: fmtDelta(s.deltaPct, locale),
+                    })}
                   </Text>
                 </View>
                 <Sparkline series={s.series} color={color} width={510} height={40} />
@@ -638,69 +692,59 @@ export function ClientReportPdfDocument({
           })
         )}
 
-        <Footer generatedAt={generatedAt} />
+        <Footer generatedAt={generatedAt} t={t} />
       </Page>
 
       {/* ====================================================================
           PAGINA 3 — DISCLAIMER
       ==================================================================== */}
       <Page size="A4" style={styles.page}>
-        <Header professional={professional} periodLabel={periodLabel} />
+        <Header professional={professional} periodLabel={periodLabel} t={t} />
 
-        <Text style={styles.h1}>Informazioni e disclaimer</Text>
+        <Text style={styles.h1}>{t('common.infoAndDisclaimer')}</Text>
 
         <View style={styles.disclaimerBox}>
-          <Text style={styles.disclaimerText}>
-            I dati forniti da Stress Index hanno finalità informativa e non costituiscono diagnosi medica.
-            L&apos;analisi della variabilità della frequenza cardiaca (HRV) è uno strumento di valutazione funzionale
-            del sistema nervoso autonomo e non sostituisce in alcun modo l&apos;esame clinico, la diagnosi o la
-            terapia di un medico.
-          </Text>
-          <Text style={[styles.disclaimerText, { marginTop: 10 }]}>
-            Per qualsiasi decisione clinica, terapeutica o relativa al proprio stato di salute, consultare
-            il proprio medico curante o uno specialista qualificato.
-          </Text>
+          <Text style={styles.disclaimerText}>{t('common.disclaimerPart1')}</Text>
+          <Text style={[styles.disclaimerText, { marginTop: 10 }]}>{t('common.disclaimerPart2')}</Text>
         </View>
 
-        <Text style={styles.h2}>Dettagli report</Text>
+        <Text style={styles.h2}>{t('report.detailsTitle')}</Text>
         <View style={styles.infoGrid}>
           <View style={styles.infoCell}>
-            <Text style={styles.infoLabel}>Periodo</Text>
+            <Text style={styles.infoLabel}>{t('report.period')}</Text>
             <Text style={styles.infoValue}>{periodLabel}</Text>
           </View>
           <View style={styles.infoCell}>
-            <Text style={styles.infoLabel}>Misurazioni</Text>
+            <Text style={styles.infoLabel}>{t('report.measurements')}</Text>
             <Text style={styles.infoValue}>{aggregates.count}</Text>
           </View>
           <View style={styles.infoCell}>
-            <Text style={styles.infoLabel}>Generato il</Text>
+            <Text style={styles.infoLabel}>{t('common.generatedOn')}</Text>
             <Text style={styles.infoValue}>{generatedAt}</Text>
           </View>
           <View style={styles.infoCell}>
-            <Text style={styles.infoLabel}>Professionista</Text>
-            <Text style={styles.infoValue}>{proName || '—'}</Text>
+            <Text style={styles.infoLabel}>{t('common.professional')}</Text>
+            <Text style={styles.infoValue}>{proName || EMPTY}</Text>
           </View>
           {professional?.nome_studio ? (
             <View style={styles.infoCell}>
-              <Text style={styles.infoLabel}>Studio</Text>
+              <Text style={styles.infoLabel}>{t('common.studio')}</Text>
               <Text style={styles.infoValue}>{professional.nome_studio}</Text>
             </View>
           ) : null}
           {professional?.sito_web ? (
             <View style={styles.infoCell}>
-              <Text style={styles.infoLabel}>Sito web</Text>
+              <Text style={styles.infoLabel}>{t('common.website')}</Text>
               <Text style={styles.infoValue}>{professional.sito_web}</Text>
             </View>
           ) : null}
         </View>
 
         <View style={{ marginTop: 30, alignItems: 'center' }}>
-          <Text style={[styles.muted, { fontSize: 9 }]}>
-            Generato da Stress Index — stressindex.io
-          </Text>
+          <Text style={[styles.muted, { fontSize: 9 }]}>{t('common.generatedBy')}</Text>
         </View>
 
-        <Footer generatedAt={generatedAt} />
+        <Footer generatedAt={generatedAt} t={t} />
       </Page>
     </Document>
   )

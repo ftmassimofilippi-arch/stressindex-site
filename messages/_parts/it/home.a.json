@@ -1,0 +1,197 @@
+{
+  "mockup": {
+    "measuring": "Stress Index · Misura in corso",
+    "ecgLive": "65 bpm · ECG live"
+  },
+  "hero": {
+    "eyebrow": "Software HRV per professionisti del benessere",
+    "titleLead": "Il tuo cliente è stressato.",
+    "titleEm": "Adesso puoi dimostrarlo.",
+    "body": "Stress Index misura il sistema nervoso autonomo in 10 minuti e ti consegna 4 indici pronti da usare in seduta. Basta valutazioni a occhio. Basta spiegare senza dati.",
+    "ctaHow": "Guarda come funziona"
+  },
+  "trust": {
+    "params": "24 parametri HRV",
+    "platforms": "Android e iOS",
+    "eu": "Server EU · GDPR",
+    "pdf": "Report PDF professionale",
+    "pros": "Per professionisti del benessere"
+  },
+  "problem": {
+    "eyebrow": "Il problema reale",
+    "titleLead": "Sai già che lo stress cambia tutto.",
+    "titleEm": "Ma riesci a misurarlo davvero?",
+    "body": "Ogni giorno lavori con persone che dormono male, recuperano lentamente, si infortunano sempre nello stesso periodo, non rispondono come dovrebbero al protocollo. Tu sai che dietro c’è il sistema nervoso. Ma non hai un numero da mostrare.",
+    "cards": [
+      {
+        "title": "Valuto tutto con l’esperienza",
+        "body": "Funziona. Finché il cliente non ti chiede perché non migliora, o finché un collega non gli porta un report con i dati. La sensazione non si difende, i numeri sì."
+      },
+      {
+        "title": "Gli strumenti HRV esistono già",
+        "body": "Sì, esistono. Sono pensati per ricercatori, costano migliaia di euro, producono report incomprensibili e richiedono settimane di formazione. Non sono stati costruiti per il tuo studio."
+      },
+      {
+        "title": "Faccio vedere i miglioramenti al cliente",
+        "body": "Come? A parole? Il cliente vuole vedere il suo grafico che migliora nel tempo. Vuole il PDF da mostrare al medico. Vuole capire perché oggi si sente diverso da tre settimane fa."
+      }
+    ]
+  },
+  "solution": {
+    "eyebrow": "La risposta",
+    "titleLead": "4 numeri.",
+    "titleEm": "Tutto quello che ti serve.",
+    "body": "Stress Index elabora 24 parametri HRV e li traduce in 4 indici su scala 0-100. Tu li leggi in un secondo. Il cliente li capisce senza spiegazioni.",
+    "features": [
+      {
+        "title": "Indice di Stress",
+        "body": "Sai esattamente quanto il simpatico sta dominando. Intervieni prima che il cliente arrivi al collasso, non dopo."
+      },
+      {
+        "title": "Indice di Recupero",
+        "body": "Smetti di indovinare se è pronto per un carico maggiore. Il numero ti dice quando spingere e quando fermarsi."
+      },
+      {
+        "title": "Indice di Equilibrio",
+        "body": "La firma del sistema nervoso autonomo. In un colpo d’occhio vedi se il bilanciamento simpatico-parasimpatico è dove deve essere."
+      },
+      {
+        "title": "Indice di Energia",
+        "body": "Le riserve reali, non quelle percepite. Fondamentale per chi lavora su burnout, performance sportiva o gestione delle energie."
+      }
+    ],
+    "adaptation": {
+      "label": "Adattamento",
+      "value": "58/100",
+      "text": "Capacità di recupero e adattamento nella norma per fascia demografica. Consigliato monitoraggio settimanale."
+    }
+  },
+  "how": {
+    "eyebrow": "Come funziona",
+    "titleLead": "Tre passi.",
+    "titleEm": "Poi hai il report.",
+    "steps": [
+      {
+        "title": "Collega la fascia",
+        "body": "Qualsiasi fascia cardio Bluetooth. Il Polar H10 è il riferimento per qualità ECG, ma funziona con molti altri sensori. Un minuto e sei pronto."
+      },
+      {
+        "title": "Misura in 10 minuti",
+        "body": "Il cliente si siede, tu avvii la misurazione. Stress Index legge il segnale in tempo reale e filtra automaticamente gli artefatti. Zero configurazioni."
+      },
+      {
+        "title": "Condividi il report",
+        "body": "PDF professionale con i 4 indici, i grafici HRV e l’analisi del sistema nervoso autonomo. Lo invii al cliente con un tap. Lo stampi. Lo archivi nel CRM."
+      }
+    ]
+  },
+  "benefits": {
+    "eyebrow": "Perché Stress Index",
+    "titleLead": "Costruito per chi lavora",
+    "titleEm": "nel benessere reale.",
+    "items": [
+      {
+        "title": "Funziona su tutto",
+        "body": "Android, iOS, tablet, smartphone. Bluetooth 4.0 o superiore. Portalo in studio, in palestra, in campo. Nessun hardware proprietario da comprare."
+      },
+      {
+        "title": "I tuoi clienti, organizzati",
+        "body": "CRM integrato con anagrafica, storico misurazioni e confronto tra sessioni. Vedi l’evoluzione nel tempo e aggiusti il protocollo con dati alla mano."
+      },
+      {
+        "title": "Privacy garantita per legge",
+        "body": "Server in Germania, GDPR compliant, consenso del cliente registrato automaticamente. I dati non escono dall’Europa. Mai."
+      },
+      {
+        "title": "Scienza seria, linguaggio semplice",
+        "body": "24 parametri HRV su letteratura internazionale, normalizzazione demografica per età e sesso. Il rigore scientifico che ti aspetti, senza la complessità che non ti serve."
+      }
+    ]
+  },
+  "explore": {
+    "eyebrow": "Scopri di più",
+    "titleLead": "Vai in profondità.",
+    "titleEm": "Da dove vuoi partire?",
+    "features": {
+      "title": "Scopri tutte le funzionalità",
+      "body": "5 score proprietari, 25+ parametri, 3 tipi di test, sessioni lunghe, report PDF, CRM clienti, dashboard web.",
+      "cta": "Esplora le funzionalità"
+    },
+    "sport": {
+      "title": "Modulo Sport per professionisti",
+      "body": "DFA Alpha1 in tempo reale, zone metaboliche, questionario post-allenamento, dashboard atleta.",
+      "cta": "Scopri il Piano Pro"
+    }
+  },
+  "pricing": {
+    "eyebrow": "Prezzi",
+    "titleLead": "Un abbonamento.",
+    "titleEm": "Tutto incluso, per sempre.",
+    "body": "Niente costi per cliente, niente report extra, niente sorprese. Paghi una cifra fissa ogni mese e usi tutto senza limiti.",
+    "badge": "Offerta Founding Members · Primi 200 iscritti",
+    "planName": "Stress Index Pro",
+    "planFor": "Per fisioterapisti, osteopati, medici sportivi e coach del benessere",
+    "perMonth": "/mese",
+    "standardNote": "Prezzo standard <s>{standard}/mese</s> · Founding Members {price}/mese per i primi 200",
+    "lockNote": "Sei tra i primi 200 iscritti? Il prezzo di <b>{price}/mese</b> è bloccato per sempre.",
+    "features": [
+      "Clienti e misurazioni illimitati",
+      "Report PDF professionali illimitati",
+      "CRM clienti con storico completo",
+      "Export CSV dei dati",
+      "Android e iOS inclusi",
+      "Aggiornamenti automatici per sempre",
+      "Supporto prioritario via email"
+    ],
+    "cta": "Inizia 60 giorni gratis",
+    "note": "Carta di credito richiesta · Nessun addebito per 60 giorni · Poi {price}/mese · Disdici quando vuoi"
+  },
+  "faq": {
+    "eyebrow": "Domande frequenti",
+    "titleLead": "Tutto chiaro,",
+    "titleEm": "prima di iniziare.",
+    "items": [
+      {
+        "q": "Ho bisogno del Polar H10?",
+        "a": "No. Funziona con qualsiasi fascia cardio Bluetooth. Il Polar H10 è quello che consigliamo per la qualità del segnale ECG, specialmente su Android, ma non è obbligatorio."
+      },
+      {
+        "q": "Funziona su iPhone?",
+        "a": "Sì. Android e iOS, tablet e smartphone. Qualsiasi dispositivo con Bluetooth 4.0."
+      },
+      {
+        "q": "I dati dei miei clienti sono al sicuro?",
+        "a": "Server in Germania, GDPR compliant. I dati non vengono mai condivisi con terzi. Il consenso del cliente viene registrato automaticamente dall’app ad ogni misurazione."
+      },
+      {
+        "q": "Posso usarlo senza internet?",
+        "a": "La misurazione è completamente offline. I dati si sincronizzano automaticamente quando torni online. Non perdi nessuna sessione."
+      },
+      {
+        "q": "Cosa succede dopo i 60 giorni?",
+        "a": "Ti arriva una notifica prima della scadenza. Se vuoi continuare, l’abbonamento parte in automatico. Se no, annulli e non ti addebitiamo niente. Zero burocrazia."
+      },
+      {
+        "q": "Il prezzo Founding Members dura quanto?",
+        "a": "Per sempre. I primi 200 professionisti che si iscrivono bloccano {price}/mese a vita, anche quando il prezzo standard salirà a {standard}/mese."
+      }
+    ]
+  },
+  "finalCta": {
+    "eyebrow": "Inizia oggi",
+    "titleLead": "Il prossimo cliente che entra,",
+    "titleEm": "misuralo davvero.",
+    "body": "60 giorni gratis. Nessun vincolo. Smetti quando vuoi.",
+    "note": "Carta di credito richiesta · Poi {price}/mese · Disdici in qualsiasi momento"
+  },
+  "footer": {
+    "tagline": "Software HRV professionale per fisioterapisti, osteopati, medici sportivi e coach del benessere. Misura lo stress del sistema nervoso autonomo in 10 minuti.",
+    "product": "Prodotto",
+    "support": "Supporto",
+    "legal": "Legale",
+    "vat": "P.IVA {vat}"
+  },
+  "jsonLd": {
+    "appDescription": "Software HRV professionale per l’analisi del sistema nervoso autonomo"
+  }
+}

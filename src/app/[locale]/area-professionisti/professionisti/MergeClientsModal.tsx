@@ -1,10 +1,11 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Loader2, Merge, Search, AlertTriangle } from 'lucide-react'
 import { Modal } from '@/components/dashboard/Modal'
 import { ConfirmDialog } from '@/components/dashboard/ConfirmDialog'
-import { api, type Toast } from './adminApi'
+import { api, errorText, type Toast } from './adminApi'
 import type { AdminClientRow } from '@/lib/admin-data'
 
 // Unione anagrafiche doppione: scegli la riga DA TENERE (radio) e una o più
@@ -27,6 +28,9 @@ export function MergeClientsModal({
   onChanged: () => void
   showToast: (t: Toast) => void
 }) {
+  const t = useTranslations('admin.merge')
+  const tc = useTranslations('common')
+  const tErr = useTranslations('errors.api')
   const [search, setSearch] = useState('')
   const [keepId, setKeepId] = useState<string | null>(null)
   const [mergeIds, setMergeIds] = useState<Set<string>>(new Set())
@@ -72,7 +76,7 @@ export function MergeClientsModal({
     })
     setBusy(null)
     if (ok) setPreview((json?.result?.tables ?? []) as PreviewTable[])
-    else showToast({ kind: 'err', text: json?.message ?? json?.error ?? 'Errore anteprima' })
+    else showToast({ kind: 'err', text: errorText(json, tErr, t('previewError')) })
   }
 
   async function execute() {
@@ -87,35 +91,39 @@ export function MergeClientsModal({
     setConfirmOpen(false)
     if (ok) {
       const tables = (json?.result?.tables ?? []) as PreviewTable[]
-      const moved = tables.reduce((a, t) => a + (t.moved ?? t.rows), 0)
-      const conflictDeleted = tables.reduce((a, t) => a + (t.conflict_deleted ?? 0), 0)
+      const moved = tables.reduce((a, tb) => a + (tb.moved ?? tb.rows), 0)
+      const conflictDeleted = tables.reduce((a, tb) => a + (tb.conflict_deleted ?? 0), 0)
       showToast({
         kind: 'ok',
-        text: `Unione completata: ${moved} righe spostate${conflictDeleted > 0 ? `, ${conflictDeleted} eliminate per conflitto (snapshot in audit log)` : ''}, ${json?.result?.deleted_clients ?? mergeIds.size} anagrafiche eliminate`,
+        text: t('done', {
+          moved,
+          conflict: conflictDeleted > 0 ? t('confirmConflict', { count: conflictDeleted }) : '',
+          count: json?.result?.deleted_clients ?? mergeIds.size,
+        }),
       })
       onChanged()
     } else {
-      showToast({ kind: 'err', text: json?.message ?? json?.error ?? 'Errore unione' })
+      showToast({ kind: 'err', text: errorText(json, tErr, t('mergeError')) })
     }
   }
 
-  const totalMoved = preview?.reduce((a, t) => a + (t.moved ?? t.rows), 0) ?? 0
-  const totalConflictDeleted = preview?.reduce((a, t) => a + (t.conflict_deleted ?? 0), 0) ?? 0
+  const totalMoved = preview?.reduce((a, tb) => a + (tb.moved ?? tb.rows), 0) ?? 0
+  const totalConflictDeleted = preview?.reduce((a, tb) => a + (tb.conflict_deleted ?? 0), 0) ?? 0
 
   return (
     <Modal
       open
       onClose={onClose}
-      title="Unisci anagrafiche doppione"
-      description="Sposta misurazioni, note, alert e ogni altro riferimento sulla riga da tenere, poi elimina i doppioni. Tutto in una transazione."
+      title={t('title')}
+      description={t('description')}
       size="lg"
       footer={
-        <div className="flex items-center justify-between gap-2 w-full">
-          <div className="text-xs text-anthracite-lighter">
-            {keep ? <>Tieni: <b className="text-anthracite">{keep.full_name}</b> · Unisci: {mergeIds.size}</> : 'Seleziona la riga da tenere'}
+        <div className="flex items-center justify-between gap-2 w-full flex-wrap">
+          <div className="text-xs text-anthracite-lighter min-w-0">
+            {keep ? t.rich('keepSummary', { name: keep.full_name, count: mergeIds.size, b: (c) => <b className="text-anthracite">{c}</b> }) : t('selectKeep')}
           </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={onClose} className="btn-secondary text-sm py-2">Annulla</button>
+          <div className="flex gap-2 flex-wrap">
+            <button type="button" onClick={onClose} className="btn-secondary text-sm py-2">{tc('cancel')}</button>
             {!preview ? (
               <button
                 type="button"
@@ -123,7 +131,7 @@ export function MergeClientsModal({
                 disabled={!keepId || mergeIds.size === 0 || busy === 'preview'}
                 className="text-sm px-5 py-2 rounded-xl bg-teal hover:bg-teal-dark text-white font-medium disabled:opacity-50 inline-flex items-center gap-1.5"
               >
-                {busy === 'preview' ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />} Anteprima
+                {busy === 'preview' ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />} {t('preview')}
               </button>
             ) : (
               <button
@@ -132,7 +140,7 @@ export function MergeClientsModal({
                 disabled={busy === 'merge'}
                 className="text-sm px-5 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium disabled:opacity-50 inline-flex items-center gap-1.5"
               >
-                {busy === 'merge' ? <Loader2 size={14} className="animate-spin" /> : <Merge size={14} />} Esegui unione
+                {busy === 'merge' ? <Loader2 size={14} className="animate-spin" /> : <Merge size={14} />} {t('execute')}
               </button>
             )}
           </div>
@@ -145,21 +153,21 @@ export function MergeClientsModal({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Filtra per nome, email o professionista…"
+            placeholder={t('search')}
             className="w-full pl-9 pr-3 py-2.5 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal"
           />
         </div>
 
         <div className="rounded-xl border border-surface-border overflow-hidden">
           <div className="overflow-x-auto max-h-72 overflow-y-auto">
-            <table className="w-full text-sm min-w-[560px]">
+            <table className="w-full text-sm min-w-[600px]">
               <thead className="bg-surface text-anthracite-lighter sticky top-0">
                 <tr>
-                  <th className="px-3 py-2.5 text-left font-medium w-16">Tieni</th>
-                  <th className="px-3 py-2.5 text-left font-medium w-16">Unisci</th>
-                  <th className="px-3 py-2.5 text-left font-medium">Cliente</th>
-                  <th className="px-3 py-2.5 text-left font-medium">Professionista</th>
-                  <th className="px-3 py-2.5 text-right font-medium">Mis.</th>
+                  <th className="px-3 py-2.5 text-left font-medium w-20">{t('thKeep')}</th>
+                  <th className="px-3 py-2.5 text-left font-medium w-24">{t('thMerge')}</th>
+                  <th className="px-3 py-2.5 text-left font-medium">{t('thClient')}</th>
+                  <th className="px-3 py-2.5 text-left font-medium">{t('thProfessional')}</th>
+                  <th className="px-3 py-2.5 text-right font-medium">{t('thMeasurements')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -178,20 +186,20 @@ export function MergeClientsModal({
                           checked={mergeIds.has(c.id)}
                           disabled={c.id === keepId || !mergeable}
                           onChange={() => toggleMerge(c.id)}
-                          title={!mergeable ? 'Appartiene a un altro professionista' : undefined}
+                          title={!mergeable ? t('otherProfessional') : undefined}
                         />
                       </td>
-                      <td className="px-3 py-2">
-                        <div className="font-medium text-anthracite">{c.full_name}</div>
-                        <div className="text-xs text-anthracite-lighter">{c.email ?? '—'}</div>
+                      <td className="px-3 py-2 max-w-[240px]">
+                        <div className="font-medium text-anthracite truncate">{c.full_name}</div>
+                        <div className="text-xs text-anthracite-lighter truncate">{c.email ?? '—'}</div>
                       </td>
-                      <td className="px-3 py-2 text-anthracite-lighter">{c.professional_name ?? '—'}</td>
+                      <td className="px-3 py-2 text-anthracite-lighter max-w-[200px] truncate">{c.professional_name ?? '—'}</td>
                       <td className="px-3 py-2 text-right text-anthracite">{c.measurements_count}</td>
                     </tr>
                   )
                 })}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-8 text-center text-anthracite-lighter">Nessun cliente.</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-anthracite-lighter">{t('empty')}</td></tr>
                 )}
               </tbody>
             </table>
@@ -200,27 +208,25 @@ export function MergeClientsModal({
 
         {preview && (
           <div className="rounded-xl border border-surface-border p-4">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-anthracite-lighter mb-3">
-              Anteprima per tabella
-            </h4>
-            {preview.filter((t) => t.rows > 0).length === 0 ? (
-              <p className="text-sm text-anthracite-lighter">Nessun riferimento da spostare: verranno solo eliminate le anagrafiche doppione.</p>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-anthracite-lighter mb-3">{t('previewTitle')}</h4>
+            {preview.filter((tb) => tb.rows > 0).length === 0 ? (
+              <p className="text-sm text-anthracite-lighter">{t('previewEmpty')}</p>
             ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-anthracite-lighter">
-                    <th className="py-1 font-medium">Tabella</th>
-                    <th className="py-1 font-medium text-right">Spostate</th>
-                    <th className="py-1 font-medium text-right">Eliminate per conflitto</th>
+                    <th className="py-1 font-medium">{t('thTable')}</th>
+                    <th className="py-1 font-medium text-right">{t('thMoved')}</th>
+                    <th className="py-1 font-medium text-right">{t('thConflict')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {preview.filter((t) => t.rows > 0).map((t) => (
-                    <tr key={`${t.table}.${t.column}`} className="border-t border-surface-border">
-                      <td className="py-1.5 text-anthracite-lighter">{t.table}<span className="text-anthracite-lighter/60"> · {t.column}</span></td>
-                      <td className="py-1.5 text-right font-medium text-anthracite">{t.moved ?? t.rows}</td>
-                      <td className={`py-1.5 text-right font-medium ${(t.conflict_deleted ?? 0) > 0 ? 'text-red-500' : 'text-anthracite-lighter/50'}`}>
-                        {t.conflict_deleted ?? 0}
+                  {preview.filter((tb) => tb.rows > 0).map((tb) => (
+                    <tr key={`${tb.table}.${tb.column}`} className="border-t border-surface-border">
+                      <td className="py-1.5 text-anthracite-lighter">{tb.table}<span className="text-anthracite-lighter/60"> · {tb.column}</span></td>
+                      <td className="py-1.5 text-right font-medium text-anthracite">{tb.moved ?? tb.rows}</td>
+                      <td className={`py-1.5 text-right font-medium ${(tb.conflict_deleted ?? 0) > 0 ? 'text-red-500' : 'text-anthracite-lighter/50'}`}>
+                        {tb.conflict_deleted ?? 0}
                       </td>
                     </tr>
                   ))}
@@ -228,28 +234,24 @@ export function MergeClientsModal({
               </table>
             )}
             <div className="mt-3 pt-3 border-t border-surface-border space-y-1 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-anthracite-lighter">Totale righe spostate</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-anthracite-lighter">{t('totalMoved')}</span>
                 <span className="font-medium text-anthracite">{totalMoved}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-anthracite-lighter">Totale eliminate per conflitto</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-anthracite-lighter">{t('totalConflict')}</span>
                 <span className={`font-medium ${totalConflictDeleted > 0 ? 'text-red-500' : 'text-anthracite'}`}>{totalConflictDeleted}</span>
               </div>
             </div>
             {totalConflictDeleted > 0 && (
               <div className="callout-amber mt-3 text-xs">
                 <AlertTriangle size={14} className="text-amber-500 flex-shrink-0" />
-                <span>
-                  {totalConflictDeleted} righe NON verranno spostate ma eliminate, perché la scheda da tenere ne ha già una equivalente
-                  (vincoli di unicità). All&apos;esecuzione il loro contenuto completo viene salvato in audit log (azione
-                  «merge_conflict_delete»): ricostruibili a posteriori.
-                </span>
+                <span>{t('conflictWarning', { count: totalConflictDeleted })}</span>
               </div>
             )}
             <div className="callout-amber mt-3 text-xs">
               <AlertTriangle size={14} className="text-amber-500 flex-shrink-0" />
-              <span>Le {mergeIds.size} anagrafiche unite verranno eliminate al termine. L&apos;operazione è atomica: o riesce tutta o non cambia niente.</span>
+              <span>{t('atomicWarning', { count: mergeIds.size })}</span>
             </div>
           </div>
         )}
@@ -259,11 +261,16 @@ export function MergeClientsModal({
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         onConfirm={execute}
-        title="Eseguire l'unione?"
-        description={`${totalMoved} righe verranno spostate su "${keep?.full_name ?? ''}"${totalConflictDeleted > 0 ? `, ${totalConflictDeleted} eliminate per conflitto (snapshot in audit log)` : ''} e ${mergeIds.size} anagrafiche verranno eliminate. Operazione irreversibile.`}
-        confirmText="Unisci"
+        title={t('confirmTitle')}
+        description={t('confirmDescription', {
+          moved: totalMoved,
+          name: keep?.full_name ?? '',
+          conflict: totalConflictDeleted > 0 ? t('confirmConflict', { count: totalConflictDeleted }) : '',
+          count: mergeIds.size,
+        })}
+        confirmText={t('confirm')}
         destructive
-        requireTypedConfirmation="UNISCI"
+        requireTypedConfirmation={t('typed')}
       />
     </Modal>
   )

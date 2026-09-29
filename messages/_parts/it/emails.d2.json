@@ -1,0 +1,35 @@
+{
+  "access": {
+    "yourProfessional": "Il tuo professionista",
+    "set_temp_password": {
+      "subject": "Il tuo accesso a Stress Index è stato reimpostato",
+      "title": "Il tuo accesso è stato reimpostato",
+      "action": "ha impostato una password temporanea per il tuo account"
+    },
+    "send_reset_email": {
+      "subject": "Ripristino del tuo accesso a Stress Index",
+      "title": "Ripristino del tuo accesso",
+      "action": "ha avviato il ripristino del tuo accesso"
+    },
+    "copy_reset_link": {
+      "subject": "Ripristino del tuo accesso a Stress Index",
+      "title": "Ripristino del tuo accesso",
+      "action": "ha generato un link per ripristinare il tuo accesso"
+    },
+    "intro": "{who} {action} a Stress Index.",
+    "tempPasswordHtml": "La password che ti è stata comunicata è temporanea: al prossimo accesso all'app ti verrà chiesto di scegliere una password tua, che nessun altro conosce.",
+    "resetHtml": "Trovi il link per scegliere una nuova password nell'email di ripristino, oppure te lo farà avere direttamente. Il link vale un'ora e si può usare una sola volta.",
+    "warningHtml": "Se <strong>non</strong> hai chiesto tu questa operazione, contattalo prima di usare il link o la password e cambia la password appena rientri.",
+    "tempPasswordText": "La password comunicata è temporanea: al prossimo accesso all'app ti verrà chiesto di scegliere una password tua.",
+    "resetText": "Il link per scegliere una nuova password vale un'ora e si può usare una sola volta.",
+    "warningText": "Se non hai chiesto tu questa operazione, contattalo prima di usare il link o la password.",
+    "footer": "Questa email è un avviso automatico: la riceverai ogni volta che qualcuno interviene sul tuo accesso.",
+    "signature": "Stress Index"
+  },
+  "resetLink": {
+    "greeting": "Ciao {name},",
+    "greetingNoName": "Ciao,",
+    "body": "ecco il link per rientrare nella tua app Stress Index e scegliere una nuova password:",
+    "note": "Vale un'ora e si può usare una sola volta. Se è scaduto scrivimi e te ne mando un altro."
+  }
+}

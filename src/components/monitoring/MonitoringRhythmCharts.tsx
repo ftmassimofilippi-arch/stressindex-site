@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import type { CosinorSummary, HourPattern, MseSummary, PrsaSummary, TimeToMinHr } from '@/lib/monitoring-types'
 import { MON, STATE_COLOR, wallDate } from '@/lib/monitoring-format'
 
@@ -8,6 +9,7 @@ const AX = { fontSize: 9, fill: MON.textSecondary }
 
 /** Cosinor: punti orari (mediane) e sinusoide stimata, con MESOR, acrofase (rosso) e batifase (verde). */
 export function CosinorChart({ hours, fit, tz, pick, height = 180 }: { hours: HourPattern[]; fit: CosinorSummary; tz: number; pick: (h: HourPattern) => number | null; height?: number }) {
+  const t = useTranslations('monitoring')
   const W = 1000
   const left = 40, bottom = 18, top = 8
   const plotW = W - left, plotH = height - bottom - top
@@ -33,7 +35,7 @@ export function CosinorChart({ hours, fit, tz, pick, height = 180 }: { hours: Ho
   }).join(' ')
   return (
     <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${height}`} className="w-full min-w-[520px] block" style={{ height }} role="img" aria-label="Orologio interno: cosinor">
+      <svg viewBox={`0 0 ${W} ${height}`} className="w-full min-w-[520px] block" style={{ height }} role="img" aria-label={t('charts.cosinorAria')}>
         {[0, 1, 2, 3, 4].map((i) => {
           const v = vMin + ((vMax - vMin) * i) / 4
           return (
@@ -58,6 +60,7 @@ export function CosinorChart({ hours, fit, tz, pick, height = 180 }: { hours: Ho
 
 /** Curva MSE: SampEn per scala 1..20 con l'area (Complexity Index). */
 export function MseChart({ mse, height = 130 }: { mse: MseSummary; height?: number }) {
+  const t = useTranslations('monitoring')
   const W = 500
   const left = 30, bottom = 16, top = 6
   const plotW = W - left, plotH = height - bottom - top
@@ -76,7 +79,7 @@ export function MseChart({ mse, height = 130 }: { mse: MseSummary; height?: numb
   })
   area += `L${x(vals.length)},${y(0)} Z`
   return (
-    <svg viewBox={`0 0 ${W} ${height}`} className="w-full block" style={{ height }} role="img" aria-label="Curva MSE">
+    <svg viewBox={`0 0 ${W} ${height}`} className="w-full block" style={{ height }} role="img" aria-label={t('charts.mseAria')}>
       {[0, 1, 2, 3].map((i) => {
         const v = (vMax * i) / 3
         return (
@@ -96,6 +99,7 @@ export function MseChart({ mse, height = 130 }: { mse: MseSummary; height?: numb
 
 /** Curve PRSA medie di decelerazione (verde) e accelerazione (rosso) attorno all'ancoraggio. */
 export function PrsaChart({ prsa, height = 130 }: { prsa: PrsaSummary; height?: number }) {
+  const t = useTranslations('monitoring')
   const W = 500
   const left = 40, bottom = 14, top = 6
   const plotW = W - left, plotH = height - bottom - top
@@ -112,7 +116,7 @@ export function PrsaChart({ prsa, height = 130 }: { prsa: PrsaSummary; height?: 
   const y = (v: number) => top + plotH - ((v - vMin) / (vMax - vMin)) * plotH
   const path = (c: number[]) => c.map((v, k) => `${k === 0 ? 'M' : 'L'}${x(k).toFixed(1)},${y(v).toFixed(1)}`).join(' ')
   return (
-    <svg viewBox={`0 0 ${W} ${height}`} className="w-full block" style={{ height }} role="img" aria-label="Curve PRSA">
+    <svg viewBox={`0 0 ${W} ${height}`} className="w-full block" style={{ height }} role="img" aria-label={t('charts.prsaAria')}>
       <line x1={x(L)} x2={x(L)} y1={top} y2={top + plotH} stroke={MON.borderMedium} />
       <path d={path(d)} fill="none" stroke={STATE_COLOR.recovery} strokeWidth={1.8} />
       <path d={path(a)} fill="none" stroke={STATE_COLOR.stress} strokeWidth={1.8} />
@@ -127,6 +131,7 @@ export function PrsaChart({ prsa, height = 130 }: { prsa: PrsaSummary; height?: 
 
 /** Curva di discesa della HR notturna (C8). */
 export function DescentChart({ ttm, height = 100 }: { ttm: TimeToMinHr; height?: number }) {
+  const t = useTranslations('monitoring')
   const pts = ttm.descent.filter((p): p is [number, number] => p[1] != null)
   if (pts.length < 2) return null
   const W = 500
@@ -140,7 +145,7 @@ export function DescentChart({ ttm, height = 100 }: { ttm: TimeToMinHr; height?:
   const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join(' ')
   const last = pts[pts.length - 1]
   return (
-    <svg viewBox={`0 0 ${W} ${height}`} className="w-full block" style={{ height }} role="img" aria-label="Curva di discesa della frequenza cardiaca">
+    <svg viewBox={`0 0 ${W} ${height}`} className="w-full block" style={{ height }} role="img" aria-label={t('charts.descentAria')}>
       <path d={path} fill="none" stroke={MON.accentDark} strokeWidth={2} />
       <circle cx={x(last[0])} cy={y(last[1])} r={3.5} fill={STATE_COLOR.recovery} />
       <text x={0} y={top + 8} {...AX}>{Math.round(vMax)}</text>

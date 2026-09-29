@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/admin-audit'
-import { COMMERCIALE_ERRORI, getAccountHistory } from '@/lib/admin-commerciale'
+import { getAccountHistory } from '@/lib/admin-commerciale'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -54,8 +55,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   let args: Record<string, unknown>
   switch (body.action) {
     case 'status': {
-      if (!['attivo', 'sospeso', 'bloccato'].includes(body.stato)) return NextResponse.json({ error: 'stato_non_valido' }, { status: 400 })
-      if (userId === guard.user.id && body.stato !== 'attivo') return NextResponse.json({ error: 'cannot_suspend_self', message: 'Non puoi sospendere o bloccare te stesso' }, { status: 400 })
+      if (!['attivo', 'sospeso', 'bloccato'].includes(body.stato)) return apiError('stato_non_valido', 400)
+      if (userId === guard.user.id && body.stato !== 'attivo') return apiError('cannot_suspend_self', 400)
       rpc = 'admin_set_account_status'
       args = { p_user_id: userId, p_stato: body.stato, p_motivo: motivo, ...by }
       break
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     case 'subscription': {
       const inizio = dateOrNull(body.data_inizio)
       const scadenza = dateOrNull(body.data_scadenza)
-      if (inizio === undefined || scadenza === undefined) return NextResponse.json({ error: 'data_non_valida' }, { status: 400 })
+      if (inizio === undefined || scadenza === undefined) return apiError('data_non_valida', 400)
       rpc = 'admin_set_subscription'
       args = {
         p_user_id: userId,
@@ -79,15 +80,15 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
     case 'extend': {
       const mesi = Number(body.mesi)
-      if (![1, 3, 12].includes(mesi)) return NextResponse.json({ error: 'mesi_non_validi' }, { status: 400 })
+      if (![1, 3, 12].includes(mesi)) return apiError('mesi_non_validi', 400)
       rpc = 'admin_extend_subscription'
       args = { p_user_id: userId, p_mesi: mesi, p_motivo: motivo, ...by }
       break
     }
     case 'module': {
       const scade = dateOrNull(body.scade_il)
-      if (scade === undefined) return NextResponse.json({ error: 'data_non_valida' }, { status: 400 })
-      if (typeof body.modulo !== 'string') return NextResponse.json({ error: 'modulo_non_valido' }, { status: 400 })
+      if (scade === undefined) return apiError('data_non_valida', 400)
+      if (typeof body.modulo !== 'string') return apiError('modulo_non_valido', 400)
       rpc = 'admin_set_module_exception'
       args = {
         p_user_id: userId,
@@ -100,18 +101,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       break
     }
     default:
-      return NextResponse.json({ error: 'invalid_action' }, { status: 400 })
+      return apiError('invalid_action', 400)
   }
 
   const { data, error } = await admin.rpc(rpc, args)
   if (error) {
-    if (isMissing(error)) return NextResponse.json({ error: 'migration_required', message: 'Applica la migration 024' }, { status: 409 })
+    if (isMissing(error)) return apiError('migration_required', 409, { migration: '024' })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
   const res = data as { ok?: boolean; error?: string } & Record<string, unknown>
   if (!res?.ok) {
-    const code = res?.error ?? 'errore'
-    return NextResponse.json({ error: code, message: COMMERCIALE_ERRORI[code] ?? code }, { status: 422 })
+    // Codice della funzione DB (es. prova_senza_scadenza): tradotto dal client.
+    return apiError(res?.error ?? 'generic', 422)
   }
 
   // Blocco = login negato anche lato auth. Il ban si toglie con ogni altro stato.
@@ -125,7 +126,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       details: { stato: body.stato, motivo, esito: banErr ? banErr.message : 'ok' },
     })
     if (banErr) {
-      return NextResponse.json({ ok: true, result: res, warning: `Stato salvato, ma ${ban ? 'ban' : 'rimozione del ban'} in auth non riuscita: ${banErr.message}` })
+      // Avviso come codice: il client lo traduce con errors.api.auth_(un)ban_failed.
+      return NextResponse.json({ ok: true, result: res, warning: ban ? 'auth_ban_failed' : 'auth_unban_failed', warning_detail: banErr.message })
     }
   }
   return NextResponse.json({ ok: true, result: res })

@@ -1,8 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase-browser'
+import { PASSWORD_MIN_LENGTH, supabaseAuthErrorKey } from '@/lib/validation'
 
 // =============================================================================
 // Atterraggio dei link email Supabase: recovery (reset password) e invite.
@@ -18,7 +20,7 @@ import { createClient } from '@/lib/supabase-browser'
 // e gli errori, che Supabase mette nel fragment o nella query:
 //   #error=access_denied&error_code=otp_expired&error_description=…
 //
-// IMPORTANTE — il client browser di @supabase/ssr forza `flowType: 'pkce'` e
+// IMPORTANTE: il client browser di @supabase/ssr forza `flowType: 'pkce'` e
 // `detectSessionInUrl: true`, e `initialize()` parte già dal costruttore. Se
 // nell'URL c'è `?code=` e il verifier è in storage, il client scambia il codice
 // DA SOLO e subito dopo cancella il verifier. Il codice è monouso: un secondo
@@ -30,34 +32,22 @@ import { createClient } from '@/lib/supabase-browser'
 // aver ricontrollato la sessione.
 //
 // In nessun caso la pagina resta bianca: o form, o messaggio d'errore chiaro.
+//
+// I testi vivono in `auth.setPassword.*`: lo stato di errore conserva la CHIAVE
+// (`errors.<kind>Title` / `errors.<kind>Detail`) e, solo per il caso "link non
+// valido", l'eventuale `error_description` grezza di Supabase come testo.
 
 type Mode = 'recovery' | 'invite'
+type ErrorKind = 'sameBrowser' | 'expired' | 'expiredExchange' | 'invalid' | 'session' | 'tokenInvalid' | 'missing' | 'unexpected'
 type State =
   | { step: 'loading' }
   | { step: 'ready'; mode: Mode; email: string | null }
   | { step: 'done'; mode: Mode }
-  | { step: 'error'; title: string; detail: string; canRetry: boolean }
-
-const COPY: Record<Mode, { eyebrow: string; icon: string; title: string; intro: string; cta: string; done: string }> = {
-  recovery: {
-    eyebrow: 'Recupera accesso',
-    icon: '🔑',
-    title: 'Nuova password',
-    intro: 'Scegli una nuova password per il tuo account Stress Index.',
-    cta: 'Salva la nuova password',
-    done: 'Password aggiornata. Ora puoi accedere con le nuove credenziali, sia sul sito sia nell’app.',
-  },
-  invite: {
-    eyebrow: 'Attiva account',
-    icon: '✨',
-    title: 'Imposta la password',
-    intro: 'Benvenuto in Stress Index. Scegli una password per attivare il tuo account.',
-    cta: 'Attiva account',
-    done: 'Account attivato. Ora puoi accedere con la tua email e la password appena scelta.',
-  },
-}
+  | { step: 'error'; kind: ErrorKind; detailText?: string; canRetry: boolean }
 
 export function SetPasswordForm() {
+  const t = useTranslations('auth.setPassword')
+  const tSupabase = useTranslations('errors.supabase')
   const [state, setState] = useState<State>({ step: 'loading' })
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -87,20 +77,9 @@ export function SetPasswordForm() {
 
     function exchangeFailure(error: unknown): State {
       if (isVerifierMissing(error)) {
-        return {
-          step: 'error',
-          title: 'Apri il link nello stesso browser',
-          detail:
-            'Per sicurezza il recupero può essere completato solo dal browser e dal dispositivo da cui l’hai richiesto. Se hai chiesto il reset dal computer e stai aprendo l’email dal telefono (o viceversa), riapri questo link da lì. Se non è possibile, richiedi un nuovo link da questo dispositivo.',
-          canRetry: true,
-        }
+        return { step: 'error', kind: 'sameBrowser', canRetry: true }
       }
-      return {
-        step: 'error',
-        title: 'Link scaduto o già utilizzato',
-        detail: 'Non è stato possibile completare il recupero con questo link. Richiedine uno nuovo.',
-        canRetry: true,
-      }
+      return { step: 'error', kind: 'expiredExchange', canRetry: true }
     }
 
     async function run() {
@@ -130,15 +109,12 @@ export function SetPasswordForm() {
       if (errorCode || errorKind) {
         const expired = errorCode === 'otp_expired' || errorCode === 'access_denied' || errorKind === 'access_denied'
         if (!cancelled) {
-          setState({
-            step: 'error',
-            title: expired ? 'Link scaduto o già utilizzato' : 'Link non valido',
-            detail: expired
-              ? 'I link di recupero valgono una sola volta e scadono dopo poco tempo. Richiedine uno nuovo: arriverà subito via email.'
-              : decodeURIComponent(get('error_description') ?? '').replace(/\+/g, ' ') ||
-                'Il link non è stato riconosciuto. Richiedine uno nuovo.',
-            canRetry: true,
-          })
+          if (expired) {
+            setState({ step: 'error', kind: 'expired', canRetry: true })
+          } else {
+            const description = decodeURIComponent(get('error_description') ?? '').replace(/\+/g, ' ')
+            setState({ step: 'error', kind: 'invalid', detailText: description || undefined, canRetry: true })
+          }
         }
         return
       }
@@ -169,12 +145,7 @@ export function SetPasswordForm() {
         if (cancelled) return
         if (error) {
           console.error('[imposta-password] setSession fallita', error)
-          await failWith({
-            step: 'error',
-            title: 'Sessione di recupero non valida',
-            detail: 'Il token del link non è più utilizzabile. Richiedi un nuovo link di recupero.',
-            canRetry: true,
-          })
+          await failWith({ step: 'error', kind: 'session', canRetry: true })
           return
         }
         await finish(mode)
@@ -207,12 +178,7 @@ export function SetPasswordForm() {
         if (cancelled) return
         if (error) {
           console.error('[imposta-password] verifyOtp fallita', error)
-          await failWith({
-            step: 'error',
-            title: 'Link scaduto o già utilizzato',
-            detail: 'Il token non è più valido. Richiedi un nuovo link di recupero.',
-            canRetry: true,
-          })
+          await failWith({ step: 'error', kind: 'tokenInvalid', canRetry: true })
           return
         }
         await finish(mode)
@@ -224,24 +190,13 @@ export function SetPasswordForm() {
         setState(exchangeFailure(initError))
         return
       }
-      setState({
-        step: 'error',
-        title: 'Token mancante',
-        detail:
-          'Questa pagina va aperta dal link ricevuto via email. Se hai copiato l’indirizzo a mano potresti aver perso la parte finale: riapri il link dall’email, oppure richiedine uno nuovo.',
-        canRetry: true,
-      })
+      setState({ step: 'error', kind: 'missing', canRetry: true })
     }
 
     run().catch((e) => {
       console.error('[imposta-password] errore inatteso', e)
       if (!cancelled) {
-        setState({
-          step: 'error',
-          title: 'Qualcosa è andato storto',
-          detail: 'Non è stato possibile validare il link. Riprova a richiedere il recupero password.',
-          canRetry: true,
-        })
+        setState({ step: 'error', kind: 'unexpected', canRetry: true })
       }
     })
 
@@ -254,12 +209,12 @@ export function SetPasswordForm() {
     e.preventDefault()
     if (state.step !== 'ready') return
     setFormError(null)
-    if (password.length < 8) {
-      setFormError('La password deve avere almeno 8 caratteri')
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      setFormError(t('passwordTooShort', { min: PASSWORD_MIN_LENGTH }))
       return
     }
     if (password !== confirm) {
-      setFormError('Le due password non coincidono')
+      setFormError(t('passwordMismatch'))
       return
     }
     setSaving(true)
@@ -268,11 +223,8 @@ export function SetPasswordForm() {
     setSaving(false)
     if (error) {
       console.error('[imposta-password] updateUser fallita', error)
-      setFormError(
-        error.message.toLowerCase().includes('session')
-          ? 'La sessione di recupero è scaduta. Richiedi un nuovo link di recupero.'
-          : error.message,
-      )
+      const key = supabaseAuthErrorKey(error)
+      setFormError(key === 'sessionMissing' ? t('sessionExpired') : tSupabase(key))
       return
     }
     setState({ step: 'done', mode: state.mode })
@@ -280,9 +232,9 @@ export function SetPasswordForm() {
 
   if (state.step === 'loading') {
     return (
-      <div className="text-center py-10">
+      <div className="text-center py-10" role="status">
         <div className="w-8 h-8 mx-auto rounded-full border-2 border-teal border-t-transparent animate-spin" />
-        <p className="mt-4 text-sm text-anthracite-lighter">Verifica del link in corso…</p>
+        <p className="mt-4 text-sm text-anthracite-lighter">{t('checking')}</p>
       </div>
     )
   }
@@ -292,18 +244,18 @@ export function SetPasswordForm() {
       <div>
         <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider mb-4">
           <span aria-hidden="true">⚠️</span>
-          <span>Link non utilizzabile</span>
+          <span>{t('unusable')}</span>
         </div>
-        <h1 className="font-serif text-3xl text-anthracite tracking-tight">{state.title}</h1>
-        <p className="mt-3 text-anthracite-light">{state.detail}</p>
+        <h1 className="font-serif text-3xl text-anthracite tracking-tight">{t(`errors.${state.kind}Title`)}</h1>
+        <p className="mt-3 text-anthracite-light">{state.detailText ?? t(`errors.${state.kind}Detail`)}</p>
         {state.canRetry && (
           <Link href="/area-professionisti/recupera-password" className="btn-primary w-full mt-8 inline-block text-center">
-            Richiedi un nuovo link
+            {t('requestNew')}
           </Link>
         )}
         <p className="mt-6 text-sm text-anthracite-lighter text-center">
           <Link href="/area-professionisti/login" className="text-teal-dark font-medium hover:underline">
-            ← Torna al login
+            {t('backToLogin')}
           </Link>
         </p>
       </div>
@@ -311,40 +263,42 @@ export function SetPasswordForm() {
   }
 
   if (state.step === 'done') {
-    const copy = COPY[state.mode]
     return (
       <div>
         <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider mb-4">
           <span aria-hidden="true">✅</span>
-          <span>Fatto</span>
+          <span>{t('doneEyebrow')}</span>
         </div>
-        <h1 className="font-serif text-3xl text-anthracite tracking-tight">Tutto a posto</h1>
-        <p className="mt-3 text-anthracite-light">{copy.done}</p>
+        <h1 className="font-serif text-3xl text-anthracite tracking-tight">{t('doneTitle')}</h1>
+        <p className="mt-3 text-anthracite-light">{t(`${state.mode}.done`)}</p>
         <Link href="/area-professionisti" className="btn-primary w-full mt-8 inline-block text-center">
-          Vai alla tua area
+          {t('goToArea')}
         </Link>
       </div>
     )
   }
 
-  const copy = COPY[state.mode]
+  const mode = state.mode
   return (
     <div>
       <div className="inline-flex items-center gap-2 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider mb-4">
-        <span aria-hidden="true">{copy.icon}</span>
-        <span>{copy.eyebrow}</span>
+        <span aria-hidden="true">{mode === 'invite' ? '✨' : '🔑'}</span>
+        <span>{t(`${mode}.eyebrow`)}</span>
       </div>
-      <h1 className="font-serif text-4xl text-anthracite tracking-tight">{copy.title}</h1>
-      <p className="mt-3 text-anthracite-light">{copy.intro}</p>
+      <h1 className="font-serif text-4xl text-anthracite tracking-tight">{t(`${mode}.title`)}</h1>
+      <p className="mt-3 text-anthracite-light">{t(`${mode}.intro`)}</p>
       {state.email && (
-        <p className="mt-2 text-sm text-anthracite-lighter">
-          Account: <strong className="text-anthracite">{state.email}</strong>
+        <p className="mt-2 text-sm text-anthracite-lighter break-words">
+          {t.rich('account', {
+            email: state.email,
+            b: (chunks) => <strong className="text-anthracite">{chunks}</strong>,
+          })}
         </p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4 mt-8" noValidate>
         <div>
-          <label htmlFor="password" className="input-label">Nuova password</label>
+          <label htmlFor="password" className="input-label">{t('newPassword')}</label>
           <input
             id="password"
             type="password"
@@ -353,11 +307,11 @@ export function SetPasswordForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="input-field"
-            placeholder="Almeno 8 caratteri"
+            placeholder={t('newPasswordPlaceholder', { min: PASSWORD_MIN_LENGTH })}
           />
         </div>
         <div>
-          <label htmlFor="confirm" className="input-label">Conferma password</label>
+          <label htmlFor="confirm" className="input-label">{t('confirmPassword')}</label>
           <input
             id="confirm"
             type="password"
@@ -366,17 +320,17 @@ export function SetPasswordForm() {
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             className="input-field"
-            placeholder="Ripeti la password"
+            placeholder={t('confirmPasswordPlaceholder')}
           />
         </div>
         {formError && (
-          <div className="px-4 py-3 rounded-lg bg-red-50 text-red-700 text-sm border-l-4 border-red-400 flex items-start gap-3">
+          <div className="px-4 py-3 rounded-lg bg-red-50 text-red-700 text-sm border-l-4 border-red-400 flex items-start gap-3" role="alert">
             <span aria-hidden="true" className="text-lg leading-none mt-0.5">⚠️</span>
             <span>{formError}</span>
           </div>
         )}
         <button type="submit" disabled={saving} className="btn-primary w-full">
-          {saving ? 'Salvataggio…' : copy.cta}
+          {saving ? t('saving') : t(`${mode}.cta`)}
         </button>
       </form>
     </div>

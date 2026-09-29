@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Area,
   AreaChart,
@@ -19,7 +19,8 @@ import {
   YAxis,
   ZAxis,
 } from 'recharts'
-import { num, toNum } from '@/lib/format'
+import { useLocale, useTranslations } from 'next-intl'
+import { intlTag, num, toNum } from '@/lib/format'
 import { ScaleToggle } from '@/components/dashboard/ScaleToggle'
 import {
   PSD_BANDS,
@@ -36,7 +37,7 @@ import {
 
 // I valori arrivano dal database (colonne numeriche, array e campi jsonb) e i
 // tipi dichiarati non sono garantiti a runtime: si coercizzano una volta sola
-// al confine dei componenti, così ogni .toFixed() interno è sicuro.
+// al confine dei componenti, così ogni formattazione interna è sicura.
 function toNumArray(values: unknown[] | null | undefined): number[] {
   if (!Array.isArray(values)) return []
   const out: number[] = []
@@ -47,13 +48,30 @@ function toNumArray(values: unknown[] | null | undefined): number[] {
   return out
 }
 
+// Numero intero per i tick degli assi: nella lingua della pagina ma senza
+// separatore delle migliaia (su un asse "1.400 ms" si legge male).
+function useAxisInt(locale: string) {
+  return useMemo(
+    () => new Intl.NumberFormat(intlTag(locale), { maximumFractionDigits: 0, useGrouping: false }),
+    [locale],
+  )
+}
+
+// Variazione con segno esplicito ("+12", "-3,5").
+function signed(v: number, digits: number, locale: string): string {
+  return `${v > 0 ? '+' : ''}${num(v, digits, locale)}`
+}
+
 // ============================================================================
 // POINCARÉ — scatter quadrato 1:1 con linea identità, centroide ed ellisse SD1/SD2
 // ============================================================================
 
 export function PoincareScatter({ rr: rawRr, sd1: rawSd1, sd2: rawSd2 }: { rr: unknown[] | null; sd1: unknown; sd2: unknown }) {
+  const locale = useLocale()
+  const t = useTranslations('charts')
+  const axisInt = useAxisInt(locale)
   // Coercizione al confine del componente: da qui in giù i valori sono number
-  // garantiti, quindi tutti i .toFixed() a valle sono sicuri.
+  // garantiti, quindi tutte le formattazioni a valle sono sicure.
   const rr = toNumArray(rawRr)
   const sd1 = toNum(rawSd1)
   const sd2 = toNum(rawSd2)
@@ -62,7 +80,7 @@ export function PoincareScatter({ rr: rawRr, sd1: rawSd1, sd2: rawSd2 }: { rr: u
   // confrontano a colpo d'occhio. "Zoom" passa alla scala adattiva.
   const [zoom, setZoom] = useState(false)
   if (rr.length < 2) {
-    return <Placeholder text="Dati RR non disponibili" />
+    return <Placeholder text={t('poincare.noRr')} />
   }
   const allPoints = rr.slice(0, -1).map((v, i) => ({ x: v, y: rr[i + 1] }))
   const sample = allPoints.length > 1500
@@ -88,8 +106,8 @@ export function PoincareScatter({ rr: rawRr, sd1: rawSd1, sd2: rawSd2 }: { rr: u
               domain={[min, max]}
               stroke="#6B7280"
               fontSize={10}
-              tickFormatter={(v) => v.toFixed(0)}
-              label={{ value: 'RR(n) ms', position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
+              tickFormatter={(v) => axisInt.format(Number(v))}
+              label={{ value: t('axes.rrN'), position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
             />
             <YAxis
               type="number"
@@ -97,8 +115,8 @@ export function PoincareScatter({ rr: rawRr, sd1: rawSd1, sd2: rawSd2 }: { rr: u
               domain={[min, max]}
               stroke="#6B7280"
               fontSize={10}
-              tickFormatter={(v) => v.toFixed(0)}
-              label={{ value: 'RR(n+1) ms', angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
+              tickFormatter={(v) => axisInt.format(Number(v))}
+              label={{ value: t('axes.rrN1'), angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
             />
             <ZAxis range={[14, 14]} />
             <ReferenceLine
@@ -116,9 +134,9 @@ export function PoincareScatter({ rr: rawRr, sd1: rawSd1, sd2: rawSd2 }: { rr: u
                 const diff = p.y - p.x
                 return (
                   <div className="bg-white border border-surface-border rounded-xl shadow-elevated px-3 py-2 text-[11px]">
-                    <div className="text-anthracite">RR(n): <b>{p.x.toFixed(0)}</b> ms</div>
-                    <div className="text-anthracite">RR(n+1): <b>{p.y.toFixed(0)}</b> ms</div>
-                    <div className="text-anthracite-lighter">differenza: <b>{diff > 0 ? '+' : ''}{diff.toFixed(0)}</b> ms</div>
+                    <div className="text-anthracite">RR(n): <b>{num(p.x, 0, locale)}</b> ms</div>
+                    <div className="text-anthracite">RR(n+1): <b>{num(p.y, 0, locale)}</b> ms</div>
+                    <div className="text-anthracite-lighter">{t('poincare.diff')}: <b>{signed(diff, 0, locale)}</b> ms</div>
                   </div>
                 )
               }}
@@ -130,6 +148,7 @@ export function PoincareScatter({ rr: rawRr, sd1: rawSd1, sd2: rawSd2 }: { rr: u
                 meanRr={meanRr}
                 sd1={sd1}
                 sd2={sd2}
+                locale={locale}
               />
             )} />
           </ScatterChart>
@@ -141,45 +160,47 @@ export function PoincareScatter({ rr: rawRr, sd1: rawSd1, sd2: rawSd2 }: { rr: u
 }
 
 function PoincareLegend({ sd1, sd2 }: { sd1: number | null; sd2: number | null }) {
+  const locale = useLocale()
+  const t = useTranslations('charts.poincare')
   const ratio = sd1 != null && sd2 != null && sd2 > 0 ? sd1 / sd2 : null
   let interp: { label: string; tone: string } | null = null
   if (ratio != null) {
-    if (ratio < 0.5) interp = { label: 'Predominanza lungo termine', tone: 'text-blue-700' }
-    else if (ratio > 1.0) interp = { label: 'Predominanza breve termine', tone: 'text-orange-700' }
-    else interp = { label: 'Bilanciato', tone: 'text-emerald-700' }
+    if (ratio < 0.5) interp = { label: t('predLong'), tone: 'text-blue-700' }
+    else if (ratio > 1.0) interp = { label: t('predShort'), tone: 'text-orange-700' }
+    else interp = { label: t('balanced'), tone: 'text-emerald-700' }
   }
   return (
     <div className="mt-3 space-y-2">
       <div className="grid grid-cols-3 gap-2 text-xs">
-        <div className="rounded-lg border border-surface-border bg-surface px-3 py-2">
+        <div className="rounded-lg border border-surface-border bg-surface px-3 py-2 min-w-0">
           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-anthracite-lighter">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#F97316' }} />
             SD1
           </div>
           <div className="text-sm font-semibold text-anthracite mt-0.5">
-            {num(sd1)} <span className="text-[10px] text-anthracite-lighter font-normal">ms</span>
+            {num(sd1, 1, locale)} <span className="text-[10px] text-anthracite-lighter font-normal">ms</span>
           </div>
-          <div className="text-[10px] text-anthracite-lighter mt-0.5">var. breve termine</div>
+          <div className="text-[10px] text-anthracite-lighter mt-0.5 break-words">{t('shortTerm')}</div>
         </div>
-        <div className="rounded-lg border border-surface-border bg-surface px-3 py-2">
+        <div className="rounded-lg border border-surface-border bg-surface px-3 py-2 min-w-0">
           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-anthracite-lighter">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#3B82F6' }} />
             SD2
           </div>
           <div className="text-sm font-semibold text-anthracite mt-0.5">
-            {num(sd2)} <span className="text-[10px] text-anthracite-lighter font-normal">ms</span>
+            {num(sd2, 1, locale)} <span className="text-[10px] text-anthracite-lighter font-normal">ms</span>
           </div>
-          <div className="text-[10px] text-anthracite-lighter mt-0.5">var. lungo termine</div>
+          <div className="text-[10px] text-anthracite-lighter mt-0.5 break-words">{t('longTerm')}</div>
         </div>
-        <div className="rounded-lg border border-surface-border bg-surface px-3 py-2">
+        <div className="rounded-lg border border-surface-border bg-surface px-3 py-2 min-w-0">
           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-anthracite-lighter">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#2F343A' }} />
             SD1/SD2
           </div>
           <div className="text-sm font-semibold text-anthracite mt-0.5">
-            {ratio == null ? '—' : ratio.toFixed(2)}
+            {ratio == null ? '—' : num(ratio, 2, locale)}
           </div>
-          {interp && <div className={`text-[10px] font-medium mt-0.5 ${interp.tone}`}>{interp.label}</div>}
+          {interp && <div className={`text-[10px] font-medium mt-0.5 break-words ${interp.tone}`}>{interp.label}</div>}
         </div>
       </div>
     </div>
@@ -192,7 +213,7 @@ type ChartInternals = {
   yAxisMap?: Record<string, AxisScale>
 }
 
-function PoincareOverlay({ chart, meanRr, sd1, sd2 }: { chart: ChartInternals; meanRr: number; sd1: number | null; sd2: number | null }) {
+function PoincareOverlay({ chart, meanRr, sd1, sd2, locale }: { chart: ChartInternals; meanRr: number; sd1: number | null; sd2: number | null; locale: string }) {
   const xMap = chart.xAxisMap
   const yMap = chart.yAxisMap
   if (!xMap || !yMap) return null
@@ -231,11 +252,11 @@ function PoincareOverlay({ chart, meanRr, sd1, sd2 }: { chart: ChartInternals; m
           <line x1={0} y1={-ry} x2={0} y2={ry} stroke="#F97316" strokeWidth={1.5} />
           {/* label SD2 al tip dell'asse lungo */}
           <g transform={`translate(${rx + 6},0) rotate(${-rotation})`}>
-            <text x={0} y={4} fontSize={10} fill="#1D4ED8" fontWeight={700}>SD2 {sd2Pos.toFixed(0)} ms</text>
+            <text x={0} y={4} fontSize={10} fill="#1D4ED8" fontWeight={700}>SD2 {num(sd2Pos, 0, locale)} ms</text>
           </g>
           {/* label SD1 al tip dell'asse breve */}
           <g transform={`translate(0,${-ry - 6}) rotate(${-rotation})`}>
-            <text x={4} y={0} fontSize={10} fill="#C2410C" fontWeight={700}>SD1 {sd1Pos.toFixed(0)} ms</text>
+            <text x={4} y={0} fontSize={10} fill="#C2410C" fontWeight={700}>SD1 {num(sd1Pos, 0, locale)} ms</text>
           </g>
         </g>
       )}
@@ -253,11 +274,14 @@ function PoincareOverlay({ chart, meanRr, sd1, sd2 }: { chart: ChartInternals; m
 // ============================================================================
 
 export function Rhythmogram({ rr: rawRr }: { rr: unknown[] | null }) {
+  const locale = useLocale()
+  const t = useTranslations('charts')
+  const axisInt = useAxisInt(locale)
   const rr = toNumArray(rawRr)
   // Asse Y fisso (400–1400 ms, esteso 300–1600) come nell'app; "Zoom" = adattivo.
   const [zoom, setZoom] = useState(false)
   if (rr.length === 0) {
-    return <Placeholder text="Dati RR non disponibili" />
+    return <Placeholder text={t('poincare.noRr')} />
   }
   const scale = zoom ? rrScaleAdaptive(rr) : rrScaleFor(rr)
   let acc = 0
@@ -283,24 +307,25 @@ export function Rhythmogram({ rr: rawRr }: { rr: unknown[] | null }) {
           type="number"
           domain={[0, 'dataMax']}
           ticks={Array.from({ length: Math.floor(totalSec / tickStep) + 1 }, (_, i) => i * tickStep)}
-          tickFormatter={(v) => `${Math.round(v)}s`}
-          label={{ value: 'Tempo (s)', position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
+          tickFormatter={(v) => `${axisInt.format(Number(v))}s`}
+          label={{ value: t('axes.timeS'), position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
         />
         <YAxis
           stroke="#6B7280"
           fontSize={10}
           domain={[scale.min, scale.max]}
           allowDataOverflow
-          label={{ value: 'Intervallo RR (ms)', angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
+          tickFormatter={(v) => axisInt.format(Number(v))}
+          label={{ value: t('axes.rrMs'), angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
         />
-        <ReferenceLine y={meanRr} stroke="#9CA3AF" strokeDasharray="4 4" label={{ value: `media ${meanRr.toFixed(0)} ms`, position: 'right', fontSize: 10, fill: '#6B7280' }} />
+        <ReferenceLine y={meanRr} stroke="#9CA3AF" strokeDasharray="4 4" label={{ value: t('rhythmogram.mean', { value: num(meanRr, 0, locale) }), position: 'right', fontSize: 10, fill: '#6B7280' }} />
         <Tooltip
           contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 11 }}
-          labelFormatter={(v) => `t = ${Number(v).toFixed(1)}s`}
-          formatter={(v) => [`${Number(v).toFixed(0)} ms`, 'RR']}
+          labelFormatter={(v) => t('rhythmogram.tooltipTime', { value: num(v, 1, locale) })}
+          formatter={(v) => [`${num(v, 0, locale)} ms`, 'RR']}
         />
         <Line type="monotone" dataKey="rr" stroke="#4FA39A" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-        <Brush dataKey="t" height={26} stroke="#4FA39A" travellerWidth={8} tickFormatter={(v) => `${Math.round(Number(v))}s`} />
+        <Brush dataKey="t" height={26} stroke="#4FA39A" travellerWidth={8} tickFormatter={(v) => `${axisInt.format(Number(v))}s`} />
       </LineChart>
     </ResponsiveContainer>
     </div>
@@ -326,6 +351,9 @@ export function PsdPlaceholder({
   lfHfRatio: rawLfHfRatio,
   resonanceHz: rawResonanceHz,
 }: { vlf: unknown; lf: unknown; hf: unknown; lfHfRatio?: unknown; resonanceHz?: unknown }) {
+  const locale = useLocale()
+  const t = useTranslations('charts')
+  const axisInt = useAxisInt(locale)
   const vlf = toNum(rawVlf)
   const lf = toNum(rawLf)
   const hf = toNum(rawHf)
@@ -335,7 +363,7 @@ export function PsdPlaceholder({
   // tick solo sulle potenze di 10) e asse X 0 – 0,5 Hz, come nell'app.
   // "Zoom" torna alla scala lineare adattiva.
   const [zoom, setZoom] = useState(false)
-  if (vlf == null && lf == null && hf == null) return <Placeholder text="Dati spettro non disponibili" />
+  if (vlf == null && lf == null && hf == null) return <Placeholder text={t('psd.noData')} />
 
   const fMax = PSD_X_MAX
   const step = 0.004
@@ -373,16 +401,16 @@ export function PsdPlaceholder({
             ticks={PSD_X_TICKS}
             stroke="#6B7280"
             fontSize={10}
-            tickFormatter={(v) => Number(v).toFixed(2)}
-            label={{ value: 'Frequenza (Hz)', position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
+            tickFormatter={(v) => num(v, 2, locale)}
+            label={{ value: t('axes.freqHz'), position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
           />
           {zoom ? (
             <YAxis
               stroke="#6B7280"
               fontSize={10}
               domain={[0, Math.ceil(maxPsd * 1.15)]}
-              tickFormatter={(v) => Number(v).toFixed(0)}
-              label={{ value: 'PSD (ms²/Hz)', angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
+              tickFormatter={(v) => axisInt.format(Number(v))}
+              label={{ value: t('axes.psd'), angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
             />
           ) : (
             <YAxis
@@ -393,7 +421,7 @@ export function PsdPlaceholder({
               ticks={decades}
               allowDataOverflow
               tickFormatter={(v) => psdLabel(Number(v))}
-              label={{ value: 'PSD (ms²/Hz)', angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
+              label={{ value: t('axes.psd'), angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
             />
           )}
           <ReferenceArea x1={PSD_BANDS.vlf.from} x2={PSD_BANDS.vlf.to} fill="#DC2626" fillOpacity={0.18} label={{ value: 'VLF', position: 'insideTop', fill: '#991B1B', fontSize: 11, fontWeight: 600 }} />
@@ -404,36 +432,36 @@ export function PsdPlaceholder({
               x={+resonanceHz.toFixed(4)}
               stroke="#8B5CF6"
               strokeWidth={2}
-              label={{ value: `risonanza ${resonanceHz.toFixed(3)} Hz`, position: 'top', fill: '#6D28D9', fontSize: 10, fontWeight: 700 }}
+              label={{ value: t('psd.resonance', { value: num(resonanceHz, 3, locale) }), position: 'top', fill: '#6D28D9', fontSize: 10, fontWeight: 700 }}
             />
           )}
           <Tooltip
             contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 11 }}
-            labelFormatter={(v) => `f = ${Number(v).toFixed(3)} Hz`}
-            formatter={(v) => [`${Number(v).toFixed(1)} ms²/Hz`, 'PSD']}
+            labelFormatter={(v) => t('psd.tooltipFreq', { value: num(v, 3, locale) })}
+            formatter={(v) => [`${num(v, 1, locale)} ms²/Hz`, 'PSD']}
           />
           <Area type="monotone" dataKey="psd" stroke="#2F343A" strokeWidth={1.8} fill="url(#psd-fill)" isAnimationActive={false} />
         </AreaChart>
       </ResponsiveContainer>
-      <div className="grid grid-cols-4 gap-2 mt-3">
-        <PowerCell label="VLF" value={vlf} color="#DC2626" unit="ms²" />
-        <PowerCell label="LF" value={lf} color="#F59E0B" unit="ms²" />
-        <PowerCell label="HF" value={hf} color="#4FA39A" unit="ms²" />
-        <PowerCell label="LF/HF" value={lfHfRatio ?? (lf != null && hf ? lf / hf : null)} color="#2F343A" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+        <PowerCell label="VLF" value={vlf} color="#DC2626" unit="ms²" locale={locale} />
+        <PowerCell label="LF" value={lf} color="#F59E0B" unit="ms²" locale={locale} />
+        <PowerCell label="HF" value={hf} color="#4FA39A" unit="ms²" locale={locale} />
+        <PowerCell label="LF/HF" value={lfHfRatio ?? (lf != null && hf ? lf / hf : null)} color="#2F343A" locale={locale} />
       </div>
     </div>
   )
 }
 
-function PowerCell({ label, value, color, unit }: { label: string; value: number | null; color: string; unit?: string }) {
+function PowerCell({ label, value, color, unit, locale }: { label: string; value: number | null; color: string; unit?: string; locale: string }) {
   return (
-    <div className="rounded-lg border border-surface-border bg-surface px-3 py-2">
+    <div className="rounded-lg border border-surface-border bg-surface px-3 py-2 min-w-0">
       <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-anthracite-lighter">
         <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
         {label}
       </div>
       <div className="text-sm font-semibold text-anthracite mt-0.5">
-        {value == null ? '—' : value.toFixed(1)}{unit ? <span className="text-[10px] text-anthracite-lighter font-normal ml-1">{unit}</span> : null}
+        {value == null ? '—' : num(value, 1, locale)}{unit ? <span className="text-[10px] text-anthracite-lighter font-normal ml-1">{unit}</span> : null}
       </div>
     </div>
   )

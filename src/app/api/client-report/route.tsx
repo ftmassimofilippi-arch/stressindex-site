@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase-server'
 import { ClientReportPdfDocument } from '@/lib/client-report-pdf'
 import { loadAuthorizedClient } from '@/lib/measurement-access'
 import { selectWithMissingColumnFallback } from '@/lib/safe-select'
+import { apiError } from '@/lib/api-error'
+import { getRequestLocale, getTranslator } from '@/lib/i18n-server'
 import { toStr } from '@/lib/format'
 import type { MeasurementAnalytics, ProfessionalProfile } from '@/lib/types'
 
@@ -115,29 +117,34 @@ function sanitizeFilename(s: string): string {
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
+// Gli errori escono come CODICE (`errors.api.<codice>` nei messaggi): il
+// componente li traduce con `apiErrorMessage`. Vedi src/lib/api-error.ts.
 export async function POST(req: Request) {
+  // Lingua: `?locale=` in query, poi cookie / Referer / Accept-Language.
+  const locale = await getRequestLocale(req)
+
   let body: { clientId?: string; dateFrom?: string; dateTo?: string }
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return apiError('invalid_json', 400)
   }
 
   const { clientId, dateFrom, dateTo } = body
   if (!clientId || !dateFrom || !dateTo) {
-    return NextResponse.json({ error: 'clientId, dateFrom e dateTo obbligatori' }, { status: 400 })
+    return apiError('pdf_missing_params', 400)
   }
   if (!ISO_DATE.test(dateFrom) || !ISO_DATE.test(dateTo)) {
-    return NextResponse.json({ error: 'Date in formato YYYY-MM-DD' }, { status: 400 })
+    return apiError('invalid_date_format', 400)
   }
   if (dateFrom > dateTo) {
-    return NextResponse.json({ error: 'dateFrom deve precedere dateTo' }, { status: 400 })
+    return apiError('invalid_date_range', 400)
   }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.json({ error: 'Sessione scaduta: ricarica la pagina e accedi di nuovo.' }, { status: 401 })
+    return apiError('session_expired', 401)
   }
 
   // Autorizzazione: la RLS di `clients` è l'unico giudice. Il confronto
@@ -146,7 +153,7 @@ export async function POST(req: Request) {
   // esplicitamente a leggere in sola lettura. Vedi lib/measurement-access.ts.
   const access = await loadAuthorizedClient(supabase, clientId)
   if ('denied' in access) {
-    return NextResponse.json({ error: access.denied.error }, { status: access.denied.status })
+    return apiError(access.denied.error, access.denied.status)
   }
   const { client } = access
 
@@ -174,7 +181,7 @@ export async function POST(req: Request) {
   )
   if (sErr) {
     console.error('[client-report] sessions query error', sErr)
-    return NextResponse.json({ error: 'Non è stato possibile leggere le misurazioni del periodo. Riprova tra qualche istante.' }, { status: 500 })
+    return apiError('report_read_failed', 500)
   }
 
   // 1b. Sessioni remote (auto-misurate dal cliente dalla sua app: client_id
@@ -223,7 +230,10 @@ export async function POST(req: Request) {
     .eq('id', client.professionista_id)
     .maybeSingle<ProfessionalProfile>()
 
-  // 4. Renderizza PDF.
+  // 4. Renderizza PDF nella lingua della richiesta. I componenti react-pdf
+  //    non stanno nell'albero next-intl: ricevono i traduttori come prop.
+  const t = await getTranslator(locale, 'pdf')
+  const tScores = await getTranslator(locale, 'scores')
   let pdfBuffer: Buffer
   try {
     pdfBuffer = await renderToBuffer(
@@ -233,14 +243,18 @@ export async function POST(req: Request) {
         measurements={measurements}
         dateFrom={dateFrom}
         dateTo={dateTo}
+        t={t}
+        tScores={tScores}
+        locale={locale}
       />,
     )
   } catch (err) {
     console.error('[client-report] render error', err)
-    return NextResponse.json({ error: 'I dati sono stati letti ma il documento non è stato generato. Riprova; se persiste, segnalacelo.' }, { status: 500 })
+    return apiError('report_render_failed', 500)
   }
 
-  const cognome = sanitizeFilename(client.cognome ?? 'cliente')
+  // Nome file: prefisso "StressIndex_" invariato in tutte le lingue.
+  const cognome = sanitizeFilename(client.cognome ?? t('common.clientFallback'))
   const nome = sanitizeFilename(client.nome ?? '')
   const filename = `StressIndex_Report_${cognome}${nome ? `_${nome}` : ''}_${dateFrom}_${dateTo}.pdf`
 

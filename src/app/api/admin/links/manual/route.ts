@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/admin-audit'
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
   const email = typeof body.client_email === 'string' ? body.client_email.trim().toLowerCase() : ''
   const professionalId = typeof body.professional_id === 'string' ? body.professional_id : ''
-  if (!email || !professionalId) return NextResponse.json({ error: 'missing_params' }, { status: 400 })
+  if (!email || !professionalId) return apiError('missing_params', 400)
   const admin = createAdminClient()
 
   // 1. Utente cliente dall'email (match case-insensitive esatto).
@@ -33,18 +34,18 @@ export async function POST(req: NextRequest) {
   const clientUser = candidates.find((c) => c.role === 'client') ?? (candidates.length === 1 ? candidates[0] : undefined)
   if (!clientUser) {
     if (candidates.length > 1) {
-      return NextResponse.json({ error: 'ambiguous_email', message: `Più profili con email ${email}: risolvere a mano.` }, { status: 409 })
+      return apiError('ambiguous_email', 409, { email })
     }
-    return NextResponse.json({ error: 'user_not_found', message: `Nessun utente registrato con email ${email}` }, { status: 404 })
+    return apiError('user_not_found_email', 404, { email })
   }
 
   // 2. Professionista.
   const { data: pro } = await admin.from('profiles').select('id, role').eq('id', professionalId).maybeSingle()
-  if (!pro) return NextResponse.json({ error: 'professional_not_found' }, { status: 404 })
+  if (!pro) return apiError('professional_not_found', 404)
 
   // 3. Punto di verità.
   const rpc = await linkViaRpc(admin, clientUser.id, professionalId, 'admin:manual')
-  if (!rpc.ok) return NextResponse.json({ error: 'link_failed', message: rpc.error, rpc: rpc.result }, { status: rpc.status })
+  if (!rpc.ok) return apiError(rpc.error, rpc.status, { ...rpc.params, rpc: rpc.result })
   const status: 'created' | 'reactivated' | 'already_active' =
     rpc.result.action === 'created' ? 'created' : rpc.result.action === 'reactivated' ? 'reactivated' : 'already_active'
   const linkId = rpc.result.link_id ?? null

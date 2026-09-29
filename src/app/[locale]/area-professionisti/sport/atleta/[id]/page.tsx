@@ -1,6 +1,7 @@
 import { Link } from '@/i18n/navigation'
 import { notFound } from 'next/navigation'
 import { redirect } from '@/i18n/navigation'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { ArrowLeft, Info } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { MetricCard } from '@/components/dashboard/MetricCard'
@@ -19,8 +20,12 @@ import { formatMeasuredDate, num } from '@/lib/format'
 import { competitiveLevelLabel, formatDuration } from '@/lib/sport-format'
 import { LnRmssdChart, PmcChart } from '../../SportCharts'
 
-export const metadata = { title: 'Atleta sport' }
 export const dynamic = 'force-dynamic'
+
+export async function generateMetadata({ params }: { params: { locale: string } }) {
+  const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
+  return { title: t('sportModule.athleteTitle'), robots: { index: false, follow: false } }
+}
 
 export default async function SportAthletePage({
   params,
@@ -31,6 +36,9 @@ export default async function SportAthletePage({
 }) {
   const { professionalId, viewing, access } = await resolveSportContext(searchParams?.professionista)
   if (!access.isPro) redirect({ href: '/area-professionisti/sport', locale: params.locale })
+
+  const t = await getTranslations('sport')
+  const locale = await getLocale()
 
   const [professional, athlete] = await Promise.all([
     getProfessionalProfile(),
@@ -46,7 +54,8 @@ export default async function SportAthletePage({
   ])
 
   const baseQuery = viewing ? `?professionista=${viewing.user_id}` : ''
-  const fullName = `${athlete.nome ?? ''} ${athlete.cognome ?? ''}`.trim() || 'Atleta'
+  const fullName = `${athlete.nome ?? ''} ${athlete.cognome ?? ''}`.trim() || t('athlete')
+  const level = competitiveLevelLabel(athlete.competitive_level, t)
 
   // ── ln(RMSSD) ultimi 60 giorni ──────────────────────────────────────────────
   const now = Date.now()
@@ -83,75 +92,69 @@ export default async function SportAthletePage({
         href={`/area-professionisti/sport${baseQuery}`}
         className="inline-flex items-center gap-1.5 text-sm text-anthracite-lighter hover:text-anthracite mb-5"
       >
-        <ArrowLeft size={15} /> Modulo Sport
+        <ArrowLeft size={15} /> {t('backToModule')}
       </Link>
 
       <header className="mb-6">
         <h1 className="font-serif text-2xl sm:text-3xl text-anthracite">{fullName}</h1>
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-anthracite-lighter">
           {athlete.sport && <span>{athlete.sport}</span>}
-          {competitiveLevelLabel(athlete.competitive_level) && <span>· {competitiveLevelLabel(athlete.competitive_level)}</span>}
-          {athlete.hr_max != null && <span>· HR max {athlete.hr_max} bpm</span>}
-          {athlete.ftp_estimated != null && <span>· FTP {athlete.ftp_estimated} W</span>}
+          {level && <span>· {level}</span>}
+          {athlete.hr_max != null && <span>· {t('athletePage.hrMax', { value: athlete.hr_max })}</span>}
+          {athlete.ftp_estimated != null && <span>· {t('athletePage.ftp', { value: athlete.ftp_estimated })}</span>}
         </div>
       </header>
 
       {/* SEZIONE 1 — Trend ln(RMSSD) 60 giorni */}
       <section className="card p-5 mb-6">
         <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
-          <h2 className="font-serif text-lg text-anthracite">Trend ln(RMSSD) · 60 giorni</h2>
-          <div className="flex items-center gap-3 text-[11px] text-anthracite-lighter">
-            <Legend color="#2E746C" label="Baseline 7gg" dashed />
-            <Legend color="#10B981" label="Sopra banda" />
-            <Legend color="#F59E0B" label="In banda" />
-            <Legend color="#EF4444" label="Sotto banda" />
+          <h2 className="font-serif text-lg text-anthracite">{t('athletePage.lnTrendTitle')}</h2>
+          <div className="flex items-center gap-3 flex-wrap text-[11px] text-anthracite-lighter">
+            <Legend color="#2E746C" label={t('athletePage.legendBaseline')} dashed />
+            <Legend color="#10B981" label={t('athletePage.legendAbove')} />
+            <Legend color="#F59E0B" label={t('athletePage.legendIn')} />
+            <Legend color="#EF4444" label={t('athletePage.legendBelow')} />
           </div>
         </div>
         <LnRmssdChart points={lnPoints} />
-        <p className="mt-3 text-xs text-anthracite-lighter">
-          La banda SWC (Smallest Worthwhile Change) rappresenta la variabilità normale. Punti sopra indicano buon recupero,
-          sotto indicano affaticamento o stress.
-        </p>
+        <p className="mt-3 text-xs text-anthracite-lighter">{t('athletePage.swcNote')}</p>
       </section>
 
       {/* SEZIONE 2 — Carico di allenamento */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <MetricCard
-          label="TRIMP settimanale"
+          label={t('athletePage.trimpWeekly')}
           value={Math.round(trimp7)}
           trend={weeklyDelta}
-          hint="vs settimana prec."
+          hint={t('athletePage.vsPrevWeek')}
         />
-        <MetricCard label="TRIMP mensile" value={Math.round(trimp30)} hint="ultimi 30gg" />
-        <MetricCard label="Sessioni" value={sessions7} hint="ultimi 7gg" />
+        <MetricCard label={t('athletePage.trimpMonthly')} value={Math.round(trimp30)} hint={t('athletePage.last30d')} />
+        <MetricCard label={t('athletePage.sessions')} value={sessions7} hint={t('athletePage.last7d')} />
       </div>
 
       {/* SEZIONE 3 — Performance Management Chart */}
       <section className="card p-5 mb-6">
         <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
-          <h2 className="font-serif text-lg text-anthracite">Performance Management Chart</h2>
+          <h2 className="font-serif text-lg text-anthracite">{t('athletePage.pmcTitle')}</h2>
           {hasPmc && (
-            <div className="flex items-center gap-3 text-[11px] text-anthracite-lighter">
-              <Legend color="#3B82F6" label="CTL · Fitness" />
-              <Legend color="#EF4444" label="ATL · Fatica" />
-              <Legend color="#10B981" label="TSB · Forma" />
+            <div className="flex items-center gap-3 flex-wrap text-[11px] text-anthracite-lighter">
+              <Legend color="#3B82F6" label={t('athletePage.legendCtl')} />
+              <Legend color="#EF4444" label={t('athletePage.legendAtl')} />
+              <Legend color="#10B981" label={t('athletePage.legendTsb')} />
             </div>
           )}
         </div>
         {hasPmc ? (
           <>
             <PmcChart data={pmcData} />
-            <p className="mt-3 text-xs text-anthracite-lighter">
-              Zona ottimale gara: TSB tra +5 e +25 (area verde). CTL = fitness (media 42gg), ATL = fatica (media 7gg),
-              TSB = forma (CTL − ATL).
-            </p>
+            <p className="mt-3 text-xs text-anthracite-lighter">{t('athletePage.pmcNote')}</p>
           </>
         ) : (
           <div className="callout-blue">
             <Info size={18} className="text-blue-500 shrink-0 mt-0.5" />
             <p className="text-sm text-anthracite">
-              Servono almeno 4 settimane di dati per il Performance Management Chart.
-              {distinctDays > 0 ? ` Attualmente disponibili ${distinctDays} giorni.` : ''}
+              {t('athletePage.pmcNeed')}
+              {distinctDays > 0 ? ` ${t('athletePage.pmcAvailable', { count: distinctDays })}` : ''}
             </p>
           </div>
         )}
@@ -163,36 +166,36 @@ export default async function SportAthletePage({
       {/* SEZIONE 4 — Storico sessioni */}
       <section className="card overflow-hidden">
         <div className="px-6 py-4 border-b border-surface-border">
-          <h2 className="font-serif text-lg text-anthracite">Storico sessioni</h2>
+          <h2 className="font-serif text-lg text-anthracite">{t('athletePage.historyTitle')}</h2>
         </div>
         {recent.length === 0 ? (
-          <EmptyState title="Nessuna sessione" description="Questo atleta non ha ancora sessioni sport." />
+          <EmptyState title={t('athletePage.emptyTitle')} description={t('athletePage.emptyText')} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-surface text-anthracite-lighter">
                 <tr>
-                  <th className="text-left px-6 py-2.5 text-[11px] uppercase tracking-wide font-medium">Data</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">Durata</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">TRIMP</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">HR medio</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">DFA α1</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">RPE</th>
+                  <th className="text-left px-6 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('columns.date')}</th>
+                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('columns.duration')}</th>
+                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('columns.trimp')}</th>
+                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('columns.hrAvg')}</th>
+                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('columns.dfa')}</th>
+                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('columns.rpe')}</th>
                   <th className="px-3 py-2.5" />
                 </tr>
               </thead>
               <tbody>
                 {recent.map((s) => (
                   <tr key={s.id} className="border-t border-surface-border hover:bg-surface transition-colors">
-                    <td className="px-6 py-3 text-anthracite font-medium">{formatMeasuredDate(s)}</td>
+                    <td className="px-6 py-3 text-anthracite font-medium">{formatMeasuredDate(s, undefined, locale)}</td>
                     <td className="px-3 py-3">{formatDuration(s.duration_s)}</td>
                     <td className="px-3 py-3">{s.trimp == null ? '—' : Math.round(s.trimp)}</td>
                     <td className="px-3 py-3">{s.hr_avg == null ? '—' : `${s.hr_avg} bpm`}</td>
-                    <td className="px-3 py-3">{num(s.dfa_alpha1_avg, 2)}</td>
+                    <td className="px-3 py-3">{num(s.dfa_alpha1_avg, 2, locale)}</td>
                     <td className="px-3 py-3">{s.questionnaire?.rpe == null ? '—' : `${s.questionnaire.rpe}/10`}</td>
-                    <td className="px-3 py-3 text-right">
+                    <td className="px-3 py-3 text-right whitespace-nowrap">
                       <Link href={`/area-professionisti/sport/sessione/${s.id}${baseQuery}`} className="text-teal-dark text-sm hover:underline">
-                        Apri →
+                        {t('sessions.open')} →
                       </Link>
                     </td>
                   </tr>

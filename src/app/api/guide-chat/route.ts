@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { GUIDE_KNOWLEDGE_BASE } from '@/lib/guide-knowledge-base'
+import { apiError } from '@/lib/api-error'
+import { getRequestLocale } from '@/lib/i18n-server'
+import { isLocale, type Locale } from '@/i18n/routing'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -20,16 +23,28 @@ const ALLOWED_ORIGINS = [
 type ChatRole = 'user' | 'assistant'
 type ChatMessage = { role: ChatRole; content: string }
 
-const SYSTEM_PROMPT = `Sei l'assistente virtuale di Stress Index, il software professionale italiano per l'analisi HRV.
+// La knowledge base resta in italiano (contesto del modello); la lingua della
+// risposta segue quella del sito da cui arriva la domanda (`locale` nel body).
+const LANGUAGE_RULES: Record<Locale, string> = {
+  it: 'Rispondi in italiano, dai del tu, sii professionale ma accessibile.',
+  en: 'Answer in English (US), in a professional but approachable tone. The guides below are in Italian: translate the information, never quote them in Italian.',
+  de: 'Antworten Sie auf Deutsch, in der Sie-Form, professionell und zugänglich. Die Anleitungen unten sind auf Italienisch: Übersetzen Sie die Informationen, zitieren Sie sie nie auf Italienisch.',
+}
+
+function systemPrompt(locale: Locale): string {
+  return `Sei l'assistente virtuale di Stress Index, il software professionale per l'analisi HRV.
 Il tuo compito è rispondere alle domande degli utenti basandoti ESCLUSIVAMENTE sulle informazioni contenute nelle guide qui sotto. Se non trovi la risposta nelle guide, dillo chiaramente e suggerisci di contattare support@stressindex.io.
 
-Rispondi in italiano, dai del tu, sii professionale ma accessibile. Risposte brevi e dirette, massimo 3-4 paragrafi. Non usare il trattino lungo per dividere le frasi, usa la virgola.
+LINGUA DELLA RISPOSTA: ${LANGUAGE_RULES[locale]} Se l'utente scrive in un'altra lingua, rispondi nella lingua dell'utente.
 
-Non inventare informazioni. Non dare consigli medici. Se ti chiedono cose non relative a Stress Index o all'HRV, rispondi gentilmente che puoi aiutare solo su argomenti relativi a Stress Index.
+Risposte brevi e dirette, massimo 3-4 paragrafi. Non usare il trattino lungo per dividere le frasi, usa la virgola.
+
+Non inventare informazioni. Non dare consigli medici. Usa un linguaggio da benessere: parla di "clienti" (mai pazienti), di "valutazione" e "report" (mai diagnosi, terapia o termini clinici). Se ti chiedono cose non relative a Stress Index o all'HRV, rispondi gentilmente che puoi aiutare solo su argomenti relativi a Stress Index.
 
 CONTENUTO GUIDE:
 
 ${GUIDE_KNOWLEDGE_BASE}`
+}
 
 const rateBuckets = new Map<string, { count: number; resetAt: number }>()
 
@@ -89,45 +104,37 @@ function sanitizeHistory(raw: unknown): ChatMessage[] {
 
 export async function POST(req: Request) {
   if (!originAllowed(req)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    return apiError('guide_chat_forbidden', 403)
   }
 
   const ip = getClientIp(req)
   if (rateLimitExceeded(ip)) {
-    return NextResponse.json(
-      { error: 'Troppe richieste, riprova fra un minuto.' },
-      { status: 429 },
-    )
+    return apiError('guide_chat_rate_limited', 429)
   }
 
-  let body: { message?: unknown; history?: unknown }
+  let body: { message?: unknown; history?: unknown; locale?: unknown }
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: 'Body non valido.' }, { status: 400 })
+    return apiError('guide_chat_invalid_body', 400)
   }
 
   const message =
     typeof body.message === 'string' ? body.message.trim() : ''
   if (!message) {
-    return NextResponse.json({ error: 'Messaggio vuoto.' }, { status: 400 })
+    return apiError('guide_chat_empty_message', 400)
   }
   if (message.length > 2000) {
-    return NextResponse.json(
-      { error: 'Messaggio troppo lungo (massimo 2000 caratteri).' },
-      { status: 400 },
-    )
+    return apiError('guide_chat_message_too_long', 400)
   }
 
   const history = sanitizeHistory(body.history)
+  const locale: Locale = isLocale(body.locale) ? body.locale : await getRequestLocale(req)
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     console.error('[guide-chat] ANTHROPIC_API_KEY non configurata')
-    return NextResponse.json(
-      { error: 'Servizio non configurato.' },
-      { status: 500 },
-    )
+    return apiError('guide_chat_not_configured', 500)
   }
 
   const messages: ChatMessage[] = [
@@ -146,7 +153,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: MODEL,
         max_tokens: MAX_TOKENS,
-        system: SYSTEM_PROMPT,
+        system: systemPrompt(locale),
         messages,
       }),
     })
@@ -158,10 +165,7 @@ export async function POST(req: Request) {
         upstream.status,
         errText.slice(0, 500),
       )
-      return NextResponse.json(
-        { error: 'Errore del servizio AI.' },
-        { status: 502 },
-      )
+      return apiError('guide_chat_upstream_error', 502)
     }
 
     const data = (await upstream.json()) as {
@@ -175,18 +179,13 @@ export async function POST(req: Request) {
         .trim() ?? ''
 
     if (!reply) {
-      return NextResponse.json(
-        { error: 'Risposta vuota dal servizio AI.' },
-        { status: 502 },
-      )
+      console.error('[guide-chat] risposta vuota dal servizio AI')
+      return apiError('guide_chat_upstream_error', 502)
     }
 
     return NextResponse.json({ reply })
   } catch (err) {
     console.error('[guide-chat] fetch error', err)
-    return NextResponse.json(
-      { error: 'Errore di rete verso il servizio AI.' },
-      { status: 502 },
-    )
+    return apiError('guide_chat_upstream_error', 502)
   }
 }

@@ -8,23 +8,19 @@
 //   • revoked_link       cliente con soli collegamenti revocati → va riattivato o ricollegato
 //   • incomplete_profile professionista senza riga professional_profiles → completare il profilo
 //   • no_profile         utente auth senza riga profiles → ruolo da assegnare
+//
+// Le etichette e i suggerimenti stanno nei messaggi (`admin.issues.labels.*`,
+// `admin.issues.hints.*`): si leggono con `t = useTranslations('admin')`.
+import type { Tr } from '@/i18n/types'
 
 export type AdminIssue = 'no_link' | 'pending_link' | 'revoked_link' | 'incomplete_profile' | 'no_profile'
 
-export const ADMIN_ISSUE_LABELS: Record<AdminIssue, string> = {
-  no_link: 'Nessun collegamento',
-  pending_link: 'Invito in attesa',
-  revoked_link: 'Collegamento revocato',
-  incomplete_profile: 'Profilo incompleto',
-  no_profile: 'Senza profilo',
+export function adminIssueLabel(issue: AdminIssue, t: Tr): string {
+  return t(`issues.labels.${issue}`)
 }
 
-export const ADMIN_ISSUE_HINTS: Record<AdminIssue, string> = {
-  no_link: 'Il cliente non ha nessun collegamento a un professionista, né attivo né in attesa.',
-  pending_link: 'Esiste un collegamento in attesa di accettazione: il professionista deve accettarlo in app, oppure puoi attivarlo dalla tab Collegamenti.',
-  revoked_link: 'Il cliente ha solo collegamenti revocati: riattivane uno dalla tab Collegamenti o creane uno nuovo.',
-  incomplete_profile: 'Manca la riga professional_profiles: il professionista non ha completato il profilo.',
-  no_profile: "L'utente esiste in auth ma non ha una riga profiles: nessun ruolo assegnato.",
+export function adminIssueHint(issue: AdminIssue, t: Tr): string {
+  return t(`issues.hints.${issue}`)
 }
 
 // Tono del badge: ambra = richiede attenzione ma è uno stato "normale" del
@@ -51,10 +47,13 @@ export function pickBestLink<T extends { status: string }>(links: T[]): T | null
   return best
 }
 
-// Etichetta testuale dello stato di collegamento di un cliente.
-export function clientLinkStatusLabel(status: string | null | undefined): string {
-  if (status === 'active') return 'Collegamento attivo'
-  if (status === 'pending') return 'Invito in attesa'
-  if (status === 'revoked') return 'Collegamento revocato'
-  return 'Nessun collegamento'
+// Chiave (in `admin.clientLinkStatus`) dello stato di collegamento di un cliente.
+export function clientLinkStatusKey(status: string | null | undefined): 'active' | 'pending' | 'revoked' | 'none' {
+  if (status === 'active' || status === 'pending' || status === 'revoked') return status
+  return 'none'
+}
+
+// Etichetta tradotta dello stato di collegamento di un cliente.
+export function clientLinkStatusLabel(status: string | null | undefined, t: Tr): string {
+  return t(`clientLinkStatus.${clientLinkStatusKey(status)}`)
 }

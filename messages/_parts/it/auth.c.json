@@ -1,0 +1,86 @@
+{
+  "login": {
+    "title": "Accedi",
+    "intro": "Inserisci le credenziali della tua app per accedere alla dashboard professionale.",
+    "blocked": "Il tuo account è stato bloccato e la sessione è stata chiusa. Per informazioni scrivi a <link>support@stressindex.io</link>.",
+    "noAccount": "Non hai ancora un account? <link>Inizia gratis →</link>",
+    "email": "Email",
+    "emailPlaceholder": "nome@studio.it",
+    "password": "Password",
+    "showPassword": "Mostra password",
+    "hidePassword": "Nascondi password",
+    "remember": "Ricordami",
+    "forgot": "Password dimenticata?",
+    "fillAll": "Compila tutti i campi",
+    "submit": "Accedi",
+    "submitting": "Accesso in corso..."
+  },
+  "recover": {
+    "eyebrow": "Recupera accesso",
+    "title": "Password dimenticata",
+    "intro": "Inserisci la tua email e ti invieremo un link per reimpostare la password.",
+    "backToLogin": "← Torna al login",
+    "email": "Email",
+    "emailPlaceholder": "nome@studio.it",
+    "emailRequired": "Inserisci la tua email",
+    "submit": "Invia link di recupero",
+    "submitting": "Invio in corso...",
+    "sent": "Ti abbiamo inviato un'email con le istruzioni per reimpostare la password. Controlla anche la cartella spam."
+  },
+  "setPassword": {
+    "recovery": {
+      "eyebrow": "Recupera accesso",
+      "title": "Nuova password",
+      "intro": "Scegli una nuova password per il tuo account Stress Index.",
+      "cta": "Salva la nuova password",
+      "done": "Password aggiornata. Ora puoi accedere con le nuove credenziali, sia sul sito sia nell'app."
+    },
+    "invite": {
+      "eyebrow": "Attiva account",
+      "title": "Imposta la password",
+      "intro": "Benvenuto in Stress Index. Scegli una password per attivare il tuo account.",
+      "cta": "Attiva account",
+      "done": "Account attivato. Ora puoi accedere con la tua email e la password appena scelta."
+    },
+    "checking": "Verifica del link in corso...",
+    "unusable": "Link non utilizzabile",
+    "requestNew": "Richiedi un nuovo link",
+    "backToLogin": "← Torna al login",
+    "doneEyebrow": "Fatto",
+    "doneTitle": "Tutto a posto",
+    "goToArea": "Vai alla tua area",
+    "account": "Account: <b>{email}</b>",
+    "newPassword": "Nuova password",
+    "newPasswordPlaceholder": "Almeno {min} caratteri",
+    "confirmPassword": "Conferma password",
+    "confirmPasswordPlaceholder": "Ripeti la password",
+    "passwordTooShort": "La password deve avere almeno {min} caratteri",
+    "passwordMismatch": "Le due password non coincidono",
+    "sessionExpired": "La sessione di recupero è scaduta. Richiedi un nuovo link di recupero.",
+    "saving": "Salvataggio...",
+    "errors": {
+      "sameBrowserTitle": "Apri il link nello stesso browser",
+      "sameBrowserDetail": "Per sicurezza il recupero può essere completato solo dal browser e dal dispositivo da cui l'hai richiesto. Se hai chiesto il reset dal computer e stai aprendo l'email dal telefono (o viceversa), riapri questo link da lì. Se non è possibile, richiedi un nuovo link da questo dispositivo.",
+      "expiredTitle": "Link scaduto o già utilizzato",
+      "expiredDetail": "I link di recupero valgono una sola volta e scadono dopo poco tempo. Richiedine uno nuovo: arriverà subito via email.",
+      "expiredExchangeTitle": "Link scaduto o già utilizzato",
+      "expiredExchangeDetail": "Non è stato possibile completare il recupero con questo link. Richiedine uno nuovo.",
+      "invalidTitle": "Link non valido",
+      "invalidDetail": "Il link non è stato riconosciuto. Richiedine uno nuovo.",
+      "sessionTitle": "Sessione di recupero non valida",
+      "sessionDetail": "Il token del link non è più utilizzabile. Richiedi un nuovo link di recupero.",
+      "tokenInvalidTitle": "Link scaduto o già utilizzato",
+      "tokenInvalidDetail": "Il token non è più valido. Richiedi un nuovo link di recupero.",
+      "missingTitle": "Token mancante",
+      "missingDetail": "Questa pagina va aperta dal link ricevuto via email. Se hai copiato l'indirizzo a mano potresti aver perso la parte finale: riapri il link dall'email, oppure richiedine uno nuovo.",
+      "unexpectedTitle": "Qualcosa è andato storto",
+      "unexpectedDetail": "Non è stato possibile validare il link. Riprova a richiedere il recupero password."
+    }
+  },
+  "suspended": {
+    "title": "Account sospeso",
+    "body": "Il tuo account è temporaneamente sospeso: clienti e misurazioni non sono accessibili finché non viene riattivato. I tuoi dati sono al sicuro e tornano disponibili con la riattivazione.",
+    "contact": "Contatta il supporto: <link>support@stressindex.io</link>",
+    "supportPage": "Pagina supporto"
+  }
+}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { Download } from 'lucide-react'
 import { DataTable, type Column } from '@/components/dashboard/DataTable'
@@ -8,23 +9,32 @@ import { DateRangePicker, defaultRange, type DateRange } from '@/components/dash
 import { DownloadMeasurementPdfButton } from '@/components/dashboard/DownloadMeasurementPdfButton'
 import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
-import { formatMeasuredAt, formatDate } from '@/lib/format'
-import { normalizeTestType, measurementTypeMeta, ALL_MEASUREMENT_TYPE_META, type MeasurementTypeKey } from '@/lib/measurement-type'
+import { formatMeasuredAt, formatDate, num } from '@/lib/format'
+import { normalizeTestType, measurementTypeLabel, ALL_MEASUREMENT_TYPE_META, type MeasurementTypeKey } from '@/lib/measurement-type'
 import type { Client, MeasurementAnalytics } from '@/lib/types'
 import { measuredInstant } from '@/lib/format'
 import { rowHasTag, tagCounts, tagLabel } from '@/lib/before-after'
 import { FilterChipRow } from '@/components/dashboard/SessionFilterChips'
 
-const DURATION_FILTERS = [
-  { value: 'all', label: 'Tutte le durate' },
-  { value: '5', label: '5 min' },
-  { value: '10', label: '10 min' },
-] as const
+const DURATION_FILTERS = ['all', '5', '10'] as const
+type DurationFilter = typeof DURATION_FILTERS[number]
+
+// Campo CSV: virgolette quando contiene separatori (le date formattate hanno
+// la virgola in tutte le lingue).
+function csvField(v: unknown): string {
+  const s = v == null ? '' : String(v)
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+}
 
 export function MeasurementsTab({ client, measurements, professionistaId }: { client: Client; measurements: MeasurementAnalytics[]; professionistaId?: string }) {
+  const t = useTranslations('clients.measurements')
+  const tScores = useTranslations('scores')
+  const tTags = useTranslations('common.tags')
+  const tTypes = useTranslations('measurement.types')
+  const locale = useLocale()
   const qs = professionistaId ? `?professionista=${professionistaId}` : ''
   const [range, setRange] = useState<DateRange>(defaultRange(90))
-  const [duration, setDuration] = useState<typeof DURATION_FILTERS[number]['value']>('all')
+  const [duration, setDuration] = useState<DurationFilter>('all')
   const [typeFilter, setTypeFilter] = useState<MeasurementTypeKey | null>(null)
   // Filtro per etichetta (chiave neutra, vedi normalizeTagKey): combinabile
   // con il tipo, con i conteggi sui chip. Stessa logica dell'app.
@@ -47,8 +57,8 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
   }, [measurements, range, duration])
 
   const tagOptions = useMemo(
-    () => Array.from(tagCounts(inPeriod).entries()).map(([value, count]) => ({ value, label: tagLabel(value), count })),
-    [inPeriod],
+    () => Array.from(tagCounts(inPeriod).entries()).map(([value, count]) => ({ value, label: tagLabel(value, tTags), count })),
+    [inPeriod, tTags],
   )
   const typeOptions = useMemo(() => {
     const counts = new Map<MeasurementTypeKey, number>()
@@ -58,11 +68,11 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
     }
     return ALL_MEASUREMENT_TYPE_META.map((meta) => ({
       value: meta.key,
-      label: meta.label,
+      label: measurementTypeLabel(meta.key, tTypes),
       count: counts.get(meta.key) ?? 0,
       color: meta.dotColor,
     }))
-  }, [inPeriod])
+  }, [inPeriod, tTypes])
 
   const filtered = useMemo(
     () =>
@@ -75,10 +85,15 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
   )
 
   function exportCsv() {
-    const headers = ['Data','Tipo','Durata (s)','Stress','Recupero','Equilibrio','Energia','Adattamento','BPM','SDNN','RMSSD','Artifact %']
+    // Intestazioni tradotte; i valori numerici restano grezzi (punto decimale).
+    const headers = [
+      t('colDate'), t('colType'), t('colDurationSeconds'),
+      tScores('names.stress'), tScores('names.recovery'), tScores('names.balance'), tScores('names.energy'), tScores('names.adaptation'),
+      t('colBpm'), 'SDNN', 'RMSSD', t('colArtifactPct'),
+    ]
     const rows = filtered.map((m) => [
-      formatMeasuredAt(m),
-      measurementTypeMeta(m.test_type).label,
+      formatMeasuredAt(m, locale),
+      measurementTypeLabel(m.test_type, tTypes),
       m.duration_seconds ?? '',
       m.score_stress ?? '',
       m.score_recupero ?? '',
@@ -89,33 +104,33 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
       m.sdnn ?? '',
       m.rmssd ?? '',
       m.artifact_percentage ?? '',
-    ].join(','))
-    const csv = [headers.join(','), ...rows].join('\n')
+    ].map(csvField).join(','))
+    const csv = [headers.map(csvField).join(','), ...rows].join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `misurazioni-${client.cognome ?? client.id}-${formatDate(new Date(), 'yyyy-MM-dd')}.csv`
+    link.download = `${t('csvFilePrefix')}-${client.cognome ?? client.id}-${formatDate(new Date(), 'yyyy-MM-dd')}.csv`
     link.click()
     URL.revokeObjectURL(url)
   }
 
   const columns: Column<MeasurementAnalytics>[] = [
-    { key: 'measured_at', header: 'Data', accessor: (m) => m.measured_at, sortable: true, render: (m) => formatMeasuredAt(m) },
-    { key: 'type', header: 'Tipo', accessor: (m) => measurementTypeMeta(m.test_type).label, sortable: true, render: (m) => <MeasurementTypeBadge testType={m.test_type} size="sm" /> },
-    { key: 'duration', header: 'Durata', accessor: (m) => m.duration_seconds ?? 0, sortable: true, render: (m) => m.duration_seconds ? `${Math.round(m.duration_seconds / 60)} min` : '—' },
-    { key: 'stress', header: 'Stress', accessor: (m) => m.score_stress ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_stress} inverted /> },
-    { key: 'recupero', header: 'Recupero', accessor: (m) => m.score_recupero ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_recupero} /> },
-    { key: 'equilibrio', header: 'Equilibrio', accessor: (m) => m.score_equilibrio ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_equilibrio} /> },
-    { key: 'energia', header: 'Energia', accessor: (m) => m.score_energia ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_energia} /> },
+    { key: 'measured_at', header: t('colDate'), accessor: (m) => m.measured_at, sortable: true, render: (m) => formatMeasuredAt(m, locale) },
+    { key: 'type', header: t('colType'), accessor: (m) => measurementTypeLabel(m.test_type, tTypes), sortable: true, render: (m) => <MeasurementTypeBadge testType={m.test_type} size="sm" /> },
+    { key: 'duration', header: t('colDuration'), accessor: (m) => m.duration_seconds ?? 0, sortable: true, render: (m) => m.duration_seconds ? t('durationMin', { n: Math.round(m.duration_seconds / 60) }) : '—' },
+    { key: 'stress', header: tScores('names.stress'), accessor: (m) => m.score_stress ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_stress} inverted /> },
+    { key: 'recupero', header: tScores('names.recovery'), accessor: (m) => m.score_recupero ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_recupero} /> },
+    { key: 'equilibrio', header: tScores('names.balance'), accessor: (m) => m.score_equilibrio ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_equilibrio} /> },
+    { key: 'energia', header: tScores('names.energy'), accessor: (m) => m.score_energia ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_energia} /> },
     // Colonna DB score_modulazione_infiammatoria, mostrata come "Adattamento".
-    { key: 'adattamento', header: 'Adattamento', accessor: (m) => m.score_modulazione_infiammatoria ?? -1, sortable: true, render: (m) => m.score_modulazione_infiammatoria != null ? m.score_modulazione_infiammatoria.toFixed(1) : '—' },
-    { key: 'quality', header: 'Artifact', accessor: (m) => m.artifact_percentage ?? -1, sortable: true, render: (m) => m.artifact_percentage != null ? `${m.artifact_percentage.toFixed(1)}%` : '—' },
+    { key: 'adattamento', header: tScores('names.adaptation'), accessor: (m) => m.score_modulazione_infiammatoria ?? -1, sortable: true, render: (m) => num(m.score_modulazione_infiammatoria, 1, locale) },
+    { key: 'quality', header: t('colArtifact'), accessor: (m) => m.artifact_percentage ?? -1, sortable: true, render: (m) => m.artifact_percentage != null ? `${num(m.artifact_percentage, 1, locale)}%` : '—' },
     {
       key: 'actions', header: '', render: (m) => (
         <div className="flex items-center gap-1 justify-end">
           <DownloadMeasurementPdfButton sessionId={m.session_id} clientId={client.id} variant="icon" />
-          <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${qs}`} className="text-teal-dark text-sm hover:underline">Apri →</Link>
+          <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${qs}`} className="text-teal-dark text-sm hover:underline whitespace-nowrap">{t('open')}</Link>
         </div>
       )
     },
@@ -128,26 +143,28 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
           <DateRangePicker value={range} onChange={setRange} />
           <select
             value={duration}
-            onChange={(e) => setDuration(e.target.value as typeof duration)}
+            onChange={(e) => setDuration(e.target.value as DurationFilter)}
             className="px-3 py-2 text-sm bg-white border border-surface-border rounded-xl"
           >
-            {DURATION_FILTERS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+            {DURATION_FILTERS.map((d) => (
+              <option key={d} value={d}>{d === 'all' ? t('allDurations') : t('durationMin', { n: Number(d) })}</option>
+            ))}
           </select>
         </div>
         <button type="button" onClick={exportCsv} className="btn-secondary text-sm inline-flex items-center gap-1.5">
-          <Download size={15} /> Esporta CSV
+          <Download size={15} /> {t('exportCsv')}
         </button>
       </div>
       <div className="space-y-2">
-        <FilterChipRow allLabel="Tutte le etichette" total={inPeriod.length} options={tagOptions} selected={tagFilter} onChange={setTagFilter} />
-        <FilterChipRow allLabel="Tutti i test" total={inPeriod.length} options={typeOptions} selected={typeFilter} onChange={(v) => setTypeFilter(v as MeasurementTypeKey | null)} />
+        <FilterChipRow allLabel={t('allTags')} total={inPeriod.length} options={tagOptions} selected={tagFilter} onChange={setTagFilter} />
+        <FilterChipRow allLabel={t('allTests')} total={inPeriod.length} options={typeOptions} selected={typeFilter} onChange={(v) => setTypeFilter(v as MeasurementTypeKey | null)} />
       </div>
       <DataTable
         columns={columns}
         rows={filtered}
         rowKey={(m) => m.id}
         initialSort={{ key: 'measured_at', dir: 'desc' }}
-        emptyState={<div className="card p-10 text-center text-sm text-anthracite-lighter">{tagFilter || typeFilter ? 'Nessuna misurazione con questi filtri' : 'Nessuna misurazione nel periodo selezionato'}</div>}
+        emptyState={<div className="card p-10 text-center text-sm text-anthracite-lighter">{tagFilter || typeFilter ? t('emptyFiltered') : t('emptyPeriod')}</div>}
       />
     </div>
   )

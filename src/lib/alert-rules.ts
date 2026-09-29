@@ -15,7 +15,8 @@
 // Gli eventi generati dall'app (alert_events) si leggono da qui per mostrarli
 // in dashboard accanto agli alert del cron.
 
-import type { Alert } from './types'
+import type { Tr } from '@/i18n/types'
+import { ALERT_TYPE_KEY, type Alert } from './types'
 
 export interface AlertRule {
   id: string
@@ -30,11 +31,12 @@ export interface AlertRule {
 /** Le 9 regole HRV predefinite, con gli stessi id, default e limiti dell'app
  *  (lib/models/alert.dart, PredefinedAlertType). Le regole sport (ACWR, TSB)
  *  dipendono dal carico, non dalla singola misurazione, e non hanno override
- *  per cliente. */
+ *  per cliente. `titleKey` e `thresholdKey` sono chiavi del namespace `alerts`
+ *  (`t = useTranslations('alerts')`; `t(rule.titleKey)`). */
 export interface PredefinedAlertRule {
   id: string
-  title: string
-  thresholdLabel: string
+  titleKey: string
+  thresholdKey: string
   defaultThreshold: number
   suffix: string
   min: number
@@ -44,39 +46,89 @@ export interface PredefinedAlertRule {
 }
 
 export const PREDEFINED_ALERT_RULES: PredefinedAlertRule[] = [
-  { id: 'rmssd_drop_20', title: 'Calo significativo RMSSD', thresholdLabel: 'Calo rispetto alla baseline', defaultThreshold: 20, suffix: '%', min: 5, max: 50, step: 1, severity: 'medium' },
-  { id: 'rmssd_drop_40', title: 'Calo importante RMSSD', thresholdLabel: 'Calo rispetto alla baseline', defaultThreshold: 40, suffix: '%', min: 20, max: 70, step: 1, severity: 'high' },
-  { id: 'stress_high_chronic', title: 'Stress elevato persistente', thresholdLabel: 'Stress Index superiore a', defaultThreshold: 75, suffix: '', min: 50, max: 95, step: 1, severity: 'medium' },
-  { id: 'stress_critical', title: 'Stress critico', thresholdLabel: 'Stress Index superiore a', defaultThreshold: 85, suffix: '', min: 70, max: 99, step: 1, severity: 'high' },
-  { id: 'recovery_low', title: 'Recupero insufficiente', thresholdLabel: 'Recovery inferiore a', defaultThreshold: 30, suffix: '', min: 10, max: 50, step: 1, severity: 'medium' },
-  { id: 'sdnn_low', title: 'SDNN molto basso', thresholdLabel: 'SDNN inferiore a', defaultThreshold: 20, suffix: ' ms', min: 5, max: 50, step: 1, severity: 'high' },
-  { id: 'dfa_alpha1_abnormal', title: 'Variabilità del battito in calo', thresholdLabel: 'DFA α1 inferiore a', defaultThreshold: 0.5, suffix: '', min: 0.2, max: 1.0, step: 0.05, severity: 'medium' },
-  { id: 'hr_rest_high', title: 'Battito a riposo elevato', thresholdLabel: 'HR superiore a', defaultThreshold: 90, suffix: ' bpm', min: 60, max: 130, step: 1, severity: 'medium' },
-  { id: 'inflammation_drop', title: 'Adattamento basso', thresholdLabel: 'Score Adattamento inferiore a', defaultThreshold: 30, suffix: '', min: 10, max: 60, step: 1, severity: 'medium' },
+  { id: 'rmssd_drop_20', titleKey: 'types.rmssd_drop_20', thresholdKey: 'thresholds.dropFromBaseline', defaultThreshold: 20, suffix: '%', min: 5, max: 50, step: 1, severity: 'medium' },
+  { id: 'rmssd_drop_40', titleKey: 'types.rmssd_drop_40', thresholdKey: 'thresholds.dropFromBaseline', defaultThreshold: 40, suffix: '%', min: 20, max: 70, step: 1, severity: 'high' },
+  { id: 'stress_high_chronic', titleKey: 'types.stress_high_chronic', thresholdKey: 'thresholds.stressAbove', defaultThreshold: 75, suffix: '', min: 50, max: 95, step: 1, severity: 'medium' },
+  { id: 'stress_critical', titleKey: 'types.stress_critical', thresholdKey: 'thresholds.stressAbove', defaultThreshold: 85, suffix: '', min: 70, max: 99, step: 1, severity: 'high' },
+  { id: 'recovery_low', titleKey: 'types.recovery_low', thresholdKey: 'thresholds.recoveryBelow', defaultThreshold: 30, suffix: '', min: 10, max: 50, step: 1, severity: 'medium' },
+  { id: 'sdnn_low', titleKey: 'types.sdnn_low', thresholdKey: 'thresholds.sdnnBelow', defaultThreshold: 20, suffix: ' ms', min: 5, max: 50, step: 1, severity: 'high' },
+  { id: 'dfa_alpha1_abnormal', titleKey: 'types.dfa_alpha1_abnormal', thresholdKey: 'thresholds.dfaBelow', defaultThreshold: 0.5, suffix: '', min: 0.2, max: 1.0, step: 0.05, severity: 'medium' },
+  { id: 'hr_rest_high', titleKey: 'types.hr_rest_high', thresholdKey: 'thresholds.hrAbove', defaultThreshold: 90, suffix: ' bpm', min: 60, max: 130, step: 1, severity: 'medium' },
+  { id: 'inflammation_drop', titleKey: 'types.inflammation_drop', thresholdKey: 'thresholds.adaptationBelow', defaultThreshold: 30, suffix: '', min: 10, max: 60, step: 1, severity: 'medium' },
 ]
 
 export const PREDEFINED_ALERT_RULE_BY_ID: Record<string, PredefinedAlertRule> = Object.fromEntries(
   PREDEFINED_ALERT_RULES.map((r) => [r.id, r]),
 )
 
-/** Etichetta italiana di un tipo di avviso, per gli eventi scritti dall'app e
- *  per quelli del cron (che usano altri codici). */
-export function alertTypeLabel(type: string): string {
+/** Etichetta tradotta di un tipo di avviso, per gli eventi scritti dall'app e
+ *  per quelli del cron (che usano altri codici). `t` è il traduttore del
+ *  namespace `alerts`; un codice sconosciuto viene mostrato com'è. */
+export function alertTypeLabel(type: string, t: Tr): string {
   const pre = PREDEFINED_ALERT_RULE_BY_ID[type]
-  if (pre) return pre.title
-  const cron: Record<string, string> = {
-    high_stress: 'Stress elevato',
-    low_recovery: 'Recupero basso',
-    missed_measurement: 'Misurazione mancante',
-    abnormal_value: 'Valore anomalo',
-    trend_negative: 'Trend negativo',
-    acwr_warning: 'Carico in aumento rapido',
-    acwr_danger: 'Rischio infortunio: carico',
-    acwr_danger_hrv: 'Rischio infortunio: carico e HRV',
-    undertraining: 'Carico troppo basso',
-    tsb_peak: 'Forma al picco',
+  if (pre) return t(pre.titleKey)
+  const key = ALERT_TYPE_KEY[type]
+  return key ? t(key) : type
+}
+
+// ── Messaggi degli alert nella lingua del professionista ─────────────────────
+//
+// L'app scrive `alert_events.message` già formattato, nella lingua dell'app
+// ("{nome} ha un RMSSD di 32 ms, in calo del 25% rispetto alla baseline (43
+// ms)."). Il sito non può tradurre quel testo, ma per le regole predefinite
+// conosce il modello (setAlertMsg* negli ARB dell'app) e quindi la posizione
+// dei numeri: li estrae e ricompone la frase dai messaggi del sito, con
+// interpolazione. Se i numeri non tornano si mostra il testo dell'app.
+
+/** Numeri che ogni modello di messaggio dell'app contiene, nell'ordine in cui
+ *  compaiono, e chiave del messaggio del sito (namespace `alerts.messages`). */
+const APP_MESSAGE_TEMPLATES: Record<string, { key: string; params: string[]; strip?: RegExp }> = {
+  rmssd_drop_20: { key: 'rmssdDrop', params: ['rmssd', 'drop', 'baseline'] },
+  rmssd_drop_40: { key: 'rmssdDrop', params: ['rmssd', 'drop', 'baseline'] },
+  stress_high_chronic: { key: 'stressChronic', params: ['threshold'] },
+  stress_critical: { key: 'stressCritical', params: ['value'] },
+  recovery_low: { key: 'recoveryLow', params: ['value'] },
+  sdnn_low: { key: 'sdnnLow', params: ['value'] },
+  // "DFA Alpha1" contiene una cifra: va tolta prima di leggere i numeri.
+  dfa_alpha1_abnormal: { key: 'dfaAbnormal', params: ['value', 'threshold'], strip: /alpha\s?1|α1/gi },
+  hr_rest_high: { key: 'hrRestHigh', params: ['value', 'threshold'] },
+  inflammation_drop: { key: 'adaptationDrop', params: ['value'] },
+  acwr_warning: { key: 'acwr', params: ['acwr'] },
+  acwr_danger: { key: 'acwr', params: ['acwr'] },
+  acwr_danger_hrv: { key: 'acwrHrv', params: ['acwr'] },
+  undertraining: { key: 'acwr', params: ['acwr'] },
+  tsb_peak: { key: 'tsb', params: ['tsb'] },
+}
+
+function numbersIn(text: string): number[] {
+  return (text.match(/-?\d+(?:[.,]\d+)?/g) ?? [])
+    .map((s) => Number(s.replace(',', '.')))
+    .filter((n) => Number.isFinite(n))
+}
+
+/**
+ * Riga descrittiva di un alert, tradotta: per gli eventi dell'app ricompone la
+ * frase della regola con i valori misurati; per gli alert del cron mostra il
+ * valore scatenante. Vuoto se non c'è nulla da dire oltre al titolo.
+ * `t` è il traduttore del namespace `alerts`; `fmt` formatta i numeri nella
+ * lingua della pagina (es. `(v) => num(v, 1, locale)`).
+ */
+export function alertMessage(alert: Pick<Alert, 'type' | 'message' | 'triggering_value' | 'source'>, t: Tr, fmt: (v: number) => string): string {
+  if (alert.source === 'app') {
+    const raw = alert.message ?? ''
+    const tpl = APP_MESSAGE_TEMPLATES[alert.type]
+    if (tpl && raw) {
+      const nums = numbersIn(tpl.strip ? raw.replace(tpl.strip, '') : raw)
+      if (nums.length >= tpl.params.length) {
+        const values: Record<string, string> = {}
+        tpl.params.forEach((p, i) => { values[p] = fmt(nums[i]) })
+        return t(`messages.${tpl.key}`, values)
+      }
+    }
+    return raw
   }
-  return cron[type] ?? type
+  if (alert.triggering_value != null) return t('messages.value', { value: fmt(alert.triggering_value) })
+  return alert.message ?? ''
 }
 
 // ── Precedenza (porting 1:1 di AlertService.resolveForClient) ────────────────

@@ -1,0 +1,66 @@
+{
+  "types": {
+    "rmssd_drop_20": "Calo significativo RMSSD",
+    "rmssd_drop_40": "Calo importante RMSSD",
+    "stress_high_chronic": "Stress elevato persistente",
+    "stress_critical": "Stress critico",
+    "recovery_low": "Recupero insufficiente",
+    "sdnn_low": "SDNN molto basso",
+    "dfa_alpha1_abnormal": "Variabilità del battito in calo",
+    "hr_rest_high": "Battito a riposo elevato",
+    "inflammation_drop": "Adattamento basso",
+    "high_stress": "Stress elevato",
+    "low_recovery": "Recupero basso",
+    "missed_measurement": "Misurazione mancante",
+    "abnormal_value": "Valore anomalo",
+    "trend_negative": "Trend negativo",
+    "acwr_warning": "Carico in aumento rapido",
+    "acwr_danger": "Rischio sovraccarico: carico",
+    "acwr_danger_hrv": "Rischio sovraccarico: carico e HRV",
+    "undertraining": "Carico troppo basso",
+    "tsb_peak": "Forma al picco"
+  },
+  "thresholds": {
+    "dropFromBaseline": "Calo rispetto alla baseline",
+    "stressAbove": "Stress Index superiore a",
+    "recoveryBelow": "Recupero inferiore a",
+    "sdnnBelow": "SDNN inferiore a",
+    "dfaBelow": "DFA α1 inferiore a",
+    "hrAbove": "HR superiore a",
+    "adaptationBelow": "Score Adattamento inferiore a"
+  },
+  "severity": {
+    "high": "Alta",
+    "medium": "Media",
+    "low": "Bassa"
+  },
+  "messages": {
+    "value": "valore {value}",
+    "rmssdDrop": "RMSSD {rmssd} ms, in calo del {drop}% rispetto alla baseline ({baseline} ms)",
+    "stressChronic": "Stress Index superiore a {threshold} nelle ultime 3 misurazioni",
+    "stressCritical": "Stress Index a {value}",
+    "recoveryLow": "Recupero a {value} nelle ultime 2 misurazioni",
+    "sdnnLow": "SDNN {value} ms, sotto la soglia di riferimento",
+    "dfaAbnormal": "DFA α1 {value} a riposo, sotto la soglia di {threshold}",
+    "hrRestHigh": "Battito a riposo {value} bpm, sopra la soglia di {threshold}",
+    "adaptationDrop": "Score Adattamento a {value}",
+    "acwr": "ACWR {acwr}",
+    "acwrHrv": "ACWR {acwr} con HRV sotto la baseline",
+    "tsb": "TSB {tsb}"
+  },
+  "rules": {
+    "title": "Soglie avvisi",
+    "description": "Le stesse regole dell'app. Una soglia del cliente sostituisce quella generale dello stesso tipo, non si somma.",
+    "useGlobal": "Usa soglie generali",
+    "followsGlobal": "Il cliente segue le soglie generali del professionista. Spegni l'interruttore per personalizzarle.",
+    "active": "attiva",
+    "restore": "Ripristina soglie generali",
+    "save": "Salva soglie del cliente",
+    "saving": "Salvataggio…",
+    "saved": "Soglie del cliente salvate",
+    "restored": "Il cliente segue di nuovo le soglie generali",
+    "saveError": "Errore di salvataggio: {detail}",
+    "error": "Errore: {detail}",
+    "sessionInvalid": "Sessione non valida: ricarica la pagina."
+  }
+}

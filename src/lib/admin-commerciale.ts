@@ -153,29 +153,22 @@ export async function getAccountHistory(admin: SupabaseClient, userId: string): 
   }
 }
 
-// Messaggi leggibili per gli errori restituiti dalle funzioni admin_* della 024.
-export const COMMERCIALE_ERRORI: Record<string, string> = {
-  stato_non_valido: 'Stato non valido',
-  motivo_obbligatorio: 'Il motivo è obbligatorio',
-  utente_inesistente: 'Utente inesistente',
-  superadmin_non_sospendibile: 'Un superadmin non può essere sospeso o bloccato',
-  piano_non_valido: 'Piano non valido',
-  prova_senza_scadenza: 'Il piano prova richiede una data di scadenza',
-  scadenza_prima_di_inizio: 'La scadenza è prima della data di inizio',
-  mesi_non_validi: 'Durata del prolungamento non valida',
-  nessun_abbonamento: 'L’account non ha un abbonamento: impostane uno prima di prolungare',
-  modulo_non_valido: 'Modulo non valido',
-  scadenza_nel_passato: 'La scadenza dell’eccezione è nel passato',
-}
+// Gli errori delle funzioni admin_* della 024 (stato_non_valido, motivo_obbligatorio,
+// utente_inesistente, superadmin_non_sospendibile, piano_non_valido,
+// prova_senza_scadenza, scadenza_prima_di_inizio, mesi_non_validi,
+// nessun_abbonamento, modulo_non_valido, scadenza_nel_passato) sono codici:
+// le route li restituiscono con apiError e il client li traduce (errors.api.*).
 
 // Cambio rapido Base ↔ Pro (toggle legacy del pannello e della vista cliente):
 // passa da admin_set_subscription mantenendo date, rinnovo e note. Senza la
-// 024 aggiorna profiles.plan come prima.
+// 024 aggiorna profiles.plan come prima. `motivo` è il testo dell'audit (tradotto
+// dalla route chiamante). `error` è un codice (errors.api.*) o il messaggio di Supabase.
 export async function setPlanViaSubscription(
   admin: SupabaseClient,
   performer: { id: string; email?: string | null },
   userId: string,
   plan: 'base' | 'pro',
+  motivo: string,
 ): Promise<{ ok: true } | { ok: false; error: string; status: number }> {
   const { data: current, error: selErr } = await admin
     .from('abbonamenti')
@@ -195,12 +188,12 @@ export async function setPlanViaSubscription(
     p_data_scadenza: c?.data_scadenza ?? null,
     p_rinnovo: c?.rinnovo_automatico ?? false,
     p_note: c?.note ?? null,
-    p_motivo: 'Cambio rapido del piano',
+    p_motivo: motivo,
     p_by: performer.id,
     p_by_email: performer.email ?? null,
   })
   if (error) return { ok: false, error: error.message, status: 500 }
   const res = data as { ok?: boolean; error?: string }
-  if (!res?.ok) return { ok: false, error: COMMERCIALE_ERRORI[res?.error ?? ''] ?? res?.error ?? 'errore', status: 422 }
+  if (!res?.ok) return { ok: false, error: res?.error ?? 'generic', status: 422 }
   return { ok: true }
 }

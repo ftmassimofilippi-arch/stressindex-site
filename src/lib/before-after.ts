@@ -15,7 +15,12 @@
 //   pre precedente più vicino nel tempo. Due post dopo lo stesso pre danno due
 //   coppie con lo stesso pre.
 //
-// Nessun accesso al database: funzioni pure su righe già lette.
+// Nessun accesso al database: funzioni pure su righe già lette. Nessun testo
+// visibile: le etichette dei tag e degli score sono chiavi dei file messaggi
+// (`common.tags.*`, `common.beforeAfterKind.*`, `scores.names.*`) che il
+// componente traduce con next-intl.
+
+import type { Tr } from '@/i18n/types'
 
 export type BeforeAfterKind = 'treatment' | 'workout'
 
@@ -72,15 +77,15 @@ const LEGACY: Record<string, string> = {
   'general check-in': TAG_KEYS.general,
 }
 
-/** Etichette in italiano dei preset, nell'ordine in cui l'app li propone. */
-export const TAG_LABEL: Record<string, string> = {
-  [TAG_KEYS.morning]: 'Misurazione mattutina',
-  [TAG_KEYS.guidedBreathing]: 'Respirazione guidata',
-  [TAG_KEYS.preSession]: 'Pre sessione',
-  [TAG_KEYS.postSession]: 'Post sessione',
-  [TAG_KEYS.preWorkout]: 'Pre allenamento',
-  [TAG_KEYS.postWorkout]: 'Post allenamento',
-  [TAG_KEYS.general]: 'Monitoraggio generico',
+/** Chiave di `common.tags.*` per ogni preset (i valori salvati non cambiano). */
+export const TAG_LABEL_KEY: Record<string, string> = {
+  [TAG_KEYS.morning]: 'morning',
+  [TAG_KEYS.guidedBreathing]: 'guidedBreathing',
+  [TAG_KEYS.preSession]: 'preSession',
+  [TAG_KEYS.postSession]: 'postSession',
+  [TAG_KEYS.preWorkout]: 'preWorkout',
+  [TAG_KEYS.postWorkout]: 'postWorkout',
+  [TAG_KEYS.general]: 'general',
 }
 
 export const TAG_PRESET_ORDER: string[] = [
@@ -101,9 +106,11 @@ export function normalizeTagKey(stored: string): string {
   return LEGACY[t.toLowerCase()] ?? t
 }
 
-/** Etichetta da mostrare per un tag salvato (personalizzati tali e quali). */
-export function tagLabel(stored: string): string {
-  return TAG_LABEL[normalizeTagKey(stored)] ?? stored.trim()
+/** Etichetta da mostrare per un tag salvato (personalizzati tali e quali).
+ *  `t` è il traduttore del namespace `common.tags`. */
+export function tagLabel(stored: string, t: Tr): string {
+  const key = TAG_LABEL_KEY[normalizeTagKey(stored)]
+  return key ? t(key) : stored.trim()
 }
 
 /** Chiavi presenti nelle righe, preset prima nell'ordine dell'app, poi i
@@ -193,14 +200,15 @@ export function pairBeforeAfter<T extends PairableRow>(rows: T[]): BeforeAfterPa
 
 // ── Delta e semantica (freccia = direzione del numero, colore = significato) ─
 
-/** Per lo Stress il calo è un miglioramento; per gli altri score la salita. */
-export const SCORE_DELTA_ROWS: Array<{ key: 'score_stress' | 'score_recupero' | 'score_equilibrio' | 'score_energia' | 'score_modulazione_infiammatoria'; label: string; higherIsBetter: boolean }> = [
-  { key: 'score_stress', label: 'Stress', higherIsBetter: false },
-  { key: 'score_recupero', label: 'Recupero', higherIsBetter: true },
-  { key: 'score_equilibrio', label: 'Equilibrio', higherIsBetter: true },
-  { key: 'score_energia', label: 'Energia', higherIsBetter: true },
+/** Per lo Stress il calo è un miglioramento; per gli altri score la salita.
+ *  `nameKey` è la chiave di `scores.names.*` con il nome da mostrare. */
+export const SCORE_DELTA_ROWS: Array<{ key: 'score_stress' | 'score_recupero' | 'score_equilibrio' | 'score_energia' | 'score_modulazione_infiammatoria'; nameKey: 'stress' | 'recovery' | 'balance' | 'energy' | 'adaptation'; higherIsBetter: boolean }> = [
+  { key: 'score_stress', nameKey: 'stress', higherIsBetter: false },
+  { key: 'score_recupero', nameKey: 'recovery', higherIsBetter: true },
+  { key: 'score_equilibrio', nameKey: 'balance', higherIsBetter: true },
+  { key: 'score_energia', nameKey: 'energy', higherIsBetter: true },
   // Colonna DB score_modulazione_infiammatoria, mostrata come "Adattamento".
-  { key: 'score_modulazione_infiammatoria', label: 'Adattamento', higherIsBetter: true },
+  { key: 'score_modulazione_infiammatoria', nameKey: 'adaptation', higherIsBetter: true },
 ]
 
 export type DeltaVerdict = 'improved' | 'declined' | 'stable' | 'unknown'

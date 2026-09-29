@@ -2,6 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { emailLayout, escapeHtml, sendMail, type EsitoEmail } from './mailer'
 import type { ClientScope } from './professional-guard'
 import { RATE_LIMIT_24H, type AccessAction, type ClientAccessState } from './access-password'
+import { getTranslator } from './i18n-server'
+import type { Locale } from '@/i18n/routing'
 
 // Ri-esportati per comodità delle route, che importano solo da qui.
 export { PASSWORD_MIN, RATE_LIMIT_24H, generaPasswordTemporanea, passwordProblema } from './access-password'
@@ -185,72 +187,62 @@ export async function logAccessAction(
 
 /**
  * Nome con cui il professionista si presenta al cliente. Senza nome si resta
- * sul generico: meglio "il tuo professionista" che una email firmata da nessuno.
+ * sul generico (`fallback`, es. "Il tuo professionista" tradotto): meglio di
+ * una email firmata da nessuno.
  */
-export function nomeProfessionista(p: { titolo?: string | null; nome?: string | null; cognome?: string | null } | null): string {
+export function nomeProfessionista(
+  p: { titolo?: string | null; nome?: string | null; cognome?: string | null } | null,
+  fallback: string,
+): string {
   const pieno = [p?.titolo, p?.nome, p?.cognome].map((v) => (v ?? '').trim()).filter(Boolean).join(' ')
-  return pieno || 'Il tuo professionista'
-}
-
-const TESTI: Record<Exclude<AccessAction, 'create_access'>, { subject: string; titolo: string; azione: string }> = {
-  set_temp_password: {
-    subject: 'Il tuo accesso a Stress Index è stato reimpostato',
-    titolo: 'Il tuo accesso è stato reimpostato',
-    azione: 'ha impostato una password temporanea per il tuo account',
-  },
-  send_reset_email: {
-    subject: 'Ripristino del tuo accesso a Stress Index',
-    titolo: 'Ripristino del tuo accesso',
-    azione: 'ha avviato il ripristino del tuo accesso',
-  },
-  copy_reset_link: {
-    subject: 'Ripristino del tuo accesso a Stress Index',
-    titolo: 'Ripristino del tuo accesso',
-    azione: 'ha generato un link per ripristinare il tuo accesso',
-  },
+  return pieno || fallback
 }
 
 /**
- * Avvisa il cliente di ciò che è stato fatto sul suo accesso. Best effort: se
- * non parte, l'azione resta valida e il motivo finisce nel registro.
+ * Avvisa il cliente di ciò che è stato fatto sul suo accesso, nella lingua del
+ * professionista che ha agito (`locale`; i testi stanno in `emails.access.*`).
+ * Best effort: se non parte, l'azione resta valida e il motivo (un codice
+ * stabile, tradotto dalla UI) finisce nel registro.
  */
 export async function notifyClientOfAccessAction(opts: {
   to: string | null
   action: Exclude<AccessAction, 'create_access'>
   professionalName: string
   professionalEmail?: string | null
+  locale: Locale
 }): Promise<EsitoEmail> {
-  if (!opts.to) return { sent: false, reason: 'il cliente non ha un indirizzo email' }
-  const testo = TESTI[opts.action]
-  const chi = escapeHtml(opts.professionalName)
+  if (!opts.to) return { sent: false, reason: 'no_email' }
+  const t = await getTranslator(opts.locale, 'emails.access')
+  const subject = t(`${opts.action}.subject`)
+  const titolo = t(`${opts.action}.title`)
+  const azione = t(`${opts.action}.action`)
+  const isTemp = opts.action === 'set_temp_password'
 
   const paragrafi = [
-    `<strong>${chi}</strong> ${escapeHtml(testo.azione)} a Stress Index.`,
-    opts.action === 'set_temp_password'
-      ? 'La password che ti è stata comunicata è temporanea: al prossimo accesso all\'app ti verrà chiesto di scegliere una password tua, che nessun altro conosce.'
-      : 'Trovi il link per scegliere una nuova password nell\'email di ripristino, oppure te lo farà avere direttamente. Il link vale un\'ora e si può usare una sola volta.',
-    'Se <strong>non</strong> hai chiesto tu questa operazione, contattalo prima di usare il link o la password e cambia la password appena rientri.',
+    t('intro', { who: `<strong>${escapeHtml(opts.professionalName)}</strong>`, action: escapeHtml(azione) }),
+    escapeHtml(isTemp ? t('tempPasswordHtml') : t('resetHtml')),
+    // Contiene <strong> voluto: la chiave è HTML per costruzione, si legge
+    // grezza per non farla interpretare come tag ICU.
+    String(t.raw('warningHtml')),
   ]
 
   const text = [
-    testo.titolo,
+    titolo,
     '',
-    `${opts.professionalName} ${testo.azione} a Stress Index.`,
+    t('intro', { who: opts.professionalName, action: azione }),
     '',
-    opts.action === 'set_temp_password'
-      ? 'La password comunicata è temporanea: al prossimo accesso all\'app ti verrà chiesto di scegliere una password tua.'
-      : 'Il link per scegliere una nuova password vale un\'ora e si può usare una sola volta.',
+    isTemp ? t('tempPasswordText') : t('resetText'),
     '',
-    'Se non hai chiesto tu questa operazione, contattalo prima di usare il link o la password.',
+    t('warningText'),
     '',
-    'Stress Index',
+    t('signature'),
   ].join('\n')
 
   return sendMail({
     to: opts.to,
     replyTo: opts.professionalEmail ?? undefined,
-    subject: testo.subject,
-    html: emailLayout(testo.titolo, paragrafi, 'Questa email è un avviso automatico: la riceverai ogni volta che qualcuno interviene sul tuo accesso.'),
+    subject,
+    html: emailLayout(titolo, paragrafi, t('footer'), opts.locale),
     text,
   })
 }

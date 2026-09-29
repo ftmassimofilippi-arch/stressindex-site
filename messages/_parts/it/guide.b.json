@@ -1,0 +1,599 @@
+{
+  "hero": {
+    "eyebrow": "Centro assistenza",
+    "title": "Guide e Supporto",
+    "subtitle": "Tutto quello che ti serve per usare Stress Index al meglio.",
+    "searchPlaceholder": "Cerca nelle guide, ad esempio 'Polar H10' o 'ortostatico'…",
+    "searchLabel": "Cerca nelle guide",
+    "clearSearch": "Cancella ricerca"
+  },
+  "nav": {
+    "index": "Indice",
+    "indexLabel": "Indice guide",
+    "sections": "Sezioni",
+    "anchorLabel": "Link a questa sezione",
+    "backToTop": "Torna su"
+  },
+  "search": {
+    "noResultsTitle": "Nessun risultato per “{query}”.",
+    "noResultsBody": "Prova con un altro termine, oppure <link>scrivici</link>.",
+    "noFaq": "Nessuna domanda corrisponde alla ricerca."
+  },
+  "sensorStatus": {
+    "ok": "Compatibile",
+    "limit": "Con limiti",
+    "no": "Non compatibile"
+  },
+  "seeAlso": {
+    "title": "Vedi anche",
+    "subtitle": "Approfondisci le altre pagine del sito.",
+    "features": {
+      "title": "Funzionalità",
+      "desc": "5 score, 25+ parametri HRV, 3 tipi di test, report PDF, CRM."
+    },
+    "sport": {
+      "title": "Modulo Sport",
+      "desc": "DFA Alpha1 in tempo reale, zone metaboliche live, dashboard atleta."
+    }
+  },
+  "aiHelp": {
+    "title": "Non trovi quello che cerchi?",
+    "body": "Usa l'assistente in basso a destra per fare domande in tempo reale. Ha letto tutte le guide e può risponderti subito."
+  },
+  "chat": {
+    "initial": "Ciao! Sono l'assistente di Stress Index. Posso aiutarti con la connessione dei sensori, i tipi di test, la lettura dei risultati e qualsiasi altra domanda sull'app. Cosa ti serve?",
+    "error": "Mi dispiace, c'è stato un problema. Riprova o scrivi a support@stressindex.io",
+    "typing": "sta scrivendo…",
+    "typingLabel": "Sta scrivendo",
+    "open": "Apri assistente",
+    "close": "Chiudi assistente",
+    "dialogLabel": "Assistente Stress Index",
+    "title": "Assistente Stress Index",
+    "online": "In linea",
+    "placeholder": "Scrivi la tua domanda…",
+    "messageLabel": "Messaggio",
+    "send": "Invia"
+  },
+  "faq": [
+    {
+      "q": "L'app si è chiusa durante la misurazione",
+      "a": [
+        { "type": "p", "text": "Se la misurazione era in corso da meno di 1 minuto i dati sono persi. Se era in corso da più di 1 minuto l'app potrebbe aver salvato i dati automaticamente. Riapri l'app e controlla lo storico del cliente." },
+        { "type": "p", "text": "Su Android, vai in Impostazioni, App, Stress Index, Batteria, Nessuna restrizione." }
+      ]
+    },
+    {
+      "q": "I valori sembrano strani",
+      "a": [
+        {
+          "type": "ul",
+          "items": [
+            "Verifica che la fascia fosse ben posizionata e bagnata.",
+            "Controlla l'artifact rate, se è sopra il 5% la misurazione potrebbe non essere affidabile.",
+            "Il cliente si è mosso o ha parlato durante la misurazione? Il movimento crea artefatti."
+          ]
+        }
+      ]
+    },
+    {
+      "q": "Non riesco a vedere i dati sulla dashboard web",
+      "a": [
+        {
+          "type": "ul",
+          "items": [
+            "Verifica di essere loggato con lo stesso account su app e web ([stressindex.io/area-professionisti](/area-professionisti/login)).",
+            "I dati si sincronizzano automaticamente, ma serve connessione internet.",
+            "Se i dati non appaiono, chiudi e riapri l'app con internet attivo per forzare il sync."
+          ]
+        }
+      ]
+    },
+    {
+      "q": "Il PDF non si genera",
+      "a": [
+        {
+          "type": "ul",
+          "items": [
+            "Verifica che la misurazione sia completa, non interrotta.",
+            "Prova a chiudere e riaprire i risultati.",
+            "Se persiste, contattaci a [support@stressindex.io](mailto:support@stressindex.io)."
+          ]
+        }
+      ]
+    },
+    {
+      "q": "Come resetto la password?",
+      "a": [
+        { "type": "p", "text": "Nella schermata di login tappa \"Password dimenticata\", inserisci la tua email e segui le istruzioni." }
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "id": "sensori",
+      "emoji": "📡",
+      "title": "Connessione sensori",
+      "blocks": [
+        { "type": "p", "text": "La guida più importante. Se hai un problema, parte quasi sempre da qui. Segui questi passaggi prima di scriverci, nel 90% dei casi risolvi in due minuti." },
+        { "type": "h3", "text": "Checklist pre-connessione" },
+        {
+          "type": "checklist",
+          "items": [
+            "Bluetooth attivato sul telefono.",
+            "GPS / Localizzazione attivata. Android richiede il permesso di localizzazione per scansionare dispositivi BLE, è una scelta del sistema operativo, l'app non usa la tua posizione.",
+            "Fascia toracica bagnata nei punti di contatto. Acqua del rubinetto o saliva, non gel.",
+            "Nessun'altra app è connessa al sensore. Polar Flow, Polar Beat, Garmin Connect, Strava, Wahoo, devono essere completamente chiuse, non solo in background.",
+            "Il sensore NON è accoppiato nelle impostazioni Bluetooth del telefono. Deve connettersi solo tramite Stress Index, non dal sistema. Se l'hai accoppiato manualmente, rimuovilo dalle impostazioni BT."
+          ]
+        },
+        { "type": "h3", "text": "Procedura passo passo" },
+        {
+          "type": "steps",
+          "items": [
+            "Indossa la fascia, bagnala bene sui contatti.",
+            "Apri Stress Index.",
+            "Tappa “Seleziona sensore” nella home.",
+            "Attendi che il sensore appaia nella lista.",
+            "Tappa sul nome del sensore.",
+            "Attendi lo stato “Connesso” con il cuore che lampeggia.",
+            "Sei pronto per misurare."
+          ]
+        },
+        { "type": "h3", "text": "Troubleshooting connessione" },
+        {
+          "type": "troubleshoot",
+          "title": "Il sensore non appare nella lista",
+          "items": [
+            "Verifica che la fascia sia indossata, il sensore si attiva solo a contatto con la pelle.",
+            "Chiudi e riapri l'app.",
+            "Disattiva e riattiva il Bluetooth.",
+            "Su Android, verifica che il GPS sia acceso.",
+            "Verifica che nessun'altra app sia connessa al sensore.",
+            "Rimuovi il sensore dalle impostazioni Bluetooth del telefono se lo hai accoppiato manualmente."
+          ]
+        },
+        {
+          "type": "troubleshoot",
+          "title": "Si connette ma non arrivano dati",
+          "items": [
+            "Riposiziona la fascia e bagna di nuovo i contatti.",
+            "Prova ad avvicinare il telefono al sensore.",
+            "Chiudi l'app completamente e riapri.",
+            "Se persiste, riavvia il telefono."
+          ]
+        },
+        {
+          "type": "troubleshoot",
+          "title": "Si disconnette durante la misurazione",
+          "items": [
+            "Non allontanarti troppo dal telefono, massimo 3 metri.",
+            "Su Android, verifica che il risparmio energetico non chiuda l'app in background.",
+            "Impostazioni → App → Stress Index → Batteria → Nessuna restrizione."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sensori-compatibili",
+      "emoji": "🔌",
+      "title": "Sensori compatibili",
+      "blocks": [
+        { "type": "p", "text": "Per fare HRV serve un sensore che trasmetta gli intervalli RR beat-to-beat via Bluetooth. Non tutti i cardiofrequenzimetri lo fanno. Ecco l'elenco aggiornato." },
+        {
+          "type": "sensorTable",
+          "headers": { "sensor": "Sensore", "status": "Stato", "notes": "Note" },
+          "rows": [
+            { "status": "ok", "name": "Polar H10 (90 €)", "note": "Il nostro standard, ECG, precisione massima. Consigliato." },
+            { "status": "ok", "name": "Polar H9 (50 €)", "note": "Stessa qualità ECG del H10, ottimo rapporto qualità prezzo." },
+            { "status": "ok", "name": "Polar OH1 / Verity Sense", "note": "Sensore ottico da braccio, funziona ma meno preciso di una fascia ECG." },
+            { "status": "limit", "name": "Wahoo TICKR", "note": "Funziona, buona stabilità BLE. Da testare con la propria unità." },
+            { "status": "limit", "name": "CooSpo H808S", "note": "Funziona, economico (30 €), qualità inferiore al Polar." },
+            { "status": "no", "name": "Whoop 4.0", "note": "Trasmette solo BPM, non gli intervalli RR necessari per l'analisi HRV." },
+            { "status": "no", "name": "Fasce Garmin (HRM-Dual, HRM-Pro)", "note": "Non trasmettono gli intervalli RR via BLE standard." },
+            { "status": "no", "name": "Apple Watch", "note": "Non trasmette dati ECG via BLE." },
+            { "status": "no", "name": "Smartwatch e smartband generici", "note": "Non adatti per analisi HRV professionale." }
+          ]
+        },
+        {
+          "type": "callout",
+          "title": "Perché servono gli intervalli RR?",
+          "text": "L'HRV misura la variazione tra un battito e l'altro con precisione al millisecondo. Un semplice dato BPM (battiti al minuto) è una media, e perde tutta l'informazione sulla variabilità. Per questo servono sensori che trasmettono gli intervalli RR beat-to-beat."
+        }
+      ]
+    },
+    {
+      "id": "prima-misurazione",
+      "emoji": "🩺",
+      "title": "La prima misurazione",
+      "blocks": [
+        { "type": "h3", "text": "Setup dell'ambiente" },
+        { "type": "p", "text": "Ambiente tranquillo, luce soffusa, temperatura confortevole. Niente telefonate, notifiche silenziose. Il cliente deve essere seduto o supino da almeno 2 minuti prima di iniziare, il tempo che il sistema nervoso si assesti." },
+        { "type": "h3", "text": "Posizione" },
+        { "type": "p", "text": "Seduto con schiena appoggiata, piedi a terra, mani sulle cosce. Oppure supino. L'importante è standardizzare, usa sempre la stessa posizione per lo stesso cliente, altrimenti i confronti tra sessioni perdono significato." },
+        { "type": "h3", "text": "Respirazione" },
+        { "type": "p", "text": "Naturale. Non dire al cliente di respirare lentamente per rilassarsi, altrimenti invalidi lo spettro e ottieni un quadro non rappresentativo. Spiegagli che deve respirare come fa normalmente." },
+        { "type": "h3", "text": "Durata" },
+        {
+          "type": "ul",
+          "items": [
+            "**5 minuti** è lo standard scientifico (Task Force ESC/NASPE 1996).",
+            "**10 minuti** per un'analisi più stabile e meno influenzata da fluttuazioni momentanee.",
+            "**Durata libera** per sessioni durante i trattamenti, dove vuoi monitorare la risposta nel tempo."
+          ]
+        },
+        { "type": "h3", "text": "Cosa succede durante" },
+        { "type": "p", "text": "L'app raccoglie gli intervalli RR dal sensore, li filtra dagli artefatti in tempo reale, e alla fine calcola tutti i parametri. Non toccare il telefono durante la misurazione, lascia che l'app lavori indisturbata." }
+      ]
+    },
+    {
+      "id": "tipi-test",
+      "emoji": "🧪",
+      "title": "I 3 tipi di test",
+      "blocks": [
+        {
+          "type": "card",
+          "color": "teal",
+          "title": "Misurazione standard (test tonico)",
+          "blocks": [
+            {
+              "type": "dl",
+              "items": [
+                { "term": "Cos'è", "desc": "Fotografia dello stato attuale del sistema nervoso autonomo a riposo." },
+                { "term": "Quando usarla", "desc": "È il default, va bene nel 70% dei casi. Valutazioni periodiche, monitoraggio, prima valutazione." },
+                { "term": "Durata", "desc": "5 o 10 minuti." },
+                { "term": "Posizione", "desc": "Seduto o supino, sempre uguale per lo stesso cliente." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "color": "amber",
+          "title": "Test ortostatico (test fasico)",
+          "blocks": [
+            {
+              "type": "dl",
+              "items": [
+                { "term": "Cos'è", "desc": "Misura la capacità del sistema nervoso di reagire a uno stimolo, il passaggio da supino a in piedi." },
+                { "term": "Come funziona", "desc": "5 minuti supino, poi l'app ti avvisa con suono e vibrazione di alzarti, poi 5 minuti in piedi. L'app analizza entrambe le fasi e le confronta." },
+                { "term": "Quando usarlo", "desc": "Ridotta reattività autonomica, recupero dopo periodi di malattia (es. sindromi post-infettive), atleti sovrallenati, valutazione iniziale approfondita. Ogni 4-6 settimane come stress test del sistema nervoso." },
+                { "term": "Il report mostra", "desc": "Indice di reattività ortostatica (0-100) e confronto supino vs in piedi per ogni parametro." }
+              ]
+            },
+            { "type": "callout", "variant": "warn", "text": "Non confrontare mai un test ortostatico con una misurazione standard, sono cose diverse." }
+          ]
+        },
+        {
+          "type": "card",
+          "color": "indigo",
+          "title": "Respirazione di coerenza",
+          "blocks": [
+            {
+              "type": "dl",
+              "items": [
+                { "term": "Cos'è", "desc": "Il cliente respira seguendo un'animazione visiva a una frequenza impostata (di default 6 respiri al minuto)." },
+                { "term": "Come funziona", "desc": "L'app mostra una sfera che si espande (inspira) e si contrae (espira). Il cliente segue il ritmo. Intanto l'app calcola lo Score di coerenza in tempo reale." },
+                { "term": "Quando usarla", "desc": "Training di coerenza cardiaca, valutazione del massimo potenziale vagale, ricerca della frequenza di risonanza personale. Utile per ansia, insonnia, dolore persistente, preparazione mentale." },
+                { "term": "Frequenza di risonanza", "desc": "Varia da persona a persona, tra 4,5 e 7,5 respiri/min. Puoi testare diverse frequenze in sessioni da 2-3 minuti e vedere quale produce il picco LF più alto nello spettro." }
+              ]
+            },
+            { "type": "callout", "variant": "warn", "text": "Non usare la coerenza come misurazione di valutazione. Per valutare il cliente usa sempre il test standard. La coerenza misura il potenziale, non lo stato attuale." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "risultati",
+      "emoji": "📊",
+      "title": "Leggere i risultati",
+      "blocks": [
+        { "type": "p", "text": "Ogni score va da 0 a 100. Sono calcolati combinando più parametri HRV con pesi scientificamente validati. Sono il modo più rapido per leggere lo stato del cliente senza doverti immergere nei singoli parametri." },
+        { "type": "h3", "text": "I 5 score proprietari" },
+        {
+          "type": "scoreCards",
+          "items": [
+            {
+              "emoji": "🔴",
+              "title": "Indice di Stress (0-100)",
+              "desc": "Quanto è sotto pressione il sistema nervoso. Se è alto cronicamente indica stress accumulato nel tempo, non solo il momento della misurazione.",
+              "color": "red",
+              "ranges": [
+                { "range": "0–30", "label": "Basso" },
+                { "range": "30–50", "label": "Equilibrio" },
+                { "range": "50–70", "label": "Medio" },
+                { "range": "70–85", "label": "Alto" },
+                { "range": "85–100", "label": "Affaticamento" }
+              ]
+            },
+            {
+              "emoji": "🟢",
+              "title": "Recupero (0-100)",
+              "desc": "Capacità di recupero del sistema parasimpatico.",
+              "color": "teal",
+              "ranges": [
+                { "range": "0–25", "label": "Insufficiente" },
+                { "range": "25–45", "label": "Scarso" },
+                { "range": "45–65", "label": "Moderato" },
+                { "range": "65–85", "label": "Buono" },
+                { "range": "85–100", "label": "Ottimale" }
+              ]
+            },
+            {
+              "emoji": "🔵",
+              "title": "Equilibrio (0-100)",
+              "desc": "Bilanciamento tra simpatico e parasimpatico. Non è 'più alto = meglio', il valore ottimale è nella zona centrale. Troppo sbilanciato in entrambe le direzioni è problematico.",
+              "color": "blue"
+            },
+            {
+              "emoji": "🟠",
+              "title": "Energia (0-100)",
+              "desc": "Risorse energetiche complessive del sistema nervoso. Basato sulla potenza totale dello spettro HRV.",
+              "color": "orange"
+            },
+            {
+              "emoji": "🟣",
+              "title": "Adattamento (0-100)",
+              "desc": "Capacità di recupero e adattamento del sistema nervoso autonomo. Più è alto, più il corpo assorbe bene i carichi della giornata e torna rapidamente all'equilibrio.",
+              "color": "purple"
+            }
+          ]
+        },
+        { "type": "h3", "text": "Stress Index Composito" },
+        { "type": "p", "text": "Valore unico 0-100 che sintetizza Stress, Recupero, Equilibrio ed Energia. Si vede nel tachimetro in cima ai risultati. È il numero da monitorare nel tempo, soprattutto se confronti più sessioni dello stesso cliente." },
+        { "type": "h3", "text": "I parametri avanzati" },
+        { "type": "p", "text": "Sotto gli score trovi i dettagli per dominio (Time Domain, Frequency Domain, Non-linear, Geometric). Ogni parametro ha un semaforo (verde, giallo, rosso) basato sui range di riferimento per età e sesso del cliente." },
+        { "type": "p", "text": "Non serve conoscerli tutti per usare l'app, gli score sono sufficienti nella pratica quotidiana. I parametri avanzati ti servono se vuoi approfondire un caso specifico o confrontare con la letteratura." }
+      ]
+    },
+    {
+      "id": "confronto",
+      "emoji": "🔀",
+      "title": "Confronto sessioni",
+      "blocks": [
+        {
+          "type": "dl",
+          "items": [
+            { "term": "Come accedere", "desc": "Nella scheda cliente seleziona 2 o più misurazioni e tappa “Confronta”." },
+            { "term": "Cosa mostra", "desc": "I parametri selezionati fianco a fianco con delta e frecce di tendenza." },
+            { "term": "Organizzazione", "desc": "I parametri sono raggruppati per dominio (Score, Time, Frequency, Non-linear, Geometric)." },
+            { "term": "Personalizzazione", "desc": "Puoi selezionare quali parametri confrontare, di default vedi i 9 più importanti." }
+          ]
+        },
+        { "type": "callout", "title": "Consiglio", "text": "Confronta sempre misurazioni dello stesso tipo (standard con standard, ortostatico con ortostatico) fatte nelle stesse condizioni. Altrimenti stai paragonando mele e pere." }
+      ]
+    },
+    {
+      "id": "clienti",
+      "emoji": "👥",
+      "title": "Gestione clienti",
+      "blocks": [
+        {
+          "type": "dl",
+          "items": [
+            { "term": "Aggiungere un cliente", "desc": "Tappa + nella lista clienti, compila l'anagrafica (nome, cognome, data di nascita, sesso, fumatore, atleta, livello di attività)." },
+            { "term": "Perché l'anagrafica è importante", "desc": "Età e sesso servono per la normalizzazione dei parametri. Senza questi dati i semafori verde/giallo/rosso non possono essere calcolati correttamente, quindi compilala sempre, anche quando hai fretta." },
+            { "term": "Storico", "desc": "Ogni misurazione viene salvata e associata al cliente. Puoi rivedere qualsiasi sessione passata in qualsiasi momento." },
+            { "term": "Note", "desc": "Puoi aggiungere note libere a ogni cliente. Usale per annotare contesto, eventi rilevanti, obiettivi." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "report-pdf",
+      "emoji": "📋",
+      "title": "Report PDF",
+      "blocks": [
+        {
+          "type": "dl",
+          "items": [
+            { "term": "Come generarlo", "desc": "Nei risultati della misurazione, tappa l'icona PDF in alto a destra." },
+            { "term": "Cosa contiene", "desc": "4 pagine con score, parametri completi, grafici (Poincaré, ritmogramma, spettro PSD) e disclaimer." },
+            { "term": "Per le sessioni lunghe", "desc": "Pagine extra con trend dei segmenti e confronto prima/dopo trattamento." },
+            { "term": "Condivisione", "desc": "Puoi inviarlo via WhatsApp, email o salvarlo nel rullino foto." },
+            { "term": "Personalizzazione", "desc": "Se compili il tuo profilo professionale (titolo, studio, contatti), questi dati appariranno nel PDF, dando un'aria più professionale al report consegnato al cliente." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "problemi",
+      "emoji": "🛠️",
+      "title": "Troubleshooting",
+      "blocks": [
+        { "type": "p", "text": "Le risposte ai problemi più frequenti. Se non trovi quello che cerchi, scrivici a [support@stressindex.io](mailto:support@stressindex.io)." },
+        { "type": "mainFaq" }
+      ]
+    },
+    {
+      "id": "misurazione-mattutina",
+      "emoji": "📅",
+      "title": "Misurazione mattutina",
+      "blocks": [
+        { "type": "p", "text": "La misurazione HRV al mattino è il modo più semplice e affidabile per capire come stai. Bastano 5 minuti, da seduto o sdraiato, e ottieni una fotografia oggettiva del tuo sistema nervoso autonomo." },
+        { "type": "callout", "title": "Perché farla ogni giorno", "text": "Un singolo dato dice poco. È il trend nel tempo a essere prezioso. Più sei costante, più i dati diventano utili." },
+        { "type": "h3", "text": "Quando farla" },
+        {
+          "type": "checklist",
+          "items": [
+            "Entro 30 minuti dal risveglio.",
+            "Prima di caffè, cibo, allenamento.",
+            "Idealmente dopo essere andato in bagno.",
+            "L'orario poco importa, l'importante è la costanza."
+          ]
+        },
+        { "type": "callout", "variant": "warn", "title": "Cosa evitare prima del test", "text": "Caffè, tè, sigarette, allenamento intenso, doccia molto calda o fredda, discussioni stressanti." },
+        { "type": "h3", "text": "Come si fa passo per passo" },
+        {
+          "type": "steps",
+          "items": [
+            "Indossa la fascia: inumidisci gli elettrodi e indossala sotto i pettorali.",
+            "Mettiti seduto o sdraiato: scegli una posizione e mantienila uguale ogni giorno.",
+            "Apri l'app: vai su Nuova Misurazione, scegli Misurazione Standard, durata 5 minuti.",
+            "Aspetta la connessione: entro 10-20 secondi vedrai il segnale stabilizzarsi.",
+            "Rilassati e respira: siediti immobile, respira normalmente, non parlare, non guardare il telefono.",
+            "Aspetta i 5 minuti: l'app ti avvisa con un suono."
+          ]
+        },
+        { "type": "callout", "title": "Il segreto è la ripetibilità", "text": "Stessa ora, stessa posizione, stesso ordine di azioni." },
+        { "type": "h3", "text": "I risultati" },
+        {
+          "type": "table",
+          "headers": ["Score", "Cosa misura"],
+          "rows": [
+            ["Indice di Stress", "quanto il corpo è sotto pressione"],
+            ["Recupero", "quanto il parasimpatico è attivo"],
+            ["Equilibrio", "bilanciamento simpatico-parasimpatico"],
+            ["Energia", "risorse autonomiche disponibili"],
+            ["Adattamento", "capacità di recupero e adattamento"]
+          ]
+        },
+        { "type": "h3", "text": "Come interpretare" },
+        {
+          "type": "ul",
+          "items": [
+            "**60-85**: zona ottimale.",
+            "**40-60**: valori normali, attenzione alle abitudini.",
+            "**Sotto 40**: possibile stress, sonno scarso, malattia.",
+            "**Sotto 25**: possibile sovrallenamento o esaurimento."
+          ]
+        },
+        { "type": "callout", "text": "Un singolo valore basso non è motivo di allarme. Quello che conta è il trend." },
+        { "type": "h3", "text": "Come trasformarla in abitudine" },
+        {
+          "type": "ul",
+          "items": [
+            "Tieni la fascia accanto al letto.",
+            "Imposta un alert al mattino.",
+            "Crea una routine: dopo il bagno, prima del caffè.",
+            "Sfrutta i 5 minuti in modalità non disturbare."
+          ]
+        },
+        { "type": "h3", "text": "Domande frequenti" },
+        {
+          "type": "faq",
+          "items": [
+            { "q": "Posso farla in piedi?", "a": [{ "type": "p", "text": "No, seduta o sdraiata." }] },
+            { "q": "Posso farla dopo un sorso d'acqua?", "a": [{ "type": "p", "text": "Sì, l'acqua non influenza. Il caffè sì." }] },
+            { "q": "Se salto un giorno?", "a": [{ "type": "p", "text": "Non recuperare, riprendi il giorno dopo." }] },
+            { "q": "Posso farla la sera?", "a": [{ "type": "p", "text": "Sì, ma non al posto di quella mattutina." }] },
+            { "q": "Quanto tempo per un trend utile?", "a": [{ "type": "p", "text": "2 settimane per iniziare, 4-6 per un trend solido." }] },
+            { "q": "Anche nei giorni di riposo?", "a": [{ "type": "p", "text": "Soprattutto quelli." }] },
+            { "q": "E se sono malato?", "a": [{ "type": "p", "text": "Falla lo stesso, è prezioso vedere come cambia durante la malattia." }] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "guida-sport",
+      "emoji": "🏋️",
+      "title": "Modulo Sport",
+      "blocks": [
+        { "type": "p", "text": "Il Modulo Sport analizza la tua attività attraverso la variabilità della frequenza cardiaca. Ti permette di sapere se stai allenando il sistema giusto, se stai esagerando o se sei pronto per spingere." },
+        { "type": "callout", "title": "Cosa ti serve", "text": "Fascia Polar H10, smartphone con Stress Index, fascia ben aderente e leggermente inumidita." },
+        { "type": "h3", "text": "I 3 tipi di test" },
+        {
+          "type": "card",
+          "color": "teal",
+          "title": "1. Sessione live durante l'allenamento",
+          "blocks": [
+            {
+              "type": "ul",
+              "items": [
+                "Indossa la fascia, avvia la sessione Sport.",
+                "L'app registra in tempo reale e mostra la zona metabolica.",
+                "Puoi tenere il telefono in tasca, funziona con schermo spento.",
+                "Al termine: questionario soggettivo e riepilogo."
+              ]
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "color": "amber",
+          "title": "2. Sessione offline con memoria Polar H10",
+          "blocks": [
+            {
+              "type": "ul",
+              "items": [
+                "Avvia la registrazione offline dall'app.",
+                "Allenati senza telefono.",
+                "Al rientro il download parte in automatico.",
+                "Una sessione alla volta."
+              ]
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "color": "indigo",
+          "title": "3. Test progressivo per le soglie metaboliche",
+          "blocks": [
+            {
+              "type": "ul",
+              "items": [
+                "Aumenti l'intensità gradualmente.",
+                "Il sistema trova le soglie aerobica e anaerobica.",
+                "Senza andare in laboratorio."
+              ]
+            }
+          ]
+        },
+        { "type": "h3", "text": "Come si usa passo per passo" },
+        {
+          "type": "dl",
+          "items": [
+            { "term": "Prima", "desc": "Inumidisci la fascia, indossala, apri Sport, scegli il tipo di attività." },
+            { "term": "Durante", "desc": "Zona metabolica in tempo reale, puoi aggiungere tag (sprint, pausa, ripresa), schermo bloccabile." },
+            { "term": "Dopo", "desc": "Termina, compila il questionario RPE 1-10, energia, dolori, umore." }
+          ]
+        },
+        { "type": "h3", "text": "Le 4 zone metaboliche" },
+        {
+          "type": "zoneCards",
+          "items": [
+            { "emoji": "🟢", "title": "Verde: aerobica", "desc": "Molto sostenibile, fondo lungo.", "color": "green" },
+            { "emoji": "🟡", "title": "Gialla: transizione", "desc": "Media, tra soglia aerobica e anaerobica.", "color": "yellow" },
+            { "emoji": "🟠", "title": "Arancione: anaerobica", "desc": "Alta, sostenibile solo per tempi limitati.", "color": "orange" },
+            { "emoji": "🔴", "title": "Rossa: massimale", "desc": "Estrema, pochi minuti.", "color": "red" }
+          ]
+        },
+        { "type": "callout", "text": "Vedere in tempo reale in quale zona stai lavorando ti permette di dosare l'allenamento." },
+        { "type": "h3", "text": "TRIMP, ACWR e TSB" },
+        {
+          "type": "dl",
+          "items": [
+            { "term": "TRIMP", "desc": "Numero che riassume quanto è stato pesante l'allenamento (durata × intensità)." },
+            { "term": "ACWR e TSB", "desc": "Rapporto tra carico recente e cronico, alert automatico se c'è rischio di infortuni." }
+          ]
+        },
+        { "type": "h3", "text": "Domande frequenti" },
+        {
+          "type": "faq",
+          "items": [
+            { "q": "Devo guardare il telefono?", "a": [{ "type": "p", "text": "No, in tasca, l'app lavora in background." }] },
+            { "q": "Posso usare l'orologio?", "a": [{ "type": "p", "text": "No, serve la fascia Polar H10 per gli intervalli RR." }] },
+            { "q": "Durata minima?", "a": [{ "type": "p", "text": "10 minuti per un'analisi affidabile." }] },
+            { "q": "Sessioni molto lunghe?", "a": [{ "type": "p", "text": "Sì, fino a 2 ore." }] },
+            { "q": "Se la fascia si scollega?", "a": [{ "type": "p", "text": "L'app avvisa, se torna entro pochi secondi continua." }] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "supporto",
+      "emoji": "💬",
+      "title": "Contatti e supporto",
+      "blocks": [
+        { "type": "p", "text": "Tre canali per parlarci, dal più rapido al più strutturato." },
+        {
+          "type": "contacts",
+          "items": [
+            { "icon": "email", "href": "mailto:support@stressindex.io", "title": "Email", "text": "support@stressindex.io" },
+            { "icon": "telegram", "href": "https://t.me/stressindex", "title": "Canale Telegram", "text": "Domande, aggiornamenti, community di professionisti.", "external": true },
+            { "icon": "site", "href": "https://stressindex.io", "title": "Sito", "text": "stressindex.io" }
+          ]
+        }
+      ]
+    }
+  ]
+}

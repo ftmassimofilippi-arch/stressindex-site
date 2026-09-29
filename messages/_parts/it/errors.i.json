@@ -1,0 +1,17 @@
+{
+  "api": {
+    "generic": "Si è verificato un errore. Riprova.",
+    "invalid_json": "Richiesta non valida.",
+    "pdf_missing_params": "Parametri obbligatori mancanti.",
+    "invalid_date_format": "Le date devono essere nel formato AAAA-MM-GG.",
+    "invalid_date_range": "La data di inizio deve precedere la data di fine.",
+    "session_expired": "Sessione scaduta: ricarica la pagina e accedi di nuovo.",
+    "client_read_failed": "Non è stato possibile leggere l'anagrafica del cliente. Riprova tra qualche istante.",
+    "measurement_read_failed": "Non è stato possibile leggere la misurazione. Riprova tra qualche istante.",
+    "measurement_not_linked": "Questa misurazione non risulta collegata al cliente selezionato: non è possibile generare un PDF a suo nome.",
+    "measurement_not_found": "Misurazione non trovata. Se è stata registrata dal cliente dalla sua app, verifica che il collegamento con lo studio sia ancora attivo.",
+    "pdf_render_failed": "La misurazione è stata trovata ma il documento non è stato generato. Riprova; se il problema persiste, segnalacelo.",
+    "report_read_failed": "Non è stato possibile leggere le misurazioni del periodo. Riprova tra qualche istante.",
+    "report_render_failed": "I dati sono stati letti ma il documento non è stato generato. Riprova; se il problema persiste, segnalacelo."
+  }
+}

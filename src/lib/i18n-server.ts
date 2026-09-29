@@ -72,7 +72,6 @@ export type Translator = {
  */
 export async function getTranslator(locale: Locale, namespace?: string): Promise<Translator> {
   const messages = await loadMessages(locale)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const t = createTranslator({ locale, messages: messages as any, namespace: namespace as any }) as any
   const fn = ((key: string, values?: Record<string, string | number | Date>) => t(key, values)) as Translator
   fn.has = (key: string) => t.has(key)

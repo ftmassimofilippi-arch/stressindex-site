@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/admin-audit'
 import { setPlanViaSubscription } from '@/lib/admin-commerciale'
+import { getRequestLocale, getTranslator } from '@/lib/i18n-server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -32,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (typeof body.email === 'string' && body.email.trim()) {
     const { data: authData } = await admin.auth.admin.getUserById(userId)
     if ((authData?.user?.email ?? '').toLowerCase() !== body.email.trim().toLowerCase()) {
-      return NextResponse.json({ error: 'use_email_route', message: "Per cambiare l'email usa \"Correggi email\"" }, { status: 400 })
+      return apiError('use_email_route', 400)
     }
   }
 
@@ -46,8 +48,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   // Piano: abbonamenti + storico + audit (024), non più profiles.plan diretto.
   if (body.plan === 'base' || body.plan === 'pro') {
-    const res = await setPlanViaSubscription(admin, guard.user, userId, body.plan)
-    if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status })
+    const t = await getTranslator(await getRequestLocale(req), 'admin.planToggle')
+    const res = await setPlanViaSubscription(admin, guard.user, userId, body.plan, t('quickChangeReason'))
+    if (!res.ok) return apiError(res.error, res.status)
   }
 
   if (profileUpdate.role !== undefined) {
@@ -78,7 +81,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
   // Non permettere l'auto-cancellazione del superadmin loggato.
   if (userId === guard.user.id) {
-    return NextResponse.json({ error: 'cannot_delete_self' }, { status: 400 })
+    return apiError('cannot_delete_self', 400)
   }
 
   const cascadeClients =

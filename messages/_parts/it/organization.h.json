@@ -1,0 +1,80 @@
+{
+  "createTitle": "Crea la tua <em>organizzazione</em>",
+  "createIntro": "Gestisci il tuo team di professionisti da un'unica dashboard. Invita i tuoi collaboratori e monitora l'attività di tutti i clienti.",
+  "adminIntro": "Gestisci il tuo team e monitora l'attività dei professionisti",
+  "memberIntro": "Il tuo team",
+  "form": {
+    "name": "Nome organizzazione",
+    "placeholder": "Es. Studio Aurora",
+    "creating": "Creazione…",
+    "create": "Crea organizzazione",
+    "error": "Errore nella creazione"
+  },
+  "tabs": {
+    "team": "Team",
+    "overview": "Panoramica",
+    "professionals": "Professionisti"
+  },
+  "team": {
+    "organization": "Organizzazione",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "members": "Membri del team",
+    "invite": "Invita professionista",
+    "inviteNote": "L'invito verrà accettato quando il professionista accede alla dashboard.",
+    "thProfessional": "Professionista",
+    "thRole": "Ruolo",
+    "thStatus": "Stato",
+    "thClients": "Clienti",
+    "thLastActivity": "Ultima attività",
+    "remove": "Rimuovi membro",
+    "removeTitle": "Rimuovere il membro?",
+    "removeDescription": "Il professionista perderà l'accesso all'organizzazione. I suoi clienti e misurazioni restano nel suo account.",
+    "removeConfirm": "Rimuovi"
+  },
+  "roles": {
+    "owner": "Titolare",
+    "admin": "Amministratore",
+    "member": "Professionista"
+  },
+  "memberStatus": {
+    "active": "Attivo",
+    "pending": "In attesa",
+    "revoked": "Revocato"
+  },
+  "inviteDialog": {
+    "title": "Invita professionista",
+    "email": "Email",
+    "placeholder": "collega@studio.it",
+    "role": "Ruolo",
+    "roleHelp": "Gli amministratori possono invitare altri professionisti.",
+    "sending": "Invio…",
+    "send": "Invita"
+  },
+  "overview": {
+    "professionals": "Professionisti",
+    "professionalsHint": "attivi",
+    "totalClients": "Clienti totali",
+    "totalMeasurements": "Misurazioni totali",
+    "measurements": "Misurazioni",
+    "measurementsHint": "ultimi 7 giorni",
+    "recent": "Attività recente",
+    "empty": "Nessuna misurazione ancora registrata",
+    "thProfessional": "Professionista",
+    "thClient": "Cliente",
+    "thDate": "Data",
+    "thStress": "Stress",
+    "open": "Apri →"
+  },
+  "professionals": {
+    "title": "Professionisti",
+    "help": "Clicca un professionista per vedere i suoi clienti e misurazioni (sola lettura).",
+    "empty": "Nessun professionista attivo. Invita qualcuno dal tab Team.",
+    "clients": "clienti",
+    "measurements": "misurazioni"
+  },
+  "memberView": {
+    "title": "I tuoi colleghi",
+    "count": "{count, plural, one {# professionista attivo} other {# professionisti attivi}}"
+  }
+}

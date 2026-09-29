@@ -8,12 +8,12 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet, Svg, Rect, Line, Path, Circle, Text as SvgText } from '@react-pdf/renderer'
 import type { Monitoring24hSession, MonitoringEvent, MonitoringNight, MonitoringWindow, ReserveCurve, HourPattern, SeriesHrv } from './monitoring-types'
+import type { Tr } from '@/i18n/types'
 import {
-  LEVEL_LABEL, MON, STATE_COLOR, balanceColor, balanceLabel, clockStrength, dayNumeric, dayPart, duration, effectiveProfile, fragmentationLabel,
-  hourFraction, hm, level, pagesFor, profileFlags, qualityColor, qualityLabel, rmssdFromLn, sourceLabel, wallDate, type IndexLevel,
+  MON, STATE_COLOR, balanceColor, balanceLabelFor, clockStrength, clockStrengthText, dayNumeric, dayPart, duration, effectiveProfile, fmtNum, fragmentationLabel,
+  hourFraction, hm, intensityColor, level, pagesFor, profileFlags, qualityColor, qualityLabel, rmssdFromLn, sourceLabel, wallDate, type IndexLevel,
 } from './monitoring-format'
 import { indexText, monT, scoreT, type IndexId, type Lang } from './monitoring-strings'
-import { intensityColor } from '@/components/monitoring/MonitoringHourMap'
 import { pdfText as tx } from './pdf-text'
 import type { ProfessionalProfile } from './types'
 
@@ -83,7 +83,10 @@ type Ctx = {
   lang: Lang
   client: boolean
   professional: ProfessionalProfile | null
+  /** Stringhe dell'app (PdfStrings.monitoring), già nella lingua. */
   t: (k: string) => string
+  /** Stringhe del sito (namespace `monitoring`), nella lingua della richiesta. */
+  tf: Tr
 }
 
 function lvlColor(l: IndexLevel): string {
@@ -91,7 +94,7 @@ function lvlColor(l: IndexLevel): string {
 }
 
 function lvlText(l: IndexLevel, t: (k: string) => string): string {
-  return t(`level_${l}`) ?? LEVEL_LABEL[l]
+  return t(`level_${l}`)
 }
 
 function Footer({ ctx, client }: { ctx: Ctx; client: boolean }) {
@@ -121,7 +124,7 @@ function ProfSection({ p }: { p: ProfessionalProfile | null }) {
 }
 
 function Header({ ctx }: { ctx: Ctx }) {
-  const { s, tz, t } = ctx
+  const { s, tz, t, tf } = ctx
   const { profile } = effectiveProfile(s)
   return (
     <View style={st.header}>
@@ -139,10 +142,10 @@ function Header({ ctx }: { ctx: Ctx }) {
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
           <Text style={st.chip}>{tx(t('profile'))}: {tx(t(`profile_${profile}`))}</Text>
-          <Text style={st.chip}>{tx(t('device'))}: {tx(s.device_name ?? sourceLabel(s.source))}</Text>
+          <Text style={st.chip}>{tx(t('device'))}: {tx(s.device_name ?? sourceLabel(s.source, tf))}</Text>
           <Text style={st.chip}>{tx(t('signal'))}: {tx(t(`signal_${s.signal_quality ?? 'fair'}`))}</Text>
           <Text style={st.chip}>{tx(t('valid_data'))}: {s.valid_coverage_percentage == null ? '—' : Math.round(s.valid_coverage_percentage)} %</Text>
-          <Text style={st.chip}>{tx(t('artifacts_pct'))}: {s.artifact_percentage?.toFixed(1) ?? '—'} %</Text>
+          <Text style={st.chip}>{tx(t('artifacts_pct'))}: {fmtNum(s.artifact_percentage, 1, ctx.lang)} %</Text>
           <Text style={st.chip}>{s.rr_count ?? 0} {tx(t('beats'))}</Text>
         </View>
       </View>
@@ -403,7 +406,7 @@ function TrendSvg({ s, pick, digits, night }: { s: Monitoring24hSession; pick: (
   )
 }
 
-function HourMapSvg({ hours, tz }: { hours: HourPattern[]; tz: number }) {
+function HourMapSvg({ hours, tz, stateRow }: { hours: HourPattern[]; tz: number; stateRow: string }) {
   const W = CONTENT_W, H = 110
   const left = 44, top = 4, bottom = 14
   const plotW = W - left, plotH = H - top - bottom
@@ -411,7 +414,7 @@ function HourMapSvg({ hours, tz }: { hours: HourPattern[]; tz: number }) {
     { label: 'HR', pick: (h) => h.hr, warm: true },
     { label: 'ln RMSSD', pick: (h) => h.ln, warm: false },
     { label: 'LF/HF', pick: (h) => h.lfhf, warm: true },
-    { label: 'Stato', pick: () => null, warm: true },
+    { label: stateRow, pick: () => null, warm: true },
   ]
   const rowH = plotH / rows.length, colW = plotW / Math.max(1, hours.length)
   return (
@@ -467,13 +470,14 @@ function CosinorSvg({ hours, fit, tz }: { hours: HourPattern[]; fit: NonNullable
   )
 }
 
-function ScoreBars({ scores, compact = false }: { scores: NonNullable<Monitoring24hSession['scores_night']>; compact?: boolean }) {
+function ScoreBars({ scores, ctx, compact = false }: { scores: NonNullable<Monitoring24hSession['scores_night']>; ctx: Ctx; compact?: boolean }) {
+  const { lang, tf } = ctx
   const rows: Array<[string, number, boolean]> = [
-    [scoreT('stress_score'), scores.stress, false],
-    [scoreT('recovery_score'), scores.recovery, true],
-    [scoreT('balance_score'), scores.balance, true],
-    [scoreT('energy_score'), scores.energy, true],
-    [scoreT('inflammatory_score'), scores.inflammation, true],
+    [scoreT('stress_score', lang), scores.stress, false],
+    [scoreT('recovery_score', lang), scores.recovery, true],
+    [scoreT('balance_score', lang), scores.balance, true],
+    [scoreT('energy_score', lang), scores.energy, true],
+    [scoreT('inflammatory_score', lang), scores.inflammation, true],
   ]
   const colorOf = (v: number, higher: boolean) => { const good = higher ? v : 100 - v; return good >= 65 ? C.recovery : good >= 45 ? C.warning : C.stress }
   return (
@@ -487,7 +491,7 @@ function ScoreBars({ scores, compact = false }: { scores: NonNullable<Monitoring
           <Text style={{ width: 28, textAlign: 'right', fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: colorOf(v, higher) }}>{Math.round(v)}</Text>
         </View>
       ))}
-      <Text style={{ textAlign: 'right', fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: C.accentDark, marginTop: 2 }}>Composito {Math.round(scores.composite)}</Text>
+      <Text style={{ textAlign: 'right', fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: C.accentDark, marginTop: 2 }}>{tx(tf('scores.compositeShort'))} {Math.round(scores.composite)}</Text>
     </View>
   )
 }
@@ -495,7 +499,7 @@ function ScoreBars({ scores, compact = false }: { scores: NonNullable<Monitoring
 // ── Pagine ──────────────────────────────────────────────────────────────────
 
 function SummaryPage({ ctx }: { ctx: Ctx }) {
-  const { s, tz, t, client } = ctx
+  const { s, tz, t, tf, client, lang } = ctx
   const sum = s.summary
   const a = sum?.advanced
   const { profile } = effectiveProfile(s)
@@ -530,8 +534,8 @@ function SummaryPage({ ctx }: { ctx: Ctx }) {
       {a?.reserve && <Text style={{ fontSize: 6.5, color: C.textMid, marginTop: 2 }}>{tx(t('reserve_hint'))}</Text>}
       <Legend t={t} />
       <View style={{ flexDirection: 'row', marginTop: 10 }}>
-        <GaugeBox title={t('balance')} value={sum?.stress_recovery_balance ?? null} label={sum ? (sum.stress_recovery_label || balanceLabel(sum.stress_recovery_balance)) : '—'} colorFor={balanceColor} />
-        {f.hasNightPages && <><View style={{ width: 10 }} /><GaugeBox title={t('night_quality')} value={sum?.night_recovery_quality ?? null} label={sum?.night_recovery_quality == null ? t('night_na_short') : qualityLabel(sum.night_recovery_quality)} colorFor={qualityColor} /></>}
+        <GaugeBox title={t('balance')} value={sum?.stress_recovery_balance ?? null} label={sum ? balanceLabelFor(sum.stress_recovery_balance, sum.stress_recovery_label, lang, tf) : '—'} colorFor={balanceColor} />
+        {f.hasNightPages && <><View style={{ width: 10 }} /><GaugeBox title={t('night_quality')} value={sum?.night_recovery_quality ?? null} label={sum?.night_recovery_quality == null ? t('night_na_short') : qualityLabel(sum.night_recovery_quality, tf)} colorFor={qualityColor} /></>}
       </View>
       <View style={{ flexDirection: 'row', marginTop: 10 }}>{kpis}</View>
       {sum && (
@@ -557,7 +561,8 @@ function SummaryPage({ ctx }: { ctx: Ctx }) {
 type CardSpec = { id: IndexId; value?: string | null; unit?: string | null; level?: IndexLevel | null; detail?: string | null; unavailable?: string | null; unreliable?: boolean }
 
 function IndicesPage({ ctx }: { ctx: Ctx }) {
-  const { s, tz, t, client } = ctx
+  const { s, tz, t, tf, client, lang } = ctx
+  const nf = (v: number | null | undefined, d: number) => fmtNum(v, d, lang)
   const pro = !client
   const a = s.summary?.advanced
   const sum = s.summary
@@ -575,19 +580,19 @@ function IndicesPage({ ctx }: { ctx: Ctx }) {
       specs.push({ id: 'longest_stretch', unavailable: a.unavailable?.longest_stretch, unreliable: a.unreliable?.includes('longest_stretch'), value: ls ? duration(ls.minutes) : null, level: ls ? level.stretch(ls.minutes) : null, detail: ls ? t('stretch_detail').replace('{from}', hm(ls.start, tz)).replace('{to}', hm(ls.end, tz)) : null })
     }
     const peak = sum?.peak_stress_time
-    specs.push({ id: 'peak', unavailable: peak ? null : '—', value: peak ? hm(peak, tz) : null, detail: peak ? dayPart(peak, tz, s.night) : null })
+    specs.push({ id: 'peak', unavailable: peak ? null : '—', value: peak ? hm(peak, tz) : null, detail: peak ? dayPart(peak, tz, s.night, tf) : null })
     const rt = a.return_times
     specs.push({ id: 'return_time', unavailable: a.unavailable?.return_time, unreliable: a.unreliable?.includes('return_time'), value: rt?.median == null ? null : `${Math.round(rt.median)}`, unit: t('unit_min_median'), level: rt?.median == null ? null : level.returnTime(rt.median), detail: rt ? t('return_detail').replace('{worst}', `${rt.worst ?? '—'}`).replace('{n}', `${rt.items.length}`) : null })
     const pr = a.prsa
-    specs.push({ id: 'dc', unavailable: a.unavailable?.dc, value: pr?.dc == null ? null : pr.dc.toFixed(1), unit: 'ms', level: pr?.dc == null ? null : level.dc(pr.dc), detail: pr && pro ? `${pr.n_dec} ${t('anchors')} · ${pr.beats} ${t('beats_used')}` : null })
-    specs.push({ id: 'ac', unavailable: a.unavailable?.ac, value: pr?.ac == null ? null : pr.ac.toFixed(1), unit: 'ms', level: pr?.ac == null ? null : level.ac(pr.ac), detail: pr && pro ? `${pr.n_acc} ${t('anchors')}` : null })
+    specs.push({ id: 'dc', unavailable: a.unavailable?.dc, value: pr?.dc == null ? null : nf(pr.dc, 1), unit: 'ms', level: pr?.dc == null ? null : level.dc(pr.dc), detail: pr && pro ? `${pr.n_dec} ${t('anchors')} · ${pr.beats} ${t('beats_used')}` : null })
+    specs.push({ id: 'ac', unavailable: a.unavailable?.ac, value: pr?.ac == null ? null : nf(pr.ac, 1), unit: 'ms', level: pr?.ac == null ? null : level.ac(pr.ac), detail: pr && pro ? `${pr.n_acc} ${t('anchors')}` : null })
     if (profile !== 'breve') {
       const fr = a.fragmentation
       const lab = fr?.pip == null ? null : fragmentationLabel(fr.pip)
-      specs.push({ id: 'fragmentation', unavailable: a.unavailable?.fragmentation, unreliable: a.unreliable?.includes('fragmentation'), value: lab ? t(`frag_${lab}`) : null, level: lab ? level.fragmentation(lab) : null, detail: fr && pro ? `PIP ${fr.pip?.toFixed(1)}% · IALS ${fr.ials?.toFixed(2)} · PSS ${fr.pss?.toFixed(1)}% · PAS ${fr.pas?.toFixed(1)}%` : null })
+      specs.push({ id: 'fragmentation', unavailable: a.unavailable?.fragmentation, unreliable: a.unreliable?.includes('fragmentation'), value: lab ? t(`frag_${lab}`) : null, level: lab ? level.fragmentation(lab) : null, detail: fr && pro ? `PIP ${nf(fr.pip, 1)}% · IALS ${nf(fr.ials, 2)} · PSS ${nf(fr.pss, 1)}% · PAS ${nf(fr.pas, 1)}%` : null })
       const resp = a.respiration
       const dayVal = resp?.day ?? resp?.all ?? null
-      specs.push({ id: 'respiration', unavailable: a.unavailable?.respiration, value: dayVal == null ? null : `${Math.round(dayVal)}`, unit: resp?.day != null ? t('unit_bpm_day') : 'atti/min', detail: resp ? `${resp.night == null ? '' : `~${Math.round(resp.night)}/min ${t('resp_night')} · `}${t('resp_note')}` : null })
+      specs.push({ id: 'respiration', unavailable: a.unavailable?.respiration, value: dayVal == null ? null : `${Math.round(dayVal)}`, unit: resp?.day != null ? t('unit_bpm_day') : tf('detail24.cards.breathsPerMin'), detail: resp ? `${resp.night == null ? '' : `~${Math.round(resp.night)}/min ${t('resp_night')} · `}${t('resp_note')}` : null })
     }
   }
   const cards = specs.map((sp) => {
@@ -613,6 +618,7 @@ function IndicesPage({ ctx }: { ctx: Ctx }) {
 
 function NightPage({ ctx }: { ctx: Ctx }) {
   const { s, tz, t, client, lang } = ctx
+  const nf = (v: number | null | undefined, d: number) => fmtNum(v, d, lang)
   const n = s.night
   const a = s.summary?.advanced
   const { profile } = effectiveProfile(s)
@@ -644,7 +650,7 @@ function NightPage({ ctx }: { ctx: Ctx }) {
             />
             <TwoCol
               a={!ttm ? <Unavailable name={ix('time_to_min').name} reason={a?.unavailable?.time_to_min ?? '—'} /> : <IndexCard name={ix('time_to_min').name} value={duration(ttm.min)} phrase={ix('time_to_min').phrase} detail={t('time_to_min_detail').replace('{hr}', `${ttm.hr == null ? '—' : Math.round(ttm.hr)}`).replace('{at}', hm(ttm.at, tz))} />}
-              b={!u ? <Unavailable name={ix('rest_waves').name} reason={a?.unavailable?.rest_waves ?? '—'} /> : <IndexCard name={ix('rest_waves').name} value={u.present ? t('waves_present') : t('waves_faint')} levelLabel={lvlText(level.waves(u.present), t)} levelColor={lvlColor(level.waves(u.present))} phrase={ix('rest_waves').phrase} detail={u.period == null ? null : t('waves_detail').replace('{p}', `${u.period}`).replace('{c}', u.cycles?.toFixed(1) ?? '—')} />}
+              b={!u ? <Unavailable name={ix('rest_waves').name} reason={a?.unavailable?.rest_waves ?? '—'} /> : <IndexCard name={ix('rest_waves').name} value={u.present ? t('waves_present') : t('waves_faint')} levelLabel={lvlText(level.waves(u.present), t)} levelColor={lvlColor(level.waves(u.present))} phrase={ix('rest_waves').phrase} detail={u.period == null ? null : t('waves_detail').replace('{p}', `${u.period}`).replace('{c}', nf(u.cycles, 1))} />}
             />
             {profile !== 'breve' && (
               <TwoCol
@@ -652,8 +658,8 @@ function NightPage({ ctx }: { ctx: Ctx }) {
                 b={<View style={{ borderWidth: 0.8, borderColor: C.warning, borderRadius: 6, padding: 8 }}><Text style={{ fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: C.warning }}>{tx(t('awakenings'))}</Text><Text style={{ fontSize: 8, marginTop: 3, lineHeight: 1.5 }}>{n.awakenings_estimate ?? 0}{'\n'}{tx(t('awakenings_note'))}</Text></View>}
               />
             )}
-            {s.scores_night && <><Text style={st.section}>{tx(t('night_scores'))}</Text><ScoreBars scores={s.scores_night} compact /></>}
-            {s.scores_morning && <><Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: C.accentDark, marginTop: 6, marginBottom: 3 }}>{tx(t('morning_scores'))}</Text><ScoreBars scores={s.scores_morning} compact /></>}
+            {s.scores_night && <><Text style={st.section}>{tx(t('night_scores'))}</Text><ScoreBars scores={s.scores_night} ctx={ctx} compact /></>}
+            {s.scores_morning && <><Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: C.accentDark, marginTop: 6, marginBottom: 3 }}>{tx(t('morning_scores'))}</Text><ScoreBars scores={s.scores_morning} ctx={ctx} compact /></>}
           </>
         )
       })()}
@@ -704,7 +710,7 @@ function TrendPage({ ctx }: { ctx: Ctx }) {
 }
 
 function HourMapPage({ ctx }: { ctx: Ctx }) {
-  const { s, tz, t, client, lang } = ctx
+  const { s, tz, t, tf, client, lang } = ctx
   const hours = s.summary?.advanced?.hourly ?? []
   if (hours.length === 0) return null
   const x = indexText('hour_map', lang)
@@ -714,19 +720,19 @@ function HourMapPage({ ctx }: { ctx: Ctx }) {
       <MiniHeader ctx={ctx} title={t('hour_map')} />
       <Text style={{ fontSize: 9.5 }}>{tx(x.phrase)}</Text>
       <View style={{ height: 8 }} />
-      <HourMapSvg hours={hours} tz={tz} />
+      <HourMapSvg hours={hours} tz={tz} stateRow={tf('pdf.stateRow')} />
       <Text style={[st.small, { marginTop: 4 }]}>{tx(t('hour_map_note'))}</Text>
       {!client && (
         <View style={{ borderWidth: 0.4, borderColor: C.border, marginTop: 10 }}>
           <View style={{ flexDirection: 'row' }}>
-            {[[t('ev_time'), 0.8], ['HR', 1], ['ln RMSSD', 1], ['LF/HF', 1], [t('ev_response'), 1], ['n', 0.6]].map(([h, fl], i) => <Text key={i} style={[st.th, { flex: fl as number }]}>{tx(h as string)}</Text>)}
+            {[[t('ev_time'), 0.8], ['HR', 1], ['ln RMSSD', 1], ['LF/HF', 1], [tf('pdf.stateRow'), 1], ['n', 0.6]].map(([h, fl], i) => <Text key={i} style={[st.th, { flex: fl as number }]}>{tx(h as string)}</Text>)}
           </View>
           {hours.map((h, i) => (
             <View key={i} style={{ flexDirection: 'row', borderTopWidth: 0.4, borderTopColor: C.border }}>
               <Text style={[st.td, { flex: 0.8 }]}>{hm(h.h, tz)}</Text>
               <Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{h.hr == null ? '—' : Math.round(h.hr)}</Text>
-              <Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{h.ln?.toFixed(2) ?? '—'}</Text>
-              <Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{h.lfhf?.toFixed(2) ?? '—'}</Text>
+              <Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{fmtNum(h.ln, 2, lang)}</Text>
+              <Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{fmtNum(h.lfhf, 2, lang)}</Text>
               <Text style={[st.td, { flex: 1 }]}>{tx(stateLabel(h))}</Text>
               <Text style={[st.td, { flex: 0.6, textAlign: 'right' }]}>{h.n}</Text>
             </View>
@@ -739,7 +745,8 @@ function HourMapPage({ ctx }: { ctx: Ctx }) {
 }
 
 function RhythmPage({ ctx }: { ctx: Ctx }) {
-  const { s, tz, t, lang } = ctx
+  const { s, tz, t, tf, lang } = ctx
+  const nf = (v: number | null | undefined, d: number) => fmtNum(v, d, lang)
   const a = s.summary?.advanced
   const sf = s.summary?.series?.full
   const ix = (id: IndexId) => indexText(id, lang)
@@ -756,11 +763,11 @@ function RhythmPage({ ctx }: { ctx: Ctx }) {
         <View style={{ marginBottom: 6 }}>
           <IndexCard
             name={clock.name}
-            value={clockStrength(amp)}
+            value={clockStrengthText(clockStrength(amp), tf)}
             levelLabel={lvlText(level.clock(amp), t)}
             levelColor={lvlColor(level.clock(amp))}
             phrase={clock.phrase}
-            detail={`${t('clock_strength')} ±${amp.toFixed(1)} bpm (MESOR ${cos.mesor == null ? '—' : Math.round(cos.mesor)}) · ${t('clock_min')} ${cos.bathy == null ? '—' : hourFraction(cos.bathy)} · ${t('clock_peak')} ${cos.acro == null ? '—' : hourFraction(cos.acro)} · R² ${cos.r2?.toFixed(2) ?? '—'} · ${cos.hours} h${cos.indicative ? ` · ${t('clock_indicative')}` : ''}${cosLn && cosLn.amp != null ? ` · ln RMSSD: A ${cosLn.amp.toFixed(2)}, ${t('clock_peak')} ${cosLn.acro == null ? '—' : hourFraction(cosLn.acro)}` : ''}`}
+            detail={`${t('clock_strength')} ±${nf(amp, 1)} bpm (MESOR ${cos.mesor == null ? '—' : Math.round(cos.mesor)}) · ${t('clock_min')} ${cos.bathy == null ? '—' : hourFraction(cos.bathy)} · ${t('clock_peak')} ${cos.acro == null ? '—' : hourFraction(cos.acro)} · R² ${nf(cos.r2, 2)} · ${cos.hours} h${cos.indicative ? ` · ${t('clock_indicative')}` : ''}${cosLn && cosLn.amp != null ? ` · ln RMSSD: A ${nf(cosLn.amp, 2)}, ${t('clock_peak')} ${cosLn.acro == null ? '—' : hourFraction(cosLn.acro)}` : ''}`}
           />
           {a?.hourly?.length ? <View style={{ marginTop: 4 }}><CosinorSvg hours={a.hourly} fit={cos} tz={tz} /></View> : null}
         </View>
@@ -769,16 +776,16 @@ function RhythmPage({ ctx }: { ctx: Ctx }) {
         <View style={{ marginBottom: 6 }}><Unavailable name={ix('dc').name} reason={a?.unavailable?.dc ?? '—'} /></View>
       ) : (
         <TwoCol
-          a={<IndexCard name={ix('dc').name} value={pr.dc?.toFixed(2) ?? '—'} unit="ms" levelLabel={pr.dc == null ? null : lvlText(level.dc(pr.dc), t)} levelColor={pr.dc == null ? C.accentDark : lvlColor(level.dc(pr.dc))} phrase={ix('dc').phrase} detail={`${pr.n_dec} ${t('anchors')} · ${pr.beats} ${t('beats_used')}`} />}
-          b={<IndexCard name={ix('ac').name} value={pr.ac?.toFixed(2) ?? '—'} unit="ms" levelLabel={pr.ac == null ? null : lvlText(level.ac(pr.ac), t)} levelColor={pr.ac == null ? C.accentDark : lvlColor(level.ac(pr.ac))} phrase={ix('ac').phrase} detail={`${pr.n_acc} ${t('anchors')}`} />}
+          a={<IndexCard name={ix('dc').name} value={nf(pr.dc, 2)} unit="ms" levelLabel={pr.dc == null ? null : lvlText(level.dc(pr.dc), t)} levelColor={pr.dc == null ? C.accentDark : lvlColor(level.dc(pr.dc))} phrase={ix('dc').phrase} detail={`${pr.n_dec} ${t('anchors')} · ${pr.beats} ${t('beats_used')}`} />}
+          b={<IndexCard name={ix('ac').name} value={nf(pr.ac, 2)} unit="ms" levelLabel={pr.ac == null ? null : lvlText(level.ac(pr.ac), t)} levelColor={pr.ac == null ? C.accentDark : lvlColor(level.ac(pr.ac))} phrase={ix('ac').phrase} detail={`${pr.n_acc} ${t('anchors')}`} />}
         />
       )}
       <TwoCol
-        a={!fr || !lab ? <Unavailable name={ix('fragmentation').name} reason={a?.unavailable?.fragmentation ?? '—'} /> : <IndexCard name={ix('fragmentation').name} value={t(`frag_${lab}`)} levelLabel={lvlText(level.fragmentation(lab), t)} levelColor={lvlColor(level.fragmentation(lab))} phrase={ix('fragmentation').phrase} detail={`PIP ${fr.pip?.toFixed(1)}% · IALS ${fr.ials?.toFixed(3)} · PSS ${fr.pss?.toFixed(1)}% · PAS ${fr.pas?.toFixed(1)}% · ${fr.beats} ${t('beats_used')}${a?.unreliable?.includes('fragmentation') ? ` · ${t('unreliable')}` : ''}`} />}
-        b={!m ? <Unavailable name={ix('mse').name} reason={a?.unavailable?.mse ?? '—'} /> : <IndexCard name={ix('mse').name} value={m.ci?.toFixed(1) ?? '—'} unit="CI" phrase={ix('mse').phrase} detail={`SampEn(1) ${m.e[0]?.toFixed(2) ?? '—'} · SampEn(10) ${(m.e.length > 9 ? m.e[9] : null)?.toFixed(2) ?? '—'} · ${m.chunks} × ${Math.floor(m.beats / (m.chunks || 1))} ${t('beats_used')}${a?.unreliable?.includes('mse') ? ` · ${t('unreliable')}` : ''}`} />}
+        a={!fr || !lab ? <Unavailable name={ix('fragmentation').name} reason={a?.unavailable?.fragmentation ?? '—'} /> : <IndexCard name={ix('fragmentation').name} value={t(`frag_${lab}`)} levelLabel={lvlText(level.fragmentation(lab), t)} levelColor={lvlColor(level.fragmentation(lab))} phrase={ix('fragmentation').phrase} detail={`PIP ${nf(fr.pip, 1)}% · IALS ${nf(fr.ials, 3)} · PSS ${nf(fr.pss, 1)}% · PAS ${nf(fr.pas, 1)}% · ${fr.beats} ${t('beats_used')}${a?.unreliable?.includes('fragmentation') ? ` · ${t('unreliable')}` : ''}`} />}
+        b={!m ? <Unavailable name={ix('mse').name} reason={a?.unavailable?.mse ?? '—'} /> : <IndexCard name={ix('mse').name} value={nf(m.ci, 1)} unit="CI" phrase={ix('mse').phrase} detail={`SampEn(1) ${nf(m.e[0], 2)} · SampEn(10) ${nf(m.e.length > 9 ? m.e[9] : null, 2)} · ${m.chunks} × ${Math.floor(m.beats / (m.chunks || 1))} ${t('beats_used')}${a?.unreliable?.includes('mse') ? ` · ${t('unreliable')}` : ''}`} />}
       />
       <TwoCol
-        a={a?.dfa_alpha2 == null ? <Unavailable name={ix('dfa_alpha2').name} reason={a?.unavailable?.dfa_alpha2 ?? '—'} /> : <IndexCard name={ix('dfa_alpha2').name} value={a.dfa_alpha2.toFixed(2)} unit="α2" phrase={ix('dfa_alpha2').phrase} detail={sf?.dfa_alpha1 == null ? null : `α1 ${sf.dfa_alpha1.toFixed(2)} (4-16)`} />}
+        a={a?.dfa_alpha2 == null ? <Unavailable name={ix('dfa_alpha2').name} reason={a?.unavailable?.dfa_alpha2 ?? '—'} /> : <IndexCard name={ix('dfa_alpha2').name} value={nf(a.dfa_alpha2, 2)} unit="α2" phrase={ix('dfa_alpha2').phrase} detail={sf?.dfa_alpha1 == null ? null : `α1 ${nf(sf.dfa_alpha1, 2)} (4-16)`} />}
         b={sf?.vlf == null ? <Unavailable name={ix('ulf_vlf').name} reason="—" /> : <IndexCard name={ix('ulf_vlf').name} value={`${Math.round(sf.vlf)}`} unit="ms² VLF" phrase={ix('ulf_vlf').phrase} detail={`ULF ${sf.ulf == null ? '—' : `${Math.round(sf.ulf)} ms²`} · LF ${sf.lf == null ? '—' : Math.round(sf.lf)} · HF ${sf.hf == null ? '—' : Math.round(sf.hf)} ms² · ${t('tracts_detail').replace('{n}', `${sf.tracts ?? 0}`).replace('{longest}', duration(a?.tracts?.longest_min ?? 0)).replace('{total}', duration(sf.tract_minutes ?? 0))}`} />}
       />
       <Footer ctx={ctx} client={false} />
@@ -787,14 +794,14 @@ function RhythmPage({ ctx }: { ctx: Ctx }) {
 }
 
 function ParamsPage({ ctx }: { ctx: Ctx }) {
-  const { s, t } = ctx
+  const { s, t, tf, lang } = ctx
   const sum = s.summary
-  const f = (v: number | null | undefined, d: number, u: string) => v == null ? '—' : `${v.toFixed(d)}${u ? ` ${u}` : ''}`
+  const f = (v: number | null | undefined, d: number, u: string) => v == null ? '—' : `${fmtNum(v, d, lang)}${u ? ` ${u}` : ''}`
   const rows: Array<[string, (x: SeriesHrv) => string]> = [
     [t('duration'), (x) => duration(x.minutes)], [t('beats'), (x) => `${x.rr_count}`], [t('tracts'), (x) => `${x.tracts ?? '—'}`],
     ['HR', (x) => f(x.mean_hr, 0, 'bpm')], ['RMSSD', (x) => f(x.rmssd, 1, 'ms')], ['SDNN', (x) => f(x.sdnn, 1, 'ms')], ['pNN50', (x) => f(x.pnn50, 1, '%')],
     ['ULF', (x) => f(x.ulf, 0, 'ms²')], ['VLF', (x) => f(x.vlf, 0, 'ms²')], ['LF', (x) => f(x.lf, 0, 'ms²')], ['HF', (x) => f(x.hf, 0, 'ms²')],
-    ['LF/HF', (x) => f(x.lf_hf, 2, '')], ['LF n.u.', (x) => f(x.lf_nu, 1, '')], ['HF n.u.', (x) => f(x.hf_nu, 1, '')], ['Total Power', (x) => f(x.total_power, 0, 'ms²')],
+    ['LF/HF', (x) => f(x.lf_hf, 2, '')], ['LF n.u.', (x) => f(x.lf_nu, 1, '')], ['HF n.u.', (x) => f(x.hf_nu, 1, '')], [tf('params.totalPower'), (x) => f(x.total_power, 0, 'ms²')],
     ['Baevsky SI', (x) => f(x.si, 0, '')], ['DFA α1', (x) => f(x.dfa_alpha1, 2, '')], ['DFA α2', (x) => f(x.dfa_alpha2, 2, '')], ['SD1 / SD2', (x) => `${f(x.sd1, 1, '')} / ${f(x.sd2, 1, '')}`],
   ]
   const series: Array<[string, SeriesHrv | null | undefined]> = [[t('series_full'), sum?.series?.full], [t('series_night'), sum?.series?.night], [t('series_day'), sum?.series?.day]]
@@ -804,15 +811,15 @@ function ParamsPage({ ctx }: { ctx: Ctx }) {
     [t('profile'), t(`profile_${profile}`)],
     [t('rr_total'), `${s.rr_count ?? '—'}`],
     [t('valid_data'), `${s.valid_coverage_percentage == null ? '—' : Math.round(s.valid_coverage_percentage)} % / ${s.windows.length} ${t('valid_windows').toLowerCase()}`],
-    [t('artifacts'), `${s.artifact_percentage?.toFixed(1) ?? '—'} %`],
+    [t('artifacts'), `${fmtNum(s.artifact_percentage, 1, lang)} %`],
     [t('signal'), t(`signal_${s.signal_quality ?? 'fair'}`)],
     [t('irregular'), `${s.ectopic_count ?? 0}`],
     [t('gaps'), duration(sum?.gap_minutes ?? 0)],
     ...(tr ? [[t('tracts'), t('tracts_detail').replace('{n}', `${tr.count}`).replace('{longest}', duration(tr.longest_min)).replace('{total}', duration(tr.total_min))] as [string, string]] : []),
-    [t('device'), `${sourceLabel(s.source)}${s.device_name ? ` · ${s.device_name}` : ''}`],
+    [t('device'), `${sourceLabel(s.source, tf)}${s.device_name ? ` · ${s.device_name}` : ''}`],
     [t('algorithm'), s.algorithm_version || '—'],
     ...(sum?.hr_rest != null ? [['HR rest (p5) / HRmax', `${Math.round(sum.hr_rest)} / ${sum.hr_max_used == null ? '—' : Math.round(sum.hr_max_used)} bpm`] as [string, string]] : []),
-    ...(sum?.ln_rmssd_reference != null ? [['ln RMSSD ref. / MAD', `${sum.ln_rmssd_reference.toFixed(2)} / ${sum.ln_rmssd_mad?.toFixed(3) ?? '—'}`] as [string, string]] : []),
+    ...(sum?.ln_rmssd_reference != null ? [['ln RMSSD ref. / MAD', `${fmtNum(sum.ln_rmssd_reference, 2, lang)} / ${fmtNum(sum.ln_rmssd_mad, 3, lang)}`] as [string, string]] : []),
   ]
   return (
     <Page size="A4" style={st.page}>
@@ -888,8 +895,8 @@ function HowPage({ ctx }: { ctx: Ctx }) {
 
 // ── Documento ───────────────────────────────────────────────────────────────
 
-export function MonitoringPdfDocument({ session, professional, client, lang = 'it' }: { session: Monitoring24hSession; professional: ProfessionalProfile | null; client: boolean; lang?: Lang }) {
-  const ctx: Ctx = { s: session, tz: session.tz_offset_minutes, lang, client, professional, t: (k) => monT(k, lang) }
+export function MonitoringPdfDocument({ session, professional, client, lang = 'it', tf }: { session: Monitoring24hSession; professional: ProfessionalProfile | null; client: boolean; lang?: Lang; tf: Tr }) {
+  const ctx: Ctx = { s: session, tz: session.tz_offset_minutes, lang, client, professional, t: (k) => monT(k, lang), tf }
   const { profile } = effectiveProfile(session)
   const pages = pagesFor(profile, !client)
   return (

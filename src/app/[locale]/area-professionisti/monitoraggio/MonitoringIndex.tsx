@@ -1,13 +1,14 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { Search } from 'lucide-react'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { MonitoringTable } from '@/components/monitoring/MonitoringTable'
 import type { MonitoringSession, RecordingProfile } from '@/lib/monitoring-types'
 import { isSleepSession } from '@/lib/monitoring-types'
-import { PROFILE_LABEL, PROFILE_ORDER, effectiveProfile, wallDate } from '@/lib/monitoring-format'
+import { PROFILE_ORDER, effectiveProfile, profileLabel, wallDate } from '@/lib/monitoring-format'
 
 type Props = {
   sessions: MonitoringSession[]
@@ -18,6 +19,8 @@ type Props = {
 const PAGE_SIZE = 25
 
 export function MonitoringIndex({ sessions, clients, baseQuery }: Props) {
+  const t = useTranslations('monitoring')
+  const locale = useLocale()
   const [client, setClient] = useState('')
   const [type, setType] = useState<'all' | '24h' | 'sleep'>('all')
   const [profile, setProfile] = useState<'all' | RecordingProfile>('all')
@@ -58,10 +61,10 @@ export function MonitoringIndex({ sessions, clients, baseQuery }: Props) {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <MetricCard label="Monitoraggi" value={filtered.length} hint="nel periodo" />
-        <MetricCard label="24h" value={n24} />
-        <MetricCard label="Sonno" value={nSleep} />
-        <MetricCard label="Clienti" value={activeClients} hint="con monitoraggi" />
+        <MetricCard label={t('index.metrics.total')} value={filtered.length} hint={t('index.metrics.inPeriod')} />
+        <MetricCard label={t('index.metrics.h24')} value={n24} />
+        <MetricCard label={t('index.metrics.sleep')} value={nSleep} />
+        <MetricCard label={t('index.metrics.clients')} value={activeClients} hint={t('index.metrics.withMonitorings')} />
       </div>
 
       <div className="card p-4 flex flex-wrap items-end gap-3">
@@ -70,43 +73,40 @@ export function MonitoringIndex({ sessions, clients, baseQuery }: Props) {
           <input
             value={search}
             onChange={(e) => reset(setSearch)(e.target.value)}
-            placeholder="Cerca per nome cliente…"
+            placeholder={t('index.searchPlaceholder')}
             className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal"
           />
         </div>
-        <select className="select-field" value={client} onChange={(e) => reset(setClient)(e.target.value)}>
-          <option value="">Tutti i clienti</option>
+        <select className="select-field max-w-full" value={client} onChange={(e) => reset(setClient)(e.target.value)}>
+          <option value="">{t('index.allClients')}</option>
           {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <select className="select-field" value={type} onChange={(e) => reset(setType)(e.target.value as typeof type)}>
-          <option value="all">Tutti i tipi</option>
-          <option value="24h">24h</option>
-          <option value="sleep">Sonno</option>
+        <select className="select-field max-w-full" value={type} onChange={(e) => reset(setType)(e.target.value as typeof type)}>
+          <option value="all">{t('index.allTypes')}</option>
+          <option value="24h">{t('type.chipH24')}</option>
+          <option value="sleep">{t('type.sleep')}</option>
         </select>
-        <select className="select-field" value={profile} onChange={(e) => reset(setProfile)(e.target.value as typeof profile)} disabled={type === 'sleep'}>
-          <option value="all">Tutti i profili</option>
-          {PROFILE_ORDER.map((p) => <option key={p} value={p}>{PROFILE_LABEL[p]}</option>)}
+        <select className="select-field max-w-full" value={profile} onChange={(e) => reset(setProfile)(e.target.value as typeof profile)} disabled={type === 'sleep'}>
+          <option value="all">{t('index.allProfiles')}</option>
+          {PROFILE_ORDER.map((p) => <option key={p} value={p}>{profileLabel(p, locale)}</option>)}
         </select>
         <DateRangePicker value={range} onChange={(v) => { setRange(v); setPage(0) }} />
       </div>
 
       <section className="card overflow-hidden">
-        <MonitoringTable sessions={rows} baseQuery={baseQuery} emptyText="Nessun monitoraggio con questi filtri" />
+        <MonitoringTable sessions={rows} baseQuery={baseQuery} emptyText={t('index.emptyFiltered')} />
         {pageCount > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-surface-border text-sm text-anthracite-lighter">
-            <div>{filtered.length} monitoraggi · pagina {safePage + 1} di {pageCount}</div>
+          <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-surface-border text-sm text-anthracite-lighter">
+            <div>{t('index.pagination', { count: filtered.length, page: safePage + 1, pages: pageCount })}</div>
             <div className="flex gap-2">
-              <button type="button" disabled={safePage === 0} onClick={() => setPage((p) => Math.max(0, p - 1))} className="px-3 py-1.5 rounded-lg border border-surface-border disabled:opacity-50 hover:bg-surface">Precedente</button>
-              <button type="button" disabled={safePage >= pageCount - 1} onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} className="px-3 py-1.5 rounded-lg border border-surface-border disabled:opacity-50 hover:bg-surface">Successiva</button>
+              <button type="button" disabled={safePage === 0} onClick={() => setPage((p) => Math.max(0, p - 1))} className="px-3 py-1.5 rounded-lg border border-surface-border disabled:opacity-50 hover:bg-surface">{t('index.prev')}</button>
+              <button type="button" disabled={safePage >= pageCount - 1} onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} className="px-3 py-1.5 rounded-lg border border-surface-border disabled:opacity-50 hover:bg-surface">{t('index.next')}</button>
             </div>
           </div>
         )}
       </section>
 
-      <p className="text-xs text-anthracite-lighter">
-        I profili con asterisco sono stimati da durata e notte: la riga è stata analizzata con una versione precedente dell&apos;app.
-        Il sito mostra quello che l&apos;app ha calcolato e salvato, senza rielaborare i dati.
-      </p>
+      <p className="text-xs text-anthracite-lighter">{t('index.footnote')}</p>
     </div>
   )
 }

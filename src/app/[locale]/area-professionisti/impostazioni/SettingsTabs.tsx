@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { Save, LogOut, Trash2 } from 'lucide-react'
 import { ConfirmDialog } from '@/components/dashboard/ConfirmDialog'
@@ -14,34 +15,32 @@ type Props = {
   initialTab?: string
 }
 
-const TABS = [
-  { id: 'profilo', label: 'Profilo' },
-  { id: 'notifiche', label: 'Notifiche' },
-  { id: 'account', label: 'Account' },
-] as const
+const TAB_IDS = ['profilo', 'notifiche', 'account'] as const
 
-type TabId = typeof TABS[number]['id']
+type TabId = typeof TAB_IDS[number]
 
 function asTabId(v: string | undefined): TabId {
-  return TABS.some((t) => t.id === v) ? (v as TabId) : 'profilo'
+  return TAB_IDS.some((id) => id === v) ? (v as TabId) : 'profilo'
 }
 
 export function SettingsTabs({ professional, preferences, initialTab }: Props) {
+  const t = useTranslations('settings.tabs')
   const [tab, setTab] = useState<TabId>(() => asTabId(initialTab))
+  const labels: Record<TabId, string> = { profilo: t('profile'), notifiche: t('notifications'), account: t('account') }
 
   return (
     <>
-      <div className="flex gap-1 border-b border-surface-border mb-6">
-        {TABS.map((t) => (
+      <div className="flex gap-1 border-b border-surface-border mb-6 overflow-x-auto">
+        {TAB_IDS.map((id) => (
           <button
-            key={t.id}
+            key={id}
             type="button"
-            onClick={() => setTab(t.id)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              tab === t.id ? 'border-teal text-teal-dark' : 'border-transparent text-anthracite-lighter hover:text-anthracite'
+            onClick={() => setTab(id)}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+              tab === id ? 'border-teal text-teal-dark' : 'border-transparent text-anthracite-lighter hover:text-anthracite'
             }`}
           >
-            {t.label}
+            {labels[id]}
           </button>
         ))}
       </div>
@@ -54,6 +53,7 @@ export function SettingsTabs({ professional, preferences, initialTab }: Props) {
 }
 
 function ProfiloTab({ professional }: { professional: ProfessionalProfile | null }) {
+  const t = useTranslations('settings.profile')
   const router = useRouter()
   const [data, setData] = useState({
     titolo: professional?.titolo ?? '',
@@ -79,67 +79,69 @@ function ProfiloTab({ professional }: { professional: ProfessionalProfile | null
       .from('professional_profiles')
       .upsert({ id: user.id, ...data })
     setSaving(false)
-    if (error) setMsg('Errore: ' + error.message)
-    else { setMsg('Profilo aggiornato'); router.refresh(); setTimeout(() => setMsg(null), 3000) }
+    if (error) setMsg(t('error', { message: error.message }))
+    else { setMsg(t('saved')); router.refresh(); setTimeout(() => setMsg(null), 3000) }
   }
 
   return (
     <div className="space-y-6">
       <section className="card p-6">
-        <h2 className="font-serif text-lg text-anthracite mb-4">Dati professionista</h2>
+        <h2 className="font-serif text-lg text-anthracite mb-4">{t('professionalData')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="input-label">Titolo</label>
+            <label className="input-label">{t('titleLabel')}</label>
+            {/* I titoli sono valori salvati nel profilo e stampati nei PDF: restano nella forma scelta dal professionista. */}
             <select value={data.titolo} onChange={(e) => setData({ ...data, titolo: e.target.value })} className="input-field">
               <option value="">—</option>
               <option value="Dott.">Dott.</option>
               <option value="Dott.ssa">Dott.ssa</option>
+              <option value="Dr.">Dr.</option>
               <option value="Prof.">Prof.</option>
               <option value="Prof.ssa">Prof.ssa</option>
             </select>
           </div>
           <div>
-            <label className="input-label">Professione</label>
-            <input value={data.professione} onChange={(e) => setData({ ...data, professione: e.target.value })} className="input-field" placeholder="Es. Fisioterapista" />
+            <label className="input-label">{t('profession')}</label>
+            <input value={data.professione} onChange={(e) => setData({ ...data, professione: e.target.value })} className="input-field" placeholder={t('professionPlaceholder')} />
           </div>
           <div>
-            <label className="input-label">Nome</label>
+            <label className="input-label">{t('firstName')}</label>
             <input value={data.nome} onChange={(e) => setData({ ...data, nome: e.target.value })} className="input-field" />
           </div>
           <div>
-            <label className="input-label">Cognome</label>
+            <label className="input-label">{t('lastName')}</label>
             <input value={data.cognome} onChange={(e) => setData({ ...data, cognome: e.target.value })} className="input-field" />
           </div>
           <div className="md:col-span-2">
-            <label className="input-label">Specializzazione</label>
+            <label className="input-label">{t('specialization')}</label>
             <input value={data.specializzazione} onChange={(e) => setData({ ...data, specializzazione: e.target.value })} className="input-field" />
           </div>
         </div>
       </section>
 
       <section className="card p-6">
-        <h2 className="font-serif text-lg text-anthracite mb-4">Studio</h2>
+        <h2 className="font-serif text-lg text-anthracite mb-4">{t('practice')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <label className="input-label">Nome studio</label>
+            <label className="input-label">{t('practiceName')}</label>
             <input value={data.nome_studio} onChange={(e) => setData({ ...data, nome_studio: e.target.value })} className="input-field" />
           </div>
           <div className="md:col-span-2">
-            <label className="input-label">Indirizzo</label>
+            <label className="input-label">{t('address')}</label>
             <input value={data.indirizzo} onChange={(e) => setData({ ...data, indirizzo: e.target.value })} className="input-field" />
           </div>
           <div>
-            <label className="input-label">Telefono</label>
+            <label className="input-label">{t('phone')}</label>
             <input value={data.telefono} onChange={(e) => setData({ ...data, telefono: e.target.value })} className="input-field" />
           </div>
           <div>
-            <label className="input-label">Sito web</label>
+            <label className="input-label">{t('website')}</label>
             <input value={data.sito_web} onChange={(e) => setData({ ...data, sito_web: e.target.value })} className="input-field" placeholder="https://" />
           </div>
           <div className="md:col-span-2">
-            <label className="input-label">URL logo (per ora link diretto)</label>
+            <label className="input-label">{t('logoUrl')}</label>
             <input value={data.logo_url} onChange={(e) => setData({ ...data, logo_url: e.target.value })} className="input-field" placeholder="https://example.com/logo.png" />
-            <p className="text-xs text-anthracite-lighter mt-1">Apparirà nell&apos;intestazione dei PDF generati.</p>
+            <p className="text-xs text-anthracite-lighter mt-1">{t('logoHelp')}</p>
           </div>
         </div>
       </section>
@@ -147,7 +149,7 @@ function ProfiloTab({ professional }: { professional: ProfessionalProfile | null
       <div className="flex items-center justify-end gap-3 flex-wrap">
         {msg && <span className="text-sm text-emerald-600">{msg}</span>}
         <button type="button" onClick={save} disabled={saving} className="btn-primary text-sm inline-flex items-center gap-1.5">
-          <Save size={15} /> {saving ? 'Salvataggio…' : 'Salva profilo'}
+          <Save size={15} /> {saving ? t('saving') : t('save')}
         </button>
       </div>
     </div>
@@ -175,13 +177,13 @@ function fusiDisponibili(selezionato: string): string[] {
 
 const ORE = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}:00`)
 
-const MODI: Array<{ id: NotificationPreferences['on_client_measurement']; label: string; desc: string }> = [
-  { id: 'subito', label: 'Subito', desc: 'Una email appena il cliente si misura. Al massimo una per cliente ogni ora.' },
-  { id: 'riepilogo', label: 'Riepilogo', desc: 'Una sola email al giorno con tutte le misurazioni, raggruppate per cliente.' },
-  { id: 'mai', label: 'Mai', desc: 'Nessuna email. Le misurazioni restano comunque visibili nelle schede.' },
-]
+// Modalità di notifica: i valori sono quelli salvati in notification_preferences.
+const MODI: NotificationPreferences['on_client_measurement'][] = ['subito', 'riepilogo', 'mai']
+const GIORNI: NotificationPreferences['weekly_summary_day'][] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+const LINGUE: NotificationPreferences['lingua'][] = ['it', 'en', 'de']
 
 function NotificheTab({ preferences }: { preferences: NotificationPreferences | null }) {
+  const t = useTranslations('settings.notifications')
   const router = useRouter()
   const [data, setData] = useState({
     weekly_summary_email: preferences?.weekly_summary_email ?? true,
@@ -203,7 +205,7 @@ function NotificheTab({ preferences }: { preferences: NotificationPreferences | 
     setErr(null); setMsg(null)
     const override = data.email_override.trim()
     if (override && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(override)) {
-      setErr('L\'email alternativa non è valida.')
+      setErr(t('emailOverrideInvalid'))
       return
     }
     setSaving(true)
@@ -214,24 +216,22 @@ function NotificheTab({ preferences }: { preferences: NotificationPreferences | 
       .from('notification_preferences')
       .upsert({ user_id: user.id, ...data, email_override: override || null })
     setSaving(false)
-    if (error) setErr('Errore: ' + error.message)
-    else { setMsg('Preferenze salvate'); router.refresh(); setTimeout(() => setMsg(null), 3000) }
+    if (error) setErr(t('error', { message: error.message }))
+    else { setMsg(t('saved')); router.refresh(); setTimeout(() => setMsg(null), 3000) }
   }
 
   return (
     <div className="space-y-6">
       <section className="card p-6">
-        <h2 className="font-serif text-lg text-anthracite mb-1">Misurazioni dei clienti collegati</h2>
-        <p className="text-sm text-anthracite-lighter mb-5">
-          Quando un cliente collegato si misura dalla propria app puoi essere avvisato via email, con il link diretto alla registrazione.
-        </p>
+        <h2 className="font-serif text-lg text-anthracite mb-1">{t('measurementsTitle')}</h2>
+        <p className="text-sm text-anthracite-lighter mb-5">{t('measurementsIntro')}</p>
 
         <div className="space-y-2">
           {MODI.map((m) => (
             <label
-              key={m.id}
+              key={m}
               className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-colors ${
-                data.on_client_measurement === m.id
+                data.on_client_measurement === m
                   ? 'border-teal bg-teal-light/50'
                   : 'border-surface-border hover:bg-surface'
               }`}
@@ -239,14 +239,14 @@ function NotificheTab({ preferences }: { preferences: NotificationPreferences | 
               <input
                 type="radio"
                 name="on_client_measurement"
-                value={m.id}
-                checked={data.on_client_measurement === m.id}
-                onChange={() => setData({ ...data, on_client_measurement: m.id })}
+                value={m}
+                checked={data.on_client_measurement === m}
+                onChange={() => setData({ ...data, on_client_measurement: m })}
                 className="mt-0.5 accent-teal"
               />
-              <span className="flex-1">
-                <span className="block text-sm font-medium text-anthracite">{m.label}</span>
-                <span className="block text-xs text-anthracite-lighter mt-0.5">{m.desc}</span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-sm font-medium text-anthracite">{t(`modes.${m}`)}</span>
+                <span className="block text-xs text-anthracite-lighter mt-0.5">{t(`modes.${m}Desc`)}</span>
               </span>
             </label>
           ))}
@@ -257,7 +257,7 @@ function NotificheTab({ preferences }: { preferences: NotificationPreferences | 
             {data.on_client_measurement === 'riepilogo' && (
               <>
                 <div>
-                  <label className="input-label">Ora del riepilogo</label>
+                  <label className="input-label">{t('digestHour')}</label>
                   <select
                     value={`${String(data.digest_hour).padStart(2, '0')}:00`}
                     onChange={(e) => setData({ ...data, digest_hour: Number(e.target.value.slice(0, 2)) })}
@@ -267,7 +267,7 @@ function NotificheTab({ preferences }: { preferences: NotificationPreferences | 
                   </select>
                 </div>
                 <div>
-                  <label className="input-label">Fuso orario</label>
+                  <label className="input-label">{t('timezone')}</label>
                   <select
                     value={data.timezone}
                     onChange={(e) => setData({ ...data, timezone: e.target.value })}
@@ -275,30 +275,28 @@ function NotificheTab({ preferences }: { preferences: NotificationPreferences | 
                   >
                     {fusiDisponibili(data.timezone).map((f) => <option key={f} value={f}>{f}</option>)}
                   </select>
-                  <p className="text-xs text-anthracite-lighter mt-1">L&apos;ora del riepilogo è letta in questo fuso.</p>
+                  <p className="text-xs text-anthracite-lighter mt-1">{t('timezoneHelp')}</p>
                 </div>
               </>
             )}
             <div>
-              <label className="input-label">Lingua delle email</label>
+              <label className="input-label">{t('emailLanguage')}</label>
               <select
                 value={data.lingua}
                 onChange={(e) => setData({ ...data, lingua: e.target.value as NotificationPreferences['lingua'] })}
                 className="input-field"
               >
-                <option value="it">Italiano</option>
-                <option value="en">English</option>
-                <option value="de">Deutsch</option>
+                {LINGUE.map((l) => <option key={l} value={l}>{t(`languages.${l}`)}</option>)}
               </select>
             </div>
             <div>
-              <label className="input-label">Email alternativa (opzionale)</label>
+              <label className="input-label">{t('emailOverride')}</label>
               <input
                 type="email"
                 value={data.email_override}
                 onChange={(e) => setData({ ...data, email_override: e.target.value })}
                 className="input-field"
-                placeholder="Lascia vuoto per usare l'email dell'account"
+                placeholder={t('emailOverridePlaceholder')}
               />
             </div>
           </div>
@@ -307,40 +305,34 @@ function NotificheTab({ preferences }: { preferences: NotificationPreferences | 
 
       <section className="card p-6 space-y-5">
         <Switch
-          label="Riassunto settimanale via email"
-          desc="Ricevi ogni settimana un riepilogo della tua attività clinica"
+          label={t('weeklySummary')}
+          desc={t('weeklySummaryDesc')}
           checked={data.weekly_summary_email}
           onChange={(v) => setData({ ...data, weekly_summary_email: v })}
         />
         {data.weekly_summary_email && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-1">
             <div>
-              <label className="input-label">Giorno</label>
-              <select value={data.weekly_summary_day} onChange={(e) => setData({ ...data, weekly_summary_day: e.target.value as any })} className="input-field">
-                <option value="monday">Lunedì</option>
-                <option value="tuesday">Martedì</option>
-                <option value="wednesday">Mercoledì</option>
-                <option value="thursday">Giovedì</option>
-                <option value="friday">Venerdì</option>
-                <option value="saturday">Sabato</option>
-                <option value="sunday">Domenica</option>
+              <label className="input-label">{t('day')}</label>
+              <select value={data.weekly_summary_day} onChange={(e) => setData({ ...data, weekly_summary_day: e.target.value as NotificationPreferences['weekly_summary_day'] })} className="input-field">
+                {GIORNI.map((g) => <option key={g} value={g}>{t(`days.${g}`)}</option>)}
               </select>
             </div>
             <div>
-              <label className="input-label">Ora</label>
+              <label className="input-label">{t('time')}</label>
               <input type="time" value={data.weekly_summary_time} onChange={(e) => setData({ ...data, weekly_summary_time: e.target.value })} className="input-field" />
             </div>
           </div>
         )}
         <Switch
-          label="Alert email immediati"
-          desc="Ricevi una email ogni volta che si genera un alert ad alta severità"
+          label={t('alertEmails')}
+          desc={t('alertEmailsDesc')}
           checked={data.alert_email_enabled}
           onChange={(v) => setData({ ...data, alert_email_enabled: v })}
         />
         <Switch
-          label="Marketing e novità prodotto"
-          desc="Aggiornamenti su nuove funzionalità di Stress Index"
+          label={t('marketing')}
+          desc={t('marketingDesc')}
           checked={data.marketing_emails}
           onChange={(v) => setData({ ...data, marketing_emails: v })}
         />
@@ -350,7 +342,7 @@ function NotificheTab({ preferences }: { preferences: NotificationPreferences | 
         {err && <span className="text-sm text-red-600">{err}</span>}
         {msg && <span className="text-sm text-emerald-600">{msg}</span>}
         <button type="button" onClick={save} disabled={saving} className="btn-primary text-sm inline-flex items-center gap-1.5">
-          <Save size={15} /> {saving ? 'Salvataggio…' : 'Salva preferenze'}
+          <Save size={15} /> {saving ? t('saving') : t('save')}
         </button>
       </div>
     </div>
@@ -358,6 +350,7 @@ function NotificheTab({ preferences }: { preferences: NotificationPreferences | 
 }
 
 function AccountTab() {
+  const t = useTranslations('settings.account')
   const router = useRouter()
   const [oldPw, setOldPw] = useState('')
   const [newPw, setNewPw] = useState('')
@@ -378,14 +371,14 @@ function AccountTab() {
 
   async function changePassword() {
     setErr(null); setMsg(null)
-    if (newPw.length < 8) { setErr('La nuova password deve avere almeno 8 caratteri'); return }
-    if (newPw !== confirmPw) { setErr('Le due password non coincidono'); return }
+    if (newPw.length < 8) { setErr(t('passwordTooShort')); return }
+    if (newPw !== confirmPw) { setErr(t('passwordMismatch')); return }
     setSaving(true)
     const supabase = createClient()
     const { error } = await supabase.auth.updateUser({ password: newPw })
     setSaving(false)
     if (error) setErr(error.message)
-    else { setMsg('Password aggiornata'); setOldPw(''); setNewPw(''); setConfirmPw(''); setTimeout(() => setMsg(null), 3000) }
+    else { setMsg(t('passwordUpdated')); setOldPw(''); setNewPw(''); setConfirmPw(''); setTimeout(() => setMsg(null), 3000) }
   }
 
   async function logout() {
@@ -397,64 +390,64 @@ function AccountTab() {
   async function deleteAccount() {
     // Eliminazione completa account richiede service_role, va fatta via Edge Function dedicata.
     // Per ora effettuiamo solo signOut e mostriamo guidance.
-    alert('Per cancellare definitivamente l\'account contattaci a hello@stressindex.io. Per ora effettuo solo logout.')
+    alert(t('deleteNotice'))
     await logout()
   }
 
   return (
     <div className="space-y-6">
       <section className="card p-6">
-        <h2 className="font-serif text-lg text-anthracite mb-4">Email</h2>
+        <h2 className="font-serif text-lg text-anthracite mb-4">{t('email')}</h2>
         <input type="email" value={email} readOnly className="input-field bg-surface cursor-not-allowed" />
-        <p className="text-xs text-anthracite-lighter mt-2">Per cambiare email contattaci a hello@stressindex.io</p>
+        <p className="text-xs text-anthracite-lighter mt-2">{t('emailHelp')}</p>
       </section>
 
       <section className="card p-6">
-        <h2 className="font-serif text-lg text-anthracite mb-4">Cambio password</h2>
+        <h2 className="font-serif text-lg text-anthracite mb-4">{t('changePassword')}</h2>
         <div className="space-y-4 max-w-md">
           <div>
-            <label className="input-label">Nuova password</label>
+            <label className="input-label">{t('newPassword')}</label>
             <input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} className="input-field" autoComplete="new-password" />
           </div>
           <div>
-            <label className="input-label">Conferma nuova password</label>
+            <label className="input-label">{t('confirmPassword')}</label>
             <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} className="input-field" autoComplete="new-password" />
           </div>
           {err && <div className="px-3 py-2 rounded-xl bg-red-50 text-red-700 text-sm">{err}</div>}
           {msg && <div className="px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-sm">{msg}</div>}
           <button type="button" onClick={changePassword} disabled={saving} className="btn-primary text-sm">
-            {saving ? 'Aggiornamento…' : 'Aggiorna password'}
+            {saving ? t('updating') : t('updatePassword')}
           </button>
         </div>
       </section>
 
       <section className="card p-6">
-        <h2 className="font-serif text-lg text-anthracite mb-2">Abbonamento</h2>
-        <p className="text-sm text-anthracite-lighter mb-3">Per gestione e fatturazione contattaci a hello@stressindex.io</p>
-        <button type="button" disabled className="btn-secondary text-sm opacity-60 cursor-not-allowed">Gestisci abbonamento</button>
+        <h2 className="font-serif text-lg text-anthracite mb-2">{t('subscription')}</h2>
+        <p className="text-sm text-anthracite-lighter mb-3">{t('subscriptionHelp')}</p>
+        <button type="button" disabled className="btn-secondary text-sm opacity-60 cursor-not-allowed">{t('manageSubscription')}</button>
       </section>
 
       <section className="card p-6">
         <button type="button" onClick={logout} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border border-surface-border hover:bg-surface">
-          <LogOut size={15} /> Esci dall&apos;account
+          <LogOut size={15} /> {t('logout')}
         </button>
       </section>
 
       <section className="card p-6 border-2 border-red-100 bg-red-50/30">
-        <h2 className="font-serif text-lg text-red-700 mb-1">Zona pericolosa</h2>
-        <p className="text-sm text-anthracite-lighter mb-3">L&apos;eliminazione dell&apos;account rimuove tutti i dati associati.</p>
+        <h2 className="font-serif text-lg text-red-700 mb-1">{t('dangerZone')}</h2>
+        <p className="text-sm text-anthracite-lighter mb-3">{t('dangerHelp')}</p>
         <button type="button" onClick={() => setDeleteOpen(true)} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-red-500 hover:bg-red-600 text-white">
-          <Trash2 size={15} /> Elimina account
+          <Trash2 size={15} /> {t('deleteAccount')}
         </button>
         <ConfirmDialog
           open={deleteOpen}
           onClose={() => setDeleteOpen(false)}
           onConfirm={deleteAccount}
-          title="Eliminare definitivamente l'account?"
-          description="L'operazione è irreversibile."
-          confirmText="Elimina"
+          title={t('deleteTitle')}
+          description={t('deleteDescription')}
+          confirmText={t('deleteConfirm')}
           destructive
-          requireTypedConfirmation="ELIMINA"
+          requireTypedConfirmation={t('deleteTyped')}
         />
       </section>
     </div>
@@ -464,7 +457,7 @@ function AccountTab() {
 function Switch({ label, desc, checked, onChange }: { label: string; desc?: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <label className="flex items-start justify-between gap-4 cursor-pointer">
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-anthracite">{label}</div>
         {desc && <div className="text-xs text-anthracite-lighter mt-0.5">{desc}</div>}
       </div>
@@ -473,7 +466,7 @@ function Switch({ label, desc, checked, onChange }: { label: string; desc?: stri
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`relative w-11 h-6 rounded-full transition-colors ${checked ? 'bg-teal' : 'bg-surface-border'}`}
+        className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${checked ? 'bg-teal' : 'bg-surface-border'}`}
       >
         <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>

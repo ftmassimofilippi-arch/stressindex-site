@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
 export type Column<T> = {
@@ -24,6 +25,7 @@ type Props<T> = {
 }
 
 export function DataTable<T>({ columns, rows, rowKey, onRowClick, emptyState, pageSize = 20, initialSort }: Props<T>) {
+  const t = useTranslations('dashboard.table')
   const [sort, setSort] = useState<{ key: string; dir: 'asc' | 'desc' } | null>(initialSort ?? null)
   const [page, setPage] = useState(0)
 
@@ -108,16 +110,16 @@ export function DataTable<T>({ columns, rows, rowKey, onRowClick, emptyState, pa
         </table>
       </div>
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4 text-sm text-anthracite-lighter">
+        <div className="flex items-center justify-between gap-3 flex-wrap mt-4 text-sm text-anthracite-lighter">
           <div>
-            {sorted.length} risultati · pagina {page + 1} di {totalPages}
+            {t('results', { count: sorted.length })} · {t('page', { page: page + 1, pages: totalPages })}
           </div>
           <div className="flex gap-2">
             <button type="button" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))} className="px-3 py-1.5 rounded-lg border border-surface-border disabled:opacity-50 hover:bg-surface">
-              Precedente
+              {t('prev')}
             </button>
             <button type="button" disabled={page >= totalPages - 1} onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} className="px-3 py-1.5 rounded-lg border border-surface-border disabled:opacity-50 hover:bg-surface">
-              Successiva
+              {t('next')}
             </button>
           </div>
         </div>

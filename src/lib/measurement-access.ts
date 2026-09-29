@@ -22,7 +22,9 @@ import type { Client } from './types'
 //      ridondante: senza, un id di sessione di un altro cliente dello stesso
 //      studio finirebbe in un PDF intestato al cliente sbagliato.
 
-export type AccessDenied = { status: number; error: string }
+/** `error` è un CODICE stabile (`errors.api.<codice>`): la route lo restituisce
+ *  con `apiError(denied.error, denied.status)` e la UI lo traduce. */
+export type AccessDenied = { status: number; error: 'client_read_failed' | 'client_not_found' }
 
 type ServerClient = Awaited<ReturnType<typeof createClient>>
 
@@ -49,15 +51,10 @@ export async function loadAuthorizedClient(
 
   if (error) {
     console.error('[measurement-access] lettura cliente fallita', { clientId, error })
-    return { denied: { status: 500, error: 'Non è stato possibile leggere l’anagrafica del cliente. Riprova tra qualche istante.' } }
+    return { denied: { status: 500, error: 'client_read_failed' } }
   }
   if (!client) {
-    return {
-      denied: {
-        status: 404,
-        error: 'Cliente non trovato, oppure non accessibile con questo account. Se stai consultando i dati di un altro professionista, riapri la scheda dal suo elenco clienti.',
-      },
-    }
+    return { denied: { status: 404, error: 'client_not_found' } }
   }
   return { client }
 }

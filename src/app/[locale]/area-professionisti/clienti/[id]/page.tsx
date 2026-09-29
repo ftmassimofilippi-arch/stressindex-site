@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import {
   getClient,
@@ -17,13 +18,17 @@ import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-acc
 import { ClientProfile } from './ClientProfile'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Profilo cliente' }
+
+export async function generateMetadata({ params }: { params: { locale: string } }) {
+  const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
+  return { title: t('clientProfile.title'), robots: { index: false, follow: false } }
+}
 
 export default async function ClientPage({
   params,
   searchParams,
 }: {
-  params: { id: string }
+  params: { locale: string; id: string }
   searchParams?: { professionista?: string }
 }) {
   const { viewing, currentUserId } = await resolveViewingProfessional(searchParams?.professionista)

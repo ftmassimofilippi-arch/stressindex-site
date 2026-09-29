@@ -1,0 +1,18 @@
+{
+  "api": {
+    "generic": "Si è verificato un errore. Riprova.",
+    "session_expired": "Sessione scaduta: ricarica la pagina e accedi di nuovo.",
+    "invalid_json": "Richiesta non valida.",
+    "monitoring_not_found": "Monitoraggio non trovato o non accessibile con questo account.",
+    "monitoring_module_not_active": "Modulo non attivo per questo account.",
+    "monitoring_no_client": "Questo monitoraggio non è collegato a una scheda cliente.",
+    "monitoring_email_fields_required": "Oggetto e messaggio sono obbligatori.",
+    "monitoring_invalid_events": "Eventi non validi.",
+    "monitoring_sleep_events_readonly": "Le notti del modulo Sonno non hanno eventi modificabili.",
+    "monitoring_event_outside_period": "Un evento cade fuori dal periodo della registrazione.",
+    "monitoring_save_failed": "Salvataggio non riuscito.",
+    "monitoring_pdf_not_generated": "Il monitoraggio è stato letto ma il documento non è stato generato. Riprova; se persiste, segnalacelo.",
+    "monitoring_rr_file_missing": "Questo monitoraggio non ha un file RR nel bucket.",
+    "monitoring_rr_file_unreadable": "File RR non leggibile: verifica che il caricamento dall'app sia andato a buon fine."
+  }
+}

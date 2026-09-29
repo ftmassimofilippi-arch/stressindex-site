@@ -7,6 +7,8 @@
 // i calcoli (regressione, soglie, zone) sono già nel JSON. Le intensità sono
 // nell'unità della modalità: bike → watt, treadmill → km/h, field → secondi al
 // km (390 = 6:30 min/km).
+import type { Tr } from '@/i18n/types'
+import { num } from './format'
 
 export type ThresholdMode = 'bike' | 'treadmill' | 'field'
 
@@ -226,27 +228,32 @@ export function parseHrZones(raw: unknown): HrZone[] {
 }
 
 // ── Formattazione ────────────────────────────────────────────────────────────
+// Le etichette visibili vivono nel namespace `sport.threshold.*` dei file
+// messaggi: qui restano solo chiavi e unità, così la parte di calcolo sopra
+// resta identica al Dart.
 
-export const THRESHOLD_MODE_LABEL: Record<ThresholdMode, string> = {
-  bike: 'Bici',
-  treadmill: 'Corsa su tapis roulant',
-  field: 'Corsa su campo',
+export const THRESHOLD_MODES: readonly ThresholdMode[] = ['bike', 'treadmill', 'field']
+
+/** Nome della modalità (`sport.threshold.mode.*`). */
+export function thresholdModeLabel(mode: ThresholdMode, t: Tr): string {
+  return t(`threshold.mode.${mode}`)
 }
 
+// Unità delle intensità, invariate nelle tre lingue.
 export const THRESHOLD_MODE_UNIT: Record<ThresholdMode, string> = {
   bike: 'W',
   treadmill: 'km/h',
   field: 'min/km',
 }
 
-/** Intensità nella sua unità; il ritmo esce come m:ss min/km. */
-export function formatIntensity(mode: ThresholdMode, v: number | null | undefined, withUnit = true): string {
+/** Intensità nella sua unità; il ritmo esce come m:ss min/km, la velocità con i decimali della lingua. */
+export function formatIntensity(mode: ThresholdMode, v: number | null | undefined, withUnit = true, locale?: string): string {
   if (v == null || !Number.isFinite(v)) return '—'
   switch (mode) {
     case 'bike':
       return `${Math.round(v)}${withUnit ? ' W' : ''}`
     case 'treadmill':
-      return `${v.toFixed(1).replace('.', ',')}${withUnit ? ' km/h' : ''}`
+      return `${num(v, 1, locale)}${withUnit ? ' km/h' : ''}`
     case 'field': {
       const total = Math.round(v)
       const m = Math.floor(total / 60)
@@ -256,30 +263,28 @@ export function formatIntensity(mode: ThresholdMode, v: number | null | undefine
   }
 }
 
-export const THRESHOLD_REASON_TEXT: Record<ThresholdReason, string> = {
-  notEnoughData: 'Meno di 10 minuti di dati validi dopo il riscaldamento.',
-  tooManyArtifacts: 'Troppe finestre scartate per artefatti: fascia poco aderente o asciutta.',
-  sensorNoRr: 'Il sensore non trasmetteva intervalli RR.',
-  noDescendingTract: 'Alpha1 non mostra una discesa stabile con l’aumento della FC.',
-  lowR2: 'La retta descrive male i dati (R² sotto 0,6).',
-  vt1NotReached: 'Intensità raggiunta insufficiente: alpha1 non è mai sceso sotto 0,75.',
-  vt2NotReached: 'Il test non ha raggiunto la seconda soglia: alpha1 non è mai sceso sotto 0,50.',
-  vt1Extrapolated: 'La FC stimata cadrebbe oltre 5 bpm dai dati osservati: non si estrapola.',
-  vt2Extrapolated: 'La FC stimata cadrebbe oltre 5 bpm dai dati osservati: non si estrapola.',
-  inconsistent: 'VT2 non è sopra VT1: stima incoerente, non salvata.',
+const THRESHOLD_REASONS: ReadonlySet<string> = new Set<ThresholdReason>([
+  'notEnoughData', 'tooManyArtifacts', 'sensorNoRr', 'noDescendingTract', 'lowR2',
+  'vt1NotReached', 'vt2NotReached', 'vt1Extrapolated', 'vt2Extrapolated', 'inconsistent',
+])
+
+/** Testo del motivo (`sport.threshold.reasons.*`); codici sconosciuti si mostrano come arrivano. */
+export function thresholdReasonText(reason: string, t: Tr): string {
+  return THRESHOLD_REASONS.has(reason) ? t(`threshold.reasons.${reason}`) : reason
 }
+
+export type Hrr60BandKey = 'good' | 'average' | 'toImprove'
 
 /** Lettura del recupero a 60 s (stesse soglie dell'app: Cole 1999 e norme
- *  sportive): ≥ 25 buono, 13–24 nella media, ≤ 12 da migliorare. */
-export function hrr60Band(hrr60: number): { label: string; tone: string } {
-  if (hrr60 >= 25) return { label: 'buono', tone: 'text-emerald-700' }
-  if (hrr60 >= 13) return { label: 'nella media', tone: 'text-blue-700' }
-  return { label: 'da migliorare', tone: 'text-amber-700' }
+ *  sportive): ≥ 25 buono, 13–24 nella media, ≤ 12 da migliorare.
+ *  L'etichetta è `sport.threshold.hrrBand.<key>`. */
+export function hrr60Band(hrr60: number): { key: Hrr60BandKey; tone: string } {
+  if (hrr60 >= 25) return { key: 'good', tone: 'text-emerald-700' }
+  if (hrr60 >= 13) return { key: 'average', tone: 'text-blue-700' }
+  return { key: 'toImprove', tone: 'text-amber-700' }
 }
 
-/** Nota metodologica, identica all'app. */
-export const THRESHOLD_METHOD_NOTE =
-  'Stima delle soglie basata sul DFA alpha1 (Rogers et al. 2021). Il DFA alpha1 da solo tende a collocare la prima soglia qualche battito più in alto rispetto al test da laboratorio. Per la massima precisione il riferimento resta il test cardiopolmonare.'
+// La nota metodologica (identica all'app) è `sport.threshold.methodNote`.
 
 export const THRESHOLD_TEST_TYPE = 'threshold_test'
 

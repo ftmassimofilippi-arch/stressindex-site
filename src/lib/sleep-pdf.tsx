@@ -4,7 +4,8 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet, Svg, Rect, Line, Path, Circle, Text as SvgText } from '@react-pdf/renderer'
 import type { SleepDesaturationEvent, SleepSession, SleepWindow } from './monitoring-types'
-import { MON, SLEEP_PARAMS, SLEEP_STATE_COLOR, SLEEP_STATE_LABEL, SLEEP_STATE_ORDER, STATE_COLOR, dayNumeric, duration, hm, seconds, sleepComponentColor, sleepScoreColor } from './monitoring-format'
+import type { Tr } from '@/i18n/types'
+import { MON, SLEEP_PARAMS, SLEEP_STATE_COLOR, SLEEP_STATE_ORDER, STATE_COLOR, dayNumeric, duration, fmtNum, hm, seconds, sleepComponentColor, sleepScoreColor, sleepStateLabel } from './monitoring-format'
 import { sleepT } from './sleep-strings'
 import type { Lang } from './monitoring-strings'
 import { pdfText as tx } from './pdf-text'
@@ -38,7 +39,7 @@ const st = StyleSheet.create({
   infoText: { fontSize: 8, marginTop: 3, lineHeight: 1.5 },
 })
 
-type Ctx = { s: SleepSession; tz: number; t: (k: string) => string; professional: ProfessionalProfile | null; client: boolean }
+type Ctx = { s: SleepSession; tz: number; lang: Lang; t: (k: string) => string; tf: Tr; professional: ProfessionalProfile | null; client: boolean }
 
 function Footer({ ctx }: { ctx: Ctx }) {
   return (
@@ -151,13 +152,13 @@ function StripSvg({ windows, events }: { windows: SleepWindow[]; events: SleepDe
   )
 }
 
-function StripLegend() {
+function StripLegend({ tf }: { tf: Tr }) {
   return (
     <View style={{ flexDirection: 'row', marginTop: 3 }}>
       {SLEEP_STATE_ORDER.map((s) => (
         <View key={s} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 8 }}>
           <View style={{ width: 8, height: 8, marginRight: 3, backgroundColor: SLEEP_STATE_COLOR[s], borderWidth: 0.3, borderColor: C.border }} />
-          <Text style={{ fontSize: 7, color: C.textMid }}>{tx(SLEEP_STATE_LABEL[s])}</Text>
+          <Text style={{ fontSize: 7, color: C.textMid }}>{tx(sleepStateLabel(s, tf))}</Text>
         </View>
       ))}
     </View>
@@ -207,9 +208,10 @@ function ProfSection({ p }: { p: ProfessionalProfile | null }) {
   return <View style={[st.box, { marginBottom: 8 }]}>{rows.map((r, i) => <Text key={i} style={{ fontSize: i === 0 ? 9 : 7.5, fontFamily: i === 0 ? 'Helvetica-Bold' : 'Helvetica', color: i === 0 ? C.anthracite : C.textMid }}>{tx(r as string)}</Text>)}</View>
 }
 
-export function SleepPdfDocument({ session, professional, client, lang = 'it' }: { session: SleepSession; professional: ProfessionalProfile | null; client: boolean; lang?: Lang }) {
+export function SleepPdfDocument({ session, professional, client, lang = 'it', tf }: { session: SleepSession; professional: ProfessionalProfile | null; client: boolean; lang?: Lang; tf: Tr }) {
   const t = (k: string) => sleepT(k, lang)
-  const ctx: Ctx = { s: session, tz: session.tz_offset_minutes, t, professional, client }
+  const nf = (v: number | null | undefined, d: number) => fmtNum(v, d, lang)
+  const ctx: Ctx = { s: session, tz: session.tz_offset_minutes, lang, t, tf, professional, client }
   const s = session
   const tz = s.tz_offset_minutes
   const n = s.night?.sleep ?? null
@@ -261,12 +263,12 @@ export function SleepPdfDocument({ session, professional, client, lang = 'it' }:
             <Text style={st.phrase}>{tx(s.summary?.summary_phrase ?? '')}</Text>
             <Text style={st.section}>{tx(t('key_numbers'))}</Text>
             <View style={{ flexDirection: 'row' }}>
-              <Kpi label={t('odi3').split(' (')[0]} value={o ? `${o.odi3.toFixed(1)} /h · ${t(`odi_${o.odi3_label}`)}` : '—'} color={odiColor(o?.odi3_label)} />
-              <Kpi label={t('t90')} value={o ? `${o.t90_pct.toFixed(1)} % · ${t(`band_${o.t90_label}`)}` : '—'} color={t90Color(o?.t90_label)} />
+              <Kpi label={t('odi3').split(' (')[0]} value={o ? `${nf(o.odi3, 1)} /h · ${t(`odi_${o.odi3_label}`)}` : '—'} color={odiColor(o?.odi3_label)} />
+              <Kpi label={t('t90')} value={o ? `${nf(o.t90_pct, 1)} % · ${t(`band_${o.t90_label}`)}` : '—'} color={t90Color(o?.t90_label)} />
               <Kpi label={t('pr_min')} value={c ? `${Math.round(c.min_pr)} bpm` : '—'} color={C.accentDark} />
             </View>
             <View style={{ flexDirection: 'row', marginTop: 6 }}>
-              <Kpi label={t('spo2_mean')} value={o?.mean_spo2 == null ? '—' : `${o.mean_spo2.toFixed(1)} %`} color={C.anthracite} />
+              <Kpi label={t('spo2_mean')} value={o?.mean_spo2 == null ? '—' : `${nf(o.mean_spo2, 1)} %`} color={C.anthracite} />
               <Kpi label={t('events')} value={o ? `${o.event_count}` : '—'} color={C.anthracite} />
               <Kpi label={t('pr_mean')} value={c ? `${Math.round(c.mean_pr)} bpm` : '—'} color={C.anthracite} />
             </View>
@@ -286,11 +288,11 @@ export function SleepPdfDocument({ session, professional, client, lang = 'it' }:
             <Text style={{ fontSize: 8.5, color: C.textMid }}>{tx(t('spo2_chart'))}</Text>
             <CurveSvg windows={s.windows} pick={(w) => w.spo2} color={C.accent} thresholdY={SLEEP_PARAMS.t90Threshold} markers={events.map((e) => [e.nadir_time, e.nadir])} markerColor={C.bad} yMax={100} tz={tz} />
             <StripSvg windows={s.windows} events={events} />
-            <StripLegend />
+            <StripLegend tf={tf} />
             <View style={{ flexDirection: 'row', marginTop: 10 }}>
-              <Kpi label="ODI3" value={`${o.odi3.toFixed(1)} /h`} color={odiColor(o.odi3_label)} />
-              <Kpi label="ODI4" value={`${o.odi4.toFixed(1)} /h`} color={C.accentDark} />
-              <Kpi label={t('t90')} value={`${o.t90_minutes.toFixed(1)} min`} color={t90Color(o.t90_label)} />
+              <Kpi label="ODI3" value={`${nf(o.odi3, 1)} /h`} color={odiColor(o.odi3_label)} />
+              <Kpi label="ODI4" value={`${nf(o.odi4, 1)} /h`} color={C.accentDark} />
+              <Kpi label={t('t90')} value={`${nf(o.t90_minutes, 1)} min`} color={t90Color(o.t90_label)} />
               <Kpi label={t('nadir')} value={`${o.nadir} %${o.nadir_time ? ` · ${hm(o.nadir_time, tz)}` : ''}`} color={o.nadir < SLEEP_PARAMS.oxyNadirPenaltyBelow ? C.bad : C.anthracite} />
             </View>
             <Text style={st.section}>{tx(t('below_threshold'))}</Text>
@@ -298,14 +300,14 @@ export function SleepPdfDocument({ session, professional, client, lang = 'it' }:
               <View style={{ flexDirection: 'row' }}>{[t('threshold'), t('minutes'), t('percent'), t('band')].map((h, i) => <Text key={i} style={[st.th, { flex: 1, textAlign: i === 0 ? 'left' : 'right' }]}>{tx(h)}</Text>)}</View>
               {([['90 %', o.t90_minutes, o.t90_pct, t(`band_${o.t90_label}`)], ['88 %', o.t88_minutes, o.t88_pct, ''], ['85 %', o.t85_minutes, o.t85_pct, '']] as Array<[string, number, number, string]>).map(([th, min, pct, band]) => (
                 <View key={th} style={{ flexDirection: 'row', borderTopWidth: 0.4, borderTopColor: C.border }}>
-                  <Text style={[st.td, { flex: 1 }]}>{th}</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{min.toFixed(1)}</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{pct.toFixed(1)}</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{tx(band)}</Text>
+                  <Text style={[st.td, { flex: 1 }]}>{th}</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{nf(min, 1)}</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{nf(pct, 1)}</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{tx(band)}</Text>
                 </View>
               ))}
             </View>
             <View style={{ flexDirection: 'row', marginTop: 10 }}>
-              <InfoBox title={t('odi3')} text={`${o.odi3.toFixed(2)} · ${t(`odi_${o.odi3_label}`)}\n${t('events')}: ${o.event_count} (ODI4: ${o.event_count_4}) · ${t('valid_time')}: ${duration(Math.round(n.signal.valid_recording_minutes))}${n.device?.drops_4 == null ? '' : `\n${t('device_drops4')}: ${n.device.drops_4}`}`} color={odiColor(o.odi3_label)} />
+              <InfoBox title={t('odi3')} text={`${nf(o.odi3, 2)} · ${t(`odi_${o.odi3_label}`)}\n${t('events')}: ${o.event_count} (ODI4: ${o.event_count_4}) · ${t('valid_time')}: ${duration(Math.round(n.signal.valid_recording_minutes))}${n.device?.drops_4 == null ? '' : `\n${t('device_drops4')}: ${n.device.drops_4}`}`} color={odiColor(o.odi3_label)} />
               <View style={{ width: 8 }} />
-              <InfoBox title={t('delta_index')} text={`${o.delta_index_12s?.toFixed(2) ?? '—'} · SD ${o.spo2_sd?.toFixed(2) ?? '—'}\n${t('cyclic')}: ${o.cyclic_runs === 0 ? t('cyclic_none') : `${o.cyclic_runs} ${t('cyclic_runs')} · ${duration(Math.round(o.cyclic_minutes))}`}`} color={C.accent} />
+              <InfoBox title={t('delta_index')} text={`${nf(o.delta_index_12s, 2)} · SD ${nf(o.spo2_sd, 2)}\n${t('cyclic')}: ${o.cyclic_runs === 0 ? t('cyclic_none') : `${o.cyclic_runs} ${t('cyclic_runs')} · ${duration(Math.round(o.cyclic_minutes))}`}`} color={C.accent} />
             </View>
             {n.signal.invalid_segments.map((seg, i) => (
               <View key={i} style={{ marginTop: 6 }}><TextBox text={`${t('probe_off')}: ${hm(seg.start, tz)} – ${hm(seg.end, tz)} (${seconds(Math.round((new Date(seg.end).getTime() - new Date(seg.start).getTime()) / 1000))}), ${t('probe_off_note')}`} /></View>
@@ -329,7 +331,7 @@ export function SleepPdfDocument({ session, professional, client, lang = 'it' }:
               <Kpi label={t('pr_mean')} value={`${Math.round(c.mean_pr)} bpm`} color={C.anthracite} />
               <Kpi label={`${t('pr_min')}${c.min_pr_time ? ` · ${hm(c.min_pr_time, tz)}` : ''}`} value={`${Math.round(c.min_pr)} bpm`} color={C.accentDark} />
               <Kpi label={t('pr_basal')} value={`${Math.round(c.pr_basal)} bpm`} color={C.good} />
-              <Kpi label={t('dip')} value={`${c.dip_pct.toFixed(1)} %`} color={c.dip_pct >= SLEEP_PARAMS.cardioDipFullPct ? C.good : C.anthracite} />
+              <Kpi label={t('dip')} value={`${nf(c.dip_pct, 1)} %`} color={c.dip_pct >= SLEEP_PARAMS.cardioDipFullPct ? C.good : C.anthracite} />
             </View>
             <View style={{ flexDirection: 'row', marginTop: 8 }}>
               <InfoBox title={t('trend')} text={`${c.first_3h_mean_pr == null ? '—' : Math.round(c.first_3h_mean_pr)} › ${c.last_3h_mean_pr == null ? '—' : Math.round(c.last_3h_mean_pr)} bpm · ${trendText(c.trend_bpm)}`} color={trendColor(c.trend_bpm)} />
@@ -343,7 +345,7 @@ export function SleepPdfDocument({ session, professional, client, lang = 'it' }:
                   <View style={{ flexDirection: 'row' }}>{[t('hour'), 'SpO₂', t('pr'), t('events')].map((h, i) => <Text key={i} style={[st.th, { flex: 1, textAlign: i === 0 ? 'left' : 'right' }]}>{tx(h)}</Text>)}</View>
                   {n.hourly.map((h, i) => (
                     <View key={i} style={{ flexDirection: 'row', borderTopWidth: 0.4, borderTopColor: C.border }}>
-                      <Text style={[st.td, { flex: 1 }]}>{hm(h.hour_start, tz)}</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{h.spo2 == null ? '—' : h.spo2.toFixed(1)}</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{h.pr == null ? '—' : Math.round(h.pr)}</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{h.events}</Text>
+                      <Text style={[st.td, { flex: 1 }]}>{hm(h.hour_start, tz)}</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{h.spo2 == null ? '—' : nf(h.spo2, 1)}</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{h.pr == null ? '—' : Math.round(h.pr)}</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{h.events}</Text>
                     </View>
                   ))}
                 </View>
@@ -355,7 +357,7 @@ export function SleepPdfDocument({ session, professional, client, lang = 'it' }:
                     <View style={{ flexDirection: 'row' }}>{[t('ev_time'), t('ev_duration'), t('ev_drop'), t('ev_nadir'), t('ev_surge')].map((h, i) => <Text key={i} style={[st.th, { flex: 1, textAlign: i === 0 ? 'left' : 'right' }]}>{tx(h)}</Text>)}</View>
                     {events.slice(0, MAX_EVENTS).map((e, i) => (
                       <View key={i} style={{ flexDirection: 'row', borderTopWidth: 0.4, borderTopColor: C.border }}>
-                        <Text style={[st.td, { flex: 1 }]}>{hm(e.start, tz)}</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{e.duration_sec} s</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>-{e.drop?.toFixed(1) ?? '—'}</Text><Text style={[st.td, { flex: 1, textAlign: 'right', color: e.nadir < SLEEP_PARAMS.t90Threshold ? C.bad : C.anthracite }]}>{e.nadir} %</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{e.surge_bpm == null ? '—' : `${e.surge_bpm >= 0 ? '+' : ''}${Math.round(e.surge_bpm)}`}</Text>
+                        <Text style={[st.td, { flex: 1 }]}>{hm(e.start, tz)}</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{e.duration_sec} s</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>-{nf(e.drop, 1)}</Text><Text style={[st.td, { flex: 1, textAlign: 'right', color: e.nadir < SLEEP_PARAMS.t90Threshold ? C.bad : C.anthracite }]}>{e.nadir} %</Text><Text style={[st.td, { flex: 1, textAlign: 'right' }]}>{e.surge_bpm == null ? '—' : `${e.surge_bpm >= 0 ? '+' : ''}${Math.round(e.surge_bpm)}`}</Text>
                       </View>
                     ))}
                     {events.length > MAX_EVENTS && <Text style={[st.td, { color: C.textMid }]}>{events.length - MAX_EVENTS} {tx(t('more_events'))}</Text>}

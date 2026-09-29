@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (body.action === 'set') {
     const password = typeof body.password === 'string' ? body.password : ''
     if (password.length < 8) {
-      return NextResponse.json({ error: 'password_too_short' }, { status: 400 })
+      return apiError('password_too_short', 400)
     }
     const { error } = await admin.auth.admin.updateUserById(userId, { password })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     // Recupera l'email dell'utente.
     const { data, error: getErr } = await admin.auth.admin.getUserById(userId)
     if (getErr || !data.user?.email) {
-      return NextResponse.json({ error: getErr?.message ?? 'no_email' }, { status: 400 })
+      return getErr ? NextResponse.json({ error: getErr.message }, { status: 400 }) : apiError('no_email', 400)
     }
     // Usa un client anon per inviare l'email di reset (resetPasswordForEmail).
     const anon = createSupabaseClient(
@@ -45,5 +46,5 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ ok: true, email: data.user.email })
   }
 
-  return NextResponse.json({ error: 'invalid_action' }, { status: 400 })
+  return apiError('invalid_action', 400)
 }

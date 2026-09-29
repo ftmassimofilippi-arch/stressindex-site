@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Calendar, ChevronDown, ChevronUp, RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react'
 import { format as fmtDate, parseISO, subDays } from 'date-fns'
-import { toNum } from '@/lib/format'
-import { it } from 'date-fns/locale'
+import { useLocale, useTranslations } from 'next-intl'
+import { intlTag, num, toNum } from '@/lib/format'
+import type { Tr } from '@/i18n/types'
 import {
   Brush,
   CartesianGrid,
@@ -19,12 +20,15 @@ import {
 // ============================================================================
 // METRIC REGISTRY
 // ============================================================================
+// L'etichetta di ogni metrica è in `charts.metrics.<key>` (chiave = colonna
+// di measurement_analytics): si legge con `metricLabel(m, t)`, dove
+// `t = useTranslations('charts.metrics')`. I nomi dei gruppi sono in
+// `charts.groups.<group>`.
 
 type Group = 'score' | 'time' | 'welch' | 'lomb' | 'nonlinear' | 'geometric'
 
 export type MetricDef = {
   key: string
-  label: string
   color: string
   group: Group
   unit?: string
@@ -34,70 +38,68 @@ export type MetricDef = {
 
 export const TREND_METRICS: MetricDef[] = [
   // Score proprietari (0-100, asse sinistro)
-  { key: 'score_stress', label: 'Indice di Stress', color: '#E85D4A', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
-  { key: 'score_recupero', label: 'Recupero', color: '#4FA39A', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
-  { key: 'score_equilibrio', label: 'Equilibrio', color: '#F59E0B', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
-  { key: 'score_energia', label: 'Energia', color: '#6366F1', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
-  { key: 'score_modulazione_infiammatoria', label: 'Adattamento', color: '#8B5CF6', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
-  { key: 'score_composito', label: 'Indice composito', color: '#2E746C', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
+  { key: 'score_stress', color: '#E85D4A', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
+  { key: 'score_recupero', color: '#4FA39A', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
+  { key: 'score_equilibrio', color: '#F59E0B', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
+  { key: 'score_energia', color: '#6366F1', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
+  { key: 'score_modulazione_infiammatoria', color: '#8B5CF6', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
+  { key: 'score_composito', color: '#2E746C', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
 
   // Time domain (blu)
-  { key: 'sdnn', label: 'SDNN', color: '#0EA5E9', group: 'time', unit: 'ms', axis: 'right', decimals: 1 },
-  { key: 'rmssd', label: 'RMSSD', color: '#38BDF8', group: 'time', unit: 'ms', axis: 'right', decimals: 1 },
-  { key: 'pnn50', label: 'pNN50', color: '#7DD3FC', group: 'time', unit: '%', axis: 'right', decimals: 1 },
-  { key: 'pnn20', label: 'pNN20', color: '#BAE6FD', group: 'time', unit: '%', axis: 'right', decimals: 1 },
-  { key: 'mean_hr', label: 'BPM medio', color: '#0284C7', group: 'time', unit: 'bpm', axis: 'right', decimals: 1 },
-  { key: 'cv', label: 'CV', color: '#0369A1', group: 'time', unit: '', axis: 'right', decimals: 2 },
-  { key: 'rmssd_sdnn_ratio', label: 'RMSSD/SDNN', color: '#075985', group: 'time', unit: '', axis: 'right', decimals: 2 },
+  { key: 'sdnn', color: '#0EA5E9', group: 'time', unit: 'ms', axis: 'right', decimals: 1 },
+  { key: 'rmssd', color: '#38BDF8', group: 'time', unit: 'ms', axis: 'right', decimals: 1 },
+  { key: 'pnn50', color: '#7DD3FC', group: 'time', unit: '%', axis: 'right', decimals: 1 },
+  { key: 'pnn20', color: '#BAE6FD', group: 'time', unit: '%', axis: 'right', decimals: 1 },
+  { key: 'mean_hr', color: '#0284C7', group: 'time', unit: 'bpm', axis: 'right', decimals: 1 },
+  { key: 'cv', color: '#0369A1', group: 'time', unit: '', axis: 'right', decimals: 2 },
+  { key: 'rmssd_sdnn_ratio', color: '#075985', group: 'time', unit: '', axis: 'right', decimals: 2 },
 
   // Frequency Welch (viola)
-  { key: 'vlf_power', label: 'VLF Power', color: '#A855F7', group: 'welch', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'lf_power', label: 'LF Power', color: '#C084FC', group: 'welch', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'hf_power', label: 'HF Power', color: '#D8B4FE', group: 'welch', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'total_power', label: 'Total Power', color: '#7C3AED', group: 'welch', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'lf_hf_ratio', label: 'LF/HF', color: '#6D28D9', group: 'welch', unit: '', axis: 'right', decimals: 2 },
-  { key: 'lf_nu', label: 'LFnu', color: '#5B21B6', group: 'welch', unit: 'n.u.', axis: 'right', decimals: 1 },
-  { key: 'hf_nu', label: 'HFnu', color: '#4C1D95', group: 'welch', unit: 'n.u.', axis: 'right', decimals: 1 },
+  { key: 'vlf_power', color: '#A855F7', group: 'welch', unit: 'ms²', axis: 'right', decimals: 0 },
+  { key: 'lf_power', color: '#C084FC', group: 'welch', unit: 'ms²', axis: 'right', decimals: 0 },
+  { key: 'hf_power', color: '#D8B4FE', group: 'welch', unit: 'ms²', axis: 'right', decimals: 0 },
+  { key: 'total_power', color: '#7C3AED', group: 'welch', unit: 'ms²', axis: 'right', decimals: 0 },
+  { key: 'lf_hf_ratio', color: '#6D28D9', group: 'welch', unit: '', axis: 'right', decimals: 2 },
+  { key: 'lf_nu', color: '#5B21B6', group: 'welch', unit: 'n.u.', axis: 'right', decimals: 1 },
+  { key: 'hf_nu', color: '#4C1D95', group: 'welch', unit: 'n.u.', axis: 'right', decimals: 1 },
 
   // Frequency Lomb-Scargle (rosa)
-  { key: 'vlf_power_ls', label: 'VLF Power (LS)', color: '#EC4899', group: 'lomb', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'lf_power_ls', label: 'LF Power (LS)', color: '#F472B6', group: 'lomb', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'hf_power_ls', label: 'HF Power (LS)', color: '#F9A8D4', group: 'lomb', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'total_power_ls', label: 'Total Power (LS)', color: '#DB2777', group: 'lomb', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'lf_hf_ratio_ls', label: 'LF/HF (LS)', color: '#BE185D', group: 'lomb', unit: '', axis: 'right', decimals: 2 },
+  { key: 'vlf_power_ls', color: '#EC4899', group: 'lomb', unit: 'ms²', axis: 'right', decimals: 0 },
+  { key: 'lf_power_ls', color: '#F472B6', group: 'lomb', unit: 'ms²', axis: 'right', decimals: 0 },
+  { key: 'hf_power_ls', color: '#F9A8D4', group: 'lomb', unit: 'ms²', axis: 'right', decimals: 0 },
+  { key: 'total_power_ls', color: '#DB2777', group: 'lomb', unit: 'ms²', axis: 'right', decimals: 0 },
+  { key: 'lf_hf_ratio_ls', color: '#BE185D', group: 'lomb', unit: '', axis: 'right', decimals: 2 },
 
   // Non-lineari (arancio)
-  { key: 'sd1', label: 'SD1', color: '#F97316', group: 'nonlinear', unit: 'ms', axis: 'right', decimals: 1 },
-  { key: 'sd2', label: 'SD2', color: '#FB923C', group: 'nonlinear', unit: 'ms', axis: 'right', decimals: 1 },
-  { key: 'sd1_sd2_ratio', label: 'SD1/SD2', color: '#FDBA74', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
-  { key: 'dfa_alpha1', label: 'DFA α1', color: '#FED7AA', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
-  { key: 'dfa_alpha2', label: 'DFA α2', color: '#EA580C', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
-  { key: 'sample_entropy', label: 'Sample Entropy', color: '#C2410C', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
-  { key: 'approximate_entropy', label: 'Approximate Entropy', color: '#9A3412', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
+  { key: 'sd1', color: '#F97316', group: 'nonlinear', unit: 'ms', axis: 'right', decimals: 1 },
+  { key: 'sd2', color: '#FB923C', group: 'nonlinear', unit: 'ms', axis: 'right', decimals: 1 },
+  { key: 'sd1_sd2_ratio', color: '#FDBA74', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
+  { key: 'dfa_alpha1', color: '#FED7AA', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
+  { key: 'dfa_alpha2', color: '#EA580C', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
+  { key: 'sample_entropy', color: '#C2410C', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
+  { key: 'approximate_entropy', color: '#9A3412', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
 
   // Geometrici (lime)
-  { key: 'triangular_index', label: 'Triangular Index', color: '#84CC16', group: 'geometric', unit: '', axis: 'right', decimals: 1 },
-  { key: 'tinn', label: 'TINN', color: '#A3E635', group: 'geometric', unit: 'ms', axis: 'right', decimals: 1 },
-  { key: 'stress_index_baevsky', label: 'Stress Index (Baevsky)', color: '#65A30D', group: 'geometric', unit: '', axis: 'right', decimals: 1 },
+  { key: 'triangular_index', color: '#84CC16', group: 'geometric', unit: '', axis: 'right', decimals: 1 },
+  { key: 'tinn', color: '#A3E635', group: 'geometric', unit: 'ms', axis: 'right', decimals: 1 },
+  { key: 'stress_index_baevsky', color: '#65A30D', group: 'geometric', unit: '', axis: 'right', decimals: 1 },
 ]
 
 const METRIC_MAP: Record<string, MetricDef> = Object.fromEntries(TREND_METRICS.map((m) => [m.key, m]))
 
-const GROUPS: Array<{ key: Group; label: string }> = [
-  { key: 'score', label: 'Score Proprietari' },
-  { key: 'time', label: 'Time Domain' },
-  { key: 'welch', label: 'Frequency · Welch' },
-  { key: 'lomb', label: 'Frequency · Lomb-Scargle' },
-  { key: 'nonlinear', label: 'Non-lineari' },
-  { key: 'geometric', label: 'Geometrici' },
-]
+/** Etichetta tradotta di una metrica del trend (`t = useTranslations('charts.metrics')`). */
+export function metricLabel(m: MetricDef | string, t: Tr): string {
+  return t(typeof m === 'string' ? m : m.key)
+}
 
-function formatMetricValue(value: unknown, m: MetricDef | undefined): string {
+const GROUP_ORDER: Group[] = ['score', 'time', 'welch', 'lomb', 'nonlinear', 'geometric']
+
+function formatMetricValue(value: unknown, m: MetricDef | undefined, locale: string): string {
   const decimals = m?.decimals ?? 1
   // I punti del grafico arrivano dal database: coercizione prima di formattare.
   const n = toNum(value)
   if (n == null) return '—'
-  const formatted = n.toFixed(decimals)
+  const formatted = num(n, decimals, locale)
   if (!m?.unit) return formatted
   if (m.unit === '/100') return `${formatted} / 100`
   if (m.unit === '%') return `${formatted}%`
@@ -107,18 +109,24 @@ function formatMetricValue(value: unknown, m: MetricDef | undefined): string {
 // ============================================================================
 // DATE PRESETS
 // ============================================================================
+// Le chiavi ('7', '30', ...) sono anche il valore salvato in localStorage:
+// non cambiano. L'etichetta è in `charts.presets.<labelKey>`.
 
 type PresetKey = '7' | '30' | '90' | '180' | '365' | 'all' | 'custom'
 
-const PRESETS: Array<{ key: PresetKey; label: string; days: number | null }> = [
-  { key: '7', label: 'Ultimi 7', days: 7 },
-  { key: '30', label: 'Ultimi 30', days: 30 },
-  { key: '90', label: '90 giorni', days: 90 },
-  { key: '180', label: '6 mesi', days: 180 },
-  { key: '365', label: '1 anno', days: 365 },
-  { key: 'all', label: 'Tutto', days: null },
+const PRESETS: Array<{ key: PresetKey; labelKey: string; days: number | null }> = [
+  { key: '7', labelKey: 'd7', days: 7 },
+  { key: '30', labelKey: 'd30', days: 30 },
+  { key: '90', labelKey: 'd90', days: 90 },
+  { key: '180', labelKey: 'm6', days: 180 },
+  { key: '365', labelKey: 'y1', days: 365 },
+  { key: 'all', labelKey: 'all', days: null },
 ]
 
+const PRESET_KEYS: ReadonlySet<string> = new Set<string>([...PRESETS.map((p) => p.key), 'custom'])
+
+// Chiave "macchina" del giorno (yyyy-MM-dd): serve per confronti e input date,
+// non è testo visibile, quindi resta senza locale.
 function isoDay(d: Date) { return fmtDate(d, 'yyyy-MM-dd') }
 
 // ============================================================================
@@ -146,6 +154,18 @@ export function AdvancedTrendChart({
   storageKey,
   showBrush = true,
 }: Props) {
+  const locale = useLocale()
+  const t = useTranslations('charts')
+  const tMetrics = useTranslations('charts.metrics')
+
+  // Formati data per assi e tooltip nella lingua della pagina.
+  const tickDate = useMemo(() => new Intl.DateTimeFormat(intlTag(locale), { day: 'numeric', month: 'short' }), [locale])
+  const fullDate = useMemo(
+    () => new Intl.DateTimeFormat(intlTag(locale), { day: 'numeric', month: 'short', year: 'numeric' }),
+    [locale],
+  )
+  const fmtTick = (v: unknown) => { try { return tickDate.format(parseISO(String(v))) } catch { return String(v) } }
+
   // periodo
   const [activeKey, setActiveKey] = useState<PresetKey>(defaultPreset)
   const [customFrom, setCustomFrom] = useState(() => isoDay(subDays(new Date(), 30)))
@@ -164,10 +184,10 @@ export function AdvancedTrendChart({
   // hydration da localStorage
   useEffect(() => {
     if (typeof window === 'undefined' || !storageKey) return
-    const savedPreset = window.localStorage.getItem(`${storageKey}:range`) as PresetKey | null
+    const savedPreset = window.localStorage.getItem(`${storageKey}:range`)
     const savedMetrics = window.localStorage.getItem(`${storageKey}:metrics`)
     const savedHidden = window.localStorage.getItem(`${storageKey}:hidden`)
-    if (savedPreset) setActiveKey(savedPreset)
+    if (savedPreset && PRESET_KEYS.has(savedPreset)) setActiveKey(savedPreset as PresetKey)
     if (savedMetrics) {
       try {
         const arr = JSON.parse(savedMetrics) as string[]
@@ -290,44 +310,38 @@ export function AdvancedTrendChart({
   const hasLeftAxis = renderedMetrics.some((m) => m.axis === 'left')
   const hasRightAxis = renderedMetrics.some((m) => m.axis === 'right')
 
-  // ricerca metriche
+  // ricerca metriche (sull'etichetta tradotta e sulla chiave)
   const filteredMetrics = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return TREND_METRICS
-    return TREND_METRICS.filter((m) => m.label.toLowerCase().includes(q) || m.key.toLowerCase().includes(q))
-  }, [search])
+    return TREND_METRICS.filter((m) => metricLabel(m, tMetrics).toLowerCase().includes(q) || m.key.toLowerCase().includes(q))
+  }, [search, tMetrics])
+
+  const presetBtn = (active: boolean) =>
+    `px-2.5 py-1 rounded-lg text-xs font-medium border whitespace-nowrap transition-colors ${
+      active
+        ? 'bg-teal-dark text-white border-teal-dark'
+        : 'bg-white border-surface-border text-anthracite-lighter hover:bg-surface hover:text-anthracite'
+    }`
 
   return (
     <div>
       {/* TOOLBAR */}
       <div className="flex flex-wrap items-center gap-1.5 mb-4">
         {PRESETS.map((p) => (
-          <button
-            key={p.key}
-            type="button"
-            onClick={() => setRange(p.key)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
-              activeKey === p.key
-                ? 'bg-teal-dark text-white border-teal-dark'
-                : 'bg-white border-surface-border text-anthracite-lighter hover:bg-surface hover:text-anthracite'
-            }`}
-          >
-            {p.label}
+          <button key={p.key} type="button" onClick={() => setRange(p.key)} className={presetBtn(activeKey === p.key)}>
+            {t(`presets.${p.labelKey}`)}
           </button>
         ))}
         <button
           type="button"
           onClick={() => setRange('custom')}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
-            activeKey === 'custom'
-              ? 'bg-teal-dark text-white border-teal-dark'
-              : 'bg-white border-surface-border text-anthracite-lighter hover:bg-surface hover:text-anthracite'
-          }`}
+          className={`flex items-center gap-1.5 ${presetBtn(activeKey === 'custom')}`}
         >
-          <Calendar size={12} /> Custom
+          <Calendar size={12} /> {t('presets.custom')}
         </button>
         {activeKey === 'custom' && (
-          <div className="flex items-center gap-1.5 ml-2">
+          <div className="flex flex-wrap items-center gap-1.5 ml-2">
             <input
               type="date"
               value={customFrom}
@@ -347,21 +361,21 @@ export function AdvancedTrendChart({
           </div>
         )}
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <button
             type="button"
             onClick={() => setBrushKey((x) => x + 1)}
-            className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border bg-white border-surface-border text-anthracite-lighter hover:bg-surface hover:text-anthracite transition-colors"
-            title="Reset zoom"
+            className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border bg-white border-surface-border text-anthracite-lighter hover:bg-surface hover:text-anthracite whitespace-nowrap transition-colors"
+            title={t('trend.resetZoom')}
           >
-            <RotateCcw size={12} /> Reset zoom
+            <RotateCcw size={12} /> {t('trend.resetZoom')}
           </button>
           <button
             type="button"
             onClick={() => setPanelOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-anthracite text-white hover:bg-anthracite-lighter transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-anthracite text-white hover:bg-anthracite-lighter whitespace-nowrap transition-colors"
           >
-            <SlidersHorizontal size={13} /> Seleziona metriche
+            <SlidersHorizontal size={13} /> {t('trend.selectMetrics')}
             <span className="ml-1 px-1.5 py-0.5 rounded-md bg-white/15 text-[10px]">{selected.size}</span>
           </button>
         </div>
@@ -369,10 +383,10 @@ export function AdvancedTrendChart({
 
       {/* CHART */}
       {filtered.length === 0 ? (
-        <div className="py-10 text-center text-sm text-anthracite-lighter">Nessun dato nel periodo selezionato</div>
+        <div className="py-10 text-center text-sm text-anthracite-lighter">{t('trend.noDataInPeriod')}</div>
       ) : renderedMetrics.length === 0 ? (
         <div className="py-10 text-center text-sm text-anthracite-lighter">
-          Nessuna metrica selezionata — apri <em>“Seleziona metriche”</em> per scegliere cosa visualizzare
+          {t.rich('trend.noMetricSelected', { em: (c) => <em>{c}</em> })}
         </div>
       ) : (
         <>
@@ -385,9 +399,7 @@ export function AdvancedTrendChart({
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => {
-                  try { return fmtDate(parseISO(v), 'd MMM', { locale: it }) } catch { return v }
-                }}
+                tickFormatter={fmtTick}
               />
               {hasLeftAxis && (
                 <YAxis
@@ -411,11 +423,12 @@ export function AdvancedTrendChart({
                   tickLine={false}
                   axisLine={false}
                   width={48}
+                  tickFormatter={(v) => num(v, 0, locale)}
                 />
               )}
               {/* se non c'è left, usa right come default per le linee left (fallback non dovrebbe servire) */}
               <Tooltip
-                content={<CustomTooltip />}
+                content={<CustomTooltip locale={locale} fullDate={fullDate} tMetrics={tMetrics} />}
                 cursor={{ stroke: '#94A3B8', strokeDasharray: '3 3' }}
               />
               {renderedMetrics.map((m) => (
@@ -438,9 +451,7 @@ export function AdvancedTrendChart({
                   height={28}
                   stroke="#4FA39A"
                   travellerWidth={8}
-                  tickFormatter={(v) => {
-                    try { return fmtDate(parseISO(String(v)), 'd MMM', { locale: it }) } catch { return String(v) }
-                  }}
+                  tickFormatter={fmtTick}
                   className="hidden md:block"
                 />
               )}
@@ -458,15 +469,15 @@ export function AdvancedTrendChart({
                   key={k}
                   type="button"
                   onClick={() => toggleHidden(k)}
-                  className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border transition-colors ${
+                  className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border max-w-full transition-colors ${
                     isHidden
                       ? 'bg-surface border-surface-border text-anthracite-lighter line-through'
                       : 'bg-white border-surface-border text-anthracite hover:bg-surface'
                   }`}
-                  title={isHidden ? 'Mostra' : 'Nascondi temporaneamente'}
+                  title={isHidden ? t('trend.show') : t('trend.hideTemporarily')}
                 >
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: m.color, opacity: isHidden ? 0.4 : 1 }} />
-                  {m.label}
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: m.color, opacity: isHidden ? 0.4 : 1 }} />
+                  <span className="truncate">{metricLabel(m, tMetrics)}</span>
                 </button>
               )
             })}
@@ -520,6 +531,10 @@ function MetricsPanel({
   bulkSelectGroup: (g: Group) => void
   resetSelection: () => void
 }) {
+  const t = useTranslations('charts')
+  const tMetrics = useTranslations('charts.metrics')
+  const tCommon = useTranslations('common')
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -527,7 +542,7 @@ function MetricsPanel({
   }, [onClose])
 
   const isSearching = search.trim().length > 0
-  // raggruppa metriche filtrate per gruppo, preservando ordine GROUPS
+  // raggruppa metriche filtrate per gruppo, preservando l'ordine dei gruppi
   const grouped = useMemo(() => {
     const map = new Map<Group, MetricDef[]>()
     for (const m of filteredMetrics) {
@@ -542,12 +557,12 @@ function MetricsPanel({
     <div className="fixed inset-0 z-50 flex">
       <div className="absolute inset-0 bg-anthracite/40 backdrop-blur-sm" onClick={onClose} aria-hidden />
       <div className="relative ml-auto h-full w-full md:w-[400px] bg-white shadow-elevated flex flex-col">
-        <div className="px-5 py-4 border-b border-surface-border flex items-center justify-between">
-          <div>
-            <h3 className="font-serif text-base text-anthracite">Metriche del grafico</h3>
-            <p className="text-xs text-anthracite-lighter mt-0.5">{selected.size} selezionate · {TREND_METRICS.length} disponibili</p>
+        <div className="px-5 py-4 border-b border-surface-border flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="font-serif text-base text-anthracite">{t('trend.panelTitle')}</h3>
+            <p className="text-xs text-anthracite-lighter mt-0.5">{t('trend.panelCount', { selected: selected.size, total: TREND_METRICS.length })}</p>
           </div>
-          <button type="button" aria-label="Chiudi" onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-surface flex items-center justify-center">
+          <button type="button" aria-label={tCommon('close')} onClick={onClose} className="w-8 h-8 flex-shrink-0 rounded-lg hover:bg-surface flex items-center justify-center">
             <X size={18} />
           </button>
         </div>
@@ -559,7 +574,7 @@ function MetricsPanel({
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cerca metrica…"
+              placeholder={t('trend.searchPlaceholder')}
               className="w-full pl-8 pr-3 py-1.5 text-sm border border-surface-border rounded-lg bg-white focus:outline-none focus:border-teal-dark"
             />
           </div>
@@ -568,38 +583,38 @@ function MetricsPanel({
               type="button"
               onClick={() => bulkSelectGroup('score')}
               className="px-2 py-1 text-[11px] rounded-md border border-surface-border bg-white hover:bg-surface text-anthracite"
-            >Tutti i score</button>
+            >{t('trend.allScores')}</button>
             <button
               type="button"
               onClick={() => bulkSelectGroup('time')}
               className="px-2 py-1 text-[11px] rounded-md border border-surface-border bg-white hover:bg-surface text-anthracite"
-            >Tutti i Time Domain</button>
+            >{t('trend.allTimeDomain')}</button>
             <button
               type="button"
               onClick={resetSelection}
               className="px-2 py-1 text-[11px] rounded-md border border-surface-border bg-white hover:bg-surface text-anthracite-lighter ml-auto"
-            >Reset</button>
+            >{tCommon('reset')}</button>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-2 py-2">
-          {GROUPS.map((g) => {
-            const metrics = grouped.get(g.key) ?? []
+          {GROUP_ORDER.map((g) => {
+            const metrics = grouped.get(g) ?? []
             if (!metrics.length) return null
-            const isOpen = isSearching || expandedGroups.has(g.key)
+            const isOpen = isSearching || expandedGroups.has(g)
             const selectedInGroup = metrics.filter((m) => selected.has(m.key)).length
             return (
-              <div key={g.key} className="mb-1">
+              <div key={g} className="mb-1">
                 <button
                   type="button"
-                  onClick={() => toggleGroupExpanded(g.key)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-surface text-left"
+                  onClick={() => toggleGroupExpanded(g)}
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg hover:bg-surface text-left"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-anthracite">{g.label}</span>
-                    <span className="text-[10px] text-anthracite-lighter px-1.5 py-0.5 rounded bg-surface">{selectedInGroup}/{metrics.length}</span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-medium text-anthracite truncate">{t(`groups.${g}`)}</span>
+                    <span className="text-[10px] text-anthracite-lighter px-1.5 py-0.5 rounded bg-surface flex-shrink-0">{selectedInGroup}/{metrics.length}</span>
                   </div>
-                  {isOpen ? <ChevronUp size={14} className="text-anthracite-lighter" /> : <ChevronDown size={14} className="text-anthracite-lighter" />}
+                  {isOpen ? <ChevronUp size={14} className="text-anthracite-lighter flex-shrink-0" /> : <ChevronDown size={14} className="text-anthracite-lighter flex-shrink-0" />}
                 </button>
                 {isOpen && (
                   <ul className="px-1 pb-1">
@@ -615,8 +630,8 @@ function MetricsPanel({
                               className="w-4 h-4 rounded border-surface-border accent-teal-dark"
                             />
                             <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: m.color }} />
-                            <span className="text-sm text-anthracite flex-1">{m.label}</span>
-                            {m.unit && <span className="text-[10px] text-anthracite-lighter">{m.unit}</span>}
+                            <span className="text-sm text-anthracite flex-1 min-w-0 truncate">{metricLabel(m, tMetrics)}</span>
+                            {m.unit && <span className="text-[10px] text-anthracite-lighter flex-shrink-0">{m.unit}</span>}
                           </label>
                         </li>
                       )
@@ -627,7 +642,7 @@ function MetricsPanel({
             )
           })}
           {filteredMetrics.length === 0 && (
-            <div className="px-5 py-8 text-center text-sm text-anthracite-lighter">Nessuna metrica corrisponde a “{search}”</div>
+            <div className="px-5 py-8 text-center text-sm text-anthracite-lighter">{t('trend.noMatch', { query: search })}</div>
           )}
         </div>
 
@@ -637,7 +652,7 @@ function MetricsPanel({
             onClick={onClose}
             className="w-full px-3 py-2 rounded-lg bg-teal-dark text-white text-sm font-medium hover:bg-teal transition-colors"
           >
-            Applica · {selected.size} metrich{selected.size === 1 ? 'a' : 'e'}
+            {t('trend.apply', { count: selected.size })}
           </button>
         </div>
       </div>
@@ -655,11 +670,14 @@ function CustomTooltip(props: {
   active?: boolean
   payload?: TooltipEntry[]
   label?: string | number
+  locale: string
+  fullDate: Intl.DateTimeFormat
+  tMetrics: Tr
 }) {
-  const { active, payload, label } = props
+  const { active, payload, label, locale, fullDate, tMetrics } = props
   if (!active || !payload || !payload.length) return null
   let dateLabel = String(label ?? '')
-  try { dateLabel = fmtDate(parseISO(dateLabel), 'd MMM yyyy', { locale: it }) } catch {}
+  try { dateLabel = fullDate.format(parseISO(dateLabel)) } catch {}
 
   return (
     <div className="bg-white rounded-xl border border-surface-border shadow-elevated px-3 py-2 text-[11px] max-w-[260px]">
@@ -671,8 +689,8 @@ function CustomTooltip(props: {
         return (
           <div key={key} className="flex items-center gap-1.5 mb-0.5 last:mb-0">
             <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
-            <span className="text-anthracite-lighter flex-1">{m?.label ?? key}</span>
-            <b className="text-anthracite ml-2">{v == null ? '—' : formatMetricValue(Number(v), m)}</b>
+            <span className="text-anthracite-lighter flex-1 min-w-0 truncate">{m ? metricLabel(m, tMetrics) : key}</span>
+            <b className="text-anthracite ml-2 whitespace-nowrap">{v == null ? '—' : formatMetricValue(Number(v), m, locale)}</b>
           </div>
         )
       })}

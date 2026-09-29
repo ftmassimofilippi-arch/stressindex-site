@@ -7,9 +7,15 @@
 // RecordingProfile.determine, MonitoringAnalysisService.dayPart). Nessun
 // indice viene calcolato: solo etichette e colori derivati da numeri che
 // l'app ha già salvato. Fonte: docs/MONITORAGGIO_SITO_ANALISI.md §3.8, §5.
+//
+// Lingue: le etichette che esistono già nell'app arrivano da
+// `monitoring-strings.ts` (monT) e `sleep-strings.ts` (sleepT), generati dal
+// Dart e già in IT/EN/DE; quelle che esistono solo sul sito vivono nel
+// namespace `monitoring` dei file messaggi e arrivano tramite un `t: Tr`.
+// Modulo "puro": niente next/headers, usabile da client, server e route API.
 
-import { format } from 'date-fns'
-import { it } from 'date-fns/locale'
+import type { Tr } from '@/i18n/types'
+import { defaultLocale, intlLocale, isLocale, type Locale } from '@/i18n/routing'
 import type {
   MonitoringEventType,
   MonitoringSession,
@@ -24,6 +30,21 @@ import type {
   T90Label,
 } from './monitoring-types'
 import { isSleepSession } from './monitoring-types'
+import { monT, type Lang } from './monitoring-strings'
+import { sleepT } from './sleep-strings'
+
+function lang(locale?: string): Lang {
+  return isLocale(locale) ? locale : defaultLocale
+}
+
+function tag(locale?: string): string {
+  return intlLocale[lang(locale) as Locale]
+}
+
+/** Prima lettera maiuscola (le stringhe dell'app per le fasce sono minuscole). */
+export function cap(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s
+}
 
 // ── Palette (AppColors in lib/widgets/hrv_widgets.dart) ──────────────────────
 
@@ -54,13 +75,9 @@ export const STATE_COLOR: Record<MonitoringState, string> = {
   invalid: '#E6E9EC',
 }
 
-/** Etichette wellness degli stati (MonitoringState.label): mai "stress" nel testo. */
-export const STATE_LABEL: Record<MonitoringState, string> = {
-  recovery: 'Recupero',
-  stress: 'Attivazione',
-  activity: 'Attività',
-  neutral: 'Neutro',
-  invalid: 'Non valido',
+/** Etichette wellness degli stati (MonitoringState.label, PdfStrings legend_*): mai "stress" nel testo. */
+export function stateLabel(state: MonitoringState, locale?: string): string {
+  return monT(`legend_${state}`, lang(locale))
 }
 
 export const STATE_ORDER: MonitoringState[] = ['recovery', 'stress', 'activity', 'neutral', 'invalid']
@@ -69,14 +86,26 @@ export function stateOf(v: unknown): MonitoringState {
   return v === 'stress' || v === 'recovery' || v === 'activity' || v === 'neutral' ? v : 'invalid'
 }
 
+/** Scala d'intensità della mappa delle ore: warm = verde tenue → rosso (HR, LF/HF); altrimenti grigio → verde (ln RMSSD). */
+export function intensityColor(t: number, warm: boolean): string {
+  return warm ? lerp('#DCEFE6', STATE_COLOR.stress, t) : lerp('#E6E9EC', STATE_COLOR.recovery, t)
+}
+function lerp(a: string, b: string, t: number): string {
+  const pa = hex(a), pb = hex(b)
+  const c = pa.map((v, i) => Math.round(v + (pb[i] - v) * t))
+  return `#${c.map((v) => v.toString(16).padStart(2, '0')).join('')}`
+}
+function hex(h: string): number[] {
+  return [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16))
+}
+
 // ── Livelli a tre gradini (IndexLevel) ───────────────────────────────────────
 
 export type IndexLevel = 'good' | 'average' | 'improve'
 
-export const LEVEL_LABEL: Record<IndexLevel, string> = {
-  good: 'buono',
-  average: 'nella media',
-  improve: 'da migliorare',
+/** "buono" / "nella media" / "da migliorare" (PdfStrings level_*). */
+export function levelLabel(level: IndexLevel, locale?: string): string {
+  return monT(`level_${level}`, lang(locale))
 }
 
 export const LEVEL_COLOR: Record<IndexLevel, string> = {
@@ -103,18 +132,28 @@ export const level = {
   reserve: (delta: number): IndexLevel => (delta >= 0.5 ? 'good' : delta <= -0.5 ? 'improve' : 'average'),
 }
 
-/** Etichetta della Riserva (reserve_up / reserve_down / reserve_flat, IT). */
-export function reserveLabel(delta: number): string {
-  return delta >= 0.5 ? 'Ricaricata' : delta <= -0.5 ? 'Consumata' : 'In pari'
+/** Etichetta della Riserva (PdfStrings reserve_up / reserve_down / reserve_flat). */
+export function reserveLabel(delta: number, locale?: string): string {
+  return monT(delta >= 0.5 ? 'reserve_up' : delta <= -0.5 ? 'reserve_down' : 'reserve_flat', lang(locale))
 }
 
-/** Etichetta dell'Ordine del battito dal PIP (FragmentationSummary.label). */
-export function fragmentationLabel(pip: number): 'ordinato' | 'intermedio' | 'frammentato' {
+/** Identificatore dell'Ordine del battito dal PIP (FragmentationSummary.label): è la CHIAVE, non il testo. */
+export type FragmentationId = 'ordinato' | 'intermedio' | 'frammentato'
+export function fragmentationLabel(pip: number): FragmentationId {
   return pip < 55 ? 'ordinato' : pip < 65 ? 'intermedio' : 'frammentato'
 }
+/** Testo dell'Ordine del battito (PdfStrings frag_*). */
+export function fragmentationText(id: FragmentationId, locale?: string): string {
+  return monT(`frag_${id}`, lang(locale))
+}
 
-export function clockStrength(amplitudeBpm: number): 'marcata' | 'moderata' | 'debole' {
-  return amplitudeBpm >= 8 ? 'marcata' : amplitudeBpm >= 4 ? 'moderata' : 'debole'
+export type ClockStrengthId = 'strong' | 'moderate' | 'weak'
+export function clockStrength(amplitudeBpm: number): ClockStrengthId {
+  return amplitudeBpm >= 8 ? 'strong' : amplitudeBpm >= 4 ? 'moderate' : 'weak'
+}
+/** "marcata" / "moderata" / "debole": chiavi `monitoring.clockStrength.*`. */
+export function clockStrengthText(id: ClockStrengthId, t: Tr): string {
+  return t(`clockStrength.${id}`)
 }
 
 // ── Gauge (MonitoringVisuals.balanceColor / qualityColor / qualityLabel) ─────
@@ -134,30 +173,41 @@ export function qualityColor(v: number): string {
   return STATE_COLOR.recovery
 }
 
-export function qualityLabel(v: number): string {
-  if (v < 40) return 'Da migliorare'
-  if (v < 60) return 'Discreto'
-  if (v < 75) return 'Buono'
-  return 'Ottimo'
+/** Fascia del recupero notturno (ngtQuality*): chiavi `monitoring.nightQuality.*`. */
+export function qualityLabel(v: number, t: Tr): string {
+  if (v < 40) return t('nightQuality.toImprove')
+  if (v < 60) return t('nightQuality.fair')
+  if (v < 75) return t('nightQuality.good')
+  return t('nightQuality.excellent')
 }
 
-/** Etichetta del bilancio (MonitoringSummary.labelForBalance), usata solo se la riga non la porta. */
-export function balanceLabel(v: number): string {
-  if (v < 30) return 'Attivazione prevalente'
-  if (v < 45) return "Tendenza all'attivazione"
-  if (v <= 55) return 'Equilibrio'
-  if (v <= 70) return 'Tendenza al recupero'
-  return 'Recupero prevalente'
+/** Etichetta del bilancio (MonitoringSummary.labelForBalance): chiavi `monitoring.balanceLabel.*`. */
+export function balanceLabel(v: number, t: Tr): string {
+  if (v < 30) return t('balanceLabel.activation')
+  if (v < 45) return t('balanceLabel.towardActivation')
+  if (v <= 55) return t('balanceLabel.balance')
+  if (v <= 70) return t('balanceLabel.towardRecovery')
+  return t('balanceLabel.recovery')
+}
+
+/**
+ * Etichetta del bilancio da mostrare: la riga porta `stress_recovery_label`
+ * scritta dall'app in italiano; in italiano si mostra quella, nelle altre
+ * lingue la stessa etichetta derivata dalle stesse soglie.
+ */
+export function balanceLabelFor(value: number, stored: string | null | undefined, locale: string | undefined, t: Tr): string {
+  if (lang(locale) === 'it' && stored) return stored
+  return balanceLabel(value, t)
 }
 
 // ── Qualità del segnale (24h) ────────────────────────────────────────────────
 
-export function signalQualityLabel(q: string | null | undefined): string {
+export function signalQualityLabel(q: string | null | undefined, t: Tr): string {
   switch (q) {
-    case 'good': return 'Qualità buona'
-    case 'fair': return 'Qualità media'
-    case 'poor': return 'Qualità insufficiente'
-    default: return 'Qualità n.d.'
+    case 'good': return t('signalQuality.good')
+    case 'fair': return t('signalQuality.fair')
+    case 'poor': return t('signalQuality.poor')
+    default: return t('signalQuality.na')
   }
 }
 
@@ -180,59 +230,71 @@ export function artifactColor(pct: number): string {
 
 // ── Tipo, sorgente, profilo, eventi ──────────────────────────────────────────
 
-export const TYPE_LABEL: Record<MonitoringType, string> = {
-  '24h': 'Monitoraggio 24h',
-  sleep: 'Sonno',
-  custom: 'Personalizzato',
+/** Nome esteso del tipo (chiavi `monitoring.type.*`). */
+export function typeLabel(type: MonitoringType, t: Tr): string {
+  return t(type === 'sleep' ? 'type.sleep' : type === '24h' ? 'type.h24' : 'type.custom')
 }
 
 /** Chip corto del tipo nelle liste (24h / Sonno). */
-export function typeChip(t: MonitoringType): string {
-  return t === 'sleep' ? 'Sonno' : t === '24h' ? '24h' : TYPE_LABEL.custom
+export function typeChip(type: MonitoringType, t: Tr): string {
+  return type === 'sleep' ? t('type.sleep') : type === '24h' ? t('type.chipH24') : t('type.custom')
 }
 
-export const SOURCE_LABEL: Record<MonitoringSource, string> = {
-  polar_h10_offline: 'Memoria Polar H10',
-  polar_h10_live: 'Telefono vicino',
-  external_device: 'Dispositivo esterno',
-  import: 'Importazione',
+const SOURCE_KEY: Record<MonitoringSource, string> = {
+  polar_h10_offline: 'source.polarOffline',
+  polar_h10_live: 'source.polarLive',
+  external_device: 'source.external',
+  import: 'source.import',
 }
 
-export function sourceLabel(s: string | null | undefined): string {
-  return (s && SOURCE_LABEL[s as MonitoringSource]) || SOURCE_LABEL.import
-}
-
-export const PROFILE_LABEL: Record<RecordingProfile, string> = {
-  breve: 'Breve',
-  giornata: 'Giornata',
-  notte: 'Notte',
-  giorno_notte: 'Giorno e notte',
-  ciclo_completo: 'Ciclo completo',
+export function sourceLabel(s: string | null | undefined, t: Tr): string {
+  return t((s && SOURCE_KEY[s as MonitoringSource]) || SOURCE_KEY.import)
 }
 
 export const PROFILE_ORDER: RecordingProfile[] = ['breve', 'giornata', 'notte', 'giorno_notte', 'ciclo_completo']
 
-export const EVENT_TYPE_LABEL: Record<MonitoringEventType, string> = {
-  coffee: 'Caffè',
-  meal: 'Pasto',
-  alcohol: 'Alcol',
-  training: 'Allenamento',
-  stress: 'Momento di attivazione',
-  sleep_start: 'Vado a dormire',
-  wake_up: 'Mi sono svegliato',
-  supplement: 'Integratore',
-  relax: 'Rilassamento',
-  other: 'Altro',
+/** Nome del profilo (PdfStrings profile_*). */
+export function profileLabel(p: RecordingProfile, locale?: string): string {
+  return monT(`profile_${p}`, lang(locale))
+}
+
+/** @deprecated usare `profileLabel(p, locale)`: questa tabella è solo in italiano (compatibilità con i chiamanti esterni). */
+export const PROFILE_LABEL: Record<RecordingProfile, string> = Object.fromEntries(
+  PROFILE_ORDER.map((p) => [p, profileLabel(p, 'it')]),
+) as Record<RecordingProfile, string>
+
+const EVENT_TYPE_KEY: Record<MonitoringEventType, string> = {
+  coffee: 'eventType.coffee',
+  meal: 'eventType.meal',
+  alcohol: 'eventType.alcohol',
+  training: 'eventType.training',
+  stress: 'eventType.stress',
+  sleep_start: 'eventType.sleepStart',
+  wake_up: 'eventType.wakeUp',
+  supplement: 'eventType.supplement',
+  relax: 'eventType.relax',
+  other: 'eventType.other',
 }
 
 export const EVENT_TYPES: MonitoringEventType[] = [
   'coffee', 'meal', 'alcohol', 'training', 'stress', 'sleep_start', 'wake_up', 'supplement', 'relax', 'other',
 ]
 
+/** Nome del tipo di evento (chiavi `monitoring.eventType.*`). */
+export function eventTypeLabel(type: MonitoringEventType, t: Tr): string {
+  return t(EVENT_TYPE_KEY[type] ?? EVENT_TYPE_KEY.other)
+}
+
+/** Tutte le etichette dei tipi di evento nella lingua data (per riconoscere un'etichetta "di default"). */
+export function eventTypeLabels(t: Tr): string[] {
+  return EVENT_TYPES.map((type) => eventTypeLabel(type, t))
+}
+
 export function isSleepMarker(t: MonitoringEventType): boolean {
   return t === 'sleep_start' || t === 'wake_up'
 }
 
+// I valori di `response.label` sono scritti dall'app in italiano: sono chiavi, non testo.
 export function eventResponseColor(label: string | null | undefined): string {
   switch (label) {
     case 'attivazione': return STATE_COLOR.stress
@@ -241,6 +303,20 @@ export function eventResponseColor(label: string | null | undefined): string {
     default: return MON.textMuted
   }
 }
+
+/** Testo della reazione a un evento (PdfStrings resp_*). */
+export function eventResponseLabel(label: string | null | undefined, locale?: string): string {
+  const l = lang(locale)
+  switch (label) {
+    case 'attivazione': return monT('resp_activation', l)
+    case 'recupero': return monT('resp_recovery', l)
+    case 'neutro': return monT('resp_neutral', l)
+    case 'dati insufficienti': return monT('resp_insufficient', l)
+    default: return label ?? '—'
+  }
+}
+
+export const RESPONSE_INSUFFICIENT = 'dati insufficienti'
 
 // ── Profilo della registrazione: fallback per le righe 1.0 ───────────────────
 //
@@ -312,16 +388,6 @@ export const profileFlags = (p: RecordingProfile) => ({
 
 export type MonitoringPage = 'riepilogo' | 'notte' | 'andamento' | 'eventi' | 'mappa_ore' | 'ritmo' | 'parametri'
 
-export const PAGE_LABEL: Record<MonitoringPage, string> = {
-  riepilogo: 'Riepilogo',
-  notte: 'Notte',
-  andamento: 'Andamento',
-  eventi: 'Eventi',
-  mappa_ore: 'Mappa delle ore',
-  ritmo: 'Ritmo e complessità',
-  parametri: 'Parametri',
-}
-
 /** Pagine per profilo (MonitoringPage.pagesFor). Le pagine escluse NON esistono. */
 export function pagesFor(p: RecordingProfile, pro: boolean): MonitoringPage[] {
   const f = profileFlags(p)
@@ -339,7 +405,8 @@ export function pagesFor(p: RecordingProfile, pro: boolean): MonitoringPage[] {
 // start_time / end_time e ogni ISO nei jsonb sono istanti UTC veri; il
 // dispositivo aveva tz_offset_minutes. Per mostrare l'ora che l'utente vedeva
 // si sommano i minuti di offset e si leggono i componenti UTC. Non si usa il
-// fuso del browser né quello del server.
+// fuso del browser né quello del server. Le date passano da `Intl` con
+// `timeZone: 'UTC'` sulla data "da parete", così la lingua decide il formato.
 
 export function wallDate(iso: string | null | undefined, tzOffsetMinutes: number): Date | null {
   if (!iso) return null
@@ -352,36 +419,53 @@ function pad(n: number): string {
   return String(n).padStart(2, '0')
 }
 
-/** "HH:mm" nell'orologio del dispositivo. */
+const dtfCache = new Map<string, Intl.DateTimeFormat>()
+function dtf(locale: string | undefined, opts: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  const key = `${tag(locale)}|${JSON.stringify(opts)}`
+  let f = dtfCache.get(key)
+  if (!f) {
+    f = new Intl.DateTimeFormat(tag(locale), { ...opts, timeZone: 'UTC' })
+    dtfCache.set(key, f)
+  }
+  return f
+}
+
+/** "HH:mm" nell'orologio del dispositivo (orologio a 24 ore in tutte le lingue, come l'app). */
 export function hm(iso: string | null | undefined, tz: number): string {
   const d = wallDate(iso, tz)
   return d ? `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}` : '—'
 }
 
-/** "12 set" (MonitoringVisuals.dayShort). */
-export function dayShort(iso: string | null | undefined, tz: number): string {
+/** "12 set" / "Sep 12" / "12. Sept." (MonitoringVisuals.dayShort). */
+export function dayShort(iso: string | null | undefined, tz: number, locale?: string): string {
   const d = wallDate(iso, tz)
   if (!d) return '—'
-  const m = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic']
-  return `${d.getUTCDate()} ${m[d.getUTCMonth()]}`
+  return dtf(locale, { day: 'numeric', month: 'short' }).format(d)
 }
 
-/** "12 settembre 2026" nell'orologio del dispositivo. */
-export function dayLong(iso: string | null | undefined, tz: number): string {
+/** "12 settembre 2026" / "September 12, 2026" / "12. September 2026" nell'orologio del dispositivo. */
+export function dayLong(iso: string | null | undefined, tz: number, locale?: string): string {
   const d = wallDate(iso, tz)
   if (!d) return '—'
-  return format(new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()), 'd MMMM yyyy', { locale: it })
+  return dtf(locale, { day: 'numeric', month: 'long', year: 'numeric' }).format(d)
 }
 
-/** "dd/MM/yyyy" nell'orologio del dispositivo. */
+/** Data breve con anno nella lingua ("12 set 2026" / "Sep 12, 2026" / "12. Sept. 2026"). */
+export function dayMedium(iso: string | null | undefined, tz: number, locale?: string): string {
+  const d = wallDate(iso, tz)
+  if (!d) return '—'
+  return dtf(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(d)
+}
+
+/** "dd/MM/yyyy" nell'orologio del dispositivo: valore "macchina" per nomi file e chiavi, non per la UI. */
 export function dayNumeric(iso: string | null | undefined, tz: number): string {
   const d = wallDate(iso, tz)
   return d ? `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}` : '—'
 }
 
 /** "12 set 15:02 → 13 set 06:48" */
-export function periodLabel(startIso: string, endIso: string, tz: number): string {
-  return `${dayShort(startIso, tz)} ${hm(startIso, tz)} → ${dayShort(endIso, tz)} ${hm(endIso, tz)}`
+export function periodLabel(startIso: string, endIso: string, tz: number, locale?: string): string {
+  return `${dayShort(startIso, tz, locale)} ${hm(startIso, tz)} → ${dayShort(endIso, tz, locale)} ${hm(endIso, tz)}`
 }
 
 /** Ora locale (0-23) del dispositivo. */
@@ -397,7 +481,7 @@ export function hourFraction(h: number): string {
   return `${pad(hh)}:${pad(mm)}`
 }
 
-/** "7 h 12 min" (MonitoringVisuals.duration). */
+/** "7 h 12 min" (MonitoringVisuals.duration): unità uguali nelle tre lingue. */
 export function duration(minutes: number | null | undefined): string {
   if (minutes == null || !Number.isFinite(minutes)) return '—'
   const m0 = Math.round(minutes)
@@ -417,35 +501,50 @@ export function seconds(sec: number): string {
 
 /**
  * Parte della giornata (MonitoringAnalysisService.dayPart): testo di
- * contesto per i dettagli delle card, come fa l'app.
+ * contesto per i dettagli delle card, come fa l'app. Chiavi `monitoring.dayPart.*`.
  */
-export function dayPart(iso: string, tz: number, night?: { night_start: string; night_end: string } | null): string {
-  const t = new Date(iso).getTime()
+export function dayPart(iso: string, tz: number, night: { night_start: string; night_end: string } | null | undefined, t: Tr): string {
+  const time = new Date(iso).getTime()
   if (night) {
     const ns = new Date(night.night_start).getTime()
     const ne = new Date(night.night_end).getTime()
-    if (t >= ns && t < ne) {
-      if (t < ns + 2 * 3_600_000) return 'nelle prime ore di sonno'
-      if (t >= ne - 3_600_000) return 'verso il risveglio'
-      return 'nel cuore della notte'
+    if (time >= ns && time < ne) {
+      if (time < ns + 2 * 3_600_000) return t('dayPart.earlySleep')
+      if (time >= ne - 3_600_000) return t('dayPart.nearWake')
+      return t('dayPart.deepNight')
     }
   }
   const h = wallHour(iso, tz)
-  if (h >= 5 && h < 9) return 'al mattino presto'
-  if (h >= 9 && h < 12) return 'in mattinata'
-  if (h >= 12 && h < 14) return 'a metà giornata'
-  if (h >= 14 && h < 18) return 'nel pomeriggio'
-  if (h >= 18 && h < 22) return 'in serata'
-  return 'di notte'
+  if (h >= 5 && h < 9) return t('dayPart.earlyMorning')
+  if (h >= 9 && h < 12) return t('dayPart.morning')
+  if (h >= 12 && h < 14) return t('dayPart.midday')
+  if (h >= 14 && h < 18) return t('dayPart.afternoon')
+  if (h >= 18 && h < 22) return t('dayPart.evening')
+  return t('dayPart.night')
 }
 
 // ── Formattazione numeri ─────────────────────────────────────────────────────
 
-export function fx(v: number | null | undefined, dec = 1, unit = ''): string {
+const nfCache = new Map<string, Intl.NumberFormat>()
+/** Numero con `dec` decimali nel formato della lingua (virgola in it/de, punto in en). */
+export function fmtNum(v: number | null | undefined, dec = 1, locale?: string): string {
   if (v == null || !Number.isFinite(v)) return '—'
-  return `${v.toFixed(dec)}${unit ? ` ${unit}` : ''}`
+  const key = `${tag(locale)}|${dec}`
+  let f = nfCache.get(key)
+  if (!f) {
+    f = new Intl.NumberFormat(tag(locale), { minimumFractionDigits: dec, maximumFractionDigits: dec })
+    nfCache.set(key, f)
+  }
+  return f.format(v)
 }
 
+/** Numero con decimali e unità ("12,3 ms"), nel formato della lingua. */
+export function fx(v: number | null | undefined, dec = 1, unit = '', locale?: string): string {
+  if (v == null || !Number.isFinite(v)) return '—'
+  return `${fmtNum(v, dec, locale)}${unit ? ` ${unit}` : ''}`
+}
+
+/** Numero intero arrotondato con unità ("72 bpm"). */
 export function fr(v: number | null | undefined, unit = ''): string {
   if (v == null || !Number.isFinite(v)) return '—'
   return `${Math.round(v)}${unit ? ` ${unit}` : ''}`
@@ -466,12 +565,17 @@ export const SLEEP_STATE_COLOR: Record<SleepWindowState, string> = {
   normale: MON.sleepLight,
 }
 
-export const SLEEP_STATE_LABEL: Record<SleepWindowState, string> = {
-  normale: 'Normale',
-  desaturazione: 'Desaturazione',
-  sotto90: 'Sotto 90 %',
-  movimento: 'Movimento',
-  nonValido: 'Non valido',
+const SLEEP_STATE_KEY: Record<SleepWindowState, string> = {
+  normale: 'sleepState.normal',
+  desaturazione: 'sleepState.desaturation',
+  sotto90: 'sleepState.below90',
+  movimento: 'sleepState.movement',
+  nonValido: 'sleepState.invalid',
+}
+
+/** Etichetta dello stato del minuto (SleepPdfStrings state_*): chiavi `monitoring.sleepState.*`. */
+export function sleepStateLabel(state: SleepWindowState, t: Tr): string {
+  return t(SLEEP_STATE_KEY[state])
 }
 
 export const SLEEP_STATE_ORDER: SleepWindowState[] = ['normale', 'desaturazione', 'sotto90', 'movimento', 'nonValido']
@@ -480,11 +584,10 @@ export function sleepStateOf(v: unknown): SleepWindowState {
   return v === 'normale' || v === 'desaturazione' || v === 'sotto90' || v === 'movimento' ? v : 'nonValido'
 }
 
-/** Testo obbligatorio ovunque compaia l'ODI (SleepVisuals.odiDisclaimer). */
-export const SLEEP_ODI_DISCLAIMER =
-  "Questo indice descrive quante volte l'ossigenazione e' scesa durante la notte. " +
-  "Non e' una diagnosi di apnea del sonno, che richiede un esame specifico. " +
-  'Un valore alterato va portato al proprio medico.'
+/** Testo obbligatorio ovunque compaia l'ODI (SleepVisuals.odiDisclaimer): è un disclaimer, identico all'app. */
+export function sleepOdiDisclaimer(locale?: string): string {
+  return sleepT('disclaimer_odi', lang(locale))
+}
 
 export function sleepScoreColor(v: number): string {
   if (v < 40) return STATE_COLOR.stress
@@ -494,23 +597,18 @@ export function sleepScoreColor(v: number): string {
   return MON.sleep
 }
 
-export function sleepScoreLabel(label: SleepScoreLabel | string | null | undefined): string {
+export function sleepScoreLabel(label: SleepScoreLabel | string | null | undefined, locale?: string): string {
   switch (label) {
-    case 'poor': return 'Scarso'
-    case 'sufficient': return 'Sufficiente'
-    case 'good': return 'Buono'
-    case 'very_good': return 'Molto buono'
-    case 'excellent': return 'Ottimo'
+    case 'poor': case 'sufficient': case 'good': case 'very_good': case 'excellent':
+      return cap(sleepT(`score_${label}`, lang(locale)))
     default: return '—'
   }
 }
 
-export function odi3Label(label: Odi3Label | string | null | undefined): string {
+export function odi3Label(label: Odi3Label | string | null | undefined, locale?: string): string {
   switch (label) {
-    case 'normal': return 'Nella norma'
-    case 'mild': return 'Alterazione lieve'
-    case 'moderate': return 'Alterazione moderata'
-    case 'marked': return 'Alterazione marcata'
+    case 'normal': case 'mild': case 'moderate': case 'marked':
+      return cap(sleepT(`odi_${label}`, lang(locale)))
     default: return '—'
   }
 }
@@ -525,11 +623,10 @@ export function odi3Color(label: Odi3Label | string | null | undefined): string 
   }
 }
 
-export function t90Label(label: T90Label | string | null | undefined): string {
+export function t90Label(label: T90Label | string | null | undefined, locale?: string): string {
   switch (label) {
-    case 'normal': return 'Nella norma'
-    case 'observe': return 'Da osservare'
-    case 'relevant': return 'Rilevante'
+    case 'normal': case 'observe': case 'relevant':
+      return cap(sleepT(`band_${label}`, lang(locale)))
     default: return '—'
   }
 }
@@ -543,12 +640,13 @@ export function t90Color(label: T90Label | string | null | undefined): string {
   }
 }
 
-export function sleepCoverageLabel(label: SignalQuality | string | null | undefined): string {
+/** "Segnale ottimo / discreto / disturbato" (SleepPdfStrings signal + signal_*). */
+export function sleepCoverageLabel(label: SignalQuality | string | null | undefined, locale: string | undefined, t: Tr): string {
+  const l = lang(locale)
   switch (label) {
-    case 'good': return 'Segnale ottimo'
-    case 'fair': return 'Segnale discreto'
-    case 'poor': return 'Segnale disturbato'
-    default: return 'Qualità n.d.'
+    case 'good': case 'fair': case 'poor':
+      return `${sleepT('signal', l)} ${sleepT(`signal_${label}`, l)}`
+    default: return t('signalQuality.na')
   }
 }
 
@@ -589,16 +687,17 @@ export interface KeyNumber {
 }
 
 /** I tre numeri chiave del profilo (24h) o del modulo Sonno, per liste e card. */
-export function keyNumbers(s: MonitoringSession): KeyNumber[] {
+export function keyNumbers(s: MonitoringSession, locale: string | undefined, t: Tr): KeyNumber[] {
+  const l = lang(locale)
   if (isSleepSession(s)) {
     const o = s.night?.sleep?.oxygenation ?? null
     const c = s.night?.sleep?.cardiac ?? null
     const score = s.summary?.sleep_score ?? null
     return [
-      { label: 'SpO₂ media', value: o ? `${o.mean_spo2 == null ? '—' : o.mean_spo2.toFixed(1)} %` : '—', color: MON.sleepDark },
-      { label: 'Polso medio', value: c ? `${Math.round(c.mean_pr)} bpm` : '—', color: MON.sleepDark },
+      { label: sleepT('spo2_mean', l), value: o ? `${fmtNum(o.mean_spo2, 1, l)} %` : '—', color: MON.sleepDark },
+      { label: sleepT('pr_mean', l), value: c ? `${Math.round(c.mean_pr)} bpm` : '—', color: MON.sleepDark },
       {
-        label: 'Sleep Score',
+        label: sleepT('sleep_score', l),
         value: score ? `${score.total}` : '—',
         color: score ? sleepScoreColor(score.total) : MON.textMuted,
       },
@@ -609,18 +708,18 @@ export function keyNumbers(s: MonitoringSession): KeyNumber[] {
   const f = profileFlags(profile)
   const balance = sum ? `${Math.round(sum.stress_recovery_balance)}` : '—'
   const out: KeyNumber[] = [
-    { label: 'Bilancio', value: balance, color: sum ? balanceColor(sum.stress_recovery_balance) : MON.textMuted },
+    { label: t('keyNumbers.balance'), value: balance, color: sum ? balanceColor(sum.stress_recovery_balance) : MON.textMuted },
   ]
   if (f.hasNightPages) {
     const q = sum?.night_recovery_quality
-    out.push({ label: 'Recupero notturno', value: q == null ? '—' : `${Math.round(q)}`, color: q == null ? MON.textMuted : qualityColor(q) })
+    out.push({ label: monT('night_quality', l), value: q == null ? '—' : `${Math.round(q)}`, color: q == null ? MON.textMuted : qualityColor(q) })
   }
   if (f.hasWakePages) {
     const p = sum?.advanced?.pauses
-    out.push({ label: 'Pause di recupero', value: p ? `${p.count} · ${p.total_min} min` : '—', color: MON.accentDark })
+    out.push({ label: monT('kpi_pauses', l), value: p ? `${p.count} · ${p.total_min} min` : '—', color: MON.accentDark })
   }
   if (out.length < 3) {
-    out.push({ label: 'Tempo in recupero', value: sum ? `${Math.round(sum.percent_recovery)} %` : '—', color: STATE_COLOR.recovery })
+    out.push({ label: monT('kpi_recovery', l), value: sum ? `${Math.round(sum.percent_recovery)} %` : '—', color: STATE_COLOR.recovery })
   }
   return out.slice(0, 3)
 }

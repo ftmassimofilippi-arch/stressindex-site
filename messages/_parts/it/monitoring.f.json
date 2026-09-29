@@ -1,0 +1,407 @@
+{
+  "client": "Cliente",
+  "algorithm": "algoritmo {version}",
+  "beats": "{count} battiti",
+  "validDataPct": "Dati validi {pct}%",
+  "artifactsPct": "Artefatti {pct}%",
+  "type": {
+    "h24": "Monitoraggio 24h",
+    "chipH24": "24h",
+    "sleep": "Sonno",
+    "custom": "Personalizzato"
+  },
+  "source": {
+    "polarOffline": "Memoria Polar H10",
+    "polarLive": "Telefono vicino",
+    "external": "Dispositivo esterno",
+    "import": "Importazione"
+  },
+  "eventType": {
+    "coffee": "Caffè",
+    "meal": "Pasto",
+    "alcohol": "Alcol",
+    "training": "Allenamento",
+    "stress": "Momento di attivazione",
+    "sleepStart": "Vado a dormire",
+    "wakeUp": "Mi sono svegliato",
+    "supplement": "Integratore",
+    "relax": "Rilassamento",
+    "other": "Altro"
+  },
+  "dayPart": {
+    "earlySleep": "nelle prime ore di sonno",
+    "nearWake": "verso il risveglio",
+    "deepNight": "nel cuore della notte",
+    "earlyMorning": "al mattino presto",
+    "morning": "in mattinata",
+    "midday": "a metà giornata",
+    "afternoon": "nel pomeriggio",
+    "evening": "in serata",
+    "night": "di notte"
+  },
+  "clockStrength": {
+    "strong": "marcata",
+    "moderate": "moderata",
+    "weak": "debole"
+  },
+  "nightQuality": {
+    "toImprove": "Da migliorare",
+    "fair": "Discreto",
+    "good": "Buono",
+    "excellent": "Ottimo"
+  },
+  "balanceLabel": {
+    "activation": "Attivazione prevalente",
+    "towardActivation": "Tendenza all'attivazione",
+    "balance": "Equilibrio",
+    "towardRecovery": "Tendenza al recupero",
+    "recovery": "Recupero prevalente"
+  },
+  "signalQuality": {
+    "good": "Qualità buona",
+    "fair": "Qualità media",
+    "poor": "Qualità insufficiente",
+    "na": "Qualità n.d."
+  },
+  "sleepState": {
+    "normal": "Normale",
+    "desaturation": "Desaturazione",
+    "below90": "Sotto 90 %",
+    "movement": "Movimento",
+    "invalid": "Non valido"
+  },
+  "keyNumbers": {
+    "balance": "Bilancio"
+  },
+  "chips": {
+    "estimatedProfileTitle": "Profilo stimato: la riga è stata analizzata con una versione precedente dell'app e non porta il profilo. Derivato da durata e notte con la stessa regola dell'app."
+  },
+  "index": {
+    "title": "Monitoraggio",
+    "subtitle": "Registrazioni lunghe (24 ore, notte) e notti con il pulsossimetro dei tuoi clienti, analizzate dall'app",
+    "lockedTitle": "Monitoraggio e Sonno",
+    "lockedDescription": "I moduli Monitoraggio 24h e Sonno non sono attivi per il tuo account.",
+    "viewingSupport": "Stai visualizzando i monitoraggi di <b>{name}</b> (modalità supporto)",
+    "viewingReadOnly": "Stai visualizzando i monitoraggi di <b>{name}</b> in sola lettura",
+    "backToProfessionals": "Torna ai professionisti",
+    "backToTeam": "Torna al tuo team",
+    "metrics": {
+      "total": "Monitoraggi",
+      "inPeriod": "nel periodo",
+      "h24": "24h",
+      "sleep": "Sonno",
+      "clients": "Clienti",
+      "withMonitorings": "con monitoraggi"
+    },
+    "searchPlaceholder": "Cerca per nome cliente…",
+    "allClients": "Tutti i clienti",
+    "allTypes": "Tutti i tipi",
+    "allProfiles": "Tutti i profili",
+    "emptyFiltered": "Nessun monitoraggio con questi filtri",
+    "pagination": "{count, plural, one {# monitoraggio} other {# monitoraggi}} · pagina {page} di {pages}",
+    "prev": "Precedente",
+    "next": "Successiva",
+    "footnote": "I profili con asterisco sono stimati da durata e notte: la riga è stata analizzata con una versione precedente dell'app. Il sito mostra quello che l'app ha calcolato e salvato, senza rielaborare i dati."
+  },
+  "detail": {
+    "viewingSupport": "Stai visualizzando i dati di <b>{name}</b> (modalità supporto)",
+    "viewingReadOnly": "Stai visualizzando i dati di <b>{name}</b> in sola lettura",
+    "clientRecord": "Scheda cliente",
+    "lockedSleepTitle": "Modulo Sonno",
+    "lockedMonitoringTitle": "Modulo Monitoraggio",
+    "lockedSleepDescription": "Il modulo Sonno non è attivo per il tuo account.",
+    "lockedMonitoringDescription": "Il modulo Monitoraggio 24h non è attivo per il tuo account."
+  },
+  "table": {
+    "client": "Cliente",
+    "professional": "Professionista",
+    "start": "Inizio",
+    "duration": "Durata",
+    "type": "Tipo",
+    "profile": "Profilo",
+    "signal": "Segnale",
+    "keyNumbers": "Numeri chiave",
+    "open": "Apri",
+    "pendingRecalc": "eventi in attesa di ricalcolo",
+    "empty": "Nessun monitoraggio"
+  },
+  "lastCard": {
+    "title": "Ultimo monitoraggio",
+    "open": "Apri il dettaglio"
+  },
+  "gauge": {
+    "na": "non disponibile"
+  },
+  "timeline": {
+    "reserveAria": "Curva della Riserva",
+    "statesAria": "Timeline degli stati",
+    "hint": "Passa il mouse (o tocca) sulla barra per leggere ora e valori di quel minuto.",
+    "invalid": "{when} · dato non valido (fascia staccata o segnale disturbato)",
+    "picked": "{when} · {state} · HR {hr} bpm · RMSSD {rmssd} ms",
+    "breathing": "respiro ~{br}/min"
+  },
+  "trend": {
+    "breathing": "Respiro stimato",
+    "breathsPerMin": "atti/min",
+    "caption": "{param} · finestre di 5 minuti",
+    "captionDfa": "{param} · finestre di 5 minuti, una ogni 5",
+    "range": "valori {min} – {max}",
+    "hint": "Passa sul grafico per leggere un valore, sull'icona per l'evento. La fascia scura è la notte; i tratti vuoti sono interruzioni. Trascina il selettore sotto il grafico per zoomare."
+  },
+  "hourMap": {
+    "state": "Stato",
+    "noData": "nessun dato",
+    "validWindows": "{count, plural, one {# finestra valida} other {# finestre valide}}",
+    "legendLow": "HR e LF/HF bassi",
+    "legendHigh": "alti",
+    "legendLnHigh": "ln RMSSD alto",
+    "noValidHours": "nessuna ora con dati validi"
+  },
+  "indexCard": {
+    "unreliable": "Copertura sotto il 60%: valore da leggere con cautela",
+    "how": "Come si calcola"
+  },
+  "scores": {
+    "composite": "Score composito",
+    "compositeShort": "Composito",
+    "demoNormalized": "Score normalizzati sul profilo demografico.",
+    "populationNorms": "Score su norme di popolazione generale (profilo incompleto)."
+  },
+  "params": {
+    "durationInTracts": "Durata (nei tratti)",
+    "beats": "Battiti",
+    "meanHr": "HR media",
+    "totalPower": "Potenza totale",
+    "estimatedSuffix": "(stimato)",
+    "validCoverage": "Dati validi (copertura)",
+    "validCoverageValue": "{pct}% di {count} finestre",
+    "signalQuality": "Qualità del segnale",
+    "uncovered": "Tempo non coperto",
+    "source": "Sorgente",
+    "scaleTitle": "Scala individuale usata",
+    "hrRest": "HR a riposo (5° percentile)",
+    "hrMax": "HR max usata",
+    "activityThreshold": "Soglia attività",
+    "lnRef": "Riferimento ln RMSSD",
+    "lnMad": "MAD ln RMSSD (scalata)",
+    "hrMedian": "Mediana HR (non attività)",
+    "baseline": "Baseline",
+    "baselineValue": "{applied} · media {mean} · SD {sd}",
+    "applied": "applicata",
+    "notApplied": "non applicata"
+  },
+  "detail24": {
+    "estimatedProfileNote": "* Profilo stimato: questa registrazione è stata analizzata con una versione precedente dell'app, che non salvava il profilo. Derivato da durata e notte con la stessa regola dell'app.",
+    "timelineReserve": "Timeline e Riserva",
+    "whatSays": "Cosa dice la registrazione",
+    "indicesUnavailable": "Indici non disponibili per questa registrazione (analisi con versione precedente: ricalcola dagli eventi).",
+    "breakdown": "Ripartizione del periodo",
+    "disclaimer": "Indicatori di benessere basati sulla variabilità del battito. Non costituiscono una valutazione medica: per ogni dato da approfondire rivolgersi al proprio medico.",
+    "trend": "Andamento",
+    "hourMap": "Mappa delle ore",
+    "events": "Eventi",
+    "params": "Parametri",
+    "night": "La notte",
+    "rhythm": "Ritmo e complessità",
+    "rhythmSub": "Solo per il professionista: ogni valore con la riga di spiegazione e la referenza dietro l'icona.",
+    "notices": {
+      "missing": "Mancano circa il {missing}% dei dati",
+      "gap": ": la fascia è stata scollegata per circa {gap}",
+      "notComputable": "Non calcolabili: {list}.",
+      "readWithCare": "Da leggere con cautela: {list}.",
+      "short": "Registrazione sotto i 60 minuti: l'analisi della notte non è disponibile.",
+      "baselineApplied": "Riferimento ln RMSSD dalla baseline personale ({source}, n={n}).",
+      "baselineNotApplied": "Baseline personale presente ma non usata: {reason}"
+    },
+    "kpi": {
+      "hrMinNightAt": "HR min notte · {time}",
+      "nightDip": "Calo notturno",
+      "peakAt": "Picco · {part}"
+    },
+    "cards": {
+      "lowestAt": "Punto più basso alle {time}, {part}",
+      "lowest": "Punto più basso",
+      "highestAt": "più alto alle {time}",
+      "pauseItem": "{time} ({min} min)",
+      "peakUnavailable": "nessuna finestra valida fuori dall'attività",
+      "longestCase": "Caso più lungo: {worst} min",
+      "afterAt": "dopo le {time}, {part}",
+      "pressureMoments": "{count, plural, one {# momento di pressione} other {# momenti di pressione}}",
+      "dcDetail": "{n} ancoraggi di decelerazione · {beats} battiti",
+      "acDetail": "{n} ancoraggi di accelerazione",
+      "respNightUnavailable": "troppo poche finestre notturne con un ritmo respiratorio leggibile",
+      "respDay": "Di giorno ~{v}/min",
+      "respNight": "Di notte ~{v}/min",
+      "breathsPerMin": "atti/min"
+    }
+  },
+  "night": {
+    "notComputable": "Notte non calcolabile",
+    "noRestPeriod": "La registrazione non contiene un periodo continuo di riposo notturno.",
+    "noRestHint": "Le ore erano quelle del riposo, ma senza dati continui gli indici notturni non si possono calcolare: controlla la fascia e la vicinanza del telefono.",
+    "detected": "Notte rilevata automaticamente dalla frequenza cardiaca",
+    "fromEvents": "Notte dagli eventi \"Vado a dormire\" / \"Mi sono svegliato\"",
+    "hrMinAt": "HR minima · {time}",
+    "hrMin": "HR minima",
+    "recoveryInNight": "Recupero in notte",
+    "scoresUnavailable": "score notturni non calcolabili",
+    "dayRefMissing": "riferimento diurno assente",
+    "legacyAnalysis": "analisi con versione precedente",
+    "wavesDetail": "periodo ~{p} min · {c} cicli · forza {s}",
+    "trendDetail": "{first3h}: RMSSD {first} ms · {last3h}: {last} ms",
+    "episodes": "{count, plural, one {# episodio di attivazione stimato} other {# episodi di attivazione stimati}} (non risvegli)",
+    "scores": "Score della notte",
+    "paramsTitle": "Parametri della notte (medie delle finestre)",
+    "rmssdMean": "RMSSD medio",
+    "sdnnMean": "SDNN medio",
+    "hoursAnalyzed": "Ore analizzate"
+  },
+  "rhythm": {
+    "clockNeeds18h": "servono almeno 18 ore di registrazione",
+    "clockDetail": "Forza del ritmo ±{amp} bpm attorno a {mesor} · ora del minimo {min} · picco {peak} · R² {r2} · {hours} h",
+    "clockLn": "ln RMSSD: ampiezza {amp}, picco {peak}",
+    "ciUnit": "Complexity Index",
+    "mseDetail": "SampEn scala 1 {s1} · scala 10 {s10} · {chunks} blocchi, {beats} battiti",
+    "alpha1Detail": "α1 sulle serie continue {v} (scale 4-16)",
+    "noTract": "nessun tratto continuo di almeno 5 minuti",
+    "ulfNa": "non calcolabile (servono 24 ore continue)",
+    "bandsDetail": "ULF {ulf} · LF {lf} · HF {hf} ms² · {count, plural, one {# tratto} other {# tratti}}, {duration}"
+  },
+  "events": {
+    "pendingBanner": "Eventi modificati dal sito: la reazione agli eventi verrà ricalcolata dall'app alla prossima apertura di questo monitoraggio. Fino ad allora i nuovi eventi sono \"in attesa di ricalcolo\".",
+    "add": "Aggiungi evento",
+    "empty": "Nessun evento. Aggiungi caffè, pasti, allenamento, sonno: per ognuno vedrai la risposta dell'organismo nell'ora successiva e nelle due ore dopo.",
+    "howComputed": "Come si calcola: {method} Requisito: {req}",
+    "removeTitle": "Rimuovere l'evento?",
+    "remove": "Rimuovi",
+    "nightBoundary": "confine notte",
+    "pendingChip": "in attesa di ricalcolo",
+    "edit": "Modifica evento",
+    "delete": "Elimina evento",
+    "insufficient": "Dati insufficienti: l'evento cade in attività, vicino a un buco o alla fine della registrazione.",
+    "form": {
+      "editTitle": "Modifica evento",
+      "addTitle": "Aggiungi evento",
+      "description": "Inserimento a posteriori · la reazione verrà calcolata dall'app",
+      "type": "Tipo",
+      "dateTime": "Data e ora (orologio del dispositivo)",
+      "label": "Etichetta",
+      "note": "Nota (opzionale)",
+      "errDate": "Indica data e ora",
+      "errRange": "L'evento deve cadere dentro il periodo della registrazione"
+    }
+  },
+  "actions": {
+    "pdfPro": "PDF professionista",
+    "pdfClient": "PDF cliente",
+    "rrCsv": "RR grezzi (CSV)",
+    "windowsCsv": "Finestre (CSV)",
+    "sendToClient": "Invia al cliente",
+    "genericError": "Operazione non riuscita. Controlla la connessione e riprova."
+  },
+  "email": {
+    "title": "Invia al cliente",
+    "description": "Destinatario: {name} · allegato: PDF cliente",
+    "subjectSleep": "Il tuo Report Sonno del {date}",
+    "subjectMonitoring": "Il tuo Report Monitoraggio del {date}",
+    "bodySleep": "Ciao {name},\n\nin allegato trovi il report della notte del {date}. Lo guardiamo insieme al prossimo incontro.\n\nA presto",
+    "bodyMonitoring": "Ciao {name},\n\nin allegato trovi il report del monitoraggio del {date}. Lo guardiamo insieme al prossimo incontro.\n\nA presto",
+    "subject": "Oggetto",
+    "message": "Messaggio",
+    "sending": "Invio…",
+    "send": "Invia",
+    "archived": "Messaggio archiviato in cronologia.",
+    "note": "Il messaggio viene archiviato nella cronologia del cliente con il link al PDF cliente. L'invio email passa da una Edge Function dedicata (in arrivo): fino ad allora il cliente non riceve una email.",
+    "pdfLink": "Report PDF",
+    "routeArchived": "Messaggio archiviato nella cronologia del cliente con il link al PDF. La consegna email arriverà con la Edge Function dedicata: per ora il cliente non riceve una email."
+  },
+  "files": {
+    "clientSuffix": "cliente",
+    "windows": "Finestre",
+    "rr": "RR"
+  },
+  "csv": {
+    "rrHeader": "indice, RR (ms), tempo dall'inizio (ms), istante UTC, orologio del dispositivo",
+    "sleepHeader": "inizio UTC, fine UTC, inizio orologio dispositivo, stato, SpO2 media, SpO2 minima, polso medio, movimento, eventi iniziati",
+    "windowsHeader": "inizio UTC, fine UTC, inizio orologio dispositivo, valida, stato, artefatti %, copertura, HR, HR min, HR max, RMSSD, ln RMSSD, SDNN, pNN50, LF/HF, HF n.u., SI Baevsky, DFA alpha1, respiro stimato"
+  },
+  "pdf": {
+    "stateRow": "Stato"
+  },
+  "charts": {
+    "cosinorAria": "Orologio interno: cosinor",
+    "mseAria": "Curva MSE",
+    "prsaAria": "Curve PRSA",
+    "descentAria": "Curva di discesa della frequenza cardiaca",
+    "noHours": "Nessuna ora con dati."
+  },
+  "sleep": {
+    "night": "Notte",
+    "serial": "seriale {serial}",
+    "step": "passo {s} s",
+    "validData": "Dati validi {pct} %",
+    "noSleepBlock": "Dati della notte non presenti nella riga.",
+    "noSleepBlockHint": "La riga è stata scritta da una versione dell'app senza il blocco Sonno.",
+    "whatRead": "Cosa è stato letto",
+    "recording": "Registrazione",
+    "samples": "Campioni",
+    "samplesValue": "{count} (validi {valid})",
+    "stepDerived": "Passo ricavato",
+    "stepUnknown": "non riconosciuto",
+    "odi3Label": "ODI3 · {label}",
+    "prMinAt": "Polso min · {time}",
+    "inBrief": "La notte in breve",
+    "deviceCompare": "Confronto con il dispositivo",
+    "deviceCompareText": "O2 score del dispositivo {device} contro Sleep Score {score}.",
+    "deviceDrops": "Cali ≥ 4 punti: dispositivo {device}, app {app}.",
+    "deviceNote": "Il punteggio del dispositivo non entra nella formula: il suo calcolo non è pubblico.",
+    "disclaimer": "Indicatori di benessere basati su ossigenazione e frequenza del polso. Non costituiscono una valutazione medica: per ogni dato da approfondire rivolgersi al proprio medico.",
+    "spo2AllNight": "SpO₂ di tutta la notte",
+    "spo2ChartHint": "Media per minuto; banda rossa sotto il 90 %; punti rossi sui nadir degli eventi.",
+    "desatIndex": "Indice di desaturazione",
+    "totalEvents": "Eventi totali",
+    "totalEventsValue": "{count} (di cui {count4} con calo ≥ 4)",
+    "validTimeUsed": "Tempo valido usato",
+    "below90": "Sotto 90 %",
+    "below88": "Sotto 88 %",
+    "below85": "Sotto 85 %",
+    "nadirAt": "{v} % alle {time}",
+    "signalStability": "Stabilità del segnale",
+    "spo2Sd": "Deviazione standard SpO₂",
+    "unstable": "instabile",
+    "cyclicRuns": "{count, plural, one {# sequenza} other {# sequenze}} · {duration}",
+    "cyclicNote": "Il pattern ciclico (almeno 3 cali consecutivi a 20-100 s di distanza e ampiezza simile) è un proxy di respiro periodico: si riporta, non si interpreta.",
+    "oxyUnavailable": "Ossigenazione non disponibile: la notte non è analizzabile, vedi il riepilogo.",
+    "pulseRate": "Frequenza del polso",
+    "prChartHint": "Media per minuto; linea verde = polso basale; punti gialli = eventi con surge ≥ 6 bpm.",
+    "mean": "Media",
+    "minAt": "Minimo · {time}",
+    "min": "Minimo",
+    "basal": "Basale (10° pct)",
+    "basalLine": "basale {v}",
+    "dipTitle": "Calo notturno e microrisvegli",
+    "firstHourMedian": "Mediana della prima ora",
+    "dipToBasal": "Calo verso il basale",
+    "max": "Massimo",
+    "surgeNote": "Il surge (polso che sale dopo il nadir di una desaturazione) è un proxy di microrisveglio: senza EEG non si contano i risvegli veri.",
+    "eventsShort": "Eventi",
+    "prUnavailable": "Frequenza del polso non disponibile: la notte non è analizzabile, vedi il riepilogo.",
+    "eventsTitle": "Eventi",
+    "nightTimeline": "Timeline della notte",
+    "desatEvents": "Eventi di desaturazione ({count})",
+    "eventTitle": "{time} · calo {drop} punti · nadir {nadir} % · {sec} s",
+    "notices": {
+      "notAnalyzable": "Notte non analizzabile. {reason}",
+      "poorSignal": "Segnale disturbato: campioni validi {pct} %. I numeri vanno letti con cautela.",
+      "probeOff": "Sonda staccata dalle {from} alle {to} ({duration}): tratto escluso dai calcoli.",
+      "noMovement": "Il dispositivo non ha fornito dati di movimento: continuità non calcolata, pesi rinormalizzati."
+    },
+    "trendTitle": "Prime 3 ore contro ultime 3 ore",
+    "trendNa": "Non valutabile (servono almeno 3 ore)",
+    "trendUp": "Il polso scende nel corso della notte: il recupero cresce",
+    "trendDown": "Il polso sale nel corso della notte",
+    "trendFlat": "Polso stabile fra inizio e fine notte",
+    "trendDetail": "Prime 3 ore: {first} bpm · Ultime 3 ore: {last} bpm",
+    "trendDiff": "differenza {v} bpm"
+  }
+}

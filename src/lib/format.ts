@@ -320,8 +320,3 @@ export function formatEur(value: number, locale?: string): string {
 export function todayLong(locale?: string): string {
   return intlDate(new Date(), locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 }
-
-/** @deprecated usare `todayLong(locale)` */
-export function todayLongIt(): string {
-  return format(new Date(), 'EEEE d MMMM yyyy', { locale: it })
-}

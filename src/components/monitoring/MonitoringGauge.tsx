@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import { MON } from '@/lib/monitoring-format'
 
 // Gauge semicircolare 0-100 (MonitoringGauge dell'app): arco di fondo a 20
@@ -16,6 +17,7 @@ type Props = {
 }
 
 export function MonitoringGauge({ value, title, label, colorFor, leftLabel, rightLabel, centerMark = false, compact = false }: Props) {
+  const t = useTranslations('monitoring')
   const v = value == null || !Number.isFinite(value) ? null : Math.max(0, Math.min(100, value))
   const color = v == null ? MON.textMuted : colorFor(v)
   const W = 200
@@ -33,9 +35,9 @@ export function MonitoringGauge({ value, title, label, colorFor, leftLabel, righ
     return `M ${p0.x} ${p0.y} A ${r} ${r} 0 ${to - from > 0.5 ? 1 : 0} 1 ${p1.x} ${p1.y}`
   }
   return (
-    <div className={`card flex flex-col items-center ${compact ? 'p-3' : 'p-4'}`}>
+    <div className={`card flex flex-col items-center min-w-0 ${compact ? 'p-3' : 'p-4'}`}>
       <div className="text-xs font-semibold text-anthracite-lighter text-center">{title}</div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[220px] mt-1" role="img" aria-label={`${title}: ${v == null ? 'non disponibile' : Math.round(v)}`}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[220px] mt-1" role="img" aria-label={`${title}: ${v == null ? t('gauge.na') : Math.round(v)}`}>
         {Array.from({ length: segments }, (_, i) => (
           <path
             key={i}
@@ -57,9 +59,9 @@ export function MonitoringGauge({ value, title, label, colorFor, leftLabel, righ
         </text>
       </svg>
       {(leftLabel || rightLabel) && (
-        <div className="w-full max-w-[220px] flex justify-between text-[9.5px] text-anthracite-lighter -mt-1">
-          <span>{leftLabel ?? ''}</span>
-          <span>{rightLabel ?? ''}</span>
+        <div className="w-full max-w-[220px] flex justify-between gap-2 text-[9.5px] text-anthracite-lighter -mt-1">
+          <span className="truncate">{leftLabel ?? ''}</span>
+          <span className="truncate">{rightLabel ?? ''}</span>
         </div>
       )}
       <div className="mt-1 text-xs font-bold text-center" style={{ color }}>{label}</div>

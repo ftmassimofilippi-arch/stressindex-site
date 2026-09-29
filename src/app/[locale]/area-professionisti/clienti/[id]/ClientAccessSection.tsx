@@ -1,14 +1,16 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { Check, Copy, KeyRound, Link2, Mail, RefreshCw, ShieldCheck, Smartphone } from 'lucide-react'
 import {
-  AZIONE_LABEL,
   PASSWORD_MIN,
   RATE_LIMIT_24H,
   generaPasswordTemporanea,
   type ClientAccessState,
 } from '@/lib/access-password'
+import { apiErrorMessage } from '@/lib/api-error'
+import { intlTag } from '@/lib/format'
 
 // =============================================================================
 // Sezione "Accesso all'app" della scheda cliente
@@ -24,7 +26,8 @@ import {
 //                  passargli un link.
 //
 // La regola è imposta dalla route (409 account_in_use): qui si nasconde solo il
-// bottone che non avrebbe senso premere.
+// bottone che non avrebbe senso premere. Gli errori della route sono codici
+// (`errors.api.*`) tradotti con apiErrorMessage.
 
 type Props = {
   clientId: string
@@ -34,6 +37,9 @@ type Props = {
 type Esito = { kind: 'ok' | 'err'; text: string } | null
 
 export function ClientAccessSection({ clientId, clientName }: Props) {
+  const t = useTranslations('clients.access')
+  const tErr = useTranslations('errors.api')
+  const locale = useLocale()
   const [state, setState] = useState<ClientAccessState | null>(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
@@ -50,17 +56,23 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
       const res = await fetch(`/api/clienti/${encodeURIComponent(clientId)}/accesso`, { cache: 'no-store' })
       const json = await res.json().catch(() => null)
       if (res.ok && json?.state) setState(json.state as ClientAccessState)
-      else setEsito({ kind: 'err', text: json?.message ?? 'Stato dell\'accesso non leggibile.' })
+      else setEsito({ kind: 'err', text: apiErrorMessage(json, tErr, t('stateUnreadable')) })
     } catch {
-      setEsito({ kind: 'err', text: 'Stato dell\'accesso non raggiungibile.' })
+      setEsito({ kind: 'err', text: t('stateUnreachable') })
     } finally {
       setLoading(false)
     }
-  }, [clientId])
+  }, [clientId, t, tErr])
 
   useEffect(() => {
     void carica()
   }, [carica])
+
+  // Motivo del mancato avviso: codice tradotto, oppure il testo grezzo (SMTP).
+  function noticeReason(reason: unknown): string {
+    const r = String(reason ?? '')
+    return t.has(`noticeReasons.${r}`) ? t(`noticeReasons.${r}`) : r
+  }
 
   async function azione(action: string, extra: Record<string, unknown> = {}) {
     setBusy(action)
@@ -73,23 +85,26 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
       })
       const json = await res.json().catch(() => null)
       if (!res.ok) {
-        setEsito({ kind: 'err', text: json?.message ?? json?.error ?? 'Operazione non riuscita.' })
+        setEsito({ kind: 'err', text: apiErrorMessage(json, tErr, t('actionFailed')) })
         return
       }
       if (action === 'copy_reset_link' && json?.link) {
         setResetLink({ link: json.link, message: json.message })
       }
       const coda: string[] = []
-      if (action === 'set_temp_password') coda.push('Password temporanea impostata. Il cliente dovrà cambiarla al primo accesso.')
-      if (action === 'send_reset_email') coda.push(`Email di ripristino inviata a ${json?.email ?? 'il cliente'}.`)
-      if (action === 'copy_reset_link') coda.push('Link generato: vale un\'ora e si usa una sola volta.')
-      if (json?.warning) coda.push(json.warning)
-      if (json?.noticeSent === false) coda.push(`Avviso al cliente non inviato (${json.noticeError}).`)
-      if (json?.logged === false) coda.push('Attenzione: l\'azione non è stata registrata nel log.')
+      if (action === 'set_temp_password') coda.push(t('results.tempPasswordSet'))
+      if (action === 'send_reset_email') coda.push(json?.email ? t('results.resetSent', { email: json.email }) : t('results.resetSentNoEmail'))
+      if (action === 'copy_reset_link') coda.push(t('results.linkGenerated'))
+      if (json?.warning) {
+        const w = String(json.warning)
+        coda.push(t.has(`warnings.${w}`) ? t(`warnings.${w}`) : w)
+      }
+      if (json?.noticeSent === false) coda.push(t('results.noticeNotSent', { reason: noticeReason(json.noticeError) }))
+      if (json?.logged === false) coda.push(t('results.notLogged'))
       setEsito({ kind: 'ok', text: coda.join(' ') })
       await carica()
     } catch {
-      setEsito({ kind: 'err', text: 'Errore di rete.' })
+      setEsito({ kind: 'err', text: t('networkError') })
     } finally {
       setBusy(null)
     }
@@ -101,15 +116,25 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
       if (quale === 'pw') { setPwCopied(true); setTimeout(() => setPwCopied(false), 2000) }
       else { setLinkCopied(quale); setTimeout(() => setLinkCopied(null), 2000) }
     } catch {
-      setEsito({ kind: 'err', text: 'Il browser non ha permesso la copia: seleziona il testo a mano.' })
+      setEsito({ kind: 'err', text: t('clipboardDenied') })
     }
+  }
+
+  function formatData(iso: string | null): string {
+    if (!iso) return '—'
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return '—'
+    return new Intl.DateTimeFormat(intlTag(locale), {
+      timeZone: 'Europe/Rome',
+      day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    }).format(d)
   }
 
   if (loading && !state) {
     return (
       <section className="card p-6">
-        <h3 className="font-serif text-lg text-anthracite mb-1">Accesso all&apos;app</h3>
-        <p className="text-sm text-anthracite-lighter">Lettura dello stato…</p>
+        <h3 className="font-serif text-lg text-anthracite mb-1">{t('title')}</h3>
+        <p className="text-sm text-anthracite-lighter">{t('reading')}</p>
       </section>
     )
   }
@@ -117,8 +142,8 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
   if (!state) {
     return (
       <section className="card p-6">
-        <h3 className="font-serif text-lg text-anthracite mb-1">Accesso all&apos;app</h3>
-        <p className="text-sm text-red-600">{esito?.text ?? 'Stato non disponibile.'}</p>
+        <h3 className="font-serif text-lg text-anthracite mb-1">{t('title')}</h3>
+        <p className="text-sm text-red-600">{esito?.text ?? t('stateUnavailable')}</p>
       </section>
     )
   }
@@ -127,11 +152,9 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
   if (!state.hasAccount) {
     return (
       <section className="card p-6">
-        <h3 className="font-serif text-lg text-anthracite mb-1">Accesso all&apos;app</h3>
+        <h3 className="font-serif text-lg text-anthracite mb-1">{t('title')}</h3>
         <p className="text-sm text-anthracite-lighter">
-          {clientName} non ha ancora un account per l&apos;app. Puoi crearlo dalla lista clienti, con
-          <strong> Nuovo cliente</strong>, usando la stessa email di questa scheda: la scheda esistente viene collegata,
-          non duplicata.
+          {t.rich('noAccount', { name: clientName, b: (chunks) => <strong>{chunks}</strong> })}
         </p>
       </section>
     )
@@ -142,18 +165,18 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
   return (
     <section className="card p-6">
       <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
-        <div>
-          <h3 className="font-serif text-lg text-anthracite mb-1">Accesso all&apos;app</h3>
-          <p className="text-sm text-anthracite-lighter">{state.email}</p>
+        <div className="min-w-0">
+          <h3 className="font-serif text-lg text-anthracite mb-1">{t('title')}</h3>
+          <p className="text-sm text-anthracite-lighter truncate">{state.email}</p>
         </div>
         <button
           type="button"
           onClick={() => void carica()}
           disabled={loading}
           className="inline-flex items-center gap-1.5 text-xs text-anthracite-lighter hover:text-anthracite"
-          title="Rileggi lo stato"
+          title={t('refreshTitle')}
         >
-          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} /> Aggiorna
+          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} /> {t('refresh')}
         </button>
       </div>
 
@@ -171,24 +194,17 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
         <div className="text-sm">
           {state.neverUsed ? (
             <>
-              <div className="font-medium text-amber-900">Account mai usato</div>
-              <div className="text-amber-800 mt-0.5">
-                {clientName} non è ancora entrato nell&apos;app. Puoi impostargli una password temporanea e comunicargliela.
-              </div>
+              <div className="font-medium text-amber-900">{t('neverUsedTitle')}</div>
+              <div className="text-amber-800 mt-0.5">{t('neverUsedBody', { name: clientName })}</div>
             </>
           ) : (
             <>
-              <div className="font-medium text-teal-dark">Account attivo</div>
-              <div className="text-anthracite-light mt-0.5">
-                Ultimo accesso: {formatData(state.lastSignInAt)}. La password è del cliente: non puoi impostarla né vederla,
-                puoi solo far ripartire il ripristino.
-              </div>
+              <div className="font-medium text-teal-dark">{t('activeTitle')}</div>
+              <div className="text-anthracite-light mt-0.5">{t('activeBody', { date: formatData(state.lastSignInAt) })}</div>
             </>
           )}
           {state.mustChangePassword && (
-            <div className="text-xs text-amber-800 mt-1.5">
-              In attesa che il cliente scelga la sua password al prossimo accesso.
-            </div>
+            <div className="text-xs text-amber-800 mt-1.5">{t('mustChange')}</div>
           )}
         </div>
       </div>
@@ -196,14 +212,14 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
       {/* Azioni */}
       {state.neverUsed ? (
         <div className="space-y-3">
-          <label className="input-label">Password temporanea (min {PASSWORD_MIN} caratteri)</label>
+          <label className="input-label">{t('tempPasswordLabel', { min: PASSWORD_MIN })}</label>
           <div className="flex gap-2 flex-wrap">
             <input
               type="text"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input-field flex-1 min-w-[200px] font-mono"
-              placeholder="Genera o scrivi una password"
+              placeholder={t('tempPasswordPlaceholder')}
               autoComplete="off"
             />
             <button
@@ -211,7 +227,7 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
               onClick={() => setPassword(generaPasswordTemporanea())}
               className="btn-secondary text-sm whitespace-nowrap"
             >
-              Genera
+              {t('generate')}
             </button>
             <button
               type="button"
@@ -219,20 +235,17 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
               disabled={!password}
               className="btn-secondary text-sm inline-flex items-center gap-1.5 whitespace-nowrap disabled:opacity-50"
             >
-              {pwCopied ? <Check size={14} /> : <Copy size={14} />} {pwCopied ? 'Copiata' : 'Copia'}
+              {pwCopied ? <Check size={14} /> : <Copy size={14} />} {pwCopied ? t('copied') : t('copy')}
             </button>
           </div>
-          <p className="text-xs text-anthracite-lighter">
-            Comunicala al cliente a voce o su un canale che usate già. Al primo accesso l&apos;app gli chiederà di
-            sceglierne una sua, che tu non vedrai.
-          </p>
+          <p className="text-xs text-anthracite-lighter">{t('tempPasswordHint')}</p>
           <button
             type="button"
             onClick={() => void azione('set_temp_password', { password })}
             disabled={password.length < PASSWORD_MIN || busy !== null || esaurito}
             className="btn-primary text-sm inline-flex items-center gap-1.5 disabled:opacity-50"
           >
-            <KeyRound size={15} /> {busy === 'set_temp_password' ? 'Impostazione…' : 'Imposta password temporanea'}
+            <KeyRound size={15} /> {busy === 'set_temp_password' ? t('settingPassword') : t('setTempPassword')}
           </button>
         </div>
       ) : (
@@ -243,7 +256,7 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
             disabled={busy !== null || esaurito}
             className="btn-primary text-sm inline-flex items-center gap-1.5 disabled:opacity-50"
           >
-            <Mail size={15} /> {busy === 'send_reset_email' ? 'Invio…' : 'Reinvia email di reset'}
+            <Mail size={15} /> {busy === 'send_reset_email' ? t('sending') : t('sendReset')}
           </button>
           <button
             type="button"
@@ -251,7 +264,7 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
             disabled={busy !== null || esaurito}
             className="btn-secondary text-sm inline-flex items-center gap-1.5 disabled:opacity-50"
           >
-            <Link2 size={15} /> {busy === 'copy_reset_link' ? 'Generazione…' : 'Copia link di reset'}
+            <Link2 size={15} /> {busy === 'copy_reset_link' ? t('generating') : t('copyResetLink')}
           </button>
         </div>
       )}
@@ -259,7 +272,7 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
       {/* Link generato, pronto da incollare */}
       {resetLink && (
         <div className="mt-4 p-4 rounded-xl border border-surface-border bg-surface">
-          <div className="text-sm font-medium text-anthracite mb-2">Messaggio pronto da incollare</div>
+          <div className="text-sm font-medium text-anthracite mb-2">{t('pasteTitle')}</div>
           <textarea
             readOnly
             value={resetLink.message}
@@ -273,19 +286,17 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
               onClick={() => void copia(resetLink.message, 'msg')}
               className="btn-primary text-sm inline-flex items-center gap-1.5"
             >
-              {linkCopied === 'msg' ? <Check size={14} /> : <Copy size={14} />} {linkCopied === 'msg' ? 'Copiato' : 'Copia messaggio'}
+              {linkCopied === 'msg' ? <Check size={14} /> : <Copy size={14} />} {linkCopied === 'msg' ? t('copiedGeneric') : t('copyMessage')}
             </button>
             <button
               type="button"
               onClick={() => void copia(resetLink.link, 'link')}
               className="btn-secondary text-sm inline-flex items-center gap-1.5"
             >
-              {linkCopied === 'link' ? <Check size={14} /> : <Copy size={14} />} {linkCopied === 'link' ? 'Copiato' : 'Copia solo il link'}
+              {linkCopied === 'link' ? <Check size={14} /> : <Copy size={14} />} {linkCopied === 'link' ? t('copiedGeneric') : t('copyLinkOnly')}
             </button>
           </div>
-          <p className="text-xs text-anthracite-lighter mt-2">
-            Vale un&apos;ora e si può usare una sola volta. Non resta salvato: se lo perdi, generane un altro.
-          </p>
+          <p className="text-xs text-anthracite-lighter mt-2">{t('linkNote')}</p>
         </div>
       )}
 
@@ -304,19 +315,17 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
       <div className="mt-5 pt-4 border-t border-surface-border text-xs text-anthracite-lighter space-y-1.5">
         <div>
           {esaurito ? (
-            <span className="text-amber-700">
-              Limite raggiunto: {RATE_LIMIT_24H} interventi sull&apos;accesso di questo cliente nelle ultime 24 ore. Riprova domani.
-            </span>
+            <span className="text-amber-700">{t('limitReached', { max: RATE_LIMIT_24H })}</span>
           ) : (
-            <>Interventi rimasti nelle prossime 24 ore: <strong>{state.actionsLeft}</strong> su {RATE_LIMIT_24H}.</>
+            t.rich('actionsLeft', { left: state.actionsLeft, max: RATE_LIMIT_24H, b: (chunks) => <strong>{chunks}</strong> })
           )}
         </div>
-        <div>Ogni intervento è registrato e il cliente riceve un avviso via email.</div>
+        <div>{t('logged')}</div>
         {state.recent.length > 0 && (
           <ul className="pt-1 space-y-0.5">
             {state.recent.map((r, i) => (
               <li key={`${r.created_at}-${i}`}>
-                {formatData(r.created_at)} — {AZIONE_LABEL[r.action] ?? r.action}
+                {formatData(r.created_at)} · {t.has(`actions.${r.action}`) ? t(`actions.${r.action}`) : r.action}
               </li>
             ))}
           </ul>
@@ -324,14 +333,4 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
       </div>
     </section>
   )
-}
-
-function formatData(iso: string | null): string {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return '—'
-  return new Intl.DateTimeFormat('it-IT', {
-    timeZone: 'Europe/Rome',
-    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
-  }).format(d)
 }

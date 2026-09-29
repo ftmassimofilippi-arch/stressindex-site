@@ -2,6 +2,7 @@
 
 import { Search, Loader2, User, ShieldCheck, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase-browser'
 
@@ -9,15 +10,17 @@ type ClientHit = { kind: 'client'; id: string; nome: string | null; cognome: str
 type ProfHit = { kind: 'professional'; id: string; nome: string | null; cognome: string | null; email: string | null }
 type Hit = ClientHit | ProfHit
 
-function label(h: Hit): string {
+function label(h: Hit, fallback: string): string {
   const full = `${h.nome ?? ''} ${h.cognome ?? ''}`.trim()
-  return full || h.email || (h.kind === 'professional' ? 'Professionista' : 'Cliente')
+  return full || h.email || fallback
 }
 
 // Ricerca globale nella TopBar: digita per cercare clienti (e, per il superadmin,
 // professionisti). I risultati sono filtrati dalle RLS lato Supabase, quindi un
 // professionista normale vede solo i propri clienti. Click → naviga alla scheda.
 export function GlobalSearch({ className = '' }: { className?: string }) {
+  const t = useTranslations('dashboard.search')
+  const tc = useTranslations('common')
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [hits, setHits] = useState<Hit[]>([])
@@ -117,13 +120,14 @@ export function GlobalSearch({ className = '' }: { className?: string }) {
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
-        placeholder="Cerca clienti, professionisti…"
+        placeholder={t('placeholder')}
+        aria-label={t('placeholder')}
         className="w-full pl-9 pr-9 py-2 text-sm bg-surface border border-surface-border rounded-xl placeholder:text-anthracite-lighter focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal focus:bg-white transition-colors"
       />
       {query && (
         <button
           type="button"
-          aria-label="Pulisci ricerca"
+          aria-label={t('clear')}
           onClick={() => {
             setQuery('')
             setHits([])
@@ -137,9 +141,9 @@ export function GlobalSearch({ className = '' }: { className?: string }) {
       {showDropdown && (
         <div className="absolute right-0 left-0 top-full mt-2 bg-white border border-surface-border rounded-xl shadow-elevated overflow-hidden z-50 max-h-[60vh] overflow-y-auto">
           {loading && hits.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-anthracite-lighter text-center">Ricerca in corso…</div>
+            <div className="px-4 py-6 text-sm text-anthracite-lighter text-center">{t('searching')}</div>
           ) : hits.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-anthracite-lighter text-center">Nessun risultato per “{query.trim()}”</div>
+            <div className="px-4 py-6 text-sm text-anthracite-lighter text-center">{t('noResults', { query: query.trim() })}</div>
           ) : (
             <ul className="py-1.5">
               {hits.map((h, i) => (
@@ -160,9 +164,11 @@ export function GlobalSearch({ className = '' }: { className?: string }) {
                       {h.kind === 'professional' ? <ShieldCheck size={15} /> : <User size={15} />}
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-sm font-medium text-anthracite truncate">{label(h)}</span>
+                      <span className="block text-sm font-medium text-anthracite truncate">
+                        {label(h, h.kind === 'professional' ? tc('professional') : tc('client'))}
+                      </span>
                       <span className="block text-xs text-anthracite-lighter truncate">
-                        {h.kind === 'professional' ? 'Professionista' : 'Cliente'}
+                        {h.kind === 'professional' ? tc('professional') : tc('client')}
                         {h.email ? ` · ${h.email}` : ''}
                       </span>
                     </span>

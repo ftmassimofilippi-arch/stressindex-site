@@ -1,9 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
 import { AdvancedTrendChart, TREND_METRICS } from '@/components/dashboard/AdvancedTrendChart'
-import { formatMeasuredAt, measuredDayKey, measuredHour, measuredInstant, measuredWeekday } from '@/lib/format'
+import { formatMeasuredAt, intlTag, measuredDayKey, measuredHour, measuredInstant, measuredWeekday, num } from '@/lib/format'
 import type { MeasurementAnalytics } from '@/lib/types'
 
 function stats(values: number[]) {
@@ -18,23 +19,27 @@ function stats(values: number[]) {
   return { mean, median, min, max, std }
 }
 
-function fmt(v: number | null) { return v == null ? '—' : v.toFixed(1) }
-
+// Colonna DB → chiave del nome in scores.names.*.
 const METRICS = [
-  { key: 'score_stress', label: 'Stress', color: '#EF4444', inverted: true },
-  { key: 'score_recupero', label: 'Recupero', color: '#10B981' },
-  { key: 'score_equilibrio', label: 'Equilibrio', color: '#4FA39A' },
-  { key: 'score_energia', label: 'Energia', color: '#F59E0B' },
+  { key: 'score_stress', nameKey: 'stress', color: '#EF4444', inverted: true },
+  { key: 'score_recupero', nameKey: 'recovery', color: '#10B981' },
+  { key: 'score_equilibrio', nameKey: 'balance', color: '#4FA39A' },
+  { key: 'score_energia', nameKey: 'energy', color: '#F59E0B' },
 ] as const
 
+const STAT_KEYS = ['mean', 'median', 'min', 'max', 'std'] as const
+
 export function AdvancedAnalyticsTab({ measurements }: { measurements: MeasurementAnalytics[] }) {
+  const t = useTranslations('clients.analytics')
+  const tScores = useTranslations('scores')
+  const locale = useLocale()
   const [rangeA, setRangeA] = useState<DateRange>(defaultRange(30))
   const [rangeB, setRangeB] = useState<DateRange>({ ...defaultRange(60), to: defaultRange(31).from })
 
   const inA = useMemo(() => filterRange(measurements, rangeA), [measurements, rangeA])
   const inB = useMemo(() => filterRange(measurements, rangeB), [measurements, rangeB])
 
-  // Punti trend su tutto lo storico — il chart filtra internamente con i propri controlli.
+  // Punti trend su tutto lo storico: il chart filtra internamente con i propri controlli.
   // Mappa tutte le metriche supportate (24+ parametri HRV) dal record di measurement_analytics.
   const allTrendData = useMemo(() => measurements.slice().reverse().map((m) => {
     const point = { date: measuredDayKey(m) ?? '' } as { date: string } & Record<string, number | string | null>
@@ -50,14 +55,14 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
   return (
     <div className="space-y-6">
       <div className="card p-5">
-        <h3 className="font-serif text-base text-anthracite mb-3">Confronto periodi</h3>
+        <h3 className="font-serif text-base text-anthracite mb-3">{t('periodsTitle')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <div className="text-xs font-medium text-anthracite-lighter mb-1.5">Periodo A</div>
+            <div className="text-xs font-medium text-anthracite-lighter mb-1.5">{t('periodA')}</div>
             <DateRangePicker value={rangeA} onChange={setRangeA} />
           </div>
           <div>
-            <div className="text-xs font-medium text-anthracite-lighter mb-1.5">Periodo B (confronto)</div>
+            <div className="text-xs font-medium text-anthracite-lighter mb-1.5">{t('periodB')}</div>
             <DateRangePicker value={rangeB} onChange={setRangeB} />
           </div>
         </div>
@@ -72,19 +77,17 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
           const variation = sA.mean != null && sB.mean ? ((sA.mean - sB.mean) / sB.mean) * 100 : null
           return (
             <div key={m.key} className="card p-5">
-              <div className="flex items-center justify-between mb-1">
-                <h4 className="font-serif text-base text-anthracite">{m.label}</h4>
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full text-anthracite-lighter">
-                  {variation != null ? `${variation > 0 ? '+' : ''}${variation.toFixed(1)}% vs B` : '—'}
+              <div className="flex items-center justify-between mb-1 gap-2">
+                <h4 className="font-serif text-base text-anthracite">{tScores(`names.${m.nameKey}`)}</h4>
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full text-anthracite-lighter whitespace-nowrap">
+                  {variation != null ? t('vsB', { value: `${variation > 0 ? '+' : ''}${num(variation, 1, locale)}%` }) : '—'}
                 </span>
               </div>
               <div className="grid grid-cols-5 gap-2 mt-3 text-xs">
-                {(['mean','median','min','max','std'] as const).map((k) => (
+                {STAT_KEYS.map((k) => (
                   <div key={k} className="text-center">
-                    <div className="text-[10px] uppercase tracking-wide text-anthracite-lighter">
-                      {k === 'std' ? 'σ' : k === 'mean' ? 'Media' : k === 'median' ? 'Med.' : k}
-                    </div>
-                    <div className="font-medium text-anthracite mt-0.5">{fmt(sA[k])}</div>
+                    <div className="text-[10px] uppercase tracking-wide text-anthracite-lighter">{t(k)}</div>
+                    <div className="font-medium text-anthracite mt-0.5">{num(sA[k], 1, locale)}</div>
                   </div>
                 ))}
               </div>
@@ -94,13 +97,13 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
       </div>
 
       <section className="card p-6">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="font-serif text-base text-anthracite">Trend storico</h3>
-          <span className="text-xs text-anthracite-lighter">Seleziona metriche e periodo</span>
+        <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
+          <h3 className="font-serif text-base text-anthracite">{t('trendTitle')}</h3>
+          <span className="text-xs text-anthracite-lighter">{t('trendHint')}</span>
         </div>
-        <p className="text-xs text-anthracite-lighter mb-4">Indipendente dai periodi A/B sopra — usa i preset rapidi o un range personalizzato</p>
+        <p className="text-xs text-anthracite-lighter mb-4">{t('trendSubtitle')}</p>
         {allTrendData.length === 0 ? (
-          <p className="text-sm text-anthracite-lighter">Nessun dato disponibile</p>
+          <p className="text-sm text-anthracite-lighter">{t('noData')}</p>
         ) : (
           <AdvancedTrendChart
             data={allTrendData}
@@ -115,13 +118,13 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section className="card overflow-hidden">
           <div className="px-5 py-4 border-b border-surface-border">
-            <h3 className="font-serif text-base text-anthracite">Top 5 — Stress più basso</h3>
+            <h3 className="font-serif text-base text-anthracite">{t('topLow')}</h3>
           </div>
           <ul className="divide-y divide-surface-border">
             {topByStress.length === 0 ? <li className="p-5 text-sm text-anthracite-lighter">—</li> : topByStress.map((m) => (
               <li key={m.id} className="px-5 py-3 flex items-center justify-between text-sm">
-                <span className="text-anthracite-lighter">{formatMeasuredAt(m)}</span>
-                <span className="font-medium text-emerald-600">{m.score_stress?.toFixed(0)}</span>
+                <span className="text-anthracite-lighter">{formatMeasuredAt(m, locale)}</span>
+                <span className="font-medium text-emerald-600">{num(m.score_stress, 0, locale)}</span>
               </li>
             ))}
           </ul>
@@ -129,13 +132,13 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
 
         <section className="card overflow-hidden">
           <div className="px-5 py-4 border-b border-surface-border">
-            <h3 className="font-serif text-base text-anthracite">Top 5 — Stress più alto</h3>
+            <h3 className="font-serif text-base text-anthracite">{t('topHigh')}</h3>
           </div>
           <ul className="divide-y divide-surface-border">
             {bottomByStress.length === 0 ? <li className="p-5 text-sm text-anthracite-lighter">—</li> : bottomByStress.map((m) => (
               <li key={m.id} className="px-5 py-3 flex items-center justify-between text-sm">
-                <span className="text-anthracite-lighter">{formatMeasuredAt(m)}</span>
-                <span className="font-medium text-red-500">{m.score_stress?.toFixed(0)}</span>
+                <span className="text-anthracite-lighter">{formatMeasuredAt(m, locale)}</span>
+                <span className="font-medium text-red-500">{num(m.score_stress, 0, locale)}</span>
               </li>
             ))}
           </ul>
@@ -156,7 +159,16 @@ function filterRange(measurements: MeasurementAnalytics[], r: DateRange): Measur
   })
 }
 
+// Nomi brevi dei giorni nella lingua della pagina, da lunedì (0) a domenica (6).
+function weekdayShortNames(locale: string): string[] {
+  const fmt = new Intl.DateTimeFormat(intlTag(locale), { weekday: 'short', timeZone: 'UTC' })
+  // Il 5 gennaio 2026 è un lunedì.
+  return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(Date.UTC(2026, 0, 5 + i))).replace(/\.$/, ''))
+}
+
 function HourlyHeatmap({ measurements }: { measurements: MeasurementAnalytics[] }) {
+  const t = useTranslations('clients.analytics')
+  const locale = useLocale()
   const grid: Array<Array<{ sum: number; n: number }>> = Array.from({ length: 7 }, () =>
     Array.from({ length: 24 }, () => ({ sum: 0, n: 0 })))
   for (const m of measurements) {
@@ -170,7 +182,7 @@ function HourlyHeatmap({ measurements }: { measurements: MeasurementAnalytics[] 
     grid[dow][h].sum += m.score_stress
     grid[dow][h].n += 1
   }
-  const days = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom']
+  const days = weekdayShortNames(locale)
 
   function colorFor(avg: number | null) {
     if (avg == null) return '#F1F4F7'
@@ -183,18 +195,18 @@ function HourlyHeatmap({ measurements }: { measurements: MeasurementAnalytics[] 
 
   return (
     <section className="card p-5">
-      <h3 className="font-serif text-base text-anthracite mb-1">Pattern temporali</h3>
-      <p className="text-xs text-anthracite-lighter mb-4">Stress medio per giorno della settimana / ora</p>
+      <h3 className="font-serif text-base text-anthracite mb-1">{t('patternsTitle')}</h3>
+      <p className="text-xs text-anthracite-lighter mb-4">{t('patternsSubtitle')}</p>
       <div className="overflow-x-auto">
         <div className="inline-block min-w-full">
-          <div className="grid" style={{ gridTemplateColumns: '30px repeat(24, minmax(18px, 1fr))' }}>
+          <div className="grid" style={{ gridTemplateColumns: '34px repeat(24, minmax(18px, 1fr))' }}>
             <div></div>
             {Array.from({ length: 24 }).map((_, h) => (
               <div key={h} className="text-[9px] text-anthracite-lighter text-center">{h}</div>
             ))}
             {days.map((day, dow) => (
-              <>
-                <div key={`l-${dow}`} className="text-[10px] text-anthracite-lighter pr-2 flex items-center">{day}</div>
+              <Fragment key={dow}>
+                <div className="text-[10px] text-anthracite-lighter pr-2 flex items-center">{day}</div>
                 {Array.from({ length: 24 }).map((_, h) => {
                   const cell = grid[dow][h]
                   const avg = cell.n > 0 ? cell.sum / cell.n : null
@@ -202,12 +214,12 @@ function HourlyHeatmap({ measurements }: { measurements: MeasurementAnalytics[] 
                     <div
                       key={`${dow}-${h}`}
                       className="aspect-square rounded-sm m-0.5"
-                      title={avg != null ? `${day} ${h}:00 — Stress medio ${avg.toFixed(1)} (n=${cell.n})` : `${day} ${h}:00 — nessuna misurazione`}
+                      title={avg != null ? t('cellTitle', { day, hour: h, avg: num(avg, 1, locale), n: cell.n }) : t('cellEmpty', { day, hour: h })}
                       style={{ backgroundColor: colorFor(avg) }}
                     />
                   )
                 })}
-              </>
+              </Fragment>
             ))}
           </div>
         </div>

@@ -46,7 +46,8 @@ export async function sendMail(opts: {
   replyTo?: string
 }): Promise<EsitoEmail> {
   if (!smtpConfigured()) {
-    return { sent: false, reason: 'SMTP non configurato (SMTP_HOST/USER/PASS/FROM)' }
+    // Codice stabile: la UI lo traduce (clients.access.noticeReasons.*).
+    return { sent: false, reason: 'smtp_not_configured' }
   }
   try {
     await transport().sendMail({
@@ -76,10 +77,11 @@ export function escapeHtml(s: unknown): string {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
-/** Email semplice: titolo, paragrafi, eventuale nota in fondo. */
-export function emailLayout(titolo: string, paragrafi: string[], nota?: string): string {
+/** Email semplice: titolo, paragrafi, eventuale nota in fondo. `lang` è la
+ *  lingua dei testi passati ('it' | 'en' | 'de'), per l'attributo dell'html. */
+export function emailLayout(titolo: string, paragrafi: string[], nota?: string, lang = 'it'): string {
   return `<!doctype html>
-<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="${escapeHtml(lang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(titolo)}</title></head>
 <body style="margin:0;padding:0;background:${C.surface};">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.surface};padding:24px 12px;">

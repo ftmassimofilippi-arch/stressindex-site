@@ -1,0 +1,64 @@
+{
+  "page": {
+    "eyebrow": "Trial gratuito 60 giorni",
+    "title": "Inizia a misurare",
+    "intro": "Crea il tuo account professionale e accedi a tutte le funzionalità di Stress Index per 60 giorni, senza impegno.",
+    "calloutTitle": "Cosa ottieni subito",
+    "calloutBody": "Accesso completo all'app, CRM clienti illimitato, report PDF professionali e tutti i 24 parametri HRV. Nessuna carta richiesta.",
+    "trustGdpr": "Dati protetti GDPR",
+    "trustEu": "Server EU Francoforte",
+    "trustNoCard": "Nessuna carta richiesta"
+  },
+  "form": {
+    "firstName": "Nome",
+    "firstNamePlaceholder": "Mario",
+    "lastName": "Cognome",
+    "lastNamePlaceholder": "Rossi",
+    "email": "Email professionale",
+    "emailPlaceholder": "mario.rossi@studio.it",
+    "password": "Password",
+    "passwordPlaceholder": "Minimo 8 caratteri",
+    "confirmPassword": "Conferma password",
+    "confirmPasswordPlaceholder": "Ripeti la password",
+    "profession": "Professione",
+    "professionPlaceholder": "Seleziona la tua professione",
+    "professions": {
+      "medico": "Medico",
+      "fisioterapista": "Fisioterapista",
+      "osteopata": "Osteopata",
+      "coach": "Coach",
+      "altro": "Altro"
+    },
+    "studioName": "Nome studio",
+    "studioNamePlaceholder": "Studio Benessere Milano",
+    "consent": "Registrandoti accetti i <terms>Termini di Servizio</terms> e la <privacy>Privacy Policy</privacy>. I tuoi dati sono protetti e conservati su server EU in conformità al GDPR.",
+    "submit": "Crea il tuo account gratuito",
+    "submitting": "Creazione account in corso...",
+    "createFailed": "Errore nella creazione dell'account. Riprova."
+  },
+  "validation": {
+    "firstNameRequired": "Il nome è obbligatorio",
+    "firstNameTooShort": "Il nome deve avere almeno 2 caratteri",
+    "lastNameRequired": "Il cognome è obbligatorio",
+    "lastNameTooShort": "Il cognome deve avere almeno 2 caratteri",
+    "emailRequired": "L'email è obbligatoria",
+    "emailInvalid": "Inserisci un indirizzo email valido",
+    "passwordRequired": "La password è obbligatoria",
+    "passwordTooShort": "La password deve avere almeno {min} caratteri",
+    "confirmPasswordRequired": "Conferma la password",
+    "passwordMismatch": "Le password non corrispondono",
+    "professionRequired": "Seleziona la tua professione"
+  },
+  "confirm": {
+    "title": "Benvenuto in Stress Index",
+    "intro": "Il tuo account è stato creato. Hai 60 giorni di accesso completo a tutte le funzionalità.",
+    "nextSteps": "Prossimi passi",
+    "step1Title": "Controlla la tua email",
+    "step1Body": "Ti abbiamo inviato un'email di conferma: apri il link per attivare il tuo account.",
+    "step2Title": "Scarica l'app",
+    "step2Body": "Installa Stress Index sul tuo smartphone o tablet.",
+    "step3Title": "Collega il sensore",
+    "step3Body": "Accedi con le credenziali appena create e collega il tuo Polar H10 (o un altro sensore ECG compatibile) via Bluetooth per le prime misurazioni.",
+    "help": "Hai bisogno di aiuto? <link>Contattaci</link>"
+  }
+}

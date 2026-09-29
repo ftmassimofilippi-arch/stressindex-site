@@ -1,9 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Loader2, RefreshCw } from 'lucide-react'
 import { formatDate, formatRelative } from '@/lib/format'
-import { api } from '../adminApi'
+import { api, errorText } from '../adminApi'
 
 // ============================================================================
 // Health check dei dati — 6 indicatori, ognuno calcolato lato DB in una sola
@@ -46,6 +47,10 @@ type Report = {
 }
 
 export function HealthPanel({ serviceRoleConfigured }: { serviceRoleConfigured: boolean }) {
+  const t = useTranslations('admin.healthCheck')
+  const ta = useTranslations('admin')
+  const tErr = useTranslations('errors.api')
+  const locale = useLocale()
   const [report, setReport] = useState<Report | null>(null)
   const [migrationRequired, setMigrationRequired] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -57,23 +62,23 @@ export function HealthPanel({ serviceRoleConfigured }: { serviceRoleConfigured: 
     const { ok, json } = await api('GET', '/api/admin/health')
     if (json?.migration_required) setMigrationRequired(true)
     else if (ok) setReport(json?.report ?? null)
-    else setError(json?.error ?? 'Errore caricamento report')
+    else setError(errorText(json, tErr, t('loadError')))
     setLoading(false)
-  }, [])
+  }, [t, tErr])
 
   useEffect(() => {
     if (serviceRoleConfigured) reload()
     else setLoading(false)
   }, [serviceRoleConfigured, reload])
 
+  const code = (c: React.ReactNode) => <code className="px-1 bg-surface rounded">{c}</code>
+
   if (!serviceRoleConfigured) {
     return (
       <div className="card p-6">
         <div className="flex items-start gap-3">
           <AlertTriangle className="text-amber-500 flex-shrink-0 mt-0.5" size={20} />
-          <p className="text-sm text-anthracite-lighter">
-            Il report richiede la <code className="px-1 bg-surface rounded">SUPABASE_SERVICE_ROLE_KEY</code> lato server.
-          </p>
+          <p className="text-sm text-anthracite-lighter">{ta.rich('serviceRole.healthBody', { code })}</p>
         </div>
       </div>
     )
@@ -82,7 +87,7 @@ export function HealthPanel({ serviceRoleConfigured }: { serviceRoleConfigured: 
   if (loading) {
     return (
       <div className="card p-12 flex items-center justify-center text-anthracite-lighter">
-        <Loader2 className="animate-spin mr-2" size={18} /> Analisi dei dati…
+        <Loader2 className="animate-spin mr-2" size={18} /> {t('analyzing')}
       </div>
     )
   }
@@ -93,12 +98,8 @@ export function HealthPanel({ serviceRoleConfigured }: { serviceRoleConfigured: 
         <div className="flex items-start gap-3">
           <AlertTriangle className="text-amber-500 flex-shrink-0 mt-0.5" size={20} />
           <div>
-            <h3 className="font-medium text-anthracite">Migration 017 non ancora applicata</h3>
-            <p className="text-sm text-anthracite-lighter mt-1">
-              Il report usa la RPC <code className="px-1 bg-surface rounded">admin_data_health</code> definita in{' '}
-              <code className="px-1 bg-surface rounded">supabase-migrations/017_client_user_id_admin_ops.sql</code>.
-              Applicala su Supabase e ricarica.
-            </p>
+            <h3 className="font-medium text-anthracite">{t('migrationTitle')}</h3>
+            <p className="text-sm text-anthracite-lighter mt-1">{t.rich('migrationBody', { code })}</p>
           </div>
         </div>
       </div>
@@ -109,7 +110,7 @@ export function HealthPanel({ serviceRoleConfigured }: { serviceRoleConfigured: 
     return (
       <div className="callout-amber text-sm">
         <AlertTriangle size={16} className="text-amber-500 flex-shrink-0" />
-        <span>{error ?? 'Report non disponibile'}</span>
+        <span>{error ?? t('unavailable')}</span>
       </div>
     )
   }
@@ -122,124 +123,125 @@ export function HealthPanel({ serviceRoleConfigured }: { serviceRoleConfigured: 
     report.stale_pending_links.count
 
   const REASON_LABEL: Record<LinkedClientNoData['reason'], string> = {
-    no_crm_match: 'Ponte rotto: il link attivo non aggancia nessuna scheda CRM',
-    no_measurements: 'Scheda agganciata ma zero misurazioni visibili',
+    no_crm_match: t('reasonNoCrm'),
+    no_measurements: t('reasonNoMeasurements'),
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-sm text-anthracite-lighter">
-          {problemCount === 0
-            ? 'Nessun problema rilevato.'
-            : `${problemCount} elementi da verificare.`}{' '}
-          Generato {formatRelative(report.generated_at)}.
+          {problemCount === 0 ? t('noProblems') : t('toVerify', { count: problemCount })}{' '}
+          {t('generated', { when: formatRelative(report.generated_at, locale) })}
         </p>
         <button
           type="button"
           onClick={reload}
           className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-xl border border-surface-border hover:bg-surface text-anthracite-lighter"
         >
-          <RefreshCw size={15} /> Aggiorna
+          <RefreshCw size={15} /> {ta('refresh')}
         </button>
       </div>
 
       <IndicatorCard
-        title="Clienti collegati senza misurazioni visibili"
-        subtitle="Link attivo ma il professionista non vede nulla: potenziale problema di aggancio."
+        title={t('linkedNoData')}
+        subtitle={t('linkedNoDataSub')}
         count={report.linked_clients_no_data.count}
       >
         <SimpleTable
-          headers={['Cliente', 'Professionista', 'Problema']}
+          headers={[t('thClient'), t('thProfessional'), t('thProblem')]}
           rows={report.linked_clients_no_data.items.map((i) => [
             <CellMain key="a" main={i.display_name} sub={i.user_email} />,
             i.professional_name,
             <span key="c" className={i.reason === 'no_crm_match' ? 'text-red-500' : 'text-amber-600'}>{REASON_LABEL[i.reason]}</span>,
           ])}
+          empty={t('empty')}
         />
       </IndicatorCard>
 
       <IndicatorCard
-        title="Misurazioni orfane"
-        subtitle="Utenti non professionisti con sessioni self ma nessun collegamento attivo: quei dati non li vede nessuno."
+        title={t('orphan')}
+        subtitle={t('orphanSub')}
         count={report.orphan_remote_sessions.count}
       >
         <SimpleTable
-          headers={['Utente', 'Sessioni', 'Ultima']}
+          headers={[t('thUser'), t('thSessions'), t('thLast')]}
           rows={report.orphan_remote_sessions.items.map((i) => [
             <CellMain key="a" main={i.name ?? i.email ?? i.user_id} sub={i.name ? i.email : null} />,
             String(i.sessions_count),
-            i.last_at ? formatRelative(i.last_at) : '—',
+            i.last_at ? formatRelative(i.last_at, locale) : '—',
           ])}
+          empty={t('empty')}
         />
       </IndicatorCard>
 
       <IndicatorCard
-        title="Anagrafiche duplicate"
-        subtitle="Stessa email sotto lo stesso professionista: da unire con lo strumento del pannello."
+        title={t('duplicates')}
+        subtitle={t('duplicatesSub')}
         count={report.duplicate_clients.count}
       >
         <SimpleTable
-          headers={['Email', 'Professionista', 'Righe']}
+          headers={[t('thEmail'), t('thProfessional'), t('thRows')]}
           rows={report.duplicate_clients.items.map((i) => [
             <CellMain key="a" main={i.email} sub={i.rows.map((r) => `${r.nome ?? ''} ${r.cognome ?? ''}`.trim() || r.id).join(' · ')} />,
             i.professional_name,
             String(i.rows_count),
           ])}
+          empty={t('empty')}
         />
       </IndicatorCard>
 
       <IndicatorCard
-        title="Clienti senza email né ponte"
-        subtitle="Senza email e senza client_user_id le misurazioni remote non potranno mai agganciarsi."
+        title={t('noEmail')}
+        subtitle={t('noEmailSub')}
         count={report.clients_no_email.count}
       >
         <SimpleTable
-          headers={['Cliente', 'Professionista', 'Creato']}
+          headers={[t('thClient'), t('thProfessional'), t('thCreated')]}
           rows={report.clients_no_email.items.map((i) => [
             i.name ?? i.id,
             i.professional_name,
-            i.created_at ? formatDate(i.created_at) : '—',
+            i.created_at ? formatDate(i.created_at, undefined, locale) : '—',
           ])}
+          empty={t('empty')}
         />
       </IndicatorCard>
 
       <IndicatorCard
-        title="Versioni app installate"
-        subtitle="Utenti per versione e ultimo accesso rilevato."
+        title={t('appVersions')}
+        subtitle={t('appVersionsSub')}
         count={report.app_versions.available ? report.app_versions.items.length : null}
         neutral
       >
         {report.app_versions.available ? (
           <SimpleTable
-            headers={['Versione', 'Piattaforma', 'Utenti', 'Ultimo accesso']}
+            headers={[t('thVersion'), t('thPlatform'), t('thUsers'), t('thLastSeen')]}
             rows={report.app_versions.items.map((i) => [
               i.app_version,
               i.platform,
               String(i.users_count),
-              i.last_seen_at ? formatRelative(i.last_seen_at) : '—',
+              i.last_seen_at ? formatRelative(i.last_seen_at, locale) : '—',
             ])}
+            empty={t('empty')}
           />
         ) : (
-          <p className="text-sm text-anthracite-lighter px-4 pb-4">
-            Dato non disponibile: le colonne <code className="px-1 bg-surface rounded">app_version</code> /{' '}
-            <code className="px-1 bg-surface rounded">last_seen_at</code> su profiles arrivano dal lavoro in corso sull&apos;app Flutter.
-          </p>
+          <p className="text-sm text-anthracite-lighter px-4 pb-4">{t.rich('appVersionsUnavailable', { code })}</p>
         )}
       </IndicatorCard>
 
       <IndicatorCard
-        title="Richieste di collegamento dimenticate"
-        subtitle="Link in stato pending da più di 7 giorni: il professionista probabilmente non li ha visti."
+        title={t('stalePending')}
+        subtitle={t('stalePendingSub')}
         count={report.stale_pending_links.count}
       >
         <SimpleTable
-          headers={['Cliente', 'Professionista', 'In attesa da']}
+          headers={[t('thClient'), t('thProfessional'), t('thPendingSince')]}
           rows={report.stale_pending_links.items.map((i) => [
             <CellMain key="a" main={i.client_name ?? i.client_email ?? '—'} sub={i.client_name ? i.client_email : null} />,
             i.professional_name,
-            formatRelative(i.created_at),
+            formatRelative(i.created_at, locale),
           ])}
+          empty={t('empty')}
         />
       </IndicatorCard>
     </div>
@@ -261,6 +263,7 @@ function IndicatorCard({
   neutral?: boolean // per sezioni informative (non problemi)
   children: React.ReactNode
 }) {
+  const tc = useTranslations('common')
   const [open, setOpen] = useState(false)
   const ok = !neutral && count === 0
   const expandable = count === null || count > 0 || neutral
@@ -296,7 +299,7 @@ function IndicatorCard({
                   : 'bg-amber-50 text-amber-600'
           }`}
         >
-          {count === null ? 'n/d' : count}
+          {count === null ? tc('na') : count}
         </span>
       </button>
       {open && expandable && <div className="border-t border-surface-border">{children}</div>}
@@ -304,9 +307,9 @@ function IndicatorCard({
   )
 }
 
-function SimpleTable({ headers, rows }: { headers: string[]; rows: React.ReactNode[][] }) {
+function SimpleTable({ headers, rows, empty }: { headers: string[]; rows: React.ReactNode[][]; empty: string }) {
   if (rows.length === 0) {
-    return <p className="text-sm text-anthracite-lighter px-5 py-4">Nessun elemento.</p>
+    return <p className="text-sm text-anthracite-lighter px-5 py-4">{empty}</p>
   }
   return (
     <div className="overflow-x-auto max-h-80 overflow-y-auto">
@@ -336,7 +339,7 @@ function CellMain({ main, sub }: { main: React.ReactNode; sub?: React.ReactNode 
   return (
     <div>
       <div className="font-medium text-anthracite">{main}</div>
-      {sub && <div className="text-xs text-anthracite-lighter mt-0.5">{sub}</div>}
+      {sub && <div className="text-xs text-anthracite-lighter mt-0.5 break-words">{sub}</div>}
     </div>
   )
 }

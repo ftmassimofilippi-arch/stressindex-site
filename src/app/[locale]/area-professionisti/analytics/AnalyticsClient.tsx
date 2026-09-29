@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { useLocale, useTranslations } from 'next-intl'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
 import { MetricCard } from '@/components/dashboard/MetricCard'
-import { fullName } from '@/lib/format'
+import { fullName, num } from '@/lib/format'
 import type { MeasurementAnalytics } from '@/lib/types'
 import type { ClientWithLastMeasurement } from '@/lib/dashboard-data'
+import type { Tr } from '@/i18n/types'
 import { Link } from '@/i18n/navigation'
 import { measuredInstant } from '@/lib/format'
 import type { MonitoringSession } from '@/lib/monitoring-types'
@@ -15,21 +17,28 @@ import { PROFILE_LABEL, PROFILE_ORDER, effectiveProfile, wallDate } from '@/lib/
 
 type Props = { clients: ClientWithLastMeasurement[]; measurements: MeasurementAnalytics[]; monitoring?: MonitoringSession[] }
 
+type SegmentDim = 'tag' | 'sesso' | 'atleta' | 'fumatore'
+
 function avgOf(values: number[]) {
   if (!values.length) return null
   return values.reduce((a, b) => a + b, 0) / values.length
 }
 
 export function AnalyticsClient({ clients, measurements, monitoring = [] }: Props) {
+  const locale = useLocale()
+  const t = useTranslations('dashboard.analytics')
+  const tScores = useTranslations('scores.names')
+  const tSeg = useTranslations('dashboard.analytics.segments')
+
   const [range, setRange] = useState<DateRange>(defaultRange(30))
-  const [segmentDim, setSegmentDim] = useState<'tag' | 'sesso' | 'atleta' | 'fumatore'>('sesso')
+  const [segmentDim, setSegmentDim] = useState<SegmentDim>('sesso')
 
   const filtered = useMemo(() => {
     const f = new Date(range.from).getTime()
-    const t = new Date(range.to).getTime() + 24 * 3600 * 1000
+    const tt = new Date(range.to).getTime() + 24 * 3600 * 1000
     return measurements.filter((m) => {
       const v = measuredInstant(m)?.getTime() ?? 0
-      return v >= f && v <= t
+      return v >= f && v <= tt
     })
   }, [measurements, range])
 
@@ -54,36 +63,36 @@ export function AnalyticsClient({ clients, measurements, monitoring = [] }: Prop
   }).filter((x) => x.recoveryAvg != null) as Array<{ client: ClientWithLastMeasurement; recoveryAvg: number; n: number }>
 
   const topPerformers = [...perClient].sort((a, b) => b.recoveryAvg - a.recoveryAvg).slice(0, 5)
-  const critical = [...perClient].sort((a, b) => a.recoveryAvg - b.recoveryAvg).slice(0, 5)
+  const toWatch = [...perClient].sort((a, b) => a.recoveryAvg - b.recoveryAvg).slice(0, 5)
 
   // Distribution histogram in 5 bins per score
   const bins = ['0-20', '21-40', '41-60', '61-80', '81-100']
   const distData = bins.map((label, i) => ({
     bin: label,
-    Stress: 0, Recupero: 0, Equilibrio: 0, Energia: 0,
+    stress: 0, recovery: 0, balance: 0, energy: 0,
     binStart: i * 20,
   }))
-  function inc(key: 'Stress' | 'Recupero' | 'Equilibrio' | 'Energia', value: number | null | undefined) {
+  function inc(key: 'stress' | 'recovery' | 'balance' | 'energy', value: number | null | undefined) {
     if (value == null) return
     const idx = Math.min(4, Math.floor(value / 20))
     distData[idx][key]++
   }
   for (const m of filtered) {
-    inc('Stress', m.score_stress)
-    inc('Recupero', m.score_recupero)
-    inc('Equilibrio', m.score_equilibrio)
-    inc('Energia', m.score_energia)
+    inc('stress', m.score_stress)
+    inc('recovery', m.score_recupero)
+    inc('balance', m.score_equilibrio)
+    inc('energy', m.score_energia)
   }
 
-  const segments = useMemo(() => buildSegments(clients, filtered, segmentDim), [clients, filtered, segmentDim])
+  const segments = useMemo(() => buildSegments(clients, filtered, segmentDim, tSeg), [clients, filtered, segmentDim, tSeg])
 
   // Monitoraggi nel periodo, per tipo e per profilo (conteggi, nessun ricalcolo).
   const monitoringStats = useMemo(() => {
     const f = new Date(range.from + 'T00:00:00Z').getTime()
-    const t = new Date(range.to + 'T23:59:59Z').getTime()
+    const tt = new Date(range.to + 'T23:59:59Z').getTime()
     const inRange = monitoring.filter((s) => {
       const w = wallDate(s.start_time, s.tz_offset_minutes)?.getTime() ?? 0
-      return w >= f && w <= t
+      return w >= f && w <= tt
     })
     const byProfile = new Map<string, number>()
     let sleep = 0
@@ -95,6 +104,9 @@ export function AnalyticsClient({ clients, measurements, monitoring = [] }: Prop
     return { total: inRange.length, h24: inRange.length - sleep, sleep, byProfile, clients: new Set(inRange.map((s) => s.client_id)).size }
   }, [monitoring, range])
 
+  const tooltipStyle = { background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 12 }
+  const fmtCount = (v: unknown) => num(v, 0, locale)
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
@@ -102,20 +114,20 @@ export function AnalyticsClient({ clients, measurements, monitoring = [] }: Prop
       </div>
 
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Clienti attivi" value={activeClients} hint={`/ ${clients.length} totali`} />
-        <MetricCard label="Misurazioni" value={totalMeasurements} hint="nel periodo" />
-        <MetricCard label="Alert attivi" value={alertCount} />
-        <MetricCard label="% aderenza" value={`${adherence.toFixed(0)}%`} hint="hanno misurato" />
+        <MetricCard label={t('activeClients')} value={activeClients} hint={t('ofTotal', { count: clients.length })} />
+        <MetricCard label={t('measurements')} value={totalMeasurements} hint={t('inPeriod')} />
+        <MetricCard label={t('activeAlerts')} value={alertCount} />
+        <MetricCard label={t('adherence')} value={`${num(adherence, 0, locale)}%`} hint={t('adherenceHint')} />
       </section>
 
       <section className="card p-6">
-        <h2 className="font-serif text-lg mb-1" style={{ color: '#2B4160' }}>Monitoraggi nel periodo</h2>
-        <p className="text-sm text-anthracite-lighter mb-4">Registrazioni lunghe e notti analizzate dall&apos;app, per tipo e per profilo</p>
+        <h2 className="font-serif text-lg mb-1" style={{ color: '#2B4160' }}>{t('monitoringTitle')}</h2>
+        <p className="text-sm text-anthracite-lighter mb-4">{t('monitoringSubtitle')}</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <MetricCard label="Monitoraggi" value={monitoringStats.total} hint="nel periodo" />
-          <MetricCard label="24h" value={monitoringStats.h24} />
-          <MetricCard label="Sonno" value={monitoringStats.sleep} />
-          <MetricCard label="Clienti" value={monitoringStats.clients} hint="con monitoraggi" />
+          <MetricCard label={t('monitoring')} value={monitoringStats.total} hint={t('inPeriod')} />
+          <MetricCard label={t('h24')} value={monitoringStats.h24} />
+          <MetricCard label={t('sleep')} value={monitoringStats.sleep} />
+          <MetricCard label={t('clients')} value={monitoringStats.clients} hint={t('withMonitoring')} />
         </div>
         {monitoringStats.h24 > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
@@ -129,18 +141,18 @@ export function AnalyticsClient({ clients, measurements, monitoring = [] }: Prop
       </section>
 
       <section className="card p-6">
-        <h2 className="font-serif text-lg text-anthracite mb-1">Distribuzione score clienti</h2>
-        <p className="text-sm text-anthracite-lighter mb-4">Quante misurazioni cadono in ogni fascia di valore</p>
+        <h2 className="font-serif text-lg text-anthracite mb-1">{t('distributionTitle')}</h2>
+        <p className="text-sm text-anthracite-lighter mb-4">{t('distributionSubtitle')}</p>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={distData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" vertical={false} />
             <XAxis dataKey="bin" stroke="#6B7280" fontSize={11} />
-            <YAxis stroke="#6B7280" fontSize={11} />
-            <Tooltip contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 12 }} />
-            <Bar dataKey="Stress" fill="#EF4444" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Recupero" fill="#10B981" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Equilibrio" fill="#4FA39A" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Energia" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+            <YAxis stroke="#6B7280" fontSize={11} tickFormatter={fmtCount} />
+            <Tooltip contentStyle={tooltipStyle} formatter={fmtCount} />
+            <Bar dataKey="stress" name={tScores('stress')} fill="#EF4444" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="recovery" name={tScores('recovery')} fill="#10B981" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="balance" name={tScores('balance')} fill="#4FA39A" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="energy" name={tScores('energy')} fill="#F59E0B" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </section>
@@ -148,19 +160,19 @@ export function AnalyticsClient({ clients, measurements, monitoring = [] }: Prop
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section className="card overflow-hidden">
           <div className="px-5 py-4 border-b border-surface-border">
-            <h3 className="font-serif text-base text-anthracite">Top performers</h3>
-            <p className="text-xs text-anthracite-lighter">Migliore recupero medio nel periodo</p>
+            <h3 className="font-serif text-base text-anthracite">{t('topTitle')}</h3>
+            <p className="text-xs text-anthracite-lighter">{t('topSubtitle')}</p>
           </div>
           <ul className="divide-y divide-surface-border">
-            {topPerformers.length === 0 && <li className="p-5 text-sm text-anthracite-lighter">Dati insufficienti</li>}
-            {topPerformers.map((t) => (
-              <li key={t.client.id} className="px-5 py-3 flex items-center justify-between">
-                <Link href={`/area-professionisti/clienti/${t.client.id}`} className="text-sm font-medium text-anthracite hover:text-teal-dark">
-                  {fullName(t.client)}
+            {topPerformers.length === 0 && <li className="p-5 text-sm text-anthracite-lighter">{t('insufficientData')}</li>}
+            {topPerformers.map((x) => (
+              <li key={x.client.id} className="px-5 py-3 flex items-center justify-between gap-3">
+                <Link href={`/area-professionisti/clienti/${x.client.id}`} className="text-sm font-medium text-anthracite hover:text-teal-dark min-w-0 truncate">
+                  {fullName(x.client)}
                 </Link>
-                <div className="text-right">
-                  <div className="text-emerald-600 font-medium tabular-nums">{t.recoveryAvg.toFixed(0)}</div>
-                  <div className="text-[11px] text-anthracite-lighter">{t.n} misurazioni</div>
+                <div className="text-right flex-shrink-0">
+                  <div className="text-emerald-600 font-medium tabular-nums">{num(x.recoveryAvg, 0, locale)}</div>
+                  <div className="text-[11px] text-anthracite-lighter">{t('measurementsCount', { count: x.n })}</div>
                 </div>
               </li>
             ))}
@@ -169,19 +181,19 @@ export function AnalyticsClient({ clients, measurements, monitoring = [] }: Prop
 
         <section className="card overflow-hidden">
           <div className="px-5 py-4 border-b border-surface-border">
-            <h3 className="font-serif text-base text-anthracite">Clienti critici</h3>
-            <p className="text-xs text-anthracite-lighter">Recupero più basso nel periodo</p>
+            <h3 className="font-serif text-base text-anthracite">{t('watchTitle')}</h3>
+            <p className="text-xs text-anthracite-lighter">{t('watchSubtitle')}</p>
           </div>
           <ul className="divide-y divide-surface-border">
-            {critical.length === 0 && <li className="p-5 text-sm text-anthracite-lighter">Dati insufficienti</li>}
-            {critical.map((t) => (
-              <li key={t.client.id} className="px-5 py-3 flex items-center justify-between">
-                <Link href={`/area-professionisti/clienti/${t.client.id}`} className="text-sm font-medium text-anthracite hover:text-teal-dark">
-                  {fullName(t.client)}
+            {toWatch.length === 0 && <li className="p-5 text-sm text-anthracite-lighter">{t('insufficientData')}</li>}
+            {toWatch.map((x) => (
+              <li key={x.client.id} className="px-5 py-3 flex items-center justify-between gap-3">
+                <Link href={`/area-professionisti/clienti/${x.client.id}`} className="text-sm font-medium text-anthracite hover:text-teal-dark min-w-0 truncate">
+                  {fullName(x.client)}
                 </Link>
-                <div className="text-right">
-                  <div className="text-red-500 font-medium tabular-nums">{t.recoveryAvg.toFixed(0)}</div>
-                  <div className="text-[11px] text-anthracite-lighter">{t.n} misurazioni</div>
+                <div className="text-right flex-shrink-0">
+                  <div className="text-red-500 font-medium tabular-nums">{num(x.recoveryAvg, 0, locale)}</div>
+                  <div className="text-[11px] text-anthracite-lighter">{t('measurementsCount', { count: x.n })}</div>
                 </div>
               </li>
             ))}
@@ -190,16 +202,16 @@ export function AnalyticsClient({ clients, measurements, monitoring = [] }: Prop
       </div>
 
       <section className="card p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="font-serif text-lg text-anthracite">Confronto segmenti</h2>
-            <p className="text-sm text-anthracite-lighter">Differenze medie per dimensione cliente</p>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div className="min-w-0">
+            <h2 className="font-serif text-lg text-anthracite">{t('segmentsTitle')}</h2>
+            <p className="text-sm text-anthracite-lighter">{t('segmentsSubtitle')}</p>
           </div>
-          <select value={segmentDim} onChange={(e) => setSegmentDim(e.target.value as typeof segmentDim)} className="px-3 py-2 text-sm bg-white border border-surface-border rounded-xl">
-            <option value="sesso">Sesso</option>
-            <option value="atleta">Atleta vs non</option>
-            <option value="fumatore">Fumatore vs non</option>
-            <option value="tag">Per tag</option>
+          <select value={segmentDim} onChange={(e) => setSegmentDim(e.target.value as SegmentDim)} className="px-3 py-2 text-sm bg-white border border-surface-border rounded-xl max-w-full">
+            <option value="sesso">{t('dims.sex')}</option>
+            <option value="atleta">{t('dims.athlete')}</option>
+            <option value="fumatore">{t('dims.smoker')}</option>
+            <option value="tag">{t('dims.tag')}</option>
           </select>
         </div>
         <ResponsiveContainer width="100%" height={260}>
@@ -207,11 +219,11 @@ export function AnalyticsClient({ clients, measurements, monitoring = [] }: Prop
             <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" vertical={false} />
             <XAxis dataKey="label" stroke="#6B7280" fontSize={11} />
             <YAxis domain={[0, 100]} stroke="#6B7280" fontSize={11} />
-            <Tooltip contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 12 }} />
-            <Bar dataKey="stress" name="Stress" fill="#EF4444" radius={[4, 4, 0, 0]}>
+            <Tooltip contentStyle={tooltipStyle} formatter={fmtCount} />
+            <Bar dataKey="stress" name={tScores('stress')} fill="#EF4444" radius={[4, 4, 0, 0]}>
               {segments.map((_, i) => <Cell key={i} fill="#EF4444" />)}
             </Bar>
-            <Bar dataKey="recupero" name="Recupero" fill="#10B981" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="recovery" name={tScores('recovery')} fill="#10B981" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </section>
@@ -219,8 +231,10 @@ export function AnalyticsClient({ clients, measurements, monitoring = [] }: Prop
   )
 }
 
-function buildSegments(clients: ClientWithLastMeasurement[], measurements: MeasurementAnalytics[], dim: 'tag' | 'sesso' | 'atleta' | 'fumatore') {
-  const groups = new Map<string, { stress: number[]; recupero: number[] }>()
+// `tSeg` traduce le etichette dei segmenti (`dashboard.analytics.segments`);
+// i tag liberi del cliente restano com'è stato scritto.
+function buildSegments(clients: ClientWithLastMeasurement[], measurements: MeasurementAnalytics[], dim: SegmentDim, tSeg: Tr) {
+  const groups = new Map<string, { stress: number[]; recovery: number[] }>()
   const clientMap = new Map(clients.map((c) => [c.id, c]))
 
   for (const m of measurements) {
@@ -228,23 +242,23 @@ function buildSegments(clients: ClientWithLastMeasurement[], measurements: Measu
     if (!c) continue
     let keys: string[] = []
     if (dim === 'tag') keys = (c.settings?.tags ?? [])
-    else if (dim === 'sesso') keys = [c.sesso === 'M' ? 'Uomini' : c.sesso === 'F' ? 'Donne' : 'Non specificato']
-    else if (dim === 'atleta') keys = [c.atleta ? 'Atleti' : 'Non atleti']
-    else if (dim === 'fumatore') keys = [c.fumatore ? 'Fumatori' : 'Non fumatori']
-    for (const k of keys.length ? keys : ['—']) {
-      const g = groups.get(k) ?? { stress: [], recupero: [] }
+    else if (dim === 'sesso') keys = [c.sesso === 'M' ? tSeg('men') : c.sesso === 'F' ? tSeg('women') : tSeg('unspecified')]
+    else if (dim === 'atleta') keys = [c.atleta ? tSeg('athletes') : tSeg('nonAthletes')]
+    else if (dim === 'fumatore') keys = [c.fumatore ? tSeg('smokers') : tSeg('nonSmokers')]
+    for (const k of keys.length ? keys : [tSeg('noTag')]) {
+      const g = groups.get(k) ?? { stress: [], recovery: [] }
       if (m.score_stress != null) g.stress.push(m.score_stress)
-      if (m.score_recupero != null) g.recupero.push(m.score_recupero)
+      if (m.score_recupero != null) g.recovery.push(m.score_recupero)
       groups.set(k, g)
     }
   }
 
-  const out: Array<{ label: string; stress: number; recupero: number }> = []
+  const out: Array<{ label: string; stress: number; recovery: number }> = []
   Array.from(groups.entries()).forEach(([label, g]) => {
     out.push({
       label,
       stress: g.stress.length ? Math.round(g.stress.reduce((a, b) => a + b, 0) / g.stress.length) : 0,
-      recupero: g.recupero.length ? Math.round(g.recupero.reduce((a, b) => a + b, 0) / g.recupero.length) : 0,
+      recovery: g.recovery.length ? Math.round(g.recovery.reduce((a, b) => a + b, 0) / g.recovery.length) : 0,
     })
   })
   return out

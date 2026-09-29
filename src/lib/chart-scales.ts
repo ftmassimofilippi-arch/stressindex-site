@@ -116,5 +116,5 @@ export function psdClamp(v: number, scale: PsdScale): number {
   return v
 }
 
-/** Nota mostrata quando la scala fissa è stata allargata. */
-export const EXTENDED_SCALE_NOTE = 'scala estesa'
+// La nota "scala estesa" mostrata quando la scala fissa è stata allargata è
+// tradotta: chiave `charts.scale.extendedNote`, usata da ScaleToggle.

@@ -1,0 +1,35 @@
+{
+  "searchPlaceholder": "Cerca nelle note…",
+  "allCategories": "Tutte le categorie",
+  "newNote": "Nuova nota",
+  "editNote": "Modifica nota",
+  "emptyTitle": "Nessuna nota",
+  "emptyBody": "Inizia ad annotare osservazioni, valutazioni e follow-up.",
+  "noneForClient": "Nessuna nota per questo cliente",
+  "reminderTitle": "Reminder: {date}",
+  "edit": "Modifica",
+  "delete": "Elimina",
+  "deleteConfirm": "Eliminare questa nota?",
+  "client": "Cliente: {name}",
+  "text": "Testo nota",
+  "textPlaceholder": "Annotazioni, osservazioni, follow-up…",
+  "category": "Categoria",
+  "noCategory": "Nessuna",
+  "reminder": "Reminder (opzionale)",
+  "reminderHint": "Una notifica ti ricorderà di rivedere la nota in quella data.",
+  "tags": "Tag",
+  "saving": "Salvataggio…",
+  "categories": {
+    "assessment": "Valutazione",
+    "followUp": "Follow-up",
+    "postSession": "Post trattamento",
+    "history": "Storia e contesto",
+    "other": "Altro"
+  },
+  "tagPresets": {
+    "urgent": "urgente",
+    "toReview": "da rivedere",
+    "documentation": "documentazione",
+    "protocol": "protocollo"
+  }
+}

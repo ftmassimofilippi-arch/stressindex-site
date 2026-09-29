@@ -1,10 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { Building2 } from 'lucide-react'
+import { apiErrorMessage } from '@/lib/api-error'
 
 export function CreateOrganizationForm() {
+  const t = useTranslations('organization.form')
+  const tErr = useTranslations('errors.api')
   const router = useRouter()
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
@@ -23,7 +27,7 @@ export function CreateOrganizationForm() {
     setSaving(false)
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
-      setErr(data?.error ?? 'Errore nella creazione')
+      setErr(apiErrorMessage(data, tErr, t('error')))
       return
     }
     router.refresh()
@@ -36,11 +40,11 @@ export function CreateOrganizationForm() {
       </div>
       <form onSubmit={submit} className="space-y-4">
         <div>
-          <label className="input-label">Nome organizzazione</label>
+          <label className="input-label">{t('name')}</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Es. Centro Medico Aurora"
+            placeholder={t('placeholder')}
             className="input-field"
             autoFocus
             required
@@ -52,7 +56,7 @@ export function CreateOrganizationForm() {
           disabled={saving || !name.trim()}
           className="btn-primary text-sm"
         >
-          {saving ? 'Creazione…' : 'Crea organizzazione'}
+          {saving ? t('creating') : t('create')}
         </button>
       </form>
     </section>

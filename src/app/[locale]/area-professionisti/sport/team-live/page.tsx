@@ -1,4 +1,5 @@
 import { Link } from '@/i18n/navigation'
+import { getTranslations } from 'next-intl/server'
 import { ArrowLeft, Lock } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
@@ -6,14 +7,19 @@ import { getProfessionalProfile } from '@/lib/dashboard-data'
 import { getSportLiveSnapshot, resolveSportContext } from '@/lib/sport-data'
 import { TeamLiveBoard } from './TeamLiveBoard'
 
-export const metadata = { title: 'Team Live' }
 export const dynamic = 'force-dynamic'
+
+export async function generateMetadata({ params }: { params: { locale: string } }) {
+  const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
+  return { title: t('sportModule.teamLiveTitle'), robots: { index: false, follow: false } }
+}
 
 export default async function TeamLivePage({
   searchParams,
 }: {
   searchParams?: { professionista?: string }
 }) {
+  const t = await getTranslations('sport')
   const { professionalId, viewing, access } = await resolveSportContext(searchParams?.professionista)
   const professional = await getProfessionalProfile()
 
@@ -25,11 +31,11 @@ export default async function TeamLivePage({
           <div className="mx-auto w-14 h-14 rounded-2xl bg-teal-light text-teal-dark flex items-center justify-center mb-5">
             <Lock size={26} />
           </div>
-          <h1 className="font-serif text-2xl text-anthracite">Team Live</h1>
+          <h1 className="font-serif text-2xl text-anthracite">{t('gate.teamLiveTitle')}</h1>
           <p className="mt-2 text-sm text-anthracite-lighter">
-            Il monitoraggio in tempo reale degli atleti è incluso nel <strong>Piano Pro</strong>.
+            {t.rich('gate.teamLiveText', { b: (c) => <strong>{c}</strong> })}
           </p>
-          <Link href="/sport" className="btn-primary text-sm mt-6 inline-flex">Scopri il Piano Pro</Link>
+          <Link href="/sport" className="btn-primary text-sm mt-6 inline-flex">{t('gate.cta')}</Link>
         </div>
       </DashboardLayout>
     )
@@ -46,15 +52,16 @@ export default async function TeamLivePage({
       )}
       {viewing && (
         <div className="mb-6 flex items-center gap-3 flex-wrap px-5 py-3.5 rounded-2xl bg-amber-50 border border-amber-200">
-          <div className="text-sm text-amber-800">
-            Stai visualizzando il Team Live di <strong>{viewing.full_name}</strong>
-            {isSuperadminView ? ' — Modalità supporto' : ' in sola lettura'}
+          <div className="text-sm text-amber-800 min-w-0">
+            {t.rich('viewing.teamLive', { name: viewing.full_name, b: (c) => <strong>{c}</strong> })}
+            {' · '}
+            {isSuperadminView ? t('viewing.supportMode') : t('viewing.readOnly')}
           </div>
           <Link
             href={isSuperadminView ? '/area-professionisti/professionisti' : '/area-professionisti/organizzazione'}
             className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-amber-900 hover:underline"
           >
-            <ArrowLeft size={14} /> {isSuperadminView ? 'Torna ai professionisti' : 'Torna al tuo team'}
+            <ArrowLeft size={14} /> {isSuperadminView ? t('viewing.backToProfessionals') : t('viewing.backToTeam')}
           </Link>
         </div>
       )}

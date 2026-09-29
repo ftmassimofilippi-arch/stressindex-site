@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/admin-audit'
@@ -27,7 +28,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   // Sposta a un altro professionista.
   if (typeof body.professional_id === 'string' && body.professional_id) {
     const result = await moveClientToProfessional(admin, guard.user, { linkId, targetProfessionalId: body.professional_id })
-    if (!result.ok) return NextResponse.json({ error: result.error, message: result.message }, { status: result.status })
+    if (!result.ok) return apiError(result.error, result.status, result.params)
     return NextResponse.json(result)
   }
 
@@ -38,7 +39,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       .select('id, status, client_user_id, professional_id')
       .eq('id', linkId)
       .maybeSingle()
-    if (!before) return NextResponse.json({ error: 'link_not_found' }, { status: 404 })
+    if (!before) return apiError('link_not_found', 404)
     const prev = before as { status: string; client_user_id: string | null; professional_id: string }
 
     const { error } = await admin
@@ -56,7 +57,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ ok: true, from: prev.status, to: body.status })
   }
 
-  return NextResponse.json({ error: 'invalid_body' }, { status: 400 })
+  return apiError('invalid_body', 400)
 }
 
 // DELETE /api/admin/links/[id] — rimuove definitivamente il collegamento.
@@ -70,7 +71,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     .select('id, status, client_id, client_user_id, professional_id')
     .eq('id', params.id)
     .maybeSingle()
-  if (!before) return NextResponse.json({ error: 'link_not_found' }, { status: 404 })
+  if (!before) return apiError('link_not_found', 404)
 
   const { error } = await admin.from('client_professional_links').delete().eq('id', params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

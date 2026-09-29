@@ -1,0 +1,6 @@
+{
+  "superadmin": { "title": "Super Admin" },
+  "healthCheck": { "title": "Health check dati" },
+  "organization": { "title": "Organizzazione" },
+  "settings": { "title": "Impostazioni" }
+}

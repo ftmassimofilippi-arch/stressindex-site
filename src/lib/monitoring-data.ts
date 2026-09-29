@@ -212,8 +212,11 @@ async function clientNames(db: SupabaseClient, ids: string[]): Promise<Map<strin
   const unique = Array.from(new Set(ids.filter(Boolean)))
   if (unique.length === 0) return map
   const { data } = await db.from('clients').select('id, nome, cognome').in('id', unique)
+  // Senza nome la mappa resta vuota per quell'id: chi mostra il nome mette il
+  // segnaposto tradotto ("Cliente" / "Client" / "Klient").
   for (const c of (data ?? []) as Array<{ id: string; nome: string | null; cognome: string | null }>) {
-    map.set(c.id, `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || 'Cliente')
+    const name = `${c.nome ?? ''} ${c.cognome ?? ''}`.trim()
+    if (name) map.set(c.id, name)
   }
   return map
 }

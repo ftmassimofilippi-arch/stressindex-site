@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getAdminLinks } from '@/lib/admin-data'
@@ -16,7 +17,7 @@ export async function GET() {
     const links = await getAdminLinks()
     return NextResponse.json({ links })
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'errore'
+    const message = e instanceof Error ? e.message : 'generic'
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -40,28 +41,25 @@ export async function POST(req: NextRequest) {
   const clientId = typeof body.client_id === 'string' ? body.client_id : ''
   const professionalId = typeof body.professional_id === 'string' ? body.professional_id : ''
   const status = body.status === 'pending' || body.status === 'revoked' ? body.status : 'active'
-  if (!clientId || !professionalId) return NextResponse.json({ error: 'missing_params' }, { status: 400 })
+  if (!clientId || !professionalId) return apiError('missing_params', 400)
 
   const { data: crm } = await admin.from('clients').select('id, email, client_user_id, professionista_id, merged_into_client_id').eq('id', clientId).maybeSingle()
-  if (!crm) return NextResponse.json({ error: 'client_not_found' }, { status: 404 })
+  if (!crm) return apiError('client_not_found', 404)
   const row = crm as { id: string; email: string | null; client_user_id: string | null; professionista_id: string | null; merged_into_client_id?: string | null }
   if (row.merged_into_client_id) {
-    return NextResponse.json({ error: 'client_merged', message: `La scheda è stata unita nella scheda ${row.merged_into_client_id}: collega quella.` }, { status: 409 })
+    return apiError('client_merged', 409, { id: row.merged_into_client_id })
   }
   if (row.professionista_id && row.professionista_id !== professionalId) {
-    return NextResponse.json({ error: 'professional_mismatch', message: 'La scheda appartiene a un altro professionista: usa "Sposta" prima di collegarla.' }, { status: 409 })
+    return apiError('professional_mismatch', 409)
   }
 
   const clientUserId = await resolveClientUserId(admin, row)
   if (!clientUserId) {
-    return NextResponse.json(
-      { error: 'no_client_account', message: 'La scheda non è associata a nessun account cliente registrato (né per id né per email).' },
-      { status: 422 },
-    )
+    return apiError('no_client_account', 422)
   }
 
   const rpc = await linkViaRpc(admin, clientUserId, professionalId, 'admin:collega_scheda')
-  if (!rpc.ok) return NextResponse.json({ error: 'link_failed', message: rpc.error }, { status: rpc.status })
+  if (!rpc.ok) return apiError(rpc.error, rpc.status, rpc.params)
   const linkId = rpc.result.link_id
 
   // Stato diverso da active richiesto esplicitamente: applicato dopo (la RPC

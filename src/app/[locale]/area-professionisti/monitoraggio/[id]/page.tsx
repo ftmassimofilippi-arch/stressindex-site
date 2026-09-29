@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
@@ -11,16 +12,21 @@ import { isSleepSession } from '@/lib/monitoring-types'
 import { ModuleLocked } from '@/components/dashboard/ModuleLocked'
 import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
 
-export const metadata = { title: 'Dettaglio monitoraggio' }
 export const dynamic = 'force-dynamic'
+
+export async function generateMetadata({ params }: { params: { locale: string; id: string } }) {
+  const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
+  return { title: t('monitoringDetail.title'), robots: { index: false, follow: false } }
+}
 
 export default async function MonitoringDetailPage({
   params,
   searchParams,
 }: {
-  params: { id: string }
+  params: { locale: string; id: string }
   searchParams?: { professionista?: string }
 }) {
+  const t = await getTranslations('monitoring')
   const { viewing, currentUserId } = await resolveViewingProfessional(searchParams?.professionista)
   const professionalId = viewing?.user_id ?? currentUserId
   const [professional, alerts, session] = await Promise.all([
@@ -30,11 +36,12 @@ export default async function MonitoringDetailPage({
   ])
   if (!session) notFound()
   if (filterMonitoringByModules([session], await getMyAccountAccess()).length === 0) {
+    const sleep = isSleepSession(session)
     return (
       <DashboardLayout professional={professional} alertCount={alerts.length}>
         <ModuleLocked
-          title={isSleepSession(session) ? 'Modulo Sonno' : 'Modulo Monitoraggio'}
-          description={`Il modulo ${isSleepSession(session) ? 'Sonno' : 'Monitoraggio 24h'} non è attivo per il tuo account.`}
+          title={sleep ? t('detail.lockedSleepTitle') : t('detail.lockedMonitoringTitle')}
+          description={sleep ? t('detail.lockedSleepDescription') : t('detail.lockedMonitoringDescription')}
         />
       </DashboardLayout>
     )
@@ -53,21 +60,20 @@ export default async function MonitoringDetailPage({
       {viewing && (
         <div className="mb-4 flex items-center gap-3 flex-wrap px-5 py-3 rounded-2xl bg-amber-50 border border-amber-200">
           <div className="text-sm text-amber-800">
-            Stai visualizzando i dati di <strong>{viewing.full_name}</strong>
-            {isSuperadminView ? ' — Modalità supporto' : ' in sola lettura'}
+            {t.rich(isSuperadminView ? 'detail.viewingSupport' : 'detail.viewingReadOnly', { name: viewing.full_name, b: (chunks) => <strong>{chunks}</strong> })}
           </div>
           <Link href={isSuperadminView ? '/area-professionisti/professionisti' : '/area-professionisti/organizzazione'} className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-amber-900 hover:underline">
-            <ArrowLeft size={14} /> {isSuperadminView ? 'Torna ai professionisti' : 'Torna al tuo team'}
+            <ArrowLeft size={14} /> {isSuperadminView ? t('index.backToProfessionals') : t('index.backToTeam')}
           </Link>
         </div>
       )}
       <div className="mb-5 flex flex-wrap gap-4">
         <Link href={`/area-professionisti/monitoraggio${baseQuery}`} className="inline-flex items-center gap-1.5 text-sm text-anthracite-lighter hover:text-anthracite">
-          <ArrowLeft size={14} /> Monitoraggio
+          <ArrowLeft size={14} /> {t('index.title')}
         </Link>
         {clientHref && (
           <Link href={clientHref} className="inline-flex items-center gap-1.5 text-sm text-anthracite-lighter hover:text-anthracite">
-            Scheda cliente
+            {t('detail.clientRecord')}
           </Link>
         )}
       </div>

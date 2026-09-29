@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/admin-audit'
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (guard.error) return guard.error
   const email = req.nextUrl.searchParams.get('email') ?? ''
   const plan = await planEmailChange(createAdminClient(), params.id, email)
-  if ('error' in plan) return NextResponse.json({ error: plan.error }, { status: plan.status })
+  if ('error' in plan) return apiError(plan.error, plan.status)
   return NextResponse.json({ plan })
 }
 
@@ -35,23 +36,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const email = typeof body.email === 'string' ? body.email : ''
   const confirm = typeof body.confirm === 'string' ? body.confirm.trim().toLowerCase() : ''
   const motivo = typeof body.motivo === 'string' ? body.motivo.trim() : ''
-  if (!motivo) return NextResponse.json({ error: 'missing_reason', message: 'Indica il motivo della correzione' }, { status: 400 })
+  if (!motivo) return apiError('missing_reason', 400)
 
   const admin = createAdminClient()
   const plan = await planEmailChange(admin, params.id, email)
-  if ('error' in plan) return NextResponse.json({ error: plan.error }, { status: plan.status })
+  if ('error' in plan) return apiError(plan.error, plan.status)
   if (confirm !== plan.new_email) {
-    return NextResponse.json({ error: 'confirmation_mismatch', message: 'Digita la nuova email per confermare' }, { status: 400 })
+    return apiError('confirmation_mismatch', 400)
   }
   if (plan.conflict) {
-    return NextResponse.json(
-      { error: 'email_in_use', message: `L'email ${plan.new_email} è già usata dall'account ${plan.conflict.full_name} (${plan.conflict.user_id})`, plan },
-      { status: 409 },
-    )
+    return apiError('email_in_use', 409, { email: plan.new_email, name: plan.conflict.full_name, id: plan.conflict.user_id, plan })
   }
 
   const { error: authErr } = await admin.auth.admin.updateUserById(params.id, { email: plan.new_email, email_confirm: true })
-  if (authErr) return NextResponse.json({ error: 'auth_update_failed', message: authErr.message }, { status: 500 })
+  if (authErr) return apiError('auth_update_failed', 500, { detail: authErr.message })
 
   const steps: Record<string, unknown> = { auth: 'ok' }
   const { error: profErr } = await admin.from('profiles').update({ email: plan.new_email }).eq('id', params.id)
@@ -62,7 +60,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const { error: cardErr } = await admin.from('clients').update({ email: plan.new_email }).in('id', cardIds)
     steps.clients = cardErr ? cardErr.message : `ok (${cardIds.length})`
   } else {
-    steps.clients = 'nessuna scheda'
+    steps.clients = 'no_cards'
   }
 
   await logAdminAction(admin, guard.user, {
@@ -79,6 +77,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     },
   })
 
-  const partial = profErr || (typeof steps.clients === 'string' && !String(steps.clients).startsWith('ok') && steps.clients !== 'nessuna scheda')
+  const partial = profErr || (typeof steps.clients === 'string' && !String(steps.clients).startsWith('ok') && steps.clients !== 'no_cards')
   return NextResponse.json({ ok: !partial, partial: !!partial, steps, plan }, { status: partial ? 207 : 200 })
 }

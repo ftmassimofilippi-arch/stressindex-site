@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { createClient } from '@/lib/supabase-server'
 
 export const runtime = 'nodejs'
@@ -16,10 +17,10 @@ async function resolveOwnerOrgId(userId: string, supabase: Awaited<ReturnType<ty
 export async function PATCH(req: NextRequest, ctx: { params: { memberId: string } }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (!user) return apiError('unauthorized', 401)
 
   const orgId = await resolveOwnerOrgId(user.id, supabase)
-  if (!orgId) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  if (!orgId) return apiError('forbidden', 403)
 
   const { memberId } = ctx.params
   const body = await req.json().catch(() => ({}))
@@ -32,7 +33,7 @@ export async function PATCH(req: NextRequest, ctx: { params: { memberId: string 
     update.status = body.status
   }
   if (Object.keys(update).length === 0) {
-    return NextResponse.json({ error: 'nothing_to_update' }, { status: 400 })
+    return apiError('nothing_to_update', 400)
   }
 
   const { data: target } = await supabase
@@ -41,10 +42,10 @@ export async function PATCH(req: NextRequest, ctx: { params: { memberId: string 
     .eq('id', memberId)
     .maybeSingle()
   if (!target || target.organization_id !== orgId) {
-    return NextResponse.json({ error: 'not_found' }, { status: 404 })
+    return apiError('not_found', 404)
   }
   if (target.user_id === user.id) {
-    return NextResponse.json({ error: 'cannot_modify_self' }, { status: 400 })
+    return apiError('cannot_modify_self', 400)
   }
 
   const { data, error } = await supabase
@@ -69,10 +70,10 @@ export async function PATCH(req: NextRequest, ctx: { params: { memberId: string 
 export async function DELETE(_req: NextRequest, ctx: { params: { memberId: string } }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (!user) return apiError('unauthorized', 401)
 
   const orgId = await resolveOwnerOrgId(user.id, supabase)
-  if (!orgId) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  if (!orgId) return apiError('forbidden', 403)
 
   const { memberId } = ctx.params
 
@@ -82,10 +83,10 @@ export async function DELETE(_req: NextRequest, ctx: { params: { memberId: strin
     .eq('id', memberId)
     .maybeSingle()
   if (!target || target.organization_id !== orgId) {
-    return NextResponse.json({ error: 'not_found' }, { status: 404 })
+    return apiError('not_found', 404)
   }
   if (target.role === 'owner') {
-    return NextResponse.json({ error: 'cannot_remove_owner' }, { status: 400 })
+    return apiError('cannot_remove_owner', 400)
   }
 
   const { error } = await supabase

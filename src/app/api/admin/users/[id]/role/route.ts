@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/admin-audit'
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const body = await req.json().catch(() => ({}))
   const targetRole = body.role
   if (targetRole !== 'client' && targetRole !== 'professional') {
-    return NextResponse.json({ error: 'invalid_role' }, { status: 400 })
+    return apiError('invalid_role', 400)
   }
   const admin = createAdminClient()
 
@@ -31,25 +32,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     admin.from('clients').select('*', { count: 'exact', head: true }).eq('professionista_id', userId),
     admin.from('client_professional_links').select('*', { count: 'exact', head: true }).eq('professional_id', userId).eq('status', 'active'),
   ])
-  if (!profile) return NextResponse.json({ error: 'user_not_found' }, { status: 404 })
+  if (!profile) return apiError('user_not_found', 404)
 
   const p = profile as { id: string; role: string | null; nome: string | null; cognome: string | null; email: string | null }
   const currentRole = p.role ?? null
   if (currentRole === targetRole) {
-    return NextResponse.json({ error: 'already_in_role' }, { status: 400 })
+    return apiError('already_in_role', 400)
   }
 
-  const warnings: string[] = []
+  // Avvisi come codici + conteggio (nessun testo): il client li traduce.
+  const warnings: Array<{ code: 'owned_clients' | 'active_links_as_professional'; count: number }> = []
   const willCreateProfessionalProfile = targetRole === 'professional' && !pp
   if (targetRole === 'client') {
-    if ((ownedClients ?? 0) > 0) {
-      warnings.push(
-        `L'utente ha ${ownedClients} clienti in anagrafica: diventando cliente non li vedrà più dalla dashboard professionista.`,
-      )
-    }
-    if ((activeLinks ?? 0) > 0) {
-      warnings.push(`L'utente ha ${activeLinks} collegamenti attivi come professionista: valuta se revocarli.`)
-    }
+    if ((ownedClients ?? 0) > 0) warnings.push({ code: 'owned_clients', count: ownedClients ?? 0 })
+    if ((activeLinks ?? 0) > 0) warnings.push({ code: 'active_links_as_professional', count: activeLinks ?? 0 })
   }
 
   const preview = {
@@ -76,10 +72,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       .insert({ id: userId, nome: p.nome, cognome: p.cognome })
     if (ppErr) {
       // Il ruolo è già cambiato: segnala il problema senza mascherarlo.
-      return NextResponse.json(
-        { error: `ruolo aggiornato ma creazione professional_profiles fallita: ${ppErr.message}` },
-        { status: 500 },
-      )
+      return apiError('professional_profile_failed', 500, { detail: ppErr.message })
     }
   }
 

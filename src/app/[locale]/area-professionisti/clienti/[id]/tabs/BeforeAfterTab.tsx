@@ -1,10 +1,11 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
-import { formatMeasuredDate, formatMeasuredTime, measuredDayKey, measuredInstant } from '@/lib/format'
+import { formatMeasuredDate, formatMeasuredTime, measuredDayKey, measuredInstant, num } from '@/lib/format'
 import {
   deltaVerdict,
   pairBeforeAfter,
@@ -35,6 +36,7 @@ function toRows(measurements: MeasurementAnalytics[], clientId: string): Row[] {
 // Freccia = direzione reale del numero, colore = significato (per lo Stress
 // il calo è verde). Stessa regola del Confronto dell'app.
 function DeltaCell({ a, b, higherIsBetter, digits = 0, unit, stableBelow = 3 }: { a: number | null; b: number | null; higherIsBetter: boolean; digits?: number; unit?: string; stableBelow?: number }) {
+  const locale = useLocale()
   const verdict = deltaVerdict(a, b, higherIsBetter, stableBelow)
   if (a == null || b == null) return <span className="text-anthracite-lighter">—</span>
   const delta = b - a
@@ -43,12 +45,14 @@ function DeltaCell({ a, b, higherIsBetter, digits = 0, unit, stableBelow = 3 }: 
   return (
     <span className={`inline-flex items-center gap-0.5 tabular-nums ${tone}`}>
       <Icon size={12} />
-      {delta > 0 ? '+' : ''}{delta.toFixed(digits)}{unit ? <span className="text-[10px] ml-0.5">{unit}</span> : null}
+      {delta > 0 ? '+' : ''}{num(delta, digits, locale)}{unit ? <span className="text-[10px] ml-0.5">{unit}</span> : null}
     </span>
   )
 }
 
 export function BeforeAfterTab({ client, measurements, professionistaId }: { client: Client; measurements: MeasurementAnalytics[]; professionistaId?: string }) {
+  const t = useTranslations('clients.beforeAfter')
+  const tScores = useTranslations('scores')
   const qs = professionistaId ? `&professionista=${professionistaId}` : ''
   const [range, setRange] = useState<DateRange>(defaultRange(180))
 
@@ -79,29 +83,23 @@ export function BeforeAfterTab({ client, measurements, professionistaId }: { cli
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3 justify-between">
         <DateRangePicker value={range} onChange={setRange} />
-        <div className="text-sm text-anthracite-lighter">
-          {pairs.length === 0 ? 'Nessuna coppia' : pairs.length === 1 ? '1 coppia' : `${pairs.length} coppie`} nel periodo
-        </div>
+        <div className="text-sm text-anthracite-lighter">{t('pairsInPeriod', { count: pairs.length })}</div>
       </div>
 
       <section className="card p-5">
-        <h3 className="font-serif text-base text-anthracite mb-1">Variazione media dei cinque score</h3>
-        <p className="text-xs text-anthracite-lighter mb-3">
-          Media di (dopo − prima) su tutte le coppie del periodo. Per lo Stress il calo è un miglioramento.
-        </p>
+        <h3 className="font-serif text-base text-anthracite mb-1">{t('avgTitle')}</h3>
+        <p className="text-xs text-anthracite-lighter mb-3">{t('avgSubtitle')}</p>
         {pairs.length === 0 ? (
-          <p className="text-sm text-anthracite-lighter">
-            Per vedere una coppia servono, nello stesso giorno, una misurazione con etichetta pre e una con etichetta post (sessione o allenamento).
-          </p>
+          <p className="text-sm text-anthracite-lighter">{t('howToPair')}</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {averages.map((r) => (
-              <div key={r.key} className="rounded-xl border border-surface-border bg-surface px-3 py-2">
-                <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter">{r.label}</div>
+              <div key={r.key} className="rounded-xl border border-surface-border bg-surface px-3 py-2 min-w-0">
+                <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter truncate">{tScores(`names.${r.nameKey}`)}</div>
                 <div className="text-lg font-serif text-anthracite mt-0.5">
                   <DeltaCell a={0} b={r.avg} higherIsBetter={r.higherIsBetter} digits={1} stableBelow={2} />
                 </div>
-                <div className="text-[10px] text-anthracite-lighter">{r.n} coppie</div>
+                <div className="text-[10px] text-anthracite-lighter">{t('pairsCount', { count: r.n })}</div>
               </div>
             ))}
           </div>
@@ -111,20 +109,20 @@ export function BeforeAfterTab({ client, measurements, professionistaId }: { cli
       {pairs.length > 0 && (
         <section className="card overflow-hidden">
           <div className="px-6 py-4 border-b border-surface-border">
-            <h3 className="font-serif text-base text-anthracite">Coppie prima e dopo</h3>
-            <p className="text-xs text-anthracite-lighter mt-0.5">Dalla più recente · clicca una riga per aprire il confronto delle due sessioni</p>
+            <h3 className="font-serif text-base text-anthracite">{t('pairsTitle')}</h3>
+            <p className="text-xs text-anthracite-lighter mt-0.5">{t('pairsSubtitle')}</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-surface text-anthracite-lighter">
                 <tr>
-                  <th className="text-left px-5 py-2.5 text-[11px] uppercase tracking-wide font-medium">Data</th>
-                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">Tipo</th>
+                  <th className="text-left px-5 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('colDate')}</th>
+                  <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('colType')}</th>
                   {SCORE_DELTA_ROWS.map((r) => (
-                    <th key={r.key} className="text-right px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{r.label}</th>
+                    <th key={r.key} className="text-right px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{tScores(`names.${r.nameKey}`)}</th>
                   ))}
                   <th className="text-right px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">RMSSD</th>
-                  <th className="text-right px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">FC</th>
+                  <th className="text-right px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium">{t('colHr')}</th>
                   <th className="px-3 py-2.5" />
                 </tr>
               </thead>
@@ -142,17 +140,20 @@ export function BeforeAfterTab({ client, measurements, professionistaId }: { cli
 }
 
 function PairRow({ pair, href }: { pair: BeforeAfterPair<Row>; href: string }) {
+  const t = useTranslations('clients.beforeAfter')
+  const tKind = useTranslations('common.beforeAfterKind')
+  const locale = useLocale()
   const pre = pair.pre.m
   const post = pair.post.m
   return (
     <tr className="border-t border-surface-border hover:bg-surface transition-colors">
       <td className="px-5 py-3 text-anthracite">
-        <div className="font-medium">{formatMeasuredDate(post)}</div>
-        <div className="text-[11px] text-anthracite-lighter">{formatMeasuredTime(pre)} → {formatMeasuredTime(post)}</div>
+        <div className="font-medium">{formatMeasuredDate(post, undefined, locale)}</div>
+        <div className="text-[11px] text-anthracite-lighter">{formatMeasuredTime(pre, locale)} → {formatMeasuredTime(post, locale)}</div>
       </td>
       <td className="px-3 py-3">
-        <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${pair.kind === 'treatment' ? 'bg-emerald-50 text-emerald-700' : 'bg-green-50 text-green-800'}`}>
-          {pair.kind === 'treatment' ? 'Sessione' : 'Allenamento'}
+        <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${pair.kind === 'treatment' ? 'bg-emerald-50 text-emerald-700' : 'bg-green-50 text-green-800'}`}>
+          {tKind(pair.kind)}
         </span>
       </td>
       {SCORE_DELTA_ROWS.map((r) => (
@@ -167,7 +168,7 @@ function PairRow({ pair, href }: { pair: BeforeAfterPair<Row>; href: string }) {
         <DeltaCell a={pre.mean_hr} b={post.mean_hr} higherIsBetter={false} unit="bpm" stableBelow={2} />
       </td>
       <td className="px-3 py-3 text-right">
-        <Link href={href} className="text-teal-dark text-sm hover:underline whitespace-nowrap">Confronta →</Link>
+        <Link href={href} className="text-teal-dark text-sm hover:underline whitespace-nowrap">{t('compare')}</Link>
       </td>
     </tr>
   )

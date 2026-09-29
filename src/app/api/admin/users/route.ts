@@ -17,7 +17,7 @@ export async function GET() {
     // catalogo null = migration 024 non applicata: il pannello nasconde stato/moduli
     return NextResponse.json({ users, catalogo })
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'errore'
+    const message = e instanceof Error ? e.message : 'generic'
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

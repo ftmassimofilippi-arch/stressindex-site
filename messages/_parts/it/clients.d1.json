@@ -1,0 +1,135 @@
+{
+  "list": {
+    "title": "I miei <em>clienti</em>",
+    "titleOf": "Clienti di <em>{name}</em>",
+    "count": "{count, plural, one {# cliente} other {# clienti}}",
+    "viewing": "Stai visualizzando i dati di <b>{name}</b>",
+    "supportMode": "(modalità supporto)",
+    "readOnly": "in sola lettura",
+    "backToProfessionals": "Torna ai professionisti",
+    "backToTeam": "Torna al tuo team",
+    "emptyTitle": "Non hai ancora clienti registrati",
+    "emptyTitleOf": "Nessun cliente per questo professionista",
+    "emptyBody": "I clienti vengono sincronizzati dall'app mobile.",
+    "searchPlaceholder": "Cerca per nome, cognome, email…",
+    "allTags": "Tutti i tag",
+    "noName": "Senza nome",
+    "never": "Mai",
+    "periods": {
+      "all": "Tutti",
+      "today": "Oggi",
+      "last7": "Ultimi 7 giorni",
+      "last30": "Ultimi 30 giorni",
+      "never": "Mai"
+    },
+    "columns": {
+      "client": "Cliente",
+      "age": "Età",
+      "tags": "Tag",
+      "lastMeasurement": "Ultima misurazione",
+      "alerts": "Alert"
+    }
+  },
+  "form": {
+    "newClient": "Nuovo cliente",
+    "title": "Nuovo cliente",
+    "createdTitle": "Cliente creato",
+    "intro": "Nome, cognome ed email sono obbligatori. Gli altri campi si possono completare più tardi.",
+    "openRecord": "Apri la scheda",
+    "creating": "Creazione…",
+    "create": "Crea cliente",
+    "checkFields": "Controlla i campi segnalati.",
+    "createFailed": "Creazione non riuscita.",
+    "networkError": "Errore di rete.",
+    "copyFailed": "Il browser non ha permesso la copia: seleziona il testo a mano.",
+    "thisClient": "questo cliente",
+    "duplicate": "Esiste già una scheda con questa email: {name}.",
+    "openExisting": "<link>Apri la scheda esistente</link> invece di crearne una seconda.",
+    "tempPasswordNotice": "Password temporanea: non sarà più mostrata",
+    "copied": "Copiata",
+    "copy": "Copia",
+    "generate": "Genera",
+    "outcome": {
+      "existingLinked": "Esisteva già un account con questa email: è stato collegato a questa scheda senza inviare un nuovo invito. Le sue misurazioni sono visibili da subito.",
+      "inviteSent": "Invito inviato: il cliente imposterà da sé la sua password dal link nell'email.",
+      "passwordSet": "Account creato con la password temporanea. Comunicala al cliente: al primo accesso l'app gli chiederà di cambiarla.",
+      "recordOnly": "Scheda creata. L'accesso all'app si può creare più tardi dalla scheda del cliente.",
+      "merged": "Una scheda doppia con la stessa email è stata unita a questa.",
+      "linkWarning": "Collegamento non riuscito: {detail}"
+    },
+    "sections": {
+      "personal": "Dati anagrafici",
+      "lifestyle": "Stile di vita",
+      "contacts": "Contatti",
+      "access": "Accesso app",
+      "notes": "Note",
+      "sport": "Dati sport"
+    },
+    "fields": {
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "birthDate": "Data di nascita",
+      "sex": "Sesso",
+      "weight": "Peso (kg)",
+      "height": "Altezza (cm)",
+      "smoker": "Fumatore",
+      "athlete": "Atleta",
+      "activityLevel": "Livello attività fisica",
+      "email": "Email",
+      "phone": "Telefono",
+      "sport": "Sport praticato",
+      "competitiveLevel": "Livello competitivo",
+      "hrMax": "HR Max (BPM)",
+      "ftp": "FTP stimato (watt)",
+      "currentGoal": "Obiettivo corrente",
+      "tempPassword": "Password temporanea (min {min} caratteri)"
+    },
+    "placeholders": {
+      "weight": "es. 75",
+      "height": "es. 178",
+      "password": "Genera o scrivi una password",
+      "hrMax": "es. 185",
+      "ftp": "es. 280 watt"
+    },
+    "access": {
+      "inviteTitle": "Invita il cliente ad accedere",
+      "inviteDesc": "Riceverà un'email di invito e imposterà da sé la password. Le sue misurazioni si collegheranno a questa scheda.",
+      "passwordTitle": "Imposta una password temporanea",
+      "passwordDesc": "Per quando il cliente è davanti a te o non usa l'email. Al primo accesso l'app gli chiederà di cambiarla.",
+      "noneTitle": "Solo la scheda, per ora",
+      "noneDesc": "Nessun account: potrai crearlo più tardi dalla scheda del cliente."
+    },
+    "sex": {
+      "M": "Maschio",
+      "F": "Femmina"
+    },
+    "activity": {
+      "sedentario": "Sedentario",
+      "moderato": "Moderato",
+      "attivo": "Attivo",
+      "atleta": "Atleta"
+    },
+    "competitive": {
+      "amateur": "Amatoriale",
+      "semi_pro": "Semi-professionista",
+      "professional": "Professionista",
+      "elite": "Elite"
+    },
+    "validation": {
+      "firstNameRequired": "Il nome è obbligatorio",
+      "lastNameRequired": "Il cognome è obbligatorio",
+      "emailRequired": "L'email è obbligatoria",
+      "emailInvalid": "Email non valida",
+      "range": "Inserisci un valore tra {min} e {max}",
+      "notAllowed": "Valore non ammesso",
+      "passwordMin": "La password deve avere almeno {min} caratteri"
+    }
+  },
+  "noteCategories": {
+    "assessment": "Valutazione",
+    "followUp": "Follow-up",
+    "postSession": "Post sessione",
+    "background": "Storia personale",
+    "other": "Altro"
+  }
+}

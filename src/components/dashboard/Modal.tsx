@@ -2,6 +2,7 @@
 
 import { X } from 'lucide-react'
 import { useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 
 type Props = {
   open: boolean
@@ -21,6 +22,7 @@ const SIZE = {
 } as const
 
 export function Modal({ open, onClose, title, description, children, footer, size = 'md' }: Props) {
+  const tc = useTranslations('common')
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -41,7 +43,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
                 {title && <h2 className="text-lg font-serif text-anthracite">{title}</h2>}
                 {description && <p className="text-sm text-anthracite-lighter mt-1">{description}</p>}
               </div>
-              <button type="button" aria-label="Chiudi" onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-surface flex items-center justify-center">
+              <button type="button" aria-label={tc('close')} onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-surface flex items-center justify-center">
                 <X size={18} />
               </button>
             </div>

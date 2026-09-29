@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { setPlanViaSubscription } from '@/lib/admin-commerciale'
+import { getRequestLocale, getTranslator } from '@/lib/i18n-server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -16,12 +18,13 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
   const userId = typeof body?.userId === 'string' ? body.userId : null
   const plan = body?.plan
-  if (!userId) return NextResponse.json({ error: 'missing_user' }, { status: 400 })
+  if (!userId) return apiError('missing_user', 400)
   if (plan !== 'base' && plan !== 'pro') {
-    return NextResponse.json({ error: 'invalid_plan' }, { status: 400 })
+    return apiError('invalid_plan', 400)
   }
 
-  const res = await setPlanViaSubscription(createAdminClient(), guard.user, userId, plan)
-  if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status })
+  const t = await getTranslator(await getRequestLocale(req), 'admin.planToggle')
+  const res = await setPlanViaSubscription(createAdminClient(), guard.user, userId, plan, t('quickChangeReason'))
+  if (!res.ok) return apiError(res.error, res.status)
   return NextResponse.json({ profile: { id: userId, plan } })
 }

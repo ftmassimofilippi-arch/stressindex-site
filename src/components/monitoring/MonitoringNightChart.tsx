@@ -1,11 +1,15 @@
+import { useLocale, useTranslations } from 'next-intl'
 import type { MonitoringNight } from '@/lib/monitoring-types'
 import { MON, STATE_COLOR, hm } from '@/lib/monitoring-format'
+import { monT, type Lang } from '@/lib/monitoring-strings'
 
 // Grafico della notte (MonitoringNightChart dell'app): barre orarie di RMSSD
 // su sfondo colorato per stato prevalente dell'ora, linea HR sovrapposta.
 export function MonitoringNightChart({ night, tz, height = 190 }: { night: MonitoringNight; tz: number; height?: number }) {
+  const t = useTranslations('monitoring')
+  const locale = useLocale() as Lang
   const hours = night.hourly ?? []
-  if (hours.length === 0) return <div className="text-sm text-anthracite-lighter">Nessuna ora con dati.</div>
+  if (hours.length === 0) return <div className="text-sm text-anthracite-lighter">{t('charts.noHours')}</div>
   const W = 1000
   const left = 34, right = 34, top = 8, bottom = 18
   const plotW = W - left - right
@@ -28,7 +32,7 @@ export function MonitoringNightChart({ night, tz, height = 190 }: { night: Monit
 
   return (
     <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${height}`} className="w-full min-w-[520px] block" style={{ height }} role="img" aria-label="RMSSD per ora e frequenza cardiaca della notte">
+      <svg viewBox={`0 0 ${W} ${height}`} className="w-full min-w-[520px] block" style={{ height }} role="img" aria-label={monT('night_chart', locale)}>
         {hours.map((h, i) => (
           <rect key={`bg${i}`} x={left + i * colW} y={top} width={colW} height={plotH} fill={STATE_COLOR[h.state]} fillOpacity={0.18} />
         ))}

@@ -1,9 +1,12 @@
 // Riconoscimento e presentazione dei tipi di misurazione.
 // La colonna `test_type` (sessions / measurement_analytics) contiene un identificatore
 // testuale salvato dall'app Flutter. Normalizziamo su un set noto e mappiamo su
-// label, colori (stile Notion-like) e descrizione.
+// colori (stile Notion-like) e chiavi di traduzione. Le etichette vivono nel
+// namespace `measurement.types` (label esteso, short per badge compatti,
+// description per il tooltip): si leggono con `measurementTypeLabel(raw, t)`.
 
 import type { MeasurementAnalytics } from './types'
+import type { Tr } from '@/i18n/types'
 
 export type MeasurementTypeKey =
   | 'standard'
@@ -15,8 +18,6 @@ export type MeasurementTypeKey =
 
 export interface MeasurementTypeMeta {
   key: MeasurementTypeKey
-  label: string
-  description: string
   // Classi Tailwind per il badge (sfondo tenue + testo + bordo), coerenti col tema.
   badgeClass: string
   // Colore "dot" pieno per liste compatte.
@@ -26,46 +27,53 @@ export interface MeasurementTypeMeta {
 const META: Record<MeasurementTypeKey, MeasurementTypeMeta> = {
   standard: {
     key: 'standard',
-    label: 'Standard',
-    description: 'Misurazione HRV a riposo',
     badgeClass: 'bg-teal-light text-teal-dark border border-teal-200',
     dotColor: '#4FA39A',
   },
   orthostatic: {
     key: 'orthostatic',
-    label: 'Ortostatica',
-    description: 'Test supino / in piedi con indice di reattività',
     badgeClass: 'bg-indigo-50 text-indigo-700 border border-indigo-200',
     dotColor: '#6366F1',
   },
   coherence: {
     key: 'coherence',
-    label: 'Coerenza',
-    description: 'Respirazione guidata e coerenza cardiaca',
     badgeClass: 'bg-violet-50 text-violet-700 border border-violet-200',
     dotColor: '#8B5CF6',
   },
   incremental: {
     key: 'incremental',
-    label: 'Test incrementale',
-    description: 'Test sport a intensità crescente',
     badgeClass: 'bg-amber-50 text-amber-700 border border-amber-200',
     dotColor: '#F59E0B',
   },
   threshold: {
     key: 'threshold',
-    label: 'Test soglia',
-    description: 'Test sport per la stima della soglia',
     badgeClass: 'bg-orange-50 text-orange-700 border border-orange-200',
     dotColor: '#F97316',
   },
   unknown: {
     key: 'unknown',
-    label: 'Misurazione',
-    description: 'Tipo non specificato',
     badgeClass: 'bg-surface text-anthracite-lighter border border-surface-border',
     dotColor: '#9CA3AF',
   },
+}
+
+// ── Etichette tradotte ───────────────────────────────────────────────────────
+// `t` è il traduttore del namespace `measurement.types`
+// (`useTranslations('measurement.types')` / `getTranslations('measurement.types')`).
+
+/** Nome esteso del tipo di test ("Misurazione standard", "Test ortostatico", ...). */
+export function measurementTypeLabel(raw: string | null | undefined, t: Tr): string {
+  return t(`${normalizeTestType(raw)}.label`)
+}
+
+/** Forma breve per badge e righe compatte ("Standard", "Ortostatico", ...). */
+export function measurementTypeShortLabel(raw: string | null | undefined, t: Tr): string {
+  return t(`${normalizeTestType(raw)}.short`)
+}
+
+/** Descrizione di una riga, per tooltip. */
+export function measurementTypeDescription(raw: string | null | undefined, t: Tr): string {
+  return t(`${normalizeTestType(raw)}.description`)
 }
 
 // Normalizza il valore grezzo di test_type sulle chiavi note. Tollera varianti

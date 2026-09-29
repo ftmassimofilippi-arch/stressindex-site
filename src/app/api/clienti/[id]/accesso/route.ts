@@ -12,6 +12,8 @@ import {
   RATE_LIMIT_24H,
   type AccessAction,
 } from '@/lib/client-access'
+import { apiError } from '@/lib/api-error'
+import { getRequestLocale, getTranslator } from '@/lib/i18n-server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -36,6 +38,10 @@ export const dynamic = 'force-dynamic'
 //
 // Il rifiuto di impostare una password su un account già in uso vive QUI, non
 // nella UI: nascondere il bottone non è un controllo.
+//
+// Gli errori sono CODICI (`errors.api.*`, via apiError) che la UI traduce; i
+// testi rivolti al cliente (avviso email, messaggio da incollare) escono nella
+// lingua del professionista che agisce (getRequestLocale).
 
 const AZIONI: AccessAction[] = ['set_temp_password', 'send_reset_email', 'copy_reset_link']
 
@@ -59,11 +65,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const guard = await requireProfessional(req)
   if (guard.error) return guard.error
   const admin = createAdminClient()
+  const locale = await getRequestLocale(req)
+  const t = await getTranslator(locale, 'emails')
 
   const body = await req.json().catch(() => ({}))
   const action = body?.action as AccessAction
   if (!AZIONI.includes(action)) {
-    return NextResponse.json({ error: 'invalid_action' }, { status: 400 })
+    return apiError('invalid_action', 400)
   }
 
   // Tutte queste azioni toccano un account che esiste già: serve il link attivo.
@@ -71,26 +79,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (scope.error) return scope.error
   const { clientId, clientUserId } = scope.scope
   if (!clientUserId) {
-    return NextResponse.json({ error: 'no_account', message: 'Questo cliente non ha ancora un account app.' }, { status: 409 })
+    return apiError('no_account', 409)
   }
 
   // ── Rate limit, prima di qualunque effetto ─────────────────────────────────
   const rate = await checkRateLimit(admin, guard.user.id, clientId)
   if (!rate.ok) {
-    return NextResponse.json(
-      {
-        error: 'rate_limited',
-        message: `Hai già fatto ${rate.used} interventi sull'accesso di questo cliente nelle ultime 24 ore (massimo ${RATE_LIMIT_24H}). Riprova più tardi.`,
-        retryAfter: rate.retryAfter,
-      },
-      { status: 429 },
-    )
+    return apiError('rate_limited', 429, { used: rate.used, max: RATE_LIMIT_24H, retryAfter: rate.retryAfter })
   }
 
   // ── Stato reale dell'account: decide cosa è permesso ───────────────────────
   const { data: userData, error: userErr } = await admin.auth.admin.getUserById(clientUserId)
   if (userErr || !userData?.user) {
-    return NextResponse.json({ error: 'account_not_found', message: userErr?.message ?? 'Account non trovato.' }, { status: 404 })
+    return apiError('account_not_found', 404, { detail: userErr?.message ?? null })
   }
   const clientEmail = userData.user.email ?? scope.scope.email
   const neverUsed = !userData.user.last_sign_in_at
@@ -108,47 +109,40 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     .maybeSingle()
   const pp = (ppRow ?? null) as { titolo?: string | null; nome?: string | null; cognome?: string | null } | null
   const pr = (profRow ?? null) as { nome?: string | null; cognome?: string | null; email?: string | null } | null
-  const professionalName = nomeProfessionista({
-    titolo: pp?.titolo ?? null,
-    nome: pp?.nome ?? pr?.nome ?? null,
-    cognome: pp?.cognome ?? pr?.cognome ?? null,
-  })
+  const professionalName = nomeProfessionista(
+    {
+      titolo: pp?.titolo ?? null,
+      nome: pp?.nome ?? pr?.nome ?? null,
+      cognome: pp?.cognome ?? pr?.cognome ?? null,
+    },
+    t('access.yourProfessional'),
+  )
 
   // ═══ 1. Password temporanea — SOLO su account mai usato ════════════════════
   if (action === 'set_temp_password') {
     if (!neverUsed) {
       // Il cuore della regola: da qui in poi la password è del cliente.
-      return NextResponse.json(
-        {
-          error: 'account_in_use',
-          message:
-            'Questo cliente ha già usato il suo account: la password è sua e non puoi impostarla. Usa "Reinvia email di reset" oppure "Copia link di reset".',
-        },
-        { status: 409 },
-      )
+      return apiError('account_in_use', 409)
     }
     const password = typeof body.password === 'string' ? body.password : ''
-    const problema = passwordProblema(password)
-    if (problema) return NextResponse.json({ error: 'password_too_short', message: problema }, { status: 400 })
+    if (passwordProblema(password)) return apiError('access_password_too_short', 400)
 
     const { error: setErr } = await admin.auth.admin.updateUserById(clientUserId, {
       password,
       email_confirm: true,
     })
-    if (setErr) return NextResponse.json({ error: 'set_password_failed', message: setErr.message }, { status: 500 })
+    if (setErr) return apiError('set_password_failed', 500, { detail: setErr.message })
 
     // must_change_password: se la 027 non è applicata la colonna manca (42703),
-    // la password è comunque cambiata e non si annulla l'operazione.
+    // la password è comunque cambiata e non si annulla l'operazione. Il
+    // `warning` è un codice (clients.access.warnings.*) o il messaggio grezzo.
     let flagWarning: string | null = null
     const { error: flagErr } = await admin
       .from('profiles')
       .update({ must_change_password: true })
       .eq('id', clientUserId)
     if (flagErr) {
-      flagWarning =
-        flagErr.code === '42703'
-          ? 'Applica la migration 027: senza must_change_password l\'app non chiederà al cliente di cambiare la password.'
-          : flagErr.message
+      flagWarning = flagErr.code === '42703' ? 'must_change_password_unavailable' : flagErr.message
       console.error('[accesso] must_change_password non impostata', flagErr.message)
     }
 
@@ -157,6 +151,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       action,
       professionalName,
       professionalEmail: pr?.email ?? null,
+      locale,
     })
     const log = await logAccessAction(admin, {
       professionalId: guard.user.id,
@@ -180,7 +175,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   // ═══ 2. Email di reset ════════════════════════════════════════════════════
   if (action === 'send_reset_email') {
     if (!clientEmail) {
-      return NextResponse.json({ error: 'no_email', message: 'Questo cliente non ha un indirizzo email.' }, { status: 400 })
+      return apiError('access_no_email', 400)
     }
     // resetPasswordForEmail vive sul client anon: è l'unica via per far partire
     // l'email di ripristino dall'SMTP di Supabase Auth.
@@ -191,13 +186,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const { error } = await anon.auth.resetPasswordForEmail(clientEmail, {
       redirectTo: `${siteUrl()}/imposta-password`,
     })
-    if (error) return NextResponse.json({ error: 'reset_failed', message: error.message }, { status: 500 })
+    if (error) return apiError('reset_failed', 500, { detail: error.message })
 
     const avviso = await notifyClientOfAccessAction({
       to: clientEmail,
       action,
       professionalName,
       professionalEmail: pr?.email ?? null,
+      locale,
     })
     const log = await logAccessAction(admin, {
       professionalId: guard.user.id,
@@ -219,7 +215,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   // ═══ 3. Link di reset da copiare ══════════════════════════════════════════
   if (!clientEmail) {
-    return NextResponse.json({ error: 'no_email', message: 'Questo cliente non ha un indirizzo email.' }, { status: 400 })
+    return apiError('access_no_email', 400)
   }
   const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
     type: 'recovery',
@@ -228,15 +224,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   })
   const actionLink = linkData?.properties?.action_link ?? null
   if (linkErr || !actionLink) {
-    return NextResponse.json({ error: 'link_failed', message: linkErr?.message ?? 'Link non generato.' }, { status: 500 })
+    return apiError('access_link_failed', 500, { detail: linkErr?.message ?? null })
   }
 
+  // Messaggio pronto da incollare, nella lingua del professionista.
   const nomeCliente = (scope.scope.nome ?? '').trim()
   const messaggio = [
-    nomeCliente ? `Ciao ${nomeCliente},` : 'Ciao,',
-    'ecco il link per rientrare nella tua app Stress Index e scegliere una nuova password:',
+    nomeCliente ? t('resetLink.greeting', { name: nomeCliente }) : t('resetLink.greetingNoName'),
+    t('resetLink.body'),
     actionLink,
-    'Vale un\'ora e si può usare una sola volta. Se è scaduto scrivimi e te ne mando un altro.',
+    t('resetLink.note'),
   ].join('\n\n')
 
   const avviso = await notifyClientOfAccessAction({
@@ -244,6 +241,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     action: 'copy_reset_link',
     professionalName,
     professionalEmail: pr?.email ?? null,
+    locale,
   })
   const log = await logAccessAction(admin, {
     professionalId: guard.user.id,

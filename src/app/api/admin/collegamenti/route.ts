@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-error'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/admin-audit'
@@ -74,11 +75,11 @@ export async function POST(req: NextRequest) {
 
   if (action === 'bridge') {
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
-    if (!email) return NextResponse.json({ error: 'missing_email' }, { status: 400 })
+    if (!email) return apiError('missing_email', 400)
     const { data, error } = await admin.rpc('ensure_client_bridge', { p_email: email })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     const res = data as { ok?: boolean; error?: string }
-    if (!res?.ok) return NextResponse.json({ error: 'bridge_failed', message: res?.error ?? 'ponte non scritto' }, { status: 422 })
+    if (!res?.ok) return apiError('bridge_failed', 422, { detail: res?.error ?? 'bridge_failed' })
     await logAdminAction(admin, guard.user, { action: 'salute_bridge', target_type: 'client', target_id: email, details: res as Record<string, unknown> })
     return NextResponse.json({ ok: true, result: res })
   }
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
   if (action === 'link') {
     const clientUserId = typeof body.client_user_id === 'string' ? body.client_user_id : ''
     const professionalId = typeof body.professional_id === 'string' ? body.professional_id : ''
-    if (!clientUserId || !professionalId) return NextResponse.json({ error: 'missing_params' }, { status: 400 })
+    if (!clientUserId || !professionalId) return apiError('missing_params', 400)
     const { data, error } = await admin.rpc('link_client_to_professional', {
       p_client_user_id: clientUserId,
       p_professional_id: professionalId,
@@ -94,14 +95,14 @@ export async function POST(req: NextRequest) {
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     const res = data as { ok?: boolean; error?: string; link_id?: string }
-    if (!res?.ok) return NextResponse.json({ error: 'link_failed', message: res?.error ?? 'collegamento non riuscito' }, { status: 422 })
+    if (!res?.ok) return apiError('link_failed', 422, { detail: res?.error ?? 'link_failed' })
     await logAdminAction(admin, guard.user, { action: 'salute_link', target_type: 'link', target_id: res.link_id ?? null, details: { client_user_id: clientUserId, professional_id: professionalId, result: res } })
     return NextResponse.json({ ok: true, result: res })
   }
 
   if (action === 'revoke_link') {
     const linkId = typeof body.link_id === 'string' ? body.link_id : ''
-    if (!linkId) return NextResponse.json({ error: 'missing_params' }, { status: 400 })
+    if (!linkId) return apiError('missing_params', 400)
     const { error } = await admin.from('client_professional_links').update({ status: 'revoked', updated_at: new Date().toISOString() }).eq('id', linkId)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     await logAdminAction(admin, guard.user, { action: 'salute_revoke_link', target_type: 'link', target_id: linkId, details: {} })
@@ -140,8 +141,8 @@ export async function POST(req: NextRequest) {
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
     const motivo = typeof body.motivo === 'string' ? body.motivo.trim() : ''
     const clientIds = Array.isArray(body.client_ids) ? (body.client_ids as unknown[]).filter((x): x is string => typeof x === 'string') : []
-    if (!professionalId || !email || clientIds.length < 2) return NextResponse.json({ error: 'missing_params' }, { status: 400 })
-    if (!motivo) return NextResponse.json({ error: 'missing_reason', message: 'Indica il motivo' }, { status: 400 })
+    if (!professionalId || !email || clientIds.length < 2) return apiError('missing_params', 400)
+    if (!motivo) return apiError('missing_reason', 400)
     const { data: existing, error: selErr } = await admin
       .from('collegamenti_esclusioni')
       .select('id, client_ids')
@@ -150,7 +151,7 @@ export async function POST(req: NextRequest) {
       .eq('email_norm', email)
       .maybeSingle()
     if (selErr) {
-      if (isMissing(selErr)) return NextResponse.json({ error: 'migration_required', message: 'Applica la migration 023' }, { status: 409 })
+      if (isMissing(selErr)) return apiError('migration_required', 409, { migration: '023' })
       return NextResponse.json({ error: selErr.message }, { status: 500 })
     }
     const prev = existing as { id: number; client_ids: string[] } | null
@@ -186,11 +187,11 @@ export async function POST(req: NextRequest) {
 
   if (action === 'resolve_alert') {
     const alertId = Number(body.alert_id)
-    if (!alertId) return NextResponse.json({ error: 'missing_params' }, { status: 400 })
+    if (!alertId) return apiError('missing_params', 400)
     const { error } = await admin.from('admin_alerts').update({ resolved_at: new Date().toISOString() }).eq('id', alertId)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true })
   }
 
-  return NextResponse.json({ error: 'invalid_action' }, { status: 400 })
+  return apiError('invalid_action', 400)
 }

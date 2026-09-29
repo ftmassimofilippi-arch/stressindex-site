@@ -1,11 +1,23 @@
 import { ImageResponse } from 'next/og'
+import { getTranslations } from 'next-intl/server'
 
 export const runtime = 'edge'
-export const alt = 'Stress Index — Software HRV Professionale'
+export const alt = 'Stress Index'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-export default async function OpenGraphImage() {
+const badgeStyle = {
+  display: 'flex',
+  padding: '8px 16px',
+  borderRadius: '999px',
+  background: 'rgba(255,255,255,0.18)',
+  border: '1px solid rgba(255,255,255,0.3)',
+} as const
+
+export default async function OpenGraphImage({ params }: { params: { locale: string } }) {
+  const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
+  const badges = [t('og.badgeScores'), t('og.badgeParams'), t('og.badgeReport')]
+
   return new ImageResponse(
     (
       <div
@@ -85,7 +97,7 @@ export default async function OpenGraphImage() {
             letterSpacing: '-0.5px',
           }}
         >
-          Software HRV Professionale
+          {t('og.tagline')}
         </div>
 
         <div
@@ -110,39 +122,11 @@ export default async function OpenGraphImage() {
               opacity: 0.95,
             }}
           >
-            <span
-              style={{
-                display: 'flex',
-                padding: '8px 16px',
-                borderRadius: '999px',
-                background: 'rgba(255,255,255,0.18)',
-                border: '1px solid rgba(255,255,255,0.3)',
-              }}
-            >
-              5 score clinici
-            </span>
-            <span
-              style={{
-                display: 'flex',
-                padding: '8px 16px',
-                borderRadius: '999px',
-                background: 'rgba(255,255,255,0.18)',
-                border: '1px solid rgba(255,255,255,0.3)',
-              }}
-            >
-              25+ parametri HRV
-            </span>
-            <span
-              style={{
-                display: 'flex',
-                padding: '8px 16px',
-                borderRadius: '999px',
-                background: 'rgba(255,255,255,0.18)',
-                border: '1px solid rgba(255,255,255,0.3)',
-              }}
-            >
-              Report PDF
-            </span>
+            {badges.map((b) => (
+              <span key={b} style={badgeStyle}>
+                {b}
+              </span>
+            ))}
           </div>
         </div>
       </div>

@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { Crown, Loader2 } from 'lucide-react'
+import { apiErrorMessage } from '@/lib/api-error'
 
 type Plan = 'base' | 'pro'
 
@@ -23,6 +25,8 @@ export function PlanToggle({
   plan: string | null
   size?: 'sm' | 'md'
 }) {
+  const t = useTranslations('admin.planToggle')
+  const tErr = useTranslations('errors.api')
   const router = useRouter()
   const [plan, setPlan] = useState<Plan>(normalize(initialPlan))
   const [pending, startTransition] = useTransition()
@@ -31,11 +35,7 @@ export function PlanToggle({
 
   async function toggle() {
     const next: Plan = isPro ? 'base' : 'pro'
-    const ok = window.confirm(
-      next === 'pro'
-        ? `Vuoi attivare il Piano Pro per ${name}?`
-        : `Vuoi riportare ${name} al Piano Base? Perderà l'accesso al Modulo Sport.`,
-    )
+    const ok = window.confirm(next === 'pro' ? t('confirmPro', { name }) : t('confirmBase', { name }))
     if (!ok) return
 
     setBusy(true)
@@ -47,13 +47,13 @@ export function PlanToggle({
       })
       if (!res.ok) {
         const j = await res.json().catch(() => ({}))
-        window.alert(`Impossibile aggiornare il piano: ${j?.error ?? res.status}`)
+        window.alert(t('updateFailed', { error: apiErrorMessage(j, tErr, String(res.status)) }))
         return
       }
       setPlan(next)
       startTransition(() => router.refresh())
     } catch {
-      window.alert('Errore di rete: impossibile aggiornare il piano.')
+      window.alert(t('networkError'))
     } finally {
       setBusy(false)
     }
@@ -66,28 +66,28 @@ export function PlanToggle({
   const pad = size === 'md' ? 'px-3 py-1.5 text-sm' : 'px-2.5 py-1 text-xs'
 
   return (
-    <div className="inline-flex items-center gap-2">
-      <span className={`inline-flex items-center gap-1 rounded-full border font-medium ${pad} ${badgeCls}`}>
+    <div className="inline-flex items-center gap-2 flex-wrap">
+      <span className={`inline-flex items-center gap-1 rounded-full border font-medium whitespace-nowrap ${pad} ${badgeCls}`}>
         {isPro && <Crown size={size === 'md' ? 14 : 12} />}
-        {isPro ? 'Pro' : 'Base'}
+        {isPro ? t('pro') : t('base')}
       </span>
       <button
         type="button"
         onClick={toggle}
         disabled={loading}
-        className={`inline-flex items-center gap-1 rounded-lg border font-medium transition-colors disabled:opacity-50 ${pad} ${
+        className={`inline-flex items-center gap-1 rounded-lg border font-medium transition-colors disabled:opacity-50 whitespace-nowrap ${pad} ${
           isPro
             ? 'border-surface-border text-anthracite-lighter hover:bg-surface'
             : 'border-teal-dark text-teal-dark hover:bg-teal-50'
         }`}
-        title={isPro ? 'Riporta al Piano Base' : 'Attiva il Piano Pro'}
+        title={isPro ? t('toBase') : t('toPro')}
       >
         {loading ? (
           <Loader2 size={size === 'md' ? 14 : 12} className="animate-spin" />
         ) : isPro ? (
-          'Disattiva Pro'
+          t('disablePro')
         ) : (
-          'Attiva Pro'
+          t('enablePro')
         )}
       </button>
     </div>

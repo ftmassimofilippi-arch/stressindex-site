@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { AlertTriangle, HelpCircle, MinusCircle, type LucideIcon } from 'lucide-react'
-import type { IndexText } from '@/lib/monitoring-strings'
+import { monT, type IndexText, type Lang } from '@/lib/monitoring-strings'
 import { LEVEL_COLOR, MON, type IndexLevel } from '@/lib/monitoring-format'
 import { LevelChip } from './MonitoringChips'
 
@@ -30,6 +31,7 @@ type Props = {
 }
 
 export function MonitoringIndexCard({ text, value, unit, level, detail, unavailableReason, unreliable, pro = true, icon: Icon, children, className = '' }: Props) {
+  const t = useTranslations('monitoring')
   if (unavailableReason) {
     return (
       <div className={`rounded-xl px-3.5 py-2.5 flex items-start gap-2 text-[12px] ${className}`} style={{ backgroundColor: MON.secondarySurface, color: MON.textSecondary }}>
@@ -49,9 +51,9 @@ export function MonitoringIndexCard({ text, value, unit, level, detail, unavaila
         )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <div className="text-[13px] font-extrabold text-anthracite flex-1">{text.name}</div>
+            <div className="text-[13px] font-extrabold text-anthracite flex-1 min-w-0 break-words">{text.name}</div>
             {unreliable && (
-              <span title="Copertura sotto il 60%: valore da leggere con cautela" className="text-amber-600"><AlertTriangle size={15} /></span>
+              <span title={t('indexCard.unreliable')} className="text-amber-600"><AlertTriangle size={15} /></span>
             )}
             {pro && <HowPopover text={text} />}
           </div>
@@ -73,6 +75,8 @@ export function MonitoringIndexCard({ text, value, unit, level, detail, unavaila
 
 /** Icona "Come si calcola" con popover: nome tecnico, metodo, requisito, referenza. */
 export function HowPopover({ text }: { text: IndexText }) {
+  const t = useTranslations('monitoring')
+  const locale = useLocale() as Lang
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -83,13 +87,14 @@ export function HowPopover({ text }: { text: IndexText }) {
     document.addEventListener('keydown', onKey)
     return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey) }
   }, [open])
+  const how = t('indexCard.how')
   return (
     <div className="relative" ref={ref}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label="Come si calcola"
-        title="Come si calcola"
+        aria-label={how}
+        title={how}
         className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-surface transition-colors"
         style={{ color: MON.accent }}
       >
@@ -97,11 +102,11 @@ export function HowPopover({ text }: { text: IndexText }) {
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-1 z-30 w-[min(92vw,380px)] rounded-xl border border-surface-border bg-white shadow-elevated p-3.5 text-[11px] leading-relaxed text-anthracite-lighter">
-          <div className="text-[11px] font-bold mb-2" style={{ color: MON.accent }}>Come si calcola</div>
-          <Kv k="Nome tecnico" v={text.tech} />
-          <Kv k="Metodo" v={text.method} />
-          <Kv k="Requisito minimo" v={text.req} />
-          <Kv k="Referenza" v={text.ref} />
+          <div className="text-[11px] font-bold mb-2" style={{ color: MON.accent }}>{how}</div>
+          <Kv k={monT('how_tech', locale)} v={text.tech} />
+          <Kv k={monT('how_method', locale)} v={text.method} />
+          <Kv k={monT('how_req', locale)} v={text.req} />
+          <Kv k={monT('how_ref', locale)} v={text.ref} />
         </div>
       )}
     </div>
