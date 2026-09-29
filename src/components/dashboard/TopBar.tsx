@@ -1,8 +1,8 @@
 'use client'
 
 import { Bell } from 'lucide-react'
-import { usePathname } from 'next/navigation'
-import Link from 'next/link'
+import { usePathname } from '@/i18n/navigation'
+import { Link } from '@/i18n/navigation'
 import { useMemo } from 'react'
 import { GlobalSearch } from './GlobalSearch'
 

@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { ArrowRight, SunMoon } from 'lucide-react'
 import type { MonitoringSession } from '@/lib/monitoring-types'
 import { isSleepSession } from '@/lib/monitoring-types'

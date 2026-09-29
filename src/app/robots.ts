@@ -5,8 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/area-professionisti/login'],
-        disallow: ['/api/', '/area-professionisti/'],
+        allow: ['/', '/area-professionisti/login', '/en/area-professionisti/login', '/de/area-professionisti/login'],
+        disallow: ['/api/', '/area-professionisti/', '/en/area-professionisti/', '/de/area-professionisti/'],
       },
     ],
     sitemap: 'https://stressindex.io/sitemap.xml',

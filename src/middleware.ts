@@ -1,6 +1,21 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import createIntlMiddleware from 'next-intl/middleware'
+import { routing, splitLocale, withLocale } from '@/i18n/routing'
 
+// =============================================================================
+// Middleware unico: routing per lingua (next-intl) + protezione di
+// /area-professionisti (Supabase Auth + stato commerciale dell'account).
+// =============================================================================
+//
+// next-intl decide la lingua (prefisso URL, poi cookie NEXT_LOCALE, poi
+// Accept-Language alla prima visita) e riscrive internamente /registrazione in
+// /it/registrazione. La parte Supabase ragiona sul percorso SENZA prefisso e,
+// quando deve reindirizzare, rimette il prefisso della lingua corrente.
+
+const handleI18n = createIntlMiddleware(routing)
+
+const DASHBOARD_PREFIX = '/area-professionisti'
 const SUSPENDED_PATH = '/area-professionisti/sospeso'
 
 const PUBLIC_DASHBOARD_PATHS = [
@@ -9,13 +24,15 @@ const PUBLIC_DASHBOARD_PATHS = [
 ]
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { locale, path } = splitLocale(request.nextUrl.pathname)
 
-  if (!pathname.startsWith('/area-professionisti')) {
-    return NextResponse.next()
+  // Prima il routing per lingua: la risposta (rewrite o redirect) è la base su
+  // cui Supabase scrive i cookie di sessione aggiornati.
+  const response = handleI18n(request)
+
+  if (!path.startsWith(DASHBOARD_PREFIX)) {
+    return response
   }
-
-  let response = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,7 +44,6 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          response = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options),
           )
@@ -40,13 +56,23 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const isPublicDashboardPath = PUBLIC_DASHBOARD_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))
+  const isPublicDashboardPath = PUBLIC_DASHBOARD_PATHS.some((p) => path === p || path.startsWith(p + '/'))
+
+  // Redirect che conserva la lingua e i cookie già scritti sulla risposta.
+  const redirectTo = (targetPath: string, mutate?: (url: URL) => void) => {
+    const url = request.nextUrl.clone()
+    url.pathname = withLocale(targetPath, locale)
+    url.search = ''
+    mutate?.(url)
+    const redirect = NextResponse.redirect(url)
+    response.cookies.getAll().forEach((c) => redirect.cookies.set(c))
+    return redirect
+  }
 
   if (!user && !isPublicDashboardPath) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/area-professionisti/login'
-    url.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(url)
+    // Il parametro `redirect` è il percorso SENZA prefisso: il router i18n lo
+    // rimette lui al momento del push dopo il login.
+    return redirectTo('/area-professionisti/login', (url) => url.searchParams.set('redirect', path))
   }
 
   // Stato dell'account (migration 024), letto a ogni richiesta: sospensione e
@@ -57,39 +83,29 @@ export async function middleware(request: NextRequest) {
     const stato = error ? null : ((data as { stato?: string } | null)?.stato ?? null)
     if (stato === 'bloccato') {
       await supabase.auth.signOut()
-      const url = request.nextUrl.clone()
-      url.pathname = '/area-professionisti/login'
-      url.search = ''
-      url.searchParams.set('stato', 'bloccato')
-      const redirect = NextResponse.redirect(url)
-      response.cookies.getAll().forEach((c) => redirect.cookies.set(c))
-      return redirect
+      return redirectTo('/area-professionisti/login', (url) => url.searchParams.set('stato', 'bloccato'))
     }
-    if (stato === 'sospeso' && pathname !== SUSPENDED_PATH) {
+    if (stato === 'sospeso' && path !== SUSPENDED_PATH) {
       const url = request.nextUrl.clone()
-      url.pathname = SUSPENDED_PATH
+      url.pathname = `/${locale}${SUSPENDED_PATH}`
       url.search = ''
       const rewrite = NextResponse.rewrite(url, { request })
       response.cookies.getAll().forEach((c) => rewrite.cookies.set(c))
       return rewrite
     }
-    if (stato !== 'sospeso' && pathname === SUSPENDED_PATH) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/area-professionisti'
-      return NextResponse.redirect(url)
+    if (stato !== 'sospeso' && path === SUSPENDED_PATH) {
+      return redirectTo('/area-professionisti')
     }
   }
 
   if (user && isPublicDashboardPath) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/area-professionisti'
-    url.searchParams.delete('redirect')
-    return NextResponse.redirect(url)
+    return redirectTo('/area-professionisti')
   }
 
   return response
 }
 
 export const config = {
-  matcher: ['/area-professionisti/:path*'],
+  // Tutto tranne API, asset di Next e file statici (con estensione).
+  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
 }

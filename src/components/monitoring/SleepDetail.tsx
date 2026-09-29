@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { AlertCircle, ArrowLeftRight, Footprints, Info, Minus, Sparkles, TimerOff, TrendingDown, TrendingUp, Wifi, WifiOff } from 'lucide-react'
 import type { SleepSession } from '@/lib/monitoring-types'
 import {

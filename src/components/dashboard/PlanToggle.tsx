@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/navigation'
 import { Crown, Loader2 } from 'lucide-react'
 
 type Plan = 'base' | 'pro'

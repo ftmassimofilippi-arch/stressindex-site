@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/navigation'
 import { RotateCcw, Save } from 'lucide-react'
 import { createClient } from '@/lib/supabase-browser'
 import {

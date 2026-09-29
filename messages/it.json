@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "keywords": "software HRV, analisi HRV, misurare stress, sistema nervoso autonomo, Heart Rate Variability, variabilità frequenza cardiaca, biofeedback, Polar H10, ECG, fisioterapia, osteopatia, medico sportivo, coaching benessere, DFA Alpha1",
+    "organizationDescription": "Software HRV professionale per fisioterapisti e professionisti del benessere",
+    "home": {
+      "title": "Stress Index | Software HRV Professionale per Fisioterapisti",
+      "description": "Misura lo stress del sistema nervoso autonomo in 10 minuti. 5 score di benessere, 25+ parametri HRV, report PDF. Per fisioterapisti e professionisti del benessere.",
+      "shortDescription": "Misura lo stress del sistema nervoso autonomo in 10 minuti. 5 score di benessere, 25+ parametri HRV, report PDF."
+    }
+  },
+  "common": {
+    "languageSwitcher": "Lingua"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Pagina non trovata",
+      "body": "La pagina che cerchi non esiste o è stata spostata.",
+      "cta": "Torna alla home"
+    },
+    "unexpected": {
+      "title": "Si è verificato un errore",
+      "body": "Qualcosa è andato storto. Riprova tra qualche istante: se il problema persiste scrivi a support@stressindex.io.",
+      "retry": "Riprova"
+    }
+  }
+}

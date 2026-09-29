@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import {
   Activity, BatteryCharging, Bed, Bolt, Clock, Grid3x3, Hourglass, Info, Layers, Minus, MoveDownRight, MoveUpRight,
   PauseCircle, Repeat, TrendingDown, TrendingUp, Waves, Wind, AudioLines, LineChart as LineChartIcon,

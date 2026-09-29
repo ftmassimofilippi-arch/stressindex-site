@@ -2,7 +2,7 @@
 
 import { Search, Loader2, User, ShieldCheck, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase-browser'
 
 type ClientHit = { kind: 'client'; id: string; nome: string | null; cognome: string | null; email: string | null }
