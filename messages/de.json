@@ -1,26 +1,141 @@
 {
-  "meta": {
-    "keywords": "software HRV, analisi HRV, misurare stress, sistema nervoso autonomo, Heart Rate Variability, variabilità frequenza cardiaca, biofeedback, Polar H10, ECG, fisioterapia, osteopatia, medico sportivo, coaching benessere, DFA Alpha1",
-    "organizationDescription": "Software HRV professionale per fisioterapisti e professionisti del benessere",
-    "home": {
-      "title": "Stress Index | Software HRV Professionale per Fisioterapisti",
-      "description": "Misura lo stress del sistema nervoso autonomo in 10 minuti. 5 score di benessere, 25+ parametri HRV, report PDF. Per fisioterapisti e professionisti del benessere.",
-      "shortDescription": "Misura lo stress del sistema nervoso autonomo in 10 minuti. 5 score di benessere, 25+ parametri HRV, report PDF."
-    }
-  },
   "common": {
-    "languageSwitcher": "Lingua"
+    "all": "Alle",
+    "back": "Zurück",
+    "brand": "Stress Index",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "confirm": "Bestätigen",
+    "continue": "Weiter",
+    "days": "{count, plural, one {# Tag} other {# Tage}}",
+    "delete": "Löschen",
+    "download": "Herunterladen",
+    "edit": "Bearbeiten",
+    "error": "Fehler",
+    "export": "Exportieren",
+    "filter": "Filtern",
+    "freeTrial": "Kostenlos testen",
+    "genericError": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "language": "Sprache",
+    "loading": "Wird geladen...",
+    "logout": "Abmelden",
+    "menuClose": "Menü schließen",
+    "menuOpen": "Menü öffnen",
+    "minutes": "{count, plural, one {# Minute} other {# Minuten}}",
+    "na": "k. A.",
+    "new": "Neu",
+    "next": "Weiter",
+    "no": "Nein",
+    "noData": "Keine Daten",
+    "none": "Keine",
+    "notAvailable": "Nicht verfügbar",
+    "ok": "OK",
+    "open": "Öffnen",
+    "optional": "optional",
+    "proArea": "Bereich für Fachkräfte",
+    "requiredField": "Pflichtfeld",
+    "reset": "Zurücksetzen",
+    "retry": "Erneut versuchen",
+    "save": "Speichern",
+    "saved": "Gespeichert",
+    "saving": "Wird gespeichert...",
+    "search": "Suchen",
+    "seeAll": "Alle anzeigen",
+    "seeDetails": "Details anzeigen",
+    "select": "Auswählen",
+    "share": "Teilen",
+    "startFree": "Kostenlos starten",
+    "support": "Support",
+    "today": "heute",
+    "yes": "Ja",
+    "yesterday": "gestern"
+  },
+  "dashboard": {
+    "greeting": {
+      "afternoon": "Guten Tag",
+      "evening": "Guten Abend",
+      "morning": "Guten Morgen",
+      "night": "Gute Nacht"
+    }
   },
   "errors": {
     "notFound": {
-      "title": "Pagina non trovata",
-      "body": "La pagina che cerchi non esiste o è stata spostata.",
-      "cta": "Torna alla home"
+      "body": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+      "cta": "Zur Startseite",
+      "title": "Seite nicht gefunden"
     },
     "unexpected": {
-      "title": "Si è verificato un errore",
-      "body": "Qualcosa è andato storto. Riprova tra qualche istante: se il problema persiste scrivi a support@stressindex.io.",
-      "retry": "Riprova"
+      "body": "Etwas ist schiefgelaufen. Bitte versuchen Sie es in Kürze erneut. Wenn das Problem weiterhin besteht, schreiben Sie an support@stressindex.io.",
+      "retry": "Erneut versuchen",
+      "title": "Ein Fehler ist aufgetreten"
+    }
+  },
+  "meta": {
+    "home": {
+      "description": "Messen Sie den Stress des autonomen Nervensystems in 10 Minuten. 5 Wellness-Scores, über 25 HRV-Parameter, PDF-Berichte. Für Physiotherapeuten und Wellness-Fachkräfte.",
+      "shortDescription": "Messen Sie den Stress des autonomen Nervensystems in 10 Minuten. 5 Wellness-Scores, über 25 HRV-Parameter, PDF-Berichte.",
+      "title": "Stress Index | Professionelle HRV-Software für Physiotherapeuten"
+    },
+    "keywords": "HRV-Software, HRV-Analyse, Stress messen, autonomes Nervensystem, Herzratenvariabilität, Biofeedback, Polar H10, EKG, Physiotherapie, Osteopathie, Sportmediziner, Wellness-Coaching, DFA Alpha1",
+    "organizationDescription": "Professionelle HRV-Software für Physiotherapeuten und Wellness-Fachkräfte"
+  },
+  "scores": {
+    "bands": {
+      "adaptation": {
+        "excellent": "Ausgezeichnet",
+        "fragile": "Fragil",
+        "good": "Gut",
+        "reduced": "Reduziert",
+        "toImprove": "Zu verbessern"
+      },
+      "balance": {
+        "good": "Gut",
+        "moderateImbalance": "Mäßiges Ungleichgewicht",
+        "optimal": "Optimal",
+        "strongImbalance": "Starkes Ungleichgewicht",
+        "sufficient": "Ausreichend"
+      },
+      "energy": {
+        "depleted": "Erschöpft",
+        "full": "Voll",
+        "good": "Gut",
+        "low": "Niedrig",
+        "moderate": "Mäßig"
+      },
+      "recovery": {
+        "good": "Gut",
+        "insufficient": "Unzureichend",
+        "moderate": "Mäßig",
+        "optimal": "Optimal",
+        "poor": "Schwach"
+      },
+      "stress": {
+        "balance": "Ausgeglichen",
+        "fatigue": "Erschöpfung",
+        "high": "Hoch",
+        "low": "Niedrig",
+        "medium": "Mittel"
+      }
+    },
+    "disclaimer": "Allgemeine Wellness-Indikatoren. Sie ersetzen nicht den Rat eines Arztes.",
+    "names": {
+      "adaptation": "Anpassung",
+      "balance": "Gleichgewicht",
+      "composite": "Gesamtwert",
+      "energy": "Energie",
+      "recovery": "Erholung",
+      "stress": "Stress",
+      "stressLong": "Stressindex"
+    },
+    "outOf100": "{n} von 100",
+    "range": {
+      "belowAverage": "Unter dem Durchschnitt",
+      "excellent": "Ausgezeichnet",
+      "good": "Gut",
+      "low": "Niedrig",
+      "normal": "Im Normbereich",
+      "outOfRange": "Außerhalb des Normbereichs",
+      "reference": "Referenzbereich"
     }
   }
 }

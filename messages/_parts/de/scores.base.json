@@ -1,0 +1,59 @@
+{
+  "names": {
+    "stress": "Stress",
+    "recovery": "Erholung",
+    "balance": "Gleichgewicht",
+    "energy": "Energie",
+    "adaptation": "Anpassung",
+    "stressLong": "Stressindex",
+    "composite": "Gesamtwert"
+  },
+  "bands": {
+    "stress": {
+      "low": "Niedrig",
+      "balance": "Ausgeglichen",
+      "medium": "Mittel",
+      "high": "Hoch",
+      "fatigue": "Erschöpfung"
+    },
+    "recovery": {
+      "insufficient": "Unzureichend",
+      "poor": "Schwach",
+      "moderate": "Mäßig",
+      "good": "Gut",
+      "optimal": "Optimal"
+    },
+    "balance": {
+      "strongImbalance": "Starkes Ungleichgewicht",
+      "moderateImbalance": "Mäßiges Ungleichgewicht",
+      "sufficient": "Ausreichend",
+      "good": "Gut",
+      "optimal": "Optimal"
+    },
+    "energy": {
+      "depleted": "Erschöpft",
+      "low": "Niedrig",
+      "moderate": "Mäßig",
+      "good": "Gut",
+      "full": "Voll"
+    },
+    "adaptation": {
+      "fragile": "Fragil",
+      "toImprove": "Zu verbessern",
+      "reduced": "Reduziert",
+      "good": "Gut",
+      "excellent": "Ausgezeichnet"
+    }
+  },
+  "range": {
+    "low": "Niedrig",
+    "belowAverage": "Unter dem Durchschnitt",
+    "normal": "Im Normbereich",
+    "good": "Gut",
+    "excellent": "Ausgezeichnet",
+    "outOfRange": "Außerhalb des Normbereichs",
+    "reference": "Referenzbereich"
+  },
+  "outOf100": "{n} von 100",
+  "disclaimer": "Allgemeine Wellness-Indikatoren. Sie ersetzen nicht den Rat eines Arztes."
+}

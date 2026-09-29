@@ -1,26 +1,141 @@
 {
-  "meta": {
-    "keywords": "software HRV, analisi HRV, misurare stress, sistema nervoso autonomo, Heart Rate Variability, variabilità frequenza cardiaca, biofeedback, Polar H10, ECG, fisioterapia, osteopatia, medico sportivo, coaching benessere, DFA Alpha1",
-    "organizationDescription": "Software HRV professionale per fisioterapisti e professionisti del benessere",
-    "home": {
-      "title": "Stress Index | Software HRV Professionale per Fisioterapisti",
-      "description": "Misura lo stress del sistema nervoso autonomo in 10 minuti. 5 score di benessere, 25+ parametri HRV, report PDF. Per fisioterapisti e professionisti del benessere.",
-      "shortDescription": "Misura lo stress del sistema nervoso autonomo in 10 minuti. 5 score di benessere, 25+ parametri HRV, report PDF."
-    }
-  },
   "common": {
-    "languageSwitcher": "Lingua"
+    "all": "All",
+    "back": "Back",
+    "brand": "Stress Index",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "continue": "Continue",
+    "days": "{count, plural, one {# day} other {# days}}",
+    "delete": "Delete",
+    "download": "Download",
+    "edit": "Edit",
+    "error": "Error",
+    "export": "Export",
+    "filter": "Filter",
+    "freeTrial": "Free trial",
+    "genericError": "Something went wrong. Please try again.",
+    "language": "Language",
+    "loading": "Loading...",
+    "logout": "Sign out",
+    "menuClose": "Close menu",
+    "menuOpen": "Open menu",
+    "minutes": "{count, plural, one {# minute} other {# minutes}}",
+    "na": "n/a",
+    "new": "New",
+    "next": "Next",
+    "no": "No",
+    "noData": "No data",
+    "none": "None",
+    "notAvailable": "Not available",
+    "ok": "OK",
+    "open": "Open",
+    "optional": "optional",
+    "proArea": "Professional Area",
+    "requiredField": "Required field",
+    "reset": "Reset",
+    "retry": "Retry",
+    "save": "Save",
+    "saved": "Saved",
+    "saving": "Saving...",
+    "search": "Search",
+    "seeAll": "See all",
+    "seeDetails": "See details",
+    "select": "Select",
+    "share": "Share",
+    "startFree": "Start for free",
+    "support": "Support",
+    "today": "today",
+    "yes": "Yes",
+    "yesterday": "yesterday"
+  },
+  "dashboard": {
+    "greeting": {
+      "afternoon": "Good afternoon",
+      "evening": "Good evening",
+      "morning": "Good morning",
+      "night": "Good night"
+    }
   },
   "errors": {
     "notFound": {
-      "title": "Pagina non trovata",
-      "body": "La pagina che cerchi non esiste o è stata spostata.",
-      "cta": "Torna alla home"
+      "body": "The page you are looking for does not exist or has been moved.",
+      "cta": "Back to home",
+      "title": "Page not found"
     },
     "unexpected": {
-      "title": "Si è verificato un errore",
-      "body": "Qualcosa è andato storto. Riprova tra qualche istante: se il problema persiste scrivi a support@stressindex.io.",
-      "retry": "Riprova"
+      "body": "An unexpected error occurred. Please try again in a moment. If the problem persists, write to support@stressindex.io.",
+      "retry": "Try again",
+      "title": "Something went wrong"
+    }
+  },
+  "meta": {
+    "home": {
+      "description": "Measure autonomic nervous system stress in 10 minutes. 5 wellness scores, 25+ HRV parameters, PDF reports. For physiotherapists and wellness professionals.",
+      "shortDescription": "Measure autonomic nervous system stress in 10 minutes. 5 wellness scores, 25+ HRV parameters, PDF reports.",
+      "title": "Stress Index | Professional HRV Software for Physiotherapists"
+    },
+    "keywords": "HRV software, HRV analysis, measure stress, autonomic nervous system, heart rate variability, biofeedback, Polar H10, ECG, physiotherapy, osteopathy, sports professionals, wellness coaching, DFA Alpha1",
+    "organizationDescription": "Professional HRV software for physiotherapists and wellness professionals"
+  },
+  "scores": {
+    "bands": {
+      "adaptation": {
+        "excellent": "Excellent",
+        "fragile": "Fragile",
+        "good": "Good",
+        "reduced": "Reduced",
+        "toImprove": "To improve"
+      },
+      "balance": {
+        "good": "Good",
+        "moderateImbalance": "Moderate imbalance",
+        "optimal": "Optimal",
+        "strongImbalance": "Strong imbalance",
+        "sufficient": "Sufficient"
+      },
+      "energy": {
+        "depleted": "Depleted",
+        "full": "Full",
+        "good": "Good",
+        "low": "Low",
+        "moderate": "Moderate"
+      },
+      "recovery": {
+        "good": "Good",
+        "insufficient": "Insufficient",
+        "moderate": "Moderate",
+        "optimal": "Optimal",
+        "poor": "Poor"
+      },
+      "stress": {
+        "balance": "Balance",
+        "fatigue": "Fatigue",
+        "high": "High",
+        "low": "Low",
+        "medium": "Medium"
+      }
+    },
+    "disclaimer": "General wellness indicators. They do not replace a doctor's advice.",
+    "names": {
+      "adaptation": "Adaptation",
+      "balance": "Balance",
+      "composite": "Composite",
+      "energy": "Energy",
+      "recovery": "Recovery",
+      "stress": "Stress",
+      "stressLong": "Stress Index"
+    },
+    "outOf100": "{n} out of 100",
+    "range": {
+      "belowAverage": "Below average",
+      "excellent": "Excellent",
+      "good": "Good",
+      "low": "Low",
+      "normal": "In range",
+      "outOfRange": "Out of range",
+      "reference": "Reference range"
     }
   }
 }

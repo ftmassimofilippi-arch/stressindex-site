@@ -1,0 +1,12 @@
+{
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "body": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "cta": "Zur Startseite"
+  },
+  "unexpected": {
+    "title": "Ein Fehler ist aufgetreten",
+    "body": "Etwas ist schiefgelaufen. Bitte versuchen Sie es in Kürze erneut. Wenn das Problem weiterhin besteht, schreiben Sie an support@stressindex.io.",
+    "retry": "Erneut versuchen"
+  }
+}

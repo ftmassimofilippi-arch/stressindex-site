@@ -1,20 +1,56 @@
 // Helper di formattazione condivisi
+//
+// Tutte le funzioni accettano una `locale` finale facoltativa ('it' | 'en' | 'de').
+// Se omessa vale l'italiano: nei componenti si passa SEMPRE `useLocale()` (client)
+// o `await getLocale()` (server), così date e numeri seguono la lingua della
+// pagina (it-IT, en-US, de-DE). I formati di default usano `Intl`; chi passa un
+// pattern `fmt` esplicito continua a usare date-fns con la locale giusta.
 import { differenceInDays, format, formatDistanceToNow, parseISO } from 'date-fns'
-import { it } from 'date-fns/locale'
+import { it, enUS, de } from 'date-fns/locale'
+import type { Locale as DateFnsLocale } from 'date-fns'
+import type { Tr } from '@/i18n/types'
+import { defaultLocale, intlLocale, isLocale, type Locale } from '@/i18n/routing'
 
-export function formatDate(date: string | Date, fmt = 'dd MMM yyyy'): string {
-  const d = typeof date === 'string' ? parseISO(date) : date
-  return format(d, fmt, { locale: it })
+function loc(locale?: string): Locale {
+  return isLocale(locale) ? locale : defaultLocale
 }
 
-export function formatDateTime(date: string | Date): string {
-  const d = typeof date === 'string' ? parseISO(date) : date
-  return format(d, "dd MMM yyyy 'alle' HH:mm", { locale: it })
+const DF: Record<Locale, DateFnsLocale> = { it, en: enUS, de }
+
+export function dateFnsLocale(locale?: string): DateFnsLocale {
+  return DF[loc(locale)]
 }
 
-export function formatTime(date: string | Date): string {
+/** Tag BCP 47 per `Intl` (it-IT, en-US, de-DE). */
+export function intlTag(locale?: string): string {
+  return intlLocale[loc(locale)]
+}
+
+const FUSO = 'Europe/Rome'
+
+function intlDate(d: Date, locale: string | undefined, opts: Intl.DateTimeFormatOptions, tz?: string): string {
+  return new Intl.DateTimeFormat(intlTag(locale), { ...opts, ...(tz ? { timeZone: tz } : {}) }).format(d)
+}
+
+const OPT_DATE: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric' }
+const OPT_DATETIME: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }
+const OPT_TIME: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' }
+
+/** Data breve (es. "29 set 2026" / "Sep 29, 2026" / "29. Sept. 2026"). Con `fmt` usa un pattern date-fns. */
+export function formatDate(date: string | Date, fmt?: string, locale?: string): string {
   const d = typeof date === 'string' ? parseISO(date) : date
-  return format(d, 'HH:mm', { locale: it })
+  if (fmt) return format(d, fmt, { locale: dateFnsLocale(locale) })
+  return intlDate(d, locale, OPT_DATE)
+}
+
+export function formatDateTime(date: string | Date, locale?: string): string {
+  const d = typeof date === 'string' ? parseISO(date) : date
+  return intlDate(d, locale, OPT_DATETIME)
+}
+
+export function formatTime(date: string | Date, locale?: string): string {
+  const d = typeof date === 'string' ? parseISO(date) : date
+  return intlDate(d, locale, OPT_TIME)
 }
 
 // ── Timestamp delle misurazioni ──────────────────────────────────────────────
@@ -44,8 +80,6 @@ export function formatTime(date: string | Date): string {
 // e nessuna build pre-fix è più attiva. Vedi docs/debiti-tecnici.md nel repo
 // dell'app, voce "Ramo legacy della convenzione oraria".
 
-const FUSO = 'Europe/Rome'
-
 // Componenti calendariali di un istante nel fuso italiano. `Intl` con
 // `timeZone` esplicito dà lo stesso risultato lato server (UTC) e lato browser,
 // quindi non ci sono disallineamenti di idratazione.
@@ -69,7 +103,7 @@ function offsetFuso(instant: Date): number {
 
 // Inverso di `parteFuso`: dai componenti di un orologio da parete italiano
 // all'istante reale. Due passate perché l'offset dipende dall'istante che
-// stiamo cercando — la seconda risolve i confini di ora legale.
+// stiamo cercando: la seconda risolve i confini di ora legale.
 function daOraItaliana(wallUtcMs: number): Date {
   let off = offsetFuso(new Date(wallUtcMs))
   const primo = new Date(wallUtcMs - off * 60000)
@@ -124,26 +158,28 @@ export function measuredInstant(row: ConIstante | null | undefined): Date | null
 }
 
 // Date i cui componenti LOCALI coincidono con l'orologio da parete italiano
-// dell'istante dato. Serve solo per passarla a `format` di date-fns senza
-// cambiare il formato di output esistente.
+// dell'istante dato. Serve solo per passarla a `format` di date-fns (pattern
+// espliciti) senza cambiare il formato di output esistente.
 function oraDaParete(instant: Date): Date {
   const p = parteFuso(instant)
   return new Date(p.y, p.mo - 1, p.d, p.h, p.mi, p.s)
 }
 
-export function formatMeasuredAt(row: ConIstante | null | undefined): string {
+export function formatMeasuredAt(row: ConIstante | null | undefined, locale?: string): string {
   const i = measuredInstant(row)
-  return i ? format(oraDaParete(i), "dd MMM yyyy 'alle' HH:mm", { locale: it }) : '—'
+  return i ? intlDate(i, locale, OPT_DATETIME, FUSO) : '—'
 }
 
-export function formatMeasuredDate(row: ConIstante | null | undefined, fmt = 'dd MMM yyyy'): string {
+export function formatMeasuredDate(row: ConIstante | null | undefined, fmt?: string, locale?: string): string {
   const i = measuredInstant(row)
-  return i ? format(oraDaParete(i), fmt, { locale: it }) : '—'
+  if (!i) return '—'
+  if (fmt) return format(oraDaParete(i), fmt, { locale: dateFnsLocale(locale) })
+  return intlDate(i, locale, OPT_DATE, FUSO)
 }
 
-export function formatMeasuredTime(row: ConIstante | null | undefined): string {
+export function formatMeasuredTime(row: ConIstante | null | undefined, locale?: string): string {
   const i = measuredInstant(row)
-  return i ? format(oraDaParete(i), 'HH:mm', { locale: it }) : '—'
+  return i ? intlDate(i, locale, OPT_TIME, FUSO) : '—'
 }
 
 /**
@@ -178,15 +214,17 @@ export function measuredWeekday(row: ConIstante | null | undefined): number | nu
  * Formatta un istante GIÀ normalizzato (uscito da `measuredInstant`), nel fuso
  * italiano. Per i valori grezzi di database usare `formatMeasured*`.
  */
-export function formatIstante(d: Date | string | null | undefined, fmt = 'dd MMM yyyy'): string {
+export function formatIstante(d: Date | string | null | undefined, fmt?: string, locale?: string): string {
   if (!d) return '—'
   const i = typeof d === 'string' ? new Date(d) : d
-  return Number.isNaN(i.getTime()) ? '—' : format(oraDaParete(i), fmt, { locale: it })
+  if (Number.isNaN(i.getTime())) return '—'
+  if (fmt) return format(oraDaParete(i), fmt, { locale: dateFnsLocale(locale) })
+  return intlDate(i, locale, OPT_DATE, FUSO)
 }
 
-export function formatRelative(date: string | Date): string {
+export function formatRelative(date: string | Date, locale?: string): string {
   const d = typeof date === 'string' ? parseISO(date) : date
-  return formatDistanceToNow(d, { locale: it, addSuffix: true })
+  return formatDistanceToNow(d, { locale: dateFnsLocale(locale), addSuffix: true })
 }
 
 export function daysSince(date: string | Date | null | undefined): number | null {
@@ -195,12 +233,13 @@ export function daysSince(date: string | Date | null | undefined): number | null
   return differenceInDays(new Date(), d)
 }
 
-export function formatGreeting(): string {
+/** Saluto in base all'ora: le stringhe vengono dal namespace `dashboard.greeting`. */
+export function formatGreeting(t: Tr): string {
   const hour = new Date().getHours()
-  if (hour < 5) return 'Buonanotte'
-  if (hour < 12) return 'Buongiorno'
-  if (hour < 18) return 'Buon pomeriggio'
-  return 'Buonasera'
+  if (hour < 5) return t('night')
+  if (hour < 12) return t('morning')
+  if (hour < 18) return t('afternoon')
+  return t('evening')
 }
 
 export function fullName(p?: { nome?: string | null; cognome?: string | null } | null): string {
@@ -230,7 +269,7 @@ export function age(birthDate?: string | null): number | null {
 // le colonne Postgres `text`/`numeric` sono serializzate come STRINGA da
 // PostgREST, e i campi dentro le colonne jsonb hanno il tipo che ci ha scritto
 // l'app Flutter. Un `.toFixed()` diretto su quei valori è un TypeError che
-// abbatte l'intera pagina — caso reale in produzione:
+// abbatte l'intera pagina, caso reale in produzione:
 // measurement_analytics.signal_quality è `text` e contiene "good".
 // Accetta solo number e string: booleani, array e oggetti danno null (Number([])
 // varrebbe 0, che sarebbe peggio di "nessun dato").
@@ -252,17 +291,37 @@ export function toStr(value: unknown): string | null {
   return null
 }
 
-export function num(value?: unknown, digits = 1): string {
+/** Numero con `digits` decimali nel formato della lingua (virgola in it/de, punto in en). */
+export function num(value?: unknown, digits = 1, locale?: string): string {
+  const n = toNum(value)
+  if (n === null) return '—'
+  return new Intl.NumberFormat(intlTag(locale), { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(n)
+}
+
+/** Numero "grezzo" con i decimali, senza separatori di lingua (per chiavi, CSV, URL). */
+export function numRaw(value?: unknown, digits = 1): string {
   const n = toNum(value)
   return n === null ? '—' : n.toFixed(digits)
 }
 
-export function pct(value?: unknown): string {
+export function pct(value?: unknown, locale?: string): string {
   const n = toNum(value)
   if (n === null) return '—'
-  return `${n > 0 ? '+' : ''}${n.toFixed(1)}%`
+  const s = new Intl.NumberFormat(intlTag(locale), { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n)
+  return `${n > 0 ? '+' : ''}${s}%`
 }
 
+/** Prezzo in euro nel formato della lingua: 49,90 € / €49.90 / 49,90 €. */
+export function formatEur(value: number, locale?: string): string {
+  return new Intl.NumberFormat(intlTag(locale), { style: 'currency', currency: 'EUR' }).format(value)
+}
+
+/** Data odierna per esteso (es. "martedì 29 settembre 2026"). */
+export function todayLong(locale?: string): string {
+  return intlDate(new Date(), locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+/** @deprecated usare `todayLong(locale)` */
 export function todayLongIt(): string {
-  return format(new Date(), "EEEE d MMMM yyyy", { locale: it })
+  return format(new Date(), 'EEEE d MMMM yyyy', { locale: it })
 }

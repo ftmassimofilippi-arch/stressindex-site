@@ -1,0 +1,12 @@
+{
+  "notFound": {
+    "title": "Pagina non trovata",
+    "body": "La pagina che cerchi non esiste o è stata spostata.",
+    "cta": "Torna alla home"
+  },
+  "unexpected": {
+    "title": "Si è verificato un errore",
+    "body": "Qualcosa è andato storto. Riprova tra qualche istante: se il problema persiste scrivi a support@stressindex.io.",
+    "retry": "Riprova"
+  }
+}

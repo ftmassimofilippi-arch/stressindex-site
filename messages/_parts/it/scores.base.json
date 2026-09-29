@@ -1,0 +1,59 @@
+{
+  "names": {
+    "stress": "Stress",
+    "recovery": "Recupero",
+    "balance": "Equilibrio",
+    "energy": "Energia",
+    "adaptation": "Adattamento",
+    "stressLong": "Indice di Stress",
+    "composite": "Composito"
+  },
+  "bands": {
+    "stress": {
+      "low": "Basso",
+      "balance": "Equilibrio",
+      "medium": "Medio",
+      "high": "Alto",
+      "fatigue": "Affaticamento"
+    },
+    "recovery": {
+      "insufficient": "Insufficiente",
+      "poor": "Scarso",
+      "moderate": "Moderato",
+      "good": "Buono",
+      "optimal": "Ottimale"
+    },
+    "balance": {
+      "strongImbalance": "Sbilanciamento forte",
+      "moderateImbalance": "Sbilanciamento moderato",
+      "sufficient": "Sufficiente",
+      "good": "Buono",
+      "optimal": "Ottimale"
+    },
+    "energy": {
+      "depleted": "Esaurita",
+      "low": "Bassa",
+      "moderate": "Moderata",
+      "good": "Buona",
+      "full": "Piena"
+    },
+    "adaptation": {
+      "fragile": "Fragile",
+      "toImprove": "Da migliorare",
+      "reduced": "Ridotta",
+      "good": "Buona",
+      "excellent": "Eccellente"
+    }
+  },
+  "range": {
+    "low": "Basso",
+    "belowAverage": "Sotto media",
+    "normal": "Nella norma",
+    "good": "Buono",
+    "excellent": "Eccellente",
+    "outOfRange": "Fuori norma",
+    "reference": "Range di riferimento"
+  },
+  "outOf100": "{n} su 100",
+  "disclaimer": "Indicatori di benessere generale. Non sostituiscono il parere di un medico."
+}

@@ -1,0 +1,59 @@
+{
+  "names": {
+    "stress": "Stress",
+    "recovery": "Recovery",
+    "balance": "Balance",
+    "energy": "Energy",
+    "adaptation": "Adaptation",
+    "stressLong": "Stress Index",
+    "composite": "Composite"
+  },
+  "bands": {
+    "stress": {
+      "low": "Low",
+      "balance": "Balance",
+      "medium": "Medium",
+      "high": "High",
+      "fatigue": "Fatigue"
+    },
+    "recovery": {
+      "insufficient": "Insufficient",
+      "poor": "Poor",
+      "moderate": "Moderate",
+      "good": "Good",
+      "optimal": "Optimal"
+    },
+    "balance": {
+      "strongImbalance": "Strong imbalance",
+      "moderateImbalance": "Moderate imbalance",
+      "sufficient": "Sufficient",
+      "good": "Good",
+      "optimal": "Optimal"
+    },
+    "energy": {
+      "depleted": "Depleted",
+      "low": "Low",
+      "moderate": "Moderate",
+      "good": "Good",
+      "full": "Full"
+    },
+    "adaptation": {
+      "fragile": "Fragile",
+      "toImprove": "To improve",
+      "reduced": "Reduced",
+      "good": "Good",
+      "excellent": "Excellent"
+    }
+  },
+  "range": {
+    "low": "Low",
+    "belowAverage": "Below average",
+    "normal": "In range",
+    "good": "Good",
+    "excellent": "Excellent",
+    "outOfRange": "Out of range",
+    "reference": "Reference range"
+  },
+  "outOf100": "{n} out of 100",
+  "disclaimer": "General wellness indicators. They do not replace a doctor's advice."
+}
