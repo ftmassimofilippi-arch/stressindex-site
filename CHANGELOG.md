@@ -42,6 +42,17 @@ produzione è nel `README.md`.
   "Rischio sovraccarico"; LF/HF sempre come "rapporto LF/HF".
 - `.eslintrc.json` (`next/core-web-vitals`) per rendere `npm run lint` non
   interattivo.
+- **Navigazione a un solo click**: righe di clienti, misurazioni, monitoraggi,
+  sessioni sport, test soglie e coppie prima/dopo interamente cliccabili con
+  veri `Link` (`LinkCell`, `DataTable.rowHref`; Cmd+click apre in nuova
+  scheda), risultati della ricerca globale come link, card score e liste
+  "da contattare"/"ultime misurazioni" cliccabili per intero; hover attivi
+  solo con puntatore (`hoverOnlyWhenSupported`), feedback `:active` su touch,
+  ancora "#" delle guide visibile anche senza hover.
+- **Selettore lingua con bandierine SVG** (IT / EN / DE) a un click, sempre
+  visibile: navbar accanto alla CTA anche su mobile, top bar della dashboard,
+  pagine di autenticazione, versione testuale nel footer. Conserva path, query
+  e ancora.
 
 ## 2026-09-27 — tag `site-2026-09-27`
 

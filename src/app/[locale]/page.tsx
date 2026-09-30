@@ -655,7 +655,7 @@ function Footer() {
             <Link className="hover:text-teal transition-colors" href="/privacy">{tc('nav.privacyPolicy')}</Link>
             <Link className="hover:text-teal transition-colors" href="/termini">{tc('nav.terms')}</Link>
             <Suspense fallback={null}>
-              <LanguageSwitcher />
+              <LanguageSwitcher variant="text" />
             </Suspense>
           </div>
         </div>

@@ -38,10 +38,12 @@ export function Footer() {
                 {l.label}
               </Link>
             ))}
-            <Suspense fallback={null}>
-              <LanguageSwitcher />
-            </Suspense>
           </nav>
+        </div>
+        <div className="mt-6 pt-6 border-t border-gray-100 flex justify-center sm:justify-end">
+          <Suspense fallback={null}>
+            <LanguageSwitcher variant="text" />
+          </Suspense>
         </div>
       </div>
     </footer>

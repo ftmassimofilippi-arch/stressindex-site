@@ -42,7 +42,7 @@ export function Header() {
               <path d="M3.5 12H6.5L9 6L12 18L15 9L17.5 12H20.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <span className="text-lg font-semibold text-anthracite tracking-tight">
+          <span className="hidden sm:inline text-lg font-semibold text-anthracite tracking-tight">
             {t('brand')}
           </span>
         </Link>
@@ -69,25 +69,28 @@ export function Header() {
           >
             {t('proArea')}
           </Link>
-          <Suspense fallback={null}>
-            <LanguageSwitcher className="ml-1" />
-          </Suspense>
           <Link
             href="/registrazione"
             className="ml-2 inline-flex items-center justify-center px-4 py-2 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal-dark transition-colors whitespace-nowrap"
           >
             {t('freeTrial')}
           </Link>
+          <Suspense fallback={null}>
+            <LanguageSwitcher className="ml-1" />
+          </Suspense>
         </nav>
 
         {/* Azioni mobile */}
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-1 md:hidden">
           <Link
             href="/registrazione"
-            className="inline-flex items-center justify-center px-3.5 py-2 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal-dark transition-colors whitespace-nowrap"
+            className="inline-flex items-center justify-center px-3 py-2 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal-dark transition-colors whitespace-nowrap"
           >
             {t('freeTrial')}
           </Link>
+          <Suspense fallback={null}>
+            <LanguageSwitcher className="-mx-0.5" />
+          </Suspense>
           <button
             type="button"
             aria-label={open ? t('menuClose') : t('menuOpen')}
@@ -132,12 +135,6 @@ export function Header() {
                 >
                   {t('proArea')}
                 </Link>
-              </li>
-              <li className="pt-3 mt-2 border-t border-gray-100 px-3 flex items-center justify-between gap-3">
-                <span className="text-sm text-anthracite-lighter">{t('language')}</span>
-                <Suspense fallback={null}>
-                  <LanguageSwitcher />
-                </Suspense>
               </li>
             </ul>
           </nav>

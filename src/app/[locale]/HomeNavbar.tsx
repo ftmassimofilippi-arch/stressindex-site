@@ -15,7 +15,7 @@ function Logo() {
           <path d="M3.5 12H6.5L9 6L12 18L15 9L17.5 12H20.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
-      <span className="text-lg font-semibold tracking-tight text-anthracite">{t('brand')}</span>
+      <span className="hidden sm:inline text-lg font-semibold tracking-tight text-anthracite">{t('brand')}</span>
     </Link>
   )
 }
@@ -27,10 +27,10 @@ export function HomeNavbar() {
   const [open, setOpen] = useState(false)
 
   const anchors = [
-    { href: '#come-funziona', label: t('nav.howItWorks') },
-    { href: '#benefici', label: t('nav.features') },
-    { href: '#prezzi', label: t('nav.pricing') },
-    { href: '#faq', label: t('nav.faq') },
+    { href: '/#come-funziona', label: t('nav.howItWorks') },
+    { href: '/#benefici', label: t('nav.features') },
+    { href: '/#prezzi', label: t('nav.pricing') },
+    { href: '/#faq', label: t('nav.faq') },
   ]
 
   useEffect(() => {
@@ -47,22 +47,22 @@ export function HomeNavbar() {
 
         <nav className="hidden md:flex items-center gap-1 text-[14px] text-anthracite-light">
           {anchors.map((a) => (
-            <a key={a.href} href={a.href} className="px-2 lg:px-3 py-2 rounded-md hover:text-teal transition-colors whitespace-nowrap">{a.label}</a>
+            <Link key={a.href} href={a.href} className="px-2 lg:px-3 py-2 rounded-md hover:text-teal transition-colors whitespace-nowrap">{a.label}</Link>
           ))}
           <Link href="/guide" className="px-2 lg:px-3 py-2 rounded-md hover:text-teal transition-colors whitespace-nowrap">{t('nav.guides')}</Link>
           <Link href="/area-professionisti/login" className="px-2 lg:px-3 py-2 rounded-md hover:text-teal transition-colors whitespace-nowrap">{t('proArea')}</Link>
-          <Suspense fallback={null}>
-            <LanguageSwitcher className="ml-1" />
-          </Suspense>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Link
             href="/registrazione"
-            className="inline-flex items-center justify-center px-3.5 sm:px-4 py-2 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal-dark transition-colors whitespace-nowrap"
+            className="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal-dark transition-colors whitespace-nowrap"
           >
             {t('startFree')}
           </Link>
+          <Suspense fallback={null}>
+            <LanguageSwitcher className="-mx-0.5" />
+          </Suspense>
           <button
             type="button"
             aria-label={open ? t('menuClose') : t('menuOpen')}
@@ -82,7 +82,7 @@ export function HomeNavbar() {
             <ul className="flex flex-col gap-1">
               {anchors.map((a) => (
                 <li key={a.href}>
-                  <a href={a.href} onClick={() => setOpen(false)} className="block px-3 py-3 rounded-lg text-base font-medium text-anthracite hover:bg-surface transition-colors">{a.label}</a>
+                  <Link href={a.href} onClick={() => setOpen(false)} className="block px-3 py-3 rounded-lg text-base font-medium text-anthracite hover:bg-surface transition-colors">{a.label}</Link>
                 </li>
               ))}
               <li>
@@ -90,12 +90,6 @@ export function HomeNavbar() {
               </li>
               <li className="pt-2 mt-2 border-t border-gray-100">
                 <Link href="/area-professionisti/login" onClick={() => setOpen(false)} className="block px-3 py-3 rounded-lg text-base font-medium text-anthracite hover:bg-surface transition-colors">{t('proArea')}</Link>
-              </li>
-              <li className="pt-3 mt-2 border-t border-gray-100 px-3 flex items-center justify-between gap-3">
-                <span className="text-sm text-anthracite-lighter">{t('language')}</span>
-                <Suspense fallback={null}>
-                  <LanguageSwitcher />
-                </Suspense>
               </li>
             </ul>
           </nav>

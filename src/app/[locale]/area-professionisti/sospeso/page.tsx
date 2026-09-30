@@ -3,6 +3,8 @@ import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { PauseCircle } from 'lucide-react'
 import { SignOutButton } from './SignOutButton'
+import { Suspense } from 'react'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 type Params = { params: { locale: string } }
 
@@ -20,7 +22,12 @@ export default async function AccountSospesoPage() {
   const t = await getTranslations('auth.suspended')
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center px-6 py-16">
+    <div className="min-h-screen bg-surface flex items-center justify-center px-6 py-16 relative">
+      <div className="absolute top-4 right-4">
+        <Suspense fallback={null}>
+          <LanguageSwitcher />
+        </Suspense>
+      </div>
       <div className="w-full max-w-md bg-white border border-surface-border rounded-2xl p-8 text-center shadow-card">
         <div className="mx-auto w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-5">
           <PauseCircle size={24} />
