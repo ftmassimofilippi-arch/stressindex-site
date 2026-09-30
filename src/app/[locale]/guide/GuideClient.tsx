@@ -787,7 +787,7 @@ export default function GuideClient() {
               <div className="space-y-16">
                 {filteredSections.map((s, i) => (
                   <section key={s.id} id={s.id} aria-labelledby={`${s.id}-title`} className="scroll-mt-24">
-                    <div className="flex items-baseline gap-3 mb-5">
+                    <div className="group flex items-baseline gap-3 mb-5">
                       <h2
                         id={`${s.id}-title`}
                         className="text-2xl sm:text-3xl font-bold text-anthracite tracking-tight flex items-center gap-3"
@@ -800,7 +800,7 @@ export default function GuideClient() {
                       <a
                         href={`#${s.id}`}
                         aria-label={t('nav.anchorLabel')}
-                        className="ml-auto text-anthracite-lighter hover:text-teal transition-colors opacity-0 hover:opacity-100 focus:opacity-100"
+                        className="ml-auto text-anthracite-lighter hover:text-teal transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-60 w-10 h-10 -mr-2 inline-flex items-center justify-center"
                       >
                         #
                       </a>

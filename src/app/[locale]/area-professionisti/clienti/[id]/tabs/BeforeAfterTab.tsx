@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
+import { LinkCell } from '@/components/dashboard/LinkCell'
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
 import { formatMeasuredDate, formatMeasuredTime, measuredDayKey, measuredInstant, num } from '@/lib/format'
@@ -147,29 +148,29 @@ function PairRow({ pair, href }: { pair: BeforeAfterPair<Row>; href: string }) {
   const post = pair.post.m
   return (
     <tr className="border-t border-surface-border hover:bg-surface transition-colors">
-      <td className="px-5 py-3 text-anthracite">
+      <LinkCell href={href} primary padding="px-5 py-3" className="text-anthracite">
         <div className="font-medium">{formatMeasuredDate(post, undefined, locale)}</div>
         <div className="text-[11px] text-anthracite-lighter">{formatMeasuredTime(pre, locale)} → {formatMeasuredTime(post, locale)}</div>
-      </td>
-      <td className="px-3 py-3">
+      </LinkCell>
+      <LinkCell href={href}>
         <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${pair.kind === 'treatment' ? 'bg-emerald-50 text-emerald-700' : 'bg-green-50 text-green-800'}`}>
           {tKind(pair.kind)}
         </span>
-      </td>
+      </LinkCell>
       {SCORE_DELTA_ROWS.map((r) => (
-        <td key={r.key} className="px-3 py-3 text-right">
+        <LinkCell key={r.key} href={href} className="text-right">
           <DeltaCell a={pre[r.key]} b={post[r.key]} higherIsBetter={r.higherIsBetter} />
-        </td>
+        </LinkCell>
       ))}
-      <td className="px-3 py-3 text-right">
+      <LinkCell href={href} className="text-right">
         <DeltaCell a={pre.rmssd} b={post.rmssd} higherIsBetter digits={1} unit="ms" stableBelow={2} />
-      </td>
-      <td className="px-3 py-3 text-right">
+      </LinkCell>
+      <LinkCell href={href} className="text-right">
         <DeltaCell a={pre.mean_hr} b={post.mean_hr} higherIsBetter={false} unit="bpm" stableBelow={2} />
-      </td>
-      <td className="px-3 py-3 text-right">
-        <Link href={href} className="text-teal-dark text-sm hover:underline whitespace-nowrap">{t('compare')}</Link>
-      </td>
+      </LinkCell>
+      <LinkCell href={href} className="text-right">
+        <span className="text-teal-dark text-sm whitespace-nowrap">{t('compare')}</span>
+      </LinkCell>
     </tr>
   )
 }

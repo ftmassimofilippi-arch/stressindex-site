@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
+import { LinkCell } from '@/components/dashboard/LinkCell'
 import { ArrowRight, RefreshCw } from 'lucide-react'
 import type { MonitoringSession } from '@/lib/monitoring-types'
 import { isSleepSession } from '@/lib/monitoring-types'
@@ -57,6 +58,7 @@ export function MonitoringTable({ sessions, showClient = true, baseQuery = '', e
             const prof = sleep ? null : effectiveProfile(s)
             const nums = keyNumbers(s, locale, t)
             const tz = s.tz_offset_minutes
+            const href = hrefFor ? hrefFor(s) : monitoringHref(s, baseQuery)
             return (
               <tr key={s.id} className="border-t border-surface-border hover:bg-surface transition-colors align-middle">
                 {showClient && (
@@ -70,24 +72,24 @@ export function MonitoringTable({ sessions, showClient = true, baseQuery = '', e
                     )}
                   </td>
                 )}
-                {showProfessional && <td className="px-3 py-3 text-anthracite-lighter whitespace-nowrap">{s.professional_name ?? '—'}</td>}
-                <td className="px-3 py-3 text-anthracite whitespace-nowrap">
+                {showProfessional && <LinkCell href={href} className="text-anthracite-lighter whitespace-nowrap">{s.professional_name ?? '—'}</LinkCell>}
+                <LinkCell href={href} primary className="text-anthracite whitespace-nowrap">
                   <div>{periodLabel(s.start_time, s.end_time, tz, locale)}</div>
                   {s.events_modified_on_web && (
                     <div className="text-[10.5px] text-amber-700 inline-flex items-center gap-1 mt-0.5">
                       <RefreshCw size={10} /> {t('table.pendingRecalc')}
                     </div>
                   )}
-                </td>
-                <td className="px-3 py-3 text-anthracite whitespace-nowrap">{duration(s.duration_minutes)}</td>
-                <td className="px-3 py-3"><TypeChip type={s.monitoring_type} size="sm" /></td>
+                </LinkCell>
+                <LinkCell href={href} className="text-anthracite whitespace-nowrap">{duration(s.duration_minutes)}</LinkCell>
+                <LinkCell href={href}><TypeChip type={s.monitoring_type} size="sm" /></LinkCell>
                 {!compact && (
-                  <td className="px-3 py-3">
+                  <LinkCell href={href}>
                     {prof ? <ProfileChip profile={prof.profile} estimated={prof.estimated} size="sm" /> : <span className="text-anthracite-lighter">—</span>}
-                  </td>
+                  </LinkCell>
                 )}
                 {!compact && (
-                  <td className="px-3 py-3">
+                  <LinkCell href={href}>
                     {sleep ? (
                       <Chip
                         label={`${sleepCoverageLabel(s.night?.sleep?.signal.coverage_label ?? null, locale, t)}${s.night?.sleep ? ` · ${Math.round(s.night.sleep.signal.coverage_pct)}%` : ''}`}
@@ -97,9 +99,9 @@ export function MonitoringTable({ sessions, showClient = true, baseQuery = '', e
                     ) : (
                       <QualityChip quality={s.signal_quality} coverage={s.valid_coverage_percentage} size="sm" />
                     )}
-                  </td>
+                  </LinkCell>
                 )}
-                <td className="px-3 py-3">
+                <LinkCell href={href}>
                   <div className="flex flex-wrap gap-x-4 gap-y-1">
                     {nums.map((n) => (
                       <div key={n.label} className="whitespace-nowrap">
@@ -108,12 +110,12 @@ export function MonitoringTable({ sessions, showClient = true, baseQuery = '', e
                       </div>
                     ))}
                   </div>
-                </td>
-                <td className="px-3 py-3 text-right whitespace-nowrap">
-                  <Link href={hrefFor ? hrefFor(s) : monitoringHref(s, baseQuery)} className="text-sm hover:underline inline-flex items-center gap-1" style={{ color: '#2B4160' }}>
+                </LinkCell>
+                <LinkCell href={href} className="text-right whitespace-nowrap">
+                  <span className="text-sm inline-flex items-center gap-1" style={{ color: '#2B4160' }}>
                     {t('table.open')} <ArrowRight size={14} />
-                  </Link>
-                </td>
+                  </span>
+                </LinkCell>
               </tr>
             )
           })}

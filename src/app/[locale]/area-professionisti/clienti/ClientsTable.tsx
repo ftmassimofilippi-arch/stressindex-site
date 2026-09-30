@@ -8,7 +8,6 @@ import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { CountBadge } from '@/components/dashboard/AlertBadge'
 import { age, fullName, initials, formatRelative } from '@/lib/format'
 import type { ClientWithLastMeasurement } from '@/lib/dashboard-data'
-import { useRouter } from '@/i18n/navigation'
 
 type Props = { clients: ClientWithLastMeasurement[]; professionistaId?: string }
 
@@ -26,7 +25,6 @@ export function ClientsTable({ clients, professionistaId }: Props) {
   const t = useTranslations('clients.list')
   const tScores = useTranslations('scores')
   const locale = useLocale()
-  const router = useRouter()
   const qs = professionistaId ? `?professionista=${professionistaId}` : ''
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState<string>('')
@@ -165,7 +163,7 @@ export function ClientsTable({ clients, professionistaId }: Props) {
         columns={columns}
         rows={filtered}
         rowKey={(c) => c.id}
-        onRowClick={(c) => router.push(`/area-professionisti/clienti/${c.id}${qs}`)}
+        rowHref={(c) => `/area-professionisti/clienti/${c.id}${qs}`}
         initialSort={{ key: 'last', dir: 'desc' }}
       />
     </div>

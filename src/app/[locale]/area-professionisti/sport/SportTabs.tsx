@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { Link } from '@/i18n/navigation'
+import { LinkCell } from '@/components/dashboard/LinkCell'
 import { useLocale, useTranslations } from 'next-intl'
 import { Activity, ArrowRight, ChevronLeft, ChevronRight, Dumbbell, TrendingDown, TrendingUp, Minus, Users } from 'lucide-react'
 import { MetricCard } from '@/components/dashboard/MetricCard'
@@ -322,36 +323,35 @@ function TrendBadge({ trend }: { trend: TrendDirection }) {
 function SessionRow({ s, baseQuery, variant = 'recent' }: { s: SportSessionWithAthlete; baseQuery: string; variant?: 'recent' | 'full' }) {
   const t = useTranslations('sport')
   const locale = useLocale()
+  const href = `/area-professionisti/sport/sessione/${s.id}${baseQuery}`
   return (
     <tr className="border-t border-surface-border hover:bg-surface transition-colors">
       {variant === 'recent' ? (
         <>
-          <Td className="font-medium text-anthracite">{s.athlete_name}</Td>
-          <Td className="text-anthracite-lighter">{formatMeasuredDate(s, undefined, locale)}</Td>
-          <Td>{s.sport ?? '—'}</Td>
-          <Td>{formatDuration(s.duration_s)}</Td>
-          <Td>{s.trimp == null ? '—' : Math.round(s.trimp)}</Td>
-          <Td>{s.hr_avg == null ? '—' : `${s.hr_avg} bpm`}</Td>
-          <Td>{num(s.dfa_alpha1_avg, 2, locale)}</Td>
+          <Td href={href} primary className="font-medium text-anthracite">{s.athlete_name}</Td>
+          <Td href={href} className="text-anthracite-lighter">{formatMeasuredDate(s, undefined, locale)}</Td>
+          <Td href={href}>{s.sport ?? '—'}</Td>
+          <Td href={href}>{formatDuration(s.duration_s)}</Td>
+          <Td href={href}>{s.trimp == null ? '—' : Math.round(s.trimp)}</Td>
+          <Td href={href}>{s.hr_avg == null ? '—' : `${s.hr_avg} bpm`}</Td>
+          <Td href={href}>{num(s.dfa_alpha1_avg, 2, locale)}</Td>
         </>
       ) : (
         <>
-          <Td className="text-anthracite-lighter whitespace-nowrap">{formatMeasuredAt(s, locale)}</Td>
-          <Td className="font-medium text-anthracite">{s.athlete_name}</Td>
-          <Td>{s.sport ?? '—'}{s.test_type === 'threshold_test' && <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap">{t('sessions.thresholdBadge')}</span>}</Td>
-          <Td>{formatDuration(s.duration_s)}</Td>
-          <Td>{s.hr_avg == null ? '—' : `${s.hr_avg}`}</Td>
-          <Td>{s.hr_max == null ? '—' : `${s.hr_max}`}</Td>
-          <Td>{s.trimp == null ? '—' : Math.round(s.trimp)}</Td>
-          <Td>{num(s.dfa_alpha1_avg, 2, locale)}</Td>
-          <Td>{s.questionnaire?.rpe == null ? '—' : `${s.questionnaire.rpe}/10`}</Td>
+          <Td href={href} primary className="text-anthracite-lighter whitespace-nowrap">{formatMeasuredAt(s, locale)}</Td>
+          <Td href={href} className="font-medium text-anthracite">{s.athlete_name}</Td>
+          <Td href={href}>{s.sport ?? '—'}{s.test_type === 'threshold_test' && <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap">{t('sessions.thresholdBadge')}</span>}</Td>
+          <Td href={href}>{formatDuration(s.duration_s)}</Td>
+          <Td href={href}>{s.hr_avg == null ? '—' : `${s.hr_avg}`}</Td>
+          <Td href={href}>{s.hr_max == null ? '—' : `${s.hr_max}`}</Td>
+          <Td href={href}>{s.trimp == null ? '—' : Math.round(s.trimp)}</Td>
+          <Td href={href}>{num(s.dfa_alpha1_avg, 2, locale)}</Td>
+          <Td href={href}>{s.questionnaire?.rpe == null ? '—' : `${s.questionnaire.rpe}/10`}</Td>
         </>
       )}
-      <td className="px-3 py-3 text-right whitespace-nowrap">
-        <Link href={`/area-professionisti/sport/sessione/${s.id}${baseQuery}`} className="text-teal-dark text-sm hover:underline">
-          {t('sessions.open')} →
-        </Link>
-      </td>
+      <LinkCell href={`/area-professionisti/sport/sessione/${s.id}${baseQuery}`} className="text-right whitespace-nowrap">
+        <span className="text-teal-dark text-sm">{t('sessions.open')} →</span>
+      </LinkCell>
     </tr>
   )
 }
@@ -360,7 +360,10 @@ function Th({ children }: { children: React.ReactNode }) {
   return <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wide font-medium first:pl-6">{children}</th>
 }
 
-function Td({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+function Td({ children, className = '', href, primary }: { children: React.ReactNode; className?: string; href?: string; primary?: boolean }) {
+  if (href) {
+    return <LinkCell href={href} primary={primary} className={`[&:first-child>a]:pl-6 ${className}`}>{children}</LinkCell>
+  }
   return <td className={`px-3 py-3 first:pl-6 ${className}`}>{children}</td>
 }
 

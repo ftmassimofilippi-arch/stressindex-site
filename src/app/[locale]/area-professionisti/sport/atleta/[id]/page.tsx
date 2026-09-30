@@ -1,4 +1,5 @@
 import { Link } from '@/i18n/navigation'
+import { LinkCell } from '@/components/dashboard/LinkCell'
 import { notFound } from 'next/navigation'
 import { redirect } from '@/i18n/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
@@ -185,21 +186,22 @@ export default async function SportAthletePage({
                 </tr>
               </thead>
               <tbody>
-                {recent.map((s) => (
-                  <tr key={s.id} className="border-t border-surface-border hover:bg-surface transition-colors">
-                    <td className="px-6 py-3 text-anthracite font-medium">{formatMeasuredDate(s, undefined, locale)}</td>
-                    <td className="px-3 py-3">{formatDuration(s.duration_s)}</td>
-                    <td className="px-3 py-3">{s.trimp == null ? '—' : Math.round(s.trimp)}</td>
-                    <td className="px-3 py-3">{s.hr_avg == null ? '—' : `${s.hr_avg} bpm`}</td>
-                    <td className="px-3 py-3">{num(s.dfa_alpha1_avg, 2, locale)}</td>
-                    <td className="px-3 py-3">{s.questionnaire?.rpe == null ? '—' : `${s.questionnaire.rpe}/10`}</td>
-                    <td className="px-3 py-3 text-right whitespace-nowrap">
-                      <Link href={`/area-professionisti/sport/sessione/${s.id}${baseQuery}`} className="text-teal-dark text-sm hover:underline">
-                        {t('sessions.open')} →
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                {recent.map((s) => {
+                  const href = `/area-professionisti/sport/sessione/${s.id}${baseQuery}`
+                  return (
+                    <tr key={s.id} className="border-t border-surface-border hover:bg-surface transition-colors">
+                      <LinkCell href={href} primary padding="px-6 py-3" className="text-anthracite font-medium">{formatMeasuredDate(s, undefined, locale)}</LinkCell>
+                      <LinkCell href={href}>{formatDuration(s.duration_s)}</LinkCell>
+                      <LinkCell href={href}>{s.trimp == null ? '—' : Math.round(s.trimp)}</LinkCell>
+                      <LinkCell href={href}>{s.hr_avg == null ? '—' : `${s.hr_avg} bpm`}</LinkCell>
+                      <LinkCell href={href}>{num(s.dfa_alpha1_avg, 2, locale)}</LinkCell>
+                      <LinkCell href={href}>{s.questionnaire?.rpe == null ? '—' : `${s.questionnaire.rpe}/10`}</LinkCell>
+                      <LinkCell href={href} className="text-right whitespace-nowrap">
+                        <span className="text-teal-dark text-sm">{t('sessions.open')} →</span>
+                      </LinkCell>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

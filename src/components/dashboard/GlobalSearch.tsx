@@ -3,7 +3,7 @@
 import { Search, Loader2, User, ShieldCheck, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { useRouter } from '@/i18n/navigation'
+import { Link, useRouter } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase-browser'
 
 type ClientHit = { kind: 'client'; id: string; nome: string | null; cognome: string | null; email: string | null }
@@ -84,12 +84,19 @@ export function GlobalSearch({ className = '' }: { className?: string }) {
     return () => clearTimeout(handle)
   }, [query])
 
-  function go(h: Hit) {
+  function hrefFor(h: Hit) {
+    return h.kind === 'client' ? `/area-professionisti/clienti/${h.id}` : `/area-professionisti/clienti?professionista=${h.id}`
+  }
+
+  function close() {
     setOpen(false)
     setQuery('')
     setHits([])
-    if (h.kind === 'client') router.push(`/area-professionisti/clienti/${h.id}`)
-    else router.push(`/area-professionisti/clienti?professionista=${h.id}`)
+  }
+
+  function go(h: Hit) {
+    close()
+    router.push(hrefFor(h))
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
@@ -148,10 +155,10 @@ export function GlobalSearch({ className = '' }: { className?: string }) {
             <ul className="py-1.5">
               {hits.map((h, i) => (
                 <li key={`${h.kind}-${h.id}`}>
-                  <button
-                    type="button"
+                  <Link
+                    href={hrefFor(h)}
                     onMouseEnter={() => setActive(i)}
-                    onClick={() => go(h)}
+                    onClick={close}
                     className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                       i === active ? 'bg-surface' : 'hover:bg-surface'
                     }`}
@@ -172,7 +179,7 @@ export function GlobalSearch({ className = '' }: { className?: string }) {
                         {h.email ? ` · ${h.email}` : ''}
                       </span>
                     </span>
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>

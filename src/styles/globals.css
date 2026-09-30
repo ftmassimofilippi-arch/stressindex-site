@@ -30,6 +30,20 @@
   ::selection {
     background-color: rgba(79, 163, 154, 0.2);
   }
+
+  /* Elementi cliccabili: cursore chiaro su desktop, feedback leggero al tap su
+     touch (dove gli hover: sono disattivati da tailwind.future.hoverOnlyWhenSupported). */
+  a, button, [role='button'], summary, label[for] {
+    -webkit-tap-highlight-color: rgba(79, 163, 154, 0.18);
+  }
+  a[href], button:not(:disabled), [role='button'] {
+    cursor: pointer;
+  }
+  @media (hover: none) {
+    a[href]:active, button:not(:disabled):active, [role='button']:active {
+      opacity: 0.7;
+    }
+  }
 }
 
 @layer components {

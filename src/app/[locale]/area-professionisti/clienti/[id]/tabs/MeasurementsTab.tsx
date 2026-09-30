@@ -127,7 +127,7 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
     { key: 'adattamento', header: tScores('names.adaptation'), accessor: (m) => m.score_modulazione_infiammatoria ?? -1, sortable: true, render: (m) => num(m.score_modulazione_infiammatoria, 1, locale) },
     { key: 'quality', header: t('colArtifact'), accessor: (m) => m.artifact_percentage ?? -1, sortable: true, render: (m) => m.artifact_percentage != null ? `${num(m.artifact_percentage, 1, locale)}%` : '—' },
     {
-      key: 'actions', header: '', render: (m) => (
+      key: 'actions', header: '', noLink: true, render: (m) => (
         <div className="flex items-center gap-1 justify-end">
           <DownloadMeasurementPdfButton sessionId={m.session_id} clientId={client.id} variant="icon" />
           <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${qs}`} className="text-teal-dark text-sm hover:underline whitespace-nowrap">{t('open')}</Link>
@@ -163,6 +163,7 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
         columns={columns}
         rows={filtered}
         rowKey={(m) => m.id}
+        rowHref={(m) => `/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${qs}`}
         initialSort={{ key: 'measured_at', dir: 'desc' }}
         emptyState={<div className="card p-10 text-center text-sm text-anthracite-lighter">{tagFilter || typeFilter ? t('emptyFiltered') : t('emptyPeriod')}</div>}
       />

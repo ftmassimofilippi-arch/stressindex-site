@@ -35,10 +35,26 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, pro
     <div className="space-y-6">
       <section>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <GaugeScore label={tScores('names.stress').toUpperCase()} value={latest?.score_stress} colorScheme="stress" />
-          <GaugeScore label={tScores('names.recovery').toUpperCase()} value={latest?.score_recupero} colorScheme="recovery" />
-          <GaugeScore label={tScores('names.balance').toUpperCase()} value={latest?.score_equilibrio} colorScheme="balance" />
-          <GaugeScore label={tScores('names.energy').toUpperCase()} value={latest?.score_energia} colorScheme="energy" />
+          {([
+            ['stress', tScores('names.stress'), latest?.score_stress],
+            ['recovery', tScores('names.recovery'), latest?.score_recupero],
+            ['balance', tScores('names.balance'), latest?.score_equilibrio],
+            ['energy', tScores('names.energy'), latest?.score_energia],
+          ] as const).map(([scheme, label, value]) =>
+            latest ? (
+              // Card score cliccabile con un click: apre l'ultima misurazione.
+              <Link
+                key={scheme}
+                href={`/area-professionisti/clienti/${client.id}/misurazione/${latest.session_id}${qs}`}
+                aria-label={`${label}: ${t('open')}`}
+                className="block rounded-2xl transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-teal/40"
+              >
+                <GaugeScore label={label.toUpperCase()} value={value} colorScheme={scheme} />
+              </Link>
+            ) : (
+              <GaugeScore key={scheme} label={label.toUpperCase()} value={value} colorScheme={scheme} />
+            ),
+          )}
         </div>
         {latest && <p className="mt-3 text-xs text-anthracite-lighter">{t('lastUpdate', { date: formatMeasuredAt(latest, locale) })}</p>}
       </section>
@@ -93,18 +109,18 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, pro
           ) : (
             <ul className="divide-y divide-surface-border">
               {measurements.slice(0, 3).map((m) => (
-                <li key={m.id} className="px-5 py-3 flex items-center gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-anthracite">{formatMeasuredAt(m, locale)}</span>
-                      <MeasurementTypeBadge testType={m.test_type} size="sm" />
+                <li key={m.id}>
+                  <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${qs}`} className="px-5 py-3 flex items-center gap-3 hover:bg-surface transition-colors">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-anthracite">{formatMeasuredAt(m, locale)}</span>
+                        <MeasurementTypeBadge testType={m.test_type} size="sm" />
+                      </div>
+                      <div className="text-xs text-anthracite-lighter mt-0.5">
+                        {tScores('names.stress')} {num(m.score_stress, 0, locale)} · {tScores('names.recovery')} {num(m.score_recupero, 0, locale)}
+                      </div>
                     </div>
-                    <div className="text-xs text-anthracite-lighter mt-0.5">
-                      {tScores('names.stress')} {num(m.score_stress, 0, locale)} · {tScores('names.recovery')} {num(m.score_recupero, 0, locale)}
-                    </div>
-                  </div>
-                  <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${qs}`} className="text-teal-dark text-sm hover:underline whitespace-nowrap">
-                    {t('open')}
+                    <span className="text-teal-dark text-sm whitespace-nowrap">{t('open')}</span>
                   </Link>
                 </li>
               ))}

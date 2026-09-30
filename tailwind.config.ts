@@ -1,6 +1,10 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
+  // Le utility hover: valgono solo sui dispositivi con puntatore: su touch
+  // (iPhone Safari) un hover che cambia layout o visibilità obbligherebbe a un
+  // primo tap "a vuoto" prima del click vero.
+  future: { hoverOnlyWhenSupported: true },
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',

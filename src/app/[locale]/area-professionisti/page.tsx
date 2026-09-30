@@ -12,6 +12,7 @@ import { AlertBadge } from '@/components/dashboard/AlertBadge'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { EmptyState } from '@/components/dashboard/EmptyState'
 import { InviteBanner } from '@/components/dashboard/InviteBanner'
+import { LinkCell } from '@/components/dashboard/LinkCell'
 import {
   aggregatedDailyAverages,
   clientsToContact,
@@ -158,19 +159,18 @@ export default async function DashboardHome() {
                   <tbody>
                     {measurements.slice(0, 10).map((m) => {
                       const c = clientMap.get(m.client_id)
+                      const href = `/area-professionisti/clienti/${m.client_id}/misurazione/${m.session_id}`
                       return (
                         <tr key={m.id} className="border-t border-surface-border hover:bg-surface transition-colors">
-                          <td className="px-6 py-3 font-medium text-anthracite">
+                          <LinkCell href={href} primary padding="px-6 py-3" className="font-medium text-anthracite">
                             {c ? `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() : '—'}
-                          </td>
-                          <td className="px-3 py-3 text-anthracite-lighter">{formatMeasuredTime(m, locale)}</td>
-                          <td className="px-3 py-3 w-40"><ScoreBar value={m.score_stress} inverted /></td>
-                          <td className="px-3 py-3 w-40"><ScoreBar value={m.score_recupero} /></td>
-                          <td className="px-3 py-3 text-right">
-                            <Link href={`/area-professionisti/clienti/${m.client_id}/misurazione/${m.session_id}`} className="text-teal-dark text-sm hover:underline whitespace-nowrap">
-                              {tc('open')} →
-                            </Link>
-                          </td>
+                          </LinkCell>
+                          <LinkCell href={href} className="text-anthracite-lighter">{formatMeasuredTime(m, locale)}</LinkCell>
+                          <LinkCell href={href} className="w-40"><ScoreBar value={m.score_stress} inverted /></LinkCell>
+                          <LinkCell href={href} className="w-40"><ScoreBar value={m.score_recupero} /></LinkCell>
+                          <LinkCell href={href} className="text-right">
+                            <span className="text-teal-dark text-sm whitespace-nowrap">{tc('open')} →</span>
+                          </LinkCell>
                         </tr>
                       )
                     })}
@@ -204,18 +204,18 @@ export default async function DashboardHome() {
             ) : (
               <ul className="divide-y divide-surface-border">
                 {contacts.map((c) => (
-                  <li key={c.client.id} className="px-6 py-3.5 flex items-center gap-4 flex-wrap">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-anthracite truncate">{c.client.nome} {c.client.cognome}</div>
-                      <div className="text-xs text-anthracite-lighter mt-0.5">
-                        {t('lastMeasurementDaysAgo', { count: c.daysSinceLast })}
+                  <li key={c.client.id}>
+                    <Link href={`/area-professionisti/clienti/${c.client.id}?tab=messaggi`} className="px-6 py-3.5 flex items-center gap-4 flex-wrap hover:bg-surface transition-colors">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-anthracite truncate">{c.client.nome} {c.client.cognome}</div>
+                        <div className="text-xs text-anthracite-lighter mt-0.5">
+                          {t('lastMeasurementDaysAgo', { count: c.daysSinceLast })}
+                        </div>
                       </div>
-                    </div>
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 whitespace-nowrap">
-                      {t('daysShort', { count: c.daysSinceLast })}
-                    </span>
-                    <Link href={`/area-professionisti/clienti/${c.client.id}?tab=messaggi`} className="text-teal-dark text-sm hover:underline whitespace-nowrap">
-                      {t('reminder')} →
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 whitespace-nowrap">
+                        {t('daysShort', { count: c.daysSinceLast })}
+                      </span>
+                      <span className="text-teal-dark text-sm whitespace-nowrap">{t('reminder')} →</span>
                     </Link>
                   </li>
                 ))}

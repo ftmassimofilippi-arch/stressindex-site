@@ -1,4 +1,5 @@
 import { Link } from '@/i18n/navigation'
+import { LinkCell } from '@/components/dashboard/LinkCell'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { formatIstante, formatMeasuredDate } from '@/lib/format'
 import type { ThresholdTestSummary } from '@/lib/sport-data'
@@ -96,17 +97,18 @@ export async function ThresholdAthleteSection({
                 {tests.map((x) => {
                   const a = x.record.analysis
                   const current = thresholds?.threshold_session_id === x.session.id
+                  const href = `/area-professionisti/sport/sessione/${x.session.id}${baseQuery}`
                   return (
-                    <tr key={x.session.id} className={`border-t border-surface-border ${current ? 'bg-teal-light/30' : ''}`}>
-                      <td className="px-4 py-2.5 text-anthracite font-medium">{formatMeasuredDate(x.session, undefined, locale)}{current && <span className="ml-1 text-[10px] text-teal-dark">· {t('threshold.inUse')}</span>}</td>
-                      <td className="px-3 py-2.5">{thresholdModeLabel(x.record.config.mode, t)}</td>
-                      <td className="px-3 py-2.5 text-right tabular-nums">{a?.vt1 ? `${Math.round(a.vt1.hr)} bpm` : '—'}</td>
-                      <td className="px-3 py-2.5 text-right tabular-nums">{a?.vt2 ? `${Math.round(a.vt2.hr)} bpm` : '—'}</td>
-                      <td className="px-3 py-2.5 text-right tabular-nums">{x.record.recovery?.hrr60 ?? '—'}</td>
-                      <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                    <tr key={x.session.id} className={`border-t border-surface-border hover:bg-surface transition-colors ${current ? 'bg-teal-light/30' : ''}`}>
+                      <LinkCell href={href} primary padding="px-4 py-2.5" className="text-anthracite font-medium">{formatMeasuredDate(x.session, undefined, locale)}{current && <span className="ml-1 text-[10px] text-teal-dark">· {t('threshold.inUse')}</span>}</LinkCell>
+                      <LinkCell href={href} padding="px-3 py-2.5">{thresholdModeLabel(x.record.config.mode, t)}</LinkCell>
+                      <LinkCell href={href} padding="px-3 py-2.5" className="text-right tabular-nums">{a?.vt1 ? `${Math.round(a.vt1.hr)} bpm` : '—'}</LinkCell>
+                      <LinkCell href={href} padding="px-3 py-2.5" className="text-right tabular-nums">{a?.vt2 ? `${Math.round(a.vt2.hr)} bpm` : '—'}</LinkCell>
+                      <LinkCell href={href} padding="px-3 py-2.5" className="text-right tabular-nums">{x.record.recovery?.hrr60 ?? '—'}</LinkCell>
+                      <LinkCell href={href} padding="px-3 py-2.5" className="text-right whitespace-nowrap">
                         {a && !a.reliable && <span className="text-[10px] text-amber-700 mr-2">{t('threshold.unreliableShort')}</span>}
-                        <Link href={`/area-professionisti/sport/sessione/${x.session.id}${baseQuery}`} className="text-teal-dark text-sm hover:underline">{t('sessions.open')} →</Link>
-                      </td>
+                        <span className="text-teal-dark text-sm">{t('sessions.open')} →</span>
+                      </LinkCell>
                     </tr>
                   )
                 })}

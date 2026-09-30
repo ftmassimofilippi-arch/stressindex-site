@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import { Link } from '@/i18n/navigation'
 
 export type Column<T> = {
   key: string
@@ -12,6 +13,8 @@ export type Column<T> = {
   sortable?: boolean
   className?: string
   width?: string
+  /** La cella contiene azioni proprie (bottoni): non diventa parte del link di riga. */
+  noLink?: boolean
 }
 
 type Props<T> = {
@@ -19,12 +22,14 @@ type Props<T> = {
   rows: T[]
   rowKey: (row: T) => string
   onRowClick?: (row: T) => void
+  /** Riga interamente cliccabile con un vero <Link> (un solo click, Cmd+click apre in nuova scheda). */
+  rowHref?: (row: T) => string
   emptyState?: React.ReactNode
   pageSize?: number
   initialSort?: { key: string; dir: 'asc' | 'desc' }
 }
 
-export function DataTable<T>({ columns, rows, rowKey, onRowClick, emptyState, pageSize = 20, initialSort }: Props<T>) {
+export function DataTable<T>({ columns, rows, rowKey, onRowClick, rowHref, emptyState, pageSize = 20, initialSort }: Props<T>) {
   const t = useTranslations('dashboard.table')
   const [sort, setSort] = useState<{ key: string; dir: 'asc' | 'desc' } | null>(initialSort ?? null)
   const [page, setPage] = useState(0)
@@ -93,19 +98,42 @@ export function DataTable<T>({ columns, rows, rowKey, onRowClick, emptyState, pa
             </tr>
           </thead>
           <tbody>
-            {paged.map((row) => (
-              <tr
-                key={rowKey(row)}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
-                className={`border-t border-surface-border ${onRowClick ? 'cursor-pointer hover:bg-surface' : ''} transition-colors`}
-              >
-                {columns.map((c) => (
-                  <td key={c.key} className={`px-4 py-3 align-middle ${c.className ?? ''}`}>
-                    {c.render ? c.render(row) : (c.accessor ? c.accessor(row) : null)}
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {paged.map((row) => {
+              const href = rowHref?.(row)
+              let primaryAssigned = false
+              return (
+                <tr
+                  key={rowKey(row)}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  className={`border-t border-surface-border ${onRowClick || href ? 'cursor-pointer hover:bg-surface' : ''} transition-colors`}
+                >
+                  {columns.map((c) => {
+                    const content = c.render ? c.render(row) : (c.accessor ? c.accessor(row) : null)
+                    if (href && !c.noLink) {
+                      const primary = !primaryAssigned
+                      primaryAssigned = true
+                      return (
+                        <td key={c.key} className={`p-0 align-middle ${c.className ?? ''}`}>
+                          <Link
+                            href={href}
+                            className="block px-4 py-3"
+                            tabIndex={primary ? undefined : -1}
+                            aria-hidden={primary ? undefined : true}
+                          >
+                            {content}
+                          </Link>
+                        </td>
+                      )
+                    }
+                    return (
+                      <td key={c.key} className={`px-4 py-3 align-middle ${c.className ?? ''}`}>
+                        {content}
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
