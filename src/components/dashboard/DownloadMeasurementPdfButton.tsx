@@ -38,11 +38,11 @@ export function DownloadMeasurementPdfButton({
     setError(null)
     try {
       // `?locale=` dice alla route in che lingua generare il PDF (testi, date, numeri).
-      const res = await fetch(`/api/measurement-pdf?locale=${encodeURIComponent(locale)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, clientId }),
-      })
+      // Nuova generazione: pagina di stampa + Chrome headless (stessi componenti della dashboard).
+      const res = await fetch(
+        `/api/pdf/misurazione/${encodeURIComponent(sessionId)}?clientId=${encodeURIComponent(clientId)}&locale=${encodeURIComponent(locale)}`,
+        { method: 'GET' },
+      )
       if (!res.ok) {
         let message = t('genericError')
         try {

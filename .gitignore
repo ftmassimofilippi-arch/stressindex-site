@@ -40,3 +40,7 @@ next-env.d.ts
 
 # Supabase CLI local state
 supabase/.temp/
+
+# PDF di esempio (possono contenere dati reali)
+/docs/pdf-esempi/*.pdf
+/docs/pdf-esempi/*.png

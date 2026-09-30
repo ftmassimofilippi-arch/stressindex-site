@@ -31,7 +31,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (!parsed.success) return apiError('monitoring_email_fields_required', 400)
 
   const origin = new URL(req.url).origin
-  const pdfLink = `${origin}/api/monitoring/${session.id}/pdf?variant=client&locale=${locale}`
+  // PDF cliente dalla pagina di stampa (/api/pdf/monitoraggio): il vecchio
+  // generatore resta raggiungibile solo con PDF_LEGACY=true.
+  const pdfLink = `${origin}/api/pdf/monitoraggio/${session.id}?variant=client&locale=${locale}`
   const content = `${parsed.data.content.trim()}\n\n${t('email.pdfLink')}: ${pdfLink}`
 
   const supabase = await createClient()
