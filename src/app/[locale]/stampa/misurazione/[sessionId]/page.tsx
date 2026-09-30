@@ -11,7 +11,7 @@ import { CoherenceView } from '@/app/[locale]/area-professionisti/clienti/[id]/m
 import { LongMeasurementView } from '@/app/[locale]/area-professionisti/clienti/[id]/misurazione/[sessionId]/LongMeasurementView'
 import { resolvePrintAccess, assertOwnerOrSuperadmin } from '@/lib/print-access'
 import { loadClient, loadMeasurementForPrint, loadOwnerProfile, loadPreviousMeasurement } from '@/lib/report-data'
-import { age, formatMeasuredAt, fullName, num, toNum, todayLong } from '@/lib/format'
+import { age, formatMeasuredAt, fullName, measuredInstant, num, toNum, todayLong } from '@/lib/format'
 import { formatDurationHuman, isLongMeasurement, measurementTypeLabel, normalizeTestType } from '@/lib/measurement-type'
 import { tagLabel } from '@/lib/before-after'
 import { professionalLine } from '@/components/print/PrintShell'
@@ -65,7 +65,14 @@ export default async function PrintMeasurementPage({
     if (viaToken && !(await assertOwnerOrSuperadmin(supabase, userId, client.professionista_id))) notFound()
     ;[professional, previous] = await Promise.all([
       loadOwnerProfile(supabase, client.professionista_id),
-      loadPreviousMeasurement(supabase, client.id, measurement.measured_at, measurement.session_id),
+      // Estremo del confronto: l'ISTANTE della misurazione, non la colonna
+      // grezza (che è due ore avanti e pescava la misurazione sbagliata).
+      loadPreviousMeasurement(
+        supabase,
+        client.id,
+        (measuredInstant(measurement) ?? new Date(measurement.created_at)).toISOString(),
+        measurement.session_id,
+      ),
     ])
   }
 

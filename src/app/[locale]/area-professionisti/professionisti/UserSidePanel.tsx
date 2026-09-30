@@ -10,7 +10,7 @@ import { Modal } from '@/components/dashboard/Modal'
 import { ConfirmDialog } from '@/components/dashboard/ConfirmDialog'
 import { TypeChip } from '@/components/monitoring/MonitoringChips'
 import { duration, periodLabel } from '@/lib/monitoring-format'
-import { formatDate, formatDateTime, formatRelative } from '@/lib/format'
+import { formatDate, formatDateTime, formatIstante, formatRelative } from '@/lib/format'
 import type { AdminUser } from '@/lib/admin-data'
 import type { AdminMonitoringRow } from '@/lib/admin-monitoring'
 import type { AccountModulo, AccountStato, AuditRiga, StoricoAbbonamento } from '@/lib/admin-commerciale'
@@ -414,7 +414,8 @@ export function UserSidePanel({
                     <tbody>
                       {sessions.map((s) => (
                         <tr key={s.id} className="border-b border-surface-border last:border-0">
-                          <td className="px-2.5 py-1.5 whitespace-nowrap text-anthracite-lighter">{s.measured_at ? formatDate(s.measured_at, undefined, locale) : '—'}</td>
+                          <td className="px-2.5 py-1.5 whitespace-nowrap text-anthracite-lighter">{/* `measured_at` qui è già un istante: si formatta nel fuso italiano. */}
+                            {formatIstante(s.measured_at, undefined, locale)}</td>
                           <td className="px-2.5 py-1.5">{s.client_name}</td>
                           <td className="px-2.5 py-1.5 text-anthracite-lighter">{s.professional_name}</td>
                         </tr>

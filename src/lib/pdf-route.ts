@@ -3,6 +3,7 @@ import { apiError } from '@/lib/api-error'
 import { createPrintToken, printSecretConfigured, type PrintKind } from '@/lib/print-token'
 import { renderPagePdf, siteOrigin } from '@/lib/pdf-render'
 import { withLocale, type Locale } from '@/i18n/routing'
+import { oggiIta } from '@/lib/format'
 
 // =============================================================================
 // Pezzi comuni delle route /api/pdf/*: apre la pagina di stampa con Chrome
@@ -71,7 +72,9 @@ export async function proxyLegacy(req: Request, path: string, init: RequestInit)
   return new NextResponse(new Uint8Array(body), { status: res.status, headers })
 }
 
+/** Giorno da mettere nel nome del file, nel fuso italiano: con `toISOString()`
+ *  una misurazione serale portava la data del giorno dopo. */
 export function dateStamp(d: Date | null | undefined): string {
   const x = d && !Number.isNaN(d.getTime()) ? d : new Date()
-  return x.toISOString().slice(0, 10)
+  return oggiIta(x)
 }

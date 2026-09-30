@@ -82,7 +82,11 @@ function base(kind: FixtureKind): MeasurementWithNotes {
     session_id: `fixture-${kind}`,
     user_id: 'fixture-pro',
     client_id: 'fixture-client',
-    measured_at: now.toISOString(),
+    // Le fixture seguono la convenzione di produzione: `measured_at` nella
+    // forma legacy e l'istante vero in `started_at_utc`.
+    measured_at: new Date(now.getTime() + 120 * 60_000).toISOString(),
+    measured_at_utc: now.toISOString(),
+    started_at_utc: now.toISOString(),
     tz_offset_minutes: 120,
     duration_seconds: kind === 'long' ? 2400 : 300,
     sensor_type: 'polar_h10',
@@ -247,7 +251,9 @@ export function fixtureReportMeasurements(from: string, to: string): Measurement
       ...m,
       id: `fixture-r-${i}`,
       session_id: `fixture-r-${i}`,
-      measured_at: iso,
+      measured_at: new Date(t + 120 * 60_000).toISOString(),
+      measured_at_utc: iso,
+      started_at_utc: iso,
       score_stress: Math.round(48 - drift * 14 + (r() - 0.5) * 10),
       score_recupero: Math.round(60 + drift * 12 + (r() - 0.5) * 10),
       score_equilibrio: Math.round(62 + (r() - 0.5) * 12),

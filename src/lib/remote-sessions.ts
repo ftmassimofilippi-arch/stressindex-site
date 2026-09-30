@@ -2,7 +2,7 @@ import { cache } from 'react'
 import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js'
 import { createAdminClient, hasServiceRole } from './supabase-admin'
 import { selectWithMissingColumnFallback } from './safe-select'
-import { measuredInstant, toStr } from './format'
+import { conIstanteSessione, measuredInstant, toStr } from './format'
 import type { MeasurementAnalytics } from './types'
 
 // =============================================================================
@@ -36,6 +36,9 @@ export type SessionRow = {
   id: string
   client_id: string
   professionista_id: string
+  /** Istante reale: l'unica colonna da cui leggere data e ora. */
+  started_at_utc?: string | null
+  /** Forma legacy (ora italiana etichettata UTC): non usare direttamente. */
   started_at: string | null
   created_at: string | null
   duration_seconds: number | null
@@ -60,6 +63,7 @@ const SESSION_COLUMNS = [
   'id',
   'client_id',
   'professionista_id',
+  'started_at_utc',
   'started_at',
   'created_at',
   'duration_seconds',
@@ -94,6 +98,8 @@ export function sessionToMeasurementAnalytics(s: SessionRow): MeasurementAnalyti
     user_id: s.professionista_id,
     client_id: s.client_id,
     measured_at: (s.started_at ?? s.created_at ?? new Date().toISOString()) as string,
+    // L'istante vero viaggia con la riga sintetizzata.
+    started_at_utc: s.started_at_utc ?? null,
     duration_seconds: s.duration_seconds ?? 0,
     sensor_type: null,
     sensor_name: null,
@@ -300,8 +306,10 @@ async function loadRemoteMeasurements(
     const ma = maBySession.get(s.id)
     // client_id resta NULL sulla riga remota: lo valorizziamo con l'anagrafica
     // CRM così tutte le viste possono raggruppare per cliente come sempre.
+    // L'istante mostrato è quello della sessione: `measured_at_utc` non è
+    // affidabile su tutto lo storico (vedi conIstanteSessione in format.ts).
     return ma
-      ? ({ ...ma, client_id: clientId } as MeasurementAnalytics)
+      ? (conIstanteSessione({ ...ma, client_id: clientId }, s) as MeasurementAnalytics)
       : sessionToMeasurementAnalytics({ ...s, client_id: clientId })
   })
   console.log('[remote-sessions] caricate', {
@@ -377,7 +385,7 @@ export async function findRemoteMeasurement(
 
   return {
     session: { ...session, client_id: session.client_id ?? clientId },
-    analytics: ma ? ({ ...(ma as MeasurementAnalytics), client_id: clientId }) : null,
+    analytics: ma ? conIstanteSessione({ ...(ma as MeasurementAnalytics), client_id: clientId }, session) : null,
   }
 }
 

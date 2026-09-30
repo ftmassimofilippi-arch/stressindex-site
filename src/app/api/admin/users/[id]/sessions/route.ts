@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getRequestLocale, getTranslator } from '@/lib/i18n-server'
+import { measuredInstant } from '@/lib/format'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -13,6 +14,11 @@ export const dynamic = 'force-dynamic'
 // (professionista_id = suo uid, client_id NULL), attribuite ai professionisti
 // con cui ha un link active. Prima si passava da client_professional_links.
 // client_id, colonna mai valorizzata dall'app: per i clienti usciva sempre [].
+/** Istante reale della sessione, in ms, per gli ordinamenti lato server. */
+function istanteMs(s: { started_at_utc?: string | null; started_at?: string | null; created_at?: string | null }): number {
+  return measuredInstant(s)?.getTime() ?? new Date(s.created_at ?? 0).getTime()
+}
+
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireSuperadmin()
   if (guard.error) return guard.error
@@ -26,7 +32,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   let query = admin
     .from('sessions')
-    .select('id, client_id, professionista_id, started_at, created_at, test_type, duration_seconds')
+    .select('id, client_id, professionista_id, started_at_utc, started_at, created_at, test_type, duration_seconds')
     .order('started_at_utc', { ascending: false, nullsFirst: false })
     .limit(50)
 
@@ -34,6 +40,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     id: string
     client_id: string | null
     professionista_id: string
+    /** Istante reale: l'unica colonna da cui leggere data e ora. */
+    started_at_utc: string | null
+    /** Forma legacy (ora italiana etichettata UTC): non usare direttamente. */
     started_at: string | null
     created_at: string | null
     test_type: string | null
@@ -53,7 +62,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       cardIds.length ? query.in('client_id', cardIds) : Promise.resolve({ data: [], error: null }),
       admin
         .from('sessions')
-        .select('id, client_id, professionista_id, started_at, created_at, test_type, duration_seconds')
+        .select('id, client_id, professionista_id, started_at_utc, started_at, created_at, test_type, duration_seconds')
         .eq('professionista_id', userId)
         .is('client_id', null)
         .order('started_at_utc', { ascending: false, nullsFirst: false })
@@ -65,7 +74,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       ...((studio.data ?? []) as Sess[]),
       ...((remote.data ?? []) as Sess[]).map((s) => ({ ...s, remote: true, linked_professionals: linkedPros })),
     ]
-      .sort((a, b) => new Date(b.started_at ?? b.created_at ?? 0).getTime() - new Date(a.started_at ?? a.created_at ?? 0).getTime())
+      // Ordinamento per ISTANTE, come la `.order()` di Postgres: `started_at`
+      // è la forma legacy e mescolava due orologi diversi.
+      .sort((a, b) => istanteMs(b) - istanteMs(a))
       .slice(0, 50)
   } else {
     const { data: sessRows, error } = await query.eq('professionista_id', userId)
@@ -92,7 +103,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json({
     sessions: sessions.map((s) => ({
       id: s.id,
-      measured_at: s.started_at ?? s.created_at,
+      // Si espone l'ISTANTE: il pannello lo formatta con un formattatore
+      // generico, quindi deve ricevere un valore già normalizzato.
+      measured_at: s.started_at_utc ?? (measuredInstant(s)?.toISOString() ?? s.created_at),
       test_type: s.test_type,
       duration_seconds: s.duration_seconds,
       client_id: s.client_id,

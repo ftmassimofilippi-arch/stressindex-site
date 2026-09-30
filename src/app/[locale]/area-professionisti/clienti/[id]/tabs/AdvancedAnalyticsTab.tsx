@@ -4,7 +4,7 @@ import { Fragment, useMemo, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
 import { AdvancedTrendChart, TREND_METRICS } from '@/components/dashboard/AdvancedTrendChart'
-import { formatMeasuredAt, intlTag, measuredDayKey, measuredHour, measuredInstant, measuredWeekday, num } from '@/lib/format'
+import { formatMeasuredAt, intervalloGiorniIta, intlTag, measuredDayKey, measuredHour, measuredInstant, measuredWeekday, num } from '@/lib/format'
 import type { MeasurementAnalytics } from '@/lib/types'
 
 function stats(values: number[]) {
@@ -151,8 +151,10 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
 }
 
 function filterRange(measurements: MeasurementAnalytics[], r: DateRange): MeasurementAnalytics[] {
-  const fromMs = new Date(r.from).getTime()
-  const toMs = new Date(r.to).getTime() + 24 * 3600 * 1000
+  // Estremi a mezzanotte ITALIANA, come negli altri filtri per periodo.
+  const { fromIso, toIso } = intervalloGiorniIta(r.from, r.to)
+  const fromMs = new Date(fromIso).getTime()
+  const toMs = new Date(toIso).getTime()
   return measurements.filter((m) => {
     const t = measuredInstant(m)?.getTime() ?? 0
     return t >= fromMs && t <= toMs

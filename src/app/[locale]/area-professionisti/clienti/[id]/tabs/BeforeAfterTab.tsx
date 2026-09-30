@@ -6,7 +6,7 @@ import { Link } from '@/i18n/navigation'
 import { LinkCell } from '@/components/dashboard/LinkCell'
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
-import { formatMeasuredDate, formatMeasuredTime, measuredDayKey, measuredInstant, num } from '@/lib/format'
+import { formatMeasuredDate, formatMeasuredTime, intervalloGiorniIta, measuredDayKey, measuredInstant, num } from '@/lib/format'
 import {
   deltaVerdict,
   pairBeforeAfter,
@@ -58,8 +58,11 @@ export function BeforeAfterTab({ client, measurements, professionistaId }: { cli
   const [range, setRange] = useState<DateRange>(defaultRange(180))
 
   const pairs = useMemo(() => {
-    const fromMs = new Date(range.from).getTime()
-    const toMs = new Date(range.to).getTime() + 24 * 3600 * 1000
+    // Estremi a mezzanotte ITALIANA: con la mezzanotte UTC le misurazioni
+    // serali cadevano nel giorno dopo e uscivano dal periodo selezionato.
+    const { fromIso, toIso } = intervalloGiorniIta(range.from, range.to)
+    const fromMs = new Date(fromIso).getTime()
+    const toMs = new Date(toIso).getTime()
     const rows = toRows(measurements, client.id).filter((r) => r.instantMs >= fromMs && r.instantMs <= toMs)
     return pairBeforeAfter(rows)
   }, [measurements, client.id, range])

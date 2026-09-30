@@ -9,7 +9,7 @@ import { findRemoteMeasurement } from '@/lib/remote-sessions'
 import { selectWithMissingColumnFallback } from '@/lib/safe-select'
 import { apiError } from '@/lib/api-error'
 import { getRequestLocale, getTranslator } from '@/lib/i18n-server'
-import { measuredDayKey, toStr } from '@/lib/format'
+import { conIstanteSessione, measuredDayKey, toStr } from '@/lib/format'
 import type { MeasurementAnalytics, MeasurementWithSession, ProfessionalProfile } from '@/lib/types'
 
 export const runtime = 'nodejs'
@@ -19,6 +19,9 @@ type SessionRow = {
   id: string
   client_id: string
   professionista_id: string
+  /** Istante reale: l'unica colonna da cui leggere data e ora. */
+  started_at_utc?: string | null
+  /** Forma legacy (ora italiana etichettata UTC): non usare direttamente. */
   started_at: string | null
   created_at: string | null
   duration_seconds: number | null
@@ -46,6 +49,7 @@ function sessionToMeasurement(s: SessionRow): MeasurementAnalytics {
     user_id: s.professionista_id,
     client_id: s.client_id,
     measured_at: (s.started_at ?? s.created_at ?? new Date().toISOString()) as string,
+    started_at_utc: s.started_at_utc ?? null,
     duration_seconds: s.duration_seconds ?? 0,
     sensor_type: null,
     sensor_name: null,
@@ -155,7 +159,7 @@ export async function POST(req: Request) {
   // 2. Sessione. Lettura resiliente alle colonne mancanti: una colonna assente
   //    nel database non deve impedire la generazione del PDF.
   const { data: sessionRows, error: sessErr } = await selectWithMissingColumnFallback<SessionRow>(
-    ['id', 'client_id', 'professionista_id', 'started_at', 'created_at', 'duration_seconds', 'hrv_data', 'test_type', 'tags', 'notes_professionista', 'indicazioni'],
+    ['id', 'client_id', 'professionista_id', 'started_at_utc', 'started_at', 'created_at', 'duration_seconds', 'hrv_data', 'test_type', 'tags', 'notes_professionista', 'indicazioni'],
     (cols) =>
       supabase.from('sessions').select(cols).eq('id', sessionId).limit(1) as unknown as PromiseLike<{
         data: SessionRow[] | null
@@ -215,8 +219,12 @@ export async function POST(req: Request) {
     .eq('session_id', sessionId)
     .maybeSingle()
 
-  const base: MeasurementAnalytics =
-    (ma as MeasurementAnalytics | null) ?? remoteAnalytics ?? sessionToMeasurement(session)
+  // Data e ora del PDF vengono dalla SESSIONE: `measured_at_utc` non è
+  // affidabile su tutto lo storico (vedi conIstanteSessione in format.ts).
+  const analytics = (ma as MeasurementAnalytics | null) ?? remoteAnalytics
+  const base: MeasurementAnalytics = analytics
+    ? conIstanteSessione(analytics, session)
+    : sessionToMeasurement(session)
 
   const measurement: MeasurementWithSession = {
     ...base,

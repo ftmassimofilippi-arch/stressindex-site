@@ -1,6 +1,6 @@
 import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js'
 import { selectWithMissingColumnFallback } from '@/lib/safe-select'
-import { toStr } from '@/lib/format'
+import { conIstanteSessione, intervalloGiorniIta, measuredInstant, toStr } from '@/lib/format'
 import type { Client, MeasurementAnalytics, ProfessionalProfile } from '@/lib/types'
 
 // =============================================================================
@@ -16,6 +16,9 @@ export type SessionRow = {
   id: string
   client_id: string
   professionista_id: string
+  /** Istante reale: l'unica colonna da cui leggere data e ora. */
+  started_at_utc?: string | null
+  /** Forma legacy (ora italiana etichettata UTC): non usare direttamente. */
   started_at: string | null
   created_at: string | null
   duration_seconds: number | null
@@ -31,7 +34,7 @@ export type MeasurementWithNotes = MeasurementAnalytics & {
   indicazioni?: string | null
 }
 
-const SESSION_COLUMNS = ['id', 'client_id', 'professionista_id', 'started_at', 'created_at', 'duration_seconds', 'hrv_data', 'test_type', 'tags', 'notes_professionista', 'indicazioni']
+const SESSION_COLUMNS = ['id', 'client_id', 'professionista_id', 'started_at_utc', 'started_at', 'created_at', 'duration_seconds', 'hrv_data', 'test_type', 'tags', 'notes_professionista', 'indicazioni']
 
 // Stessa logica di sessions → MeasurementAnalytics usata in dashboard-data.ts:
 // la riga di `sessions` è la fonte autoritativa, `measurement_analytics` è un
@@ -51,6 +54,9 @@ export function sessionToMeasurement(s: SessionRow): MeasurementAnalytics {
     user_id: s.professionista_id,
     client_id: s.client_id,
     measured_at: (s.started_at ?? s.created_at ?? new Date().toISOString()) as string,
+    // L'istante vero viaggia con la riga: senza questo, data e ora del report
+    // venivano ricavate dalla forma legacy di `started_at`.
+    started_at_utc: s.started_at_utc ?? null,
     duration_seconds: s.duration_seconds ?? 0,
     sensor_type: null,
     sensor_name: null,
@@ -120,8 +126,12 @@ export function sessionToMeasurement(s: SessionRow): MeasurementAnalytics {
   }
 }
 
-function startedMs(s: { started_at: string | null; created_at: string | null }): number {
-  return new Date((s.started_at ?? s.created_at ?? '') as string).getTime()
+/** Istante reale della sessione, in ms. Passa da `measuredInstant`, quindi
+ *  `started_at_utc` quando c'è e la forma legacy normalizzata altrimenti: senza
+ *  questo le sessioni remote venivano confrontate con un orologio diverso da
+ *  quello dei filtri, con due ore di scarto. */
+function startedMs(s: SessionRow): number {
+  return measuredInstant(s)?.getTime() ?? new Date((s.created_at ?? '') as string).getTime()
 }
 
 async function selectSessions(
@@ -167,7 +177,8 @@ export async function loadMeasurementForPrint(supabase: SupabaseClient, sessionI
     s = (await remoteSessions(supabase, clientId)).find((r) => r.id === sessionId) ?? null
   }
   if (!ma && !s) return null
-  const base = ma ?? sessionToMeasurement(s as SessionRow)
+  // Se ci sono entrambe le righe vince l'istante della sessione.
+  const base = ma ? conIstanteSessione(ma, s) : sessionToMeasurement(s as SessionRow)
   return {
     ...base,
     client_id: base.client_id ?? s?.client_id ?? clientId ?? null,
@@ -176,18 +187,32 @@ export async function loadMeasurementForPrint(supabase: SupabaseClient, sessionI
   } as MeasurementWithNotes
 }
 
-/** Misurazione immediatamente precedente (per i delta degli score). */
+/**
+ * Misurazione immediatamente precedente (per i delta degli score).
+ *
+ * `beforeIso` è un ISTANTE (da `measuredInstant`), non la colonna grezza. Il
+ * confronto avviene sulle sessioni, che portano l'unica colonna corretta su
+ * tutto lo storico; `measurement_analytics` serve solo per gli score.
+ */
 export async function loadPreviousMeasurement(supabase: SupabaseClient, clientId: string, beforeIso: string, excludeSessionId: string): Promise<MeasurementAnalytics | null> {
+  const { data: prevSessions } = await supabase
+    .from('sessions')
+    .select('id, started_at_utc')
+    .eq('client_id', clientId)
+    .lt('started_at_utc', beforeIso)
+    .neq('id', excludeSessionId)
+    .order('started_at_utc', { ascending: false, nullsFirst: false })
+    .limit(1)
+  const prev = (prevSessions as Array<{ id: string; started_at_utc: string | null }> | null)?.[0]
+  if (!prev) return null
+
   const { data } = await supabase
     .from('measurement_analytics')
     .select('session_id, client_id, measured_at, measured_at_utc, tz_offset_minutes, score_stress, score_recupero, score_equilibrio, score_energia, score_modulazione_infiammatoria, score_composito, rmssd, sdnn, mean_hr')
-    .eq('client_id', clientId)
-    .lt('measured_at', beforeIso)
-    .neq('session_id', excludeSessionId)
-    .order('measured_at', { ascending: false })
+    .eq('session_id', prev.id)
     .limit(1)
   const row = (data as MeasurementAnalytics[] | null)?.[0]
-  return row ?? null
+  return row ? conIstanteSessione(row, prev) : null
 }
 
 export type PeriodicReportData = {
@@ -198,8 +223,10 @@ export type PeriodicReportData = {
 
 /** Misurazioni del periodo [dateFrom, dateTo] (yyyy-mm-dd), dirette e remote, con gli score se presenti. */
 export async function loadPeriodicReportData(supabase: SupabaseClient, client: Client, dateFrom: string, dateTo: string): Promise<PeriodicReportData> {
-  const fromIso = `${dateFrom}T00:00:00.000Z`
-  const toIso = `${dateTo}T23:59:59.999Z`
+  // Il periodo si taglia a mezzanotte ITALIANA: con i confini UTC una
+  // misurazione fatta dopo le 22:00 cadeva nel giorno dopo e una fatta prima
+  // delle 02:00 nel giorno prima, spostando le righe fuori dal report.
+  const { fromIso, toIso } = intervalloGiorniIta(dateFrom, dateTo)
 
   const [{ data: sessions, error: sErr }, remote] = await Promise.all([
     selectSessions(
@@ -233,7 +260,10 @@ export async function loadPeriodicReportData(supabase: SupabaseClient, client: C
     const { data: ma } = await supabase.from('measurement_analytics').select('*').in('session_id', ids)
     const bySession = new Map<string, MeasurementAnalytics>()
     for (const row of (ma ?? []) as MeasurementAnalytics[]) if (row.session_id) bySession.set(row.session_id, row)
-    measurements = all.map((s) => bySession.get(s.id) ?? sessionToMeasurement(s))
+    measurements = all.map((s) => {
+      const row = bySession.get(s.id)
+      return row ? conIstanteSessione(row, s) : sessionToMeasurement(s)
+    })
   }
 
   const professional = await loadOwnerProfile(supabase, client.professionista_id)

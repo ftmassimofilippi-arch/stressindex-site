@@ -204,6 +204,27 @@ derivata dalla service role), `CHROME_PATH` (facoltativa in locale).
 Deploy: `supabase functions deploy <nome> --project-ref ivwmjwukpeldbqkxgvvf
 --no-verify-jwt` (le due di notifica). Dettagli in `docs/NOTIFICHE.md`.
 
+## Data e ora delle misurazioni
+
+Regola unica in `src/lib/measured-time.ts` (modulo senza dipendenze, coperto da
+`src/lib/format.test.ts`); `src/lib/format.ts` la riesporta e aggiunge la
+lingua. In sintesi:
+
+- L'istante si legge SOLO dalle colonne `_utc`: `sessions.started_at_utc`,
+  `sport_sessions.start_time_utc`, `measurement_analytics.measured_at_utc`.
+  `started_at`, `start_time` e `measured_at` sono la forma legacy (orologio da
+  parete italiano etichettato `+00`) e sono due ore avanti d'estate.
+  `tz_offset_minutes` non distingue le due forme: non usarlo per decidere.
+- Ordinamenti e filtri per periodo vanno sulle colonne `_utc` dentro Postgres;
+  i confini di giornata si costruiscono con `inizioGiornoIta` / `fineGiornoIta`
+  / `intervalloGiorniIta`, mai con la mezzanotte UTC.
+- Quando una query unisce `sessions` e `measurement_analytics` si passa da
+  `conIstanteSessione()`: `started_at_utc` è corretta su tutte le righe,
+  `measured_at_utc` no finché non viene applicata la 029.
+- `monitoring_sessions` e `night_metrics` sono fuori da questa regola: la prima
+  ha `start_time` già in UTC vero (si mostra con `wallDate` di
+  `monitoring-format.ts`), la seconda usa `date` e `time without time zone`.
+
 ## Migrazioni (`supabase-migrations/`, a mano nel SQL Editor, in ordine)
 
 Stato verificato sul catalogo di produzione il 27/09/2026.
@@ -240,6 +261,7 @@ Stato verificato sul catalogo di produzione il 27/09/2026.
 | 026 `notifiche_cron` | cron notifiche (segreto sostituito a mano) | applicata |
 | 027 `accesso_cliente` | registro accessi, `must_change_password` | applicata |
 | 028 `fix_cancellazione_utenti` | FK e registro compatibili con `deleteUser` | applicata |
+| 029 `measured_at_utc_dalla_sessione` | `measurement_analytics.measured_at_utc` riallineata a `sessions.started_at_utc` + trigger corretto | **da applicare** |
 
 Le migrazioni dell'app (`hrv_app/supabase/migrations/`) e il loro stato sono
 nel contesto dell'app, `docs/STRESS_INDEX_CONTEXT_v4.md` §12.

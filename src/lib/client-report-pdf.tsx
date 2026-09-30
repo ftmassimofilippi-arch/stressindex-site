@@ -292,11 +292,14 @@ export type ScoreStats = {
 }
 
 function computeScoreStats(measurements: MeasurementAnalytics[], key: ScoreKey): ScoreStats {
-  // measurements arrivano ordinate desc per measured_at → invertiamo per ordine cronologico
-  const series = [...measurements].reverse().map((m) => ({
-    date: m.measured_at,
-    value: (m[key] as number | null | undefined) ?? null,
-  }))
+  // Ordine cronologico per ISTANTE, senza fidarsi dell'ordine di arrivo: la
+  // colonna grezza `measured_at` è la forma legacy e non è confrontabile.
+  const series = [...measurements]
+    .sort((a, b) => (measuredInstant(a)?.getTime() ?? 0) - (measuredInstant(b)?.getTime() ?? 0))
+    .map((m) => ({
+      date: measuredInstant(m)?.toISOString() ?? m.measured_at,
+      value: (m[key] as number | null | undefined) ?? null,
+    }))
   const values = series.map((s) => s.value).filter((v): v is number => v != null && Number.isFinite(v))
   if (values.length === 0) {
     return { count: 0, mean: null, min: null, max: null, first: null, last: null, deltaPct: null, series }
@@ -315,7 +318,8 @@ function computeScoreStats(measurements: MeasurementAnalytics[], key: ScoreKey):
 export type ReportAggregates = {
   count: number
   stats: Record<ScoreKey, ScoreStats>
-  // `date` è il measured_at grezzo, `instant` l'istante normalizzato per la stampa.
+  // `date` e `instant` portano lo stesso istante normalizzato: per la stampa si
+  // usa `instant`, formattato nel fuso italiano.
   bestDay: { date: string; instant: Date | null; score: number } | null // stress più basso = meglio
   worstDay: { date: string; instant: Date | null; score: number } | null // stress più alto = peggio
 }
@@ -331,8 +335,9 @@ export function computeReportAggregates(measurements: MeasurementAnalytics[]): R
   for (const m of measurements) {
     const s = m.score_stress
     if (s == null) continue
-    if (best == null || s < best.score) best = { date: m.measured_at, instant: measuredInstant(m), score: s }
-    if (worst == null || s > worst.score) worst = { date: m.measured_at, instant: measuredInstant(m), score: s }
+    const i = measuredInstant(m)
+    if (best == null || s < best.score) best = { date: i?.toISOString() ?? m.measured_at, instant: i, score: s }
+    if (worst == null || s > worst.score) worst = { date: i?.toISOString() ?? m.measured_at, instant: i, score: s }
   }
   return { count: measurements.length, stats, bestDay: best, worstDay: worst }
 }

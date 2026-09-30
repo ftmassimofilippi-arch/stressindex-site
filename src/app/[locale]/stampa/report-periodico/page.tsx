@@ -6,7 +6,7 @@ import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadg
 import { resolvePrintAccess, assertOwnerOrSuperadmin } from '@/lib/print-access'
 import { loadClient, loadPeriodicReportData, previousPeriod } from '@/lib/report-data'
 import { SCORE_COLORS, SCORE_KEYS, SCORE_NAME_KEYS, commentFor, computeReportAggregates, meanOf } from '@/lib/report-aggregates'
-import { age, formatDate, formatMeasuredAt, formatMeasuredDate, fullName, measuredDayKey, num, todayLong } from '@/lib/format'
+import { age, formatDate, formatMeasuredAt, formatMeasuredDate, fullName, intervalloGiorniIta, measuredDayKey, measuredInstant, num, todayLong } from '@/lib/format'
 import { formatDurationHuman } from '@/lib/measurement-type'
 import { hasModule, getMyAccountAccess } from '@/lib/account-access'
 import type { Client, MeasurementAnalytics, ProfessionalProfile } from '@/lib/types'
@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic'
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
-type SportRow = { id: string; start_time: string | null; sport: string | null; duration_s: number | null; trimp: number | null; hr_avg: number | null; dfa_alpha1_avg: number | null }
+type SportRow = { id: string; start_time: string | null; start_time_utc: string | null; sport: string | null; duration_s: number | null; trimp: number | null; hr_avg: number | null; dfa_alpha1_avg: number | null }
 
 // Pagina di stampa del report periodico: trend dei 5 score (stesso chart
 // della dashboard in modalità statica), medie e confronto col periodo
@@ -48,8 +48,8 @@ export default async function PrintPeriodicReportPage({
     measurements = fixtureReportMeasurements(from, to)
     prevMeasurements = fixtureReportMeasurements(prev.from, prev.to).map((m) => ({ ...m, score_stress: (m.score_stress ?? 50) + 6, score_recupero: (m.score_recupero ?? 60) - 5 }))
     sport = [
-      { id: 'fx-s1', start_time: `${to}T17:00:00.000Z`, sport: 'Corsa', duration_s: 3200, trimp: 96, hr_avg: 148, dfa_alpha1_avg: 0.71 },
-      { id: 'fx-s2', start_time: `${from}T17:30:00.000Z`, sport: 'Bici', duration_s: 5400, trimp: 132, hr_avg: 139, dfa_alpha1_avg: 0.82 },
+      { id: 'fx-s1', start_time: `${to}T17:00:00.000Z`, start_time_utc: `${to}T15:00:00.000Z`, sport: 'Corsa', duration_s: 3200, trimp: 96, hr_avg: 148, dfa_alpha1_avg: 0.71 },
+      { id: 'fx-s2', start_time: `${from}T17:30:00.000Z`, start_time_utc: `${from}T15:30:00.000Z`, sport: 'Bici', duration_s: 5400, trimp: 132, hr_avg: 139, dfa_alpha1_avg: 0.82 },
     ]
   } else {
     const access = await resolvePrintAccess(searchParams?.token, { kind: 'report', id: `${clientId}:${from}:${to}` })
@@ -73,13 +73,17 @@ export default async function PrintPeriodicReportPage({
     if (!viaToken) {
     const modules = await getMyAccountAccess()
     if (hasModule(modules, 'sport')) {
+      // Estremi del periodo a mezzanotte italiana e filtro sulla colonna
+      // normalizzata: con `start_time` grezzo gli allenamenti serali finivano
+      // nel giorno dopo e potevano uscire dal report.
+      const { fromIso, toIso } = intervalloGiorniIta(from, to)
       const { data: rows } = await supabase
         .from('sport_sessions')
-        .select('id, start_time, sport, duration_s, trimp, hr_avg, dfa_alpha1_avg')
+        .select('id, start_time, start_time_utc, sport, duration_s, trimp, hr_avg, dfa_alpha1_avg')
         .eq('athlete_id', client.id)
-        .gte('start_time', `${from}T00:00:00.000Z`)
-        .lte('start_time', `${to}T23:59:59.999Z`)
-        .order('start_time', { ascending: false })
+        .gte('start_time_utc', fromIso)
+        .lte('start_time_utc', toIso)
+        .order('start_time_utc', { ascending: false, nullsFirst: false })
       sport = (rows as SportRow[] | null) ?? []
     }
     }
@@ -98,7 +102,9 @@ export default async function PrintPeriodicReportPage({
 
   const trendData = measurements
     .slice()
-    .sort((a, b) => (a.measured_at < b.measured_at ? -1 : 1))
+    // Ordine cronologico per ISTANTE: il confronto di stringhe su `measured_at`
+    // ordinava la forma legacy, che mescola le due convenzioni.
+    .sort((a, b) => (measuredInstant(a)?.getTime() ?? 0) - (measuredInstant(b)?.getTime() ?? 0))
     .map((m) => {
       // Solo i 5 score: TREND_METRICS vive in un modulo client e non si può
       // iterare da un server component.
@@ -263,7 +269,7 @@ export default async function PrintPeriodicReportPage({
                 <tbody>
                   {sport.map((s) => (
                     <tr key={s.id} className="border-t border-surface-border">
-                      <td className="px-2 py-1.5 whitespace-nowrap">{formatMeasuredDate({ start_time: s.start_time }, undefined, locale)}</td>
+                      <td className="px-2 py-1.5 whitespace-nowrap">{formatMeasuredDate({ start_time: s.start_time, start_time_utc: s.start_time_utc }, undefined, locale)}</td>
                       <td className="px-2 py-1.5">{s.sport ?? '—'}</td>
                       <td className="px-2 py-1.5">{formatDurationHuman(s.duration_s)}</td>
                       <td className="px-2 py-1.5 text-right tabular-nums">{s.trimp == null ? '—' : num(s.trimp, 0, locale)}</td>

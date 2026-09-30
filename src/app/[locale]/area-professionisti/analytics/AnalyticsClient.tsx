@@ -10,7 +10,7 @@ import type { MeasurementAnalytics } from '@/lib/types'
 import type { ClientWithLastMeasurement } from '@/lib/dashboard-data'
 import type { Tr } from '@/i18n/types'
 import { Link } from '@/i18n/navigation'
-import { measuredInstant } from '@/lib/format'
+import { intervalloGiorniIta, measuredInstant } from '@/lib/format'
 import type { MonitoringSession } from '@/lib/monitoring-types'
 import { isSleepSession } from '@/lib/monitoring-types'
 import { PROFILE_LABEL, PROFILE_ORDER, effectiveProfile, wallDate } from '@/lib/monitoring-format'
@@ -34,8 +34,11 @@ export function AnalyticsClient({ clients, measurements, monitoring = [] }: Prop
   const [segmentDim, setSegmentDim] = useState<SegmentDim>('sesso')
 
   const filtered = useMemo(() => {
-    const f = new Date(range.from).getTime()
-    const tt = new Date(range.to).getTime() + 24 * 3600 * 1000
+    // Estremi a mezzanotte ITALIANA: con la mezzanotte UTC le misurazioni
+    // serali cadevano nel giorno dopo e uscivano dal periodo selezionato.
+    const { fromIso, toIso } = intervalloGiorniIta(range.from, range.to)
+    const f = new Date(fromIso).getTime()
+    const tt = new Date(toIso).getTime()
     return measurements.filter((m) => {
       const v = measuredInstant(m)?.getTime() ?? 0
       return v >= f && v <= tt

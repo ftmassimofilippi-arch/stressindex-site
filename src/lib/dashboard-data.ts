@@ -1,7 +1,16 @@
 import type { PostgrestError } from '@supabase/supabase-js'
 import { createClient } from './supabase-server'
 import { selectWithMissingColumnFallback } from './safe-select'
-import { measuredDayKey, measuredInstant, toStr } from './format'
+import {
+  conIstanteSessione,
+  giornoItaFa,
+  inizioGiornoIta,
+  inizioGiornoItaFa,
+  measuredDayKey,
+  measuredInstant,
+  oggiIta,
+  toStr,
+} from './format'
 import { getRequestLocale, getTranslator } from './i18n-server'
 import type {
   Alert,
@@ -76,6 +85,10 @@ const SESSION_COLUMNS = [
   'id',
   'client_id',
   'professionista_id',
+  // `started_at_utc` è l'istante reale ed è la SOLA colonna da cui leggere data
+  // e ora; `started_at` resta nella lista solo come ripiego se la colonna
+  // normalizzata non esiste ancora sul database (vedi il commento in format.ts).
+  'started_at_utc',
   'started_at',
   'created_at',
   'duration_seconds',
@@ -183,7 +196,12 @@ export async function listMeasurementsForClient(clientId: string, opts?: { limit
 
   // 3. Merge: preferisci la riga measurement_analytics (con score); altrimenti
   //    sintetizza da sessions.hrv_data così la misurazione appare comunque.
-  return sessions.map((s) => maBySession.get(s.id as string) ?? sessionToMeasurementAnalytics(s))
+  //    In entrambi i casi l'istante mostrato è quello della SESSIONE: è l'unico
+  //    corretto su tutte le righe (vedi conIstanteSessione in format.ts).
+  return sessions.map((s) => {
+    const ma = maBySession.get(s.id as string)
+    return ma ? conIstanteSessione(ma, s) : sessionToMeasurementAnalytics(s)
+  })
 }
 
 // Costruisce una MeasurementAnalytics minimale a partire da una riga `sessions`.
@@ -194,6 +212,7 @@ type SessionRow = {
   id: string
   client_id: string
   professionista_id: string
+  started_at_utc?: string | null
   started_at: string | null
   created_at: string | null
   duration_seconds: number | null
@@ -324,16 +343,50 @@ export async function getMeasurementBySessionId(sessionId: string, clientId?: st
   }
 }
 
+/**
+ * Istante autoritativo su righe `measurement_analytics`: legge
+ * `sessions.started_at_utc` per i session_id dati e lo attacca alle righe.
+ * Serve perché `measured_at_utc` è sbagliata su parte dello storico finché non
+ * viene applicata la migration 029 (vedi il commento in format.ts).
+ */
+async function conIstantiDiSessione<T extends { session_id?: string | null }>(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  rows: T[],
+): Promise<T[]> {
+  const ids = Array.from(new Set(rows.map((r) => r.session_id).filter((v): v is string => !!v)))
+  if (ids.length === 0) return rows
+  const { data, error } = await supabase.from('sessions').select('id, started_at_utc').in('id', ids)
+  if (error) {
+    console.error('[conIstantiDiSessione] sessions query error', error.message)
+    return rows
+  }
+  const bySession = new Map<string, string | null>()
+  for (const s of (data ?? []) as Array<{ id: string; started_at_utc: string | null }>) {
+    bySession.set(s.id, s.started_at_utc)
+  }
+  return rows.map((r) =>
+    r.session_id ? conIstanteSessione(r, { started_at_utc: bySession.get(r.session_id) ?? null }) : r,
+  )
+}
+
 export async function todaysMeasurements(): Promise<MeasurementAnalytics[]> {
   const supabase = await createClient()
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  // "Oggi" è la giornata ITALIANA, non quella del server (che su Vercel è UTC):
+  // con la mezzanotte UTC una misurazione fatta dopo le 22:00 italiane finiva
+  // nel giorno dopo. Il margine di tre ore recupera le righe il cui
+  // `measured_at_utc` è ancora nella forma sfasata; il filtro esatto è sotto,
+  // sull'istante normalizzato.
+  const oggi = oggiIta()
+  const daIso = new Date(new Date(inizioGiornoIta(oggi)).getTime() - 3 * 3_600_000).toISOString()
   const { data } = await supabase
     .from('measurement_analytics')
     .select('*')
-    .gte('measured_at_utc', today.toISOString())
+    .gte('measured_at_utc', daIso)
     .order('measured_at_utc', { ascending: false })
-  return (data ?? []) as MeasurementAnalytics[]
+  const rows = await conIstantiDiSessione(supabase, (data ?? []) as MeasurementAnalytics[])
+  return rows
+    .filter((m) => measuredDayKey(m) === oggi)
+    .sort((a, b) => (measuredInstant(b)?.getTime() ?? 0) - (measuredInstant(a)?.getTime() ?? 0))
 }
 
 // ============================================================================
@@ -496,16 +549,19 @@ export async function listClientsEnriched(opts?: { professionistaId?: string }):
     remoteAnalyticsQ,
   ])
   const clients = (clientsRes.data ?? []) as Client[]
-  const measurements = (measurementsRes.data ?? []) as MeasurementAnalytics[]
+  // L'istante autoritativo arriva dalla sessione, poi si riordina qui: l'ordine
+  // di Postgres su `measured_at_utc` non basta a scegliere l'ultima misurazione.
+  const measurements = await conIstantiDiSessione(supabase, (measurementsRes.data ?? []) as MeasurementAnalytics[])
   const alerts = alertsRes.data ?? []
   const settings = (settingsRes.data ?? []) as ClientSettings[]
 
+  const measuredMs = (m: MeasurementAnalytics) => measuredInstant(m)?.getTime() ?? 0
   const lastByClient = new Map<string, MeasurementAnalytics>()
   for (const m of measurements) {
-    if (!lastByClient.has(m.client_id)) lastByClient.set(m.client_id, m)
+    const prev = lastByClient.get(m.client_id)
+    if (!prev || measuredMs(m) > measuredMs(prev)) lastByClient.set(m.client_id, m)
   }
   // La misurazione remota vince se è più recente di quella in studio.
-  const measuredMs = (m: MeasurementAnalytics) => new Date(measuredInstant(m) ?? m.measured_at ?? 0).getTime() || 0
   for (const [clientId, remote] of remoteAnalytics) {
     const studio = lastByClient.get(clientId)
     if (!studio || measuredMs(remote) > measuredMs(studio)) lastByClient.set(clientId, remote)
@@ -543,29 +599,32 @@ export type DailyAveragePoint = { date: string } & { [K in TrendColumn]: number 
 
 export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAveragePoint[]> {
   const supabase = await createClient()
-  const from = new Date()
-  from.setDate(from.getDate() - daysBack)
-  from.setHours(0, 0, 0, 0)
+  // Il primo giorno del grafico è una giornata ITALIANA, non un "meno N giorni"
+  // sull'orologio del server (UTC su Vercel). Il margine di tre ore recupera le
+  // righe il cui `measured_at_utc` è ancora sfasato: il giorno di appartenenza
+  // lo decide comunque `measuredDayKey` sotto.
+  const daIso = new Date(new Date(inizioGiornoItaFa(daysBack - 1)).getTime() - 3 * 3_600_000).toISOString()
 
-  type Row = { measured_at: string } & { [K in TrendColumn]: number | null }
+  type Row = { session_id: string | null; measured_at: string; measured_at_utc: string | null } & { [K in TrendColumn]: number | null }
 
   // Resiliente alle colonne mancanti: già successo con lf_nu_ls/hf_nu_ls, che
   // facevano fallire tutto il grafico di andamento invece di una sola metrica.
   const { data } = await selectWithMissingColumnFallback<Row>(
-    ['measured_at', ...TREND_COLUMNS],
+    ['session_id', 'measured_at', 'measured_at_utc', ...TREND_COLUMNS],
     (cols) =>
       supabase
         .from('measurement_analytics')
         .select(cols)
-        .gte('measured_at_utc', from.toISOString())
+        .gte('measured_at_utc', daIso)
         .order('measured_at_utc', { ascending: true }) as unknown as PromiseLike<{
         data: Row[] | null
         error: PostgrestError | null
       }>,
     { label: 'measurement_analytics (trend)', required: ['measured_at'] },
   )
+  const righe = await conIstantiDiSessione(supabase, (data ?? []) as unknown as Row[])
   const buckets = new Map<string, Map<TrendColumn, number[]>>()
-  for (const row of (data ?? []) as unknown as Row[]) {
+  for (const row of righe) {
     const day = measuredDayKey(row) ?? ''
     let bucket = buckets.get(day)
     if (!bucket) {
@@ -586,9 +645,9 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
 
   const out: DailyAveragePoint[] = []
   for (let i = daysBack - 1; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
-    const day = d.toISOString().slice(0, 10)
+    // Stessa chiave dei bucket (giorno italiano): con `toISOString()` l'asse era
+    // in giorni UTC e i bucket in giorni italiani, e un giorno si perdeva.
+    const day = giornoItaFa(i)
     const b = buckets.get(day)
     const point = { date: day } as unknown as Record<string, number | string | null>
     for (const col of TREND_COLUMNS) {
@@ -804,7 +863,10 @@ export interface OrgOverview {
     client_name: string
     professional_id: string
     professional_name: string
+    /** Forma legacy: per data e ora si usa `formatMeasuredAt` sulla riga intera. */
     measured_at: string
+    measured_at_utc: string | null
+    started_at_utc: string | null
     score_stress: number | null
   }>
 }
@@ -828,13 +890,12 @@ export async function getOrgOverview(): Promise<OrgOverview | null> {
     .select('*', { count: 'exact', head: true })
     .in('user_id', activeUserIds.length ? activeUserIds : ['00000000-0000-0000-0000-000000000000'])
 
-  const weekAgo = new Date()
-  weekAgo.setDate(weekAgo.getDate() - 7)
+  // "Ultima settimana" parte dalla mezzanotte italiana di sette giorni fa.
   const { count: weeklyCount } = await supabase
     .from('measurement_analytics')
     .select('*', { count: 'exact', head: true })
     .in('user_id', activeUserIds.length ? activeUserIds : ['00000000-0000-0000-0000-000000000000'])
-    .gte('measured_at_utc', weekAgo.toISOString())
+    .gte('measured_at_utc', inizioGiornoItaFa(6))
 
   const { data: recentRows } = await supabase
     .from('measurement_analytics')
@@ -843,13 +904,17 @@ export async function getOrgOverview(): Promise<OrgOverview | null> {
     .order('measured_at_utc', { ascending: false })
     .limit(20)
 
-  const recent = (recentRows ?? []) as Array<{
+  // L'istante autoritativo arriva dalla sessione: senza questo passaggio la
+  // colonna Data della pagina Organizzazione mostrava due ore in più.
+  const recent = await conIstantiDiSessione(supabase, (recentRows ?? []) as Array<{
     session_id: string
     client_id: string
     user_id: string
     measured_at: string
+    measured_at_utc?: string | null
+    started_at_utc?: string | null
     score_stress: number | null
-  }>
+  }>)
   const clientIds = Array.from(new Set(recent.map((r) => r.client_id)))
   const profIds = Array.from(new Set(recent.map((r) => r.user_id)))
   const [{ data: clientRows }, { data: profileRows }, { data: profProfileRows }, names] = await Promise.all([
@@ -889,6 +954,8 @@ export async function getOrgOverview(): Promise<OrgOverview | null> {
       professional_id: r.user_id,
       professional_name: profMap.get(r.user_id) || names.professional,
       measured_at: r.measured_at,
+      measured_at_utc: r.measured_at_utc ?? null,
+      started_at_utc: r.started_at_utc ?? null,
       score_stress: r.score_stress,
     })),
   }
@@ -1079,8 +1146,12 @@ export async function listAllMeasurements(opts?: { from?: string; to?: string })
     .from('measurement_analytics')
     .select('*')
     .order('measured_at_utc', { ascending: true })
-  if (opts?.from) q = q.gte('measured_at_utc', opts.from)
-  if (opts?.to) q = q.lte('measured_at_utc', opts.to)
+  // Margine di tre ore sugli estremi: le righe con `measured_at_utc` ancora
+  // sfasato rientrano nella finestra, e il filtro fine avviene a valle
+  // sull'istante normalizzato (pagina Analytics).
+  if (opts?.from) q = q.gte('measured_at_utc', new Date(new Date(opts.from).getTime() - 3 * 3_600_000).toISOString())
+  if (opts?.to) q = q.lte('measured_at_utc', new Date(new Date(opts.to).getTime() + 3 * 3_600_000).toISOString())
   const { data } = await q
-  return (data ?? []) as MeasurementAnalytics[]
+  const rows = await conIstantiDiSessione(supabase, (data ?? []) as MeasurementAnalytics[])
+  return rows.sort((a, b) => (measuredInstant(a)?.getTime() ?? 0) - (measuredInstant(b)?.getTime() ?? 0))
 }

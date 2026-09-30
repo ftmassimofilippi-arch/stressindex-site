@@ -8,7 +8,7 @@ import { Activity, ArrowRight, ChevronLeft, ChevronRight, Dumbbell, TrendingDown
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { EmptyState } from '@/components/dashboard/EmptyState'
 import { WeeklySessionsBar } from './SportCharts'
-import { formatIstante, formatMeasuredAt, formatMeasuredDate, num } from '@/lib/format'
+import { formatIstante, formatMeasuredAt, formatMeasuredDate, measuredInstant, num } from '@/lib/format'
 import { competitiveLevelLabel, formatDuration } from '@/lib/sport-format'
 import type {
   SportAthleteCard,
@@ -158,7 +158,8 @@ function SessioniTab({
     return sessions.filter((s) => {
       if (athlete && s.athlete_id !== athlete) return false
       if (sport && s.sport !== sport) return false
-      if (cutoff != null && new Date(s.start_time).getTime() < cutoff) return false
+      // Filtro sull'ISTANTE: `start_time` è la forma legacy, due ore avanti.
+      if (cutoff != null && (measuredInstant(s)?.getTime() ?? 0) < cutoff) return false
       return true
     })
   }, [sessions, athlete, period, sport])

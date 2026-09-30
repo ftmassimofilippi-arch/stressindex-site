@@ -17,7 +17,7 @@ import {
   resolveSportContext,
 } from '@/lib/sport-data'
 import { ThresholdAthleteSection } from './ThresholdAthleteSection'
-import { formatMeasuredDate, num } from '@/lib/format'
+import { formatMeasuredDate, measuredInstant, num } from '@/lib/format'
 import { competitiveLevelLabel, formatDuration } from '@/lib/sport-format'
 import { LnRmssdChart, PmcChart } from '../../SportCharts'
 
@@ -61,23 +61,26 @@ export default async function SportAthletePage({
   // ── ln(RMSSD) ultimi 60 giorni ──────────────────────────────────────────────
   const now = Date.now()
   const DAY = 86_400_000
+  // Finestre temporali e serie sull'ISTANTE: `start_time` è la forma legacy
+  // (ora italiana etichettata UTC) e sposta tutto di due ore.
+  const ist = (s: { start_time: string; start_time_utc: string | null }) => measuredInstant(s)?.getTime() ?? 0
   const lnPoints = sessions
-    .filter((s) => s.rmssd_avg != null && s.rmssd_avg > 0 && now - new Date(s.start_time).getTime() <= 60 * DAY)
-    .map((s) => ({ date: s.start_time, ln: Math.log(s.rmssd_avg as number) }))
+    .filter((s) => s.rmssd_avg != null && s.rmssd_avg > 0 && now - ist(s) <= 60 * DAY)
+    .map((s) => ({ date: measuredInstant(s)?.toISOString() ?? s.start_time, ln: Math.log(s.rmssd_avg as number) }))
     .sort((a, b) => a.date.localeCompare(b.date))
 
   // ── Carico di allenamento (dalle sessioni) ──────────────────────────────────
   const sumTrimp = (fromDays: number, toDays: number) =>
     sessions
       .filter((s) => {
-        const age = now - new Date(s.start_time).getTime()
+        const age = now - ist(s)
         return age > fromDays * DAY && age <= toDays * DAY
       })
       .reduce((acc, s) => acc + (s.trimp ?? 0), 0)
   const trimp7 = sumTrimp(0, 7)
   const trimpPrev7 = sumTrimp(7, 14)
   const trimp30 = sumTrimp(0, 30)
-  const sessions7 = sessions.filter((s) => now - new Date(s.start_time).getTime() <= 7 * DAY).length
+  const sessions7 = sessions.filter((s) => now - ist(s) <= 7 * DAY).length
   const weeklyDelta = trimpPrev7 > 0 ? ((trimp7 - trimpPrev7) / trimpPrev7) * 100 : null
 
   // ── PMC (training_load_daily) ───────────────────────────────────────────────

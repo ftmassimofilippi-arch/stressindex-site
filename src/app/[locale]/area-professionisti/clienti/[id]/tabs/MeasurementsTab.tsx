@@ -12,7 +12,7 @@ import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { formatMeasuredAt, formatDate, num } from '@/lib/format'
 import { normalizeTestType, measurementTypeLabel, ALL_MEASUREMENT_TYPE_META, type MeasurementTypeKey } from '@/lib/measurement-type'
 import type { Client, MeasurementAnalytics } from '@/lib/types'
-import { measuredInstant } from '@/lib/format'
+import { intervalloGiorniIta, measuredInstant } from '@/lib/format'
 import { rowHasTag, tagCounts, tagLabel } from '@/lib/before-after'
 import { FilterChipRow } from '@/components/dashboard/SessionFilterChips'
 
@@ -42,8 +42,11 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
 
   // Misurazioni nel periodo e nella durata scelti: i chip contano su queste.
   const inPeriod = useMemo(() => {
-    const fromMs = new Date(range.from).getTime()
-    const toMs = new Date(range.to).getTime() + 24 * 3600 * 1000
+    // Estremi a mezzanotte ITALIANA: con la mezzanotte UTC le misurazioni
+    // serali cadevano nel giorno dopo e uscivano dal periodo selezionato.
+    const { fromIso, toIso } = intervalloGiorniIta(range.from, range.to)
+    const fromMs = new Date(fromIso).getTime()
+    const toMs = new Date(toIso).getTime()
     return measurements.filter((m) => {
       const t = measuredInstant(m)?.getTime() ?? 0
       if (t < fromMs || t > toMs) return false
@@ -116,7 +119,9 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
   }
 
   const columns: Column<MeasurementAnalytics>[] = [
-    { key: 'measured_at', header: t('colDate'), accessor: (m) => m.measured_at, sortable: true, render: (m) => formatMeasuredAt(m, locale) },
+    // Si ordina sull'ISTANTE, non sulla colonna grezza: quella è la forma
+    // legacy e il confronto fra stringhe mescolava le due convenzioni.
+    { key: 'measured_at', header: t('colDate'), accessor: (m) => measuredInstant(m)?.getTime() ?? 0, sortable: true, render: (m) => formatMeasuredAt(m, locale) },
     { key: 'type', header: t('colType'), accessor: (m) => measurementTypeLabel(m.test_type, tTypes), sortable: true, render: (m) => <MeasurementTypeBadge testType={m.test_type} size="sm" /> },
     { key: 'duration', header: t('colDuration'), accessor: (m) => m.duration_seconds ?? 0, sortable: true, render: (m) => m.duration_seconds ? t('durationMin', { n: Math.round(m.duration_seconds / 60) }) : '—' },
     { key: 'stress', header: tScores('names.stress'), accessor: (m) => m.score_stress ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_stress} inverted /> },

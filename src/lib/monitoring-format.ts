@@ -407,6 +407,14 @@ export function pagesFor(p: RecordingProfile, pro: boolean): MonitoringPage[] {
 // si sommano i minuti di offset e si leggono i componenti UTC. Non si usa il
 // fuso del browser né quello del server. Le date passano da `Intl` con
 // `timeZone: 'UTC'` sulla data "da parete", così la lingua decide il formato.
+//
+// ⚠️ `monitoring_sessions` NON ha il problema di `sessions`: non esistono
+// colonne `_utc` perché non servono, `start_time` è già l'istante reale.
+// Verificato in produzione il 30 settembre 2026 su tutte e 41 le righe:
+// `end_time` cade entro pochi secondi dal proprio `created_at`, scritto dal
+// server. Non applicare qui la regola di `measured-time.ts`: sposterebbe gli
+// orari di due ore. Anche `night_metrics` è fuori dal problema, perché usa
+// `date` e `time without time zone`, cioè valori da parete per costruzione.
 
 export function wallDate(iso: string | null | undefined, tzOffsetMinutes: number): Date | null {
   if (!iso) return null

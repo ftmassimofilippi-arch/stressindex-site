@@ -67,7 +67,19 @@ export interface MeasurementAnalytics {
   session_id: string // FK → sessions.id
   user_id: UUID // = auth.uid() del professionista (RLS)
   client_id: string
+  /** ⚠️ Forma LEGACY: orologio da parete italiano etichettato UTC. Non è un
+   *  istante e non va mai formattato, ordinato o filtrato direttamente.
+   *  Per data e ora si passa da `measuredInstant`/`formatMeasured*` di
+   *  `src/lib/format.ts`. */
   measured_at: string
+  /** Istante normalizzato dal trigger. Sbagliato su parte dello storico finché
+   *  non viene applicata la migration 029: quando il chiamante ha anche la riga
+   *  `sessions` vince `started_at_utc` (vedi `conIstanteSessione`). */
+  measured_at_utc?: string | null
+  tz_offset_minutes?: number | null
+  /** `sessions.started_at_utc`, attaccato dal sito quando unisce le due
+   *  tabelle: è l'istante corretto su tutte le righe. */
+  started_at_utc?: string | null
   duration_seconds: number
   sensor_type: string | null
   sensor_name: string | null

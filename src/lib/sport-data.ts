@@ -4,7 +4,7 @@ import { getMyAccountAccess, hasModule } from './account-access'
 import { createClient } from './supabase-server'
 import { resolveViewingProfessional, type ViewingProfessional } from './dashboard-data'
 import { SPORT_LIVE_COLUMNS, type AthleteMeta, type SportLiveRow } from './sport-live'
-import { measuredInstant, type ConIstante } from './format'
+import { giornoItaFa, inizioGiornoItaFa, measuredDayKey, measuredInstant, type ConIstante } from './format'
 import { selectWithMissingColumnFallback } from './safe-select'
 import { parseHrZones, parseThresholdTest, type AthleteThresholds, type ThresholdTestRecord } from './threshold-types'
 
@@ -43,8 +43,14 @@ export interface SportSession {
   id: string
   athlete_id: string
   professional_id: string
+  /** ⚠️ Forma LEGACY (ora italiana etichettata UTC): non è un istante e non va
+   *  formattata, ordinata o filtrata direttamente. Si passa da
+   *  `measuredInstant`/`formatMeasured*` di `src/lib/format.ts`. */
   start_time: string
+  /** Istante reale della partenza: l'unica colonna da cui leggere data e ora. */
+  start_time_utc: string | null
   end_time: string | null
+  end_time_utc: string | null
   duration_s: number | null
   sport: string | null
   tags: SportTag[]
@@ -211,7 +217,9 @@ type SportSessionRow = {
   athlete_id: string
   professional_id: string
   start_time: string
+  start_time_utc?: string | null
   end_time: string | null
+  end_time_utc?: string | null
   duration_s: number | null
   sport: string | null
   tags: unknown
@@ -232,7 +240,9 @@ function mapSession(r: SportSessionRow): SportSession {
     athlete_id: r.athlete_id,
     professional_id: r.professional_id,
     start_time: r.start_time,
+    start_time_utc: r.start_time_utc ?? null,
     end_time: r.end_time,
+    end_time_utc: r.end_time_utc ?? null,
     duration_s: r.duration_s,
     sport: r.sport,
     tags: parseTags(r.tags),
@@ -249,13 +259,13 @@ function mapSession(r: SportSessionRow): SportSession {
 }
 
 const SESSION_COLUMNS =
-  'id, athlete_id, professional_id, start_time, end_time, duration_s, sport, tags, hr_avg, hr_max, rmssd_avg, dfa_alpha1_avg, trimp, notes, questionnaire, test_type, created_at'
+  'id, athlete_id, professional_id, start_time, start_time_utc, end_time, end_time_utc, duration_s, sport, tags, hr_avg, hr_max, rmssd_avg, dfa_alpha1_avg, trimp, notes, questionnaire, test_type, created_at'
 
+// Inizio del periodo: la mezzanotte ITALIANA di N giorni fa, non un "meno N
+// giorni" sull'orologio del server (UTC in produzione).
 function periodFrom(period?: SportSessionFilters['period']): string | null {
   if (!period || period === 'all') return null
-  const d = new Date()
-  d.setDate(d.getDate() - period)
-  return d.toISOString()
+  return inizioGiornoItaFa(period - 1)
 }
 
 // ── Query principali ─────────────────────────────────────────────────────────
@@ -292,11 +302,11 @@ export async function listSportSessions(
     .from('sport_sessions')
     .select(SESSION_COLUMNS)
     .eq('professional_id', professionalId)
-    .order('start_time', { ascending: false })
+    .order('start_time_utc', { ascending: false, nullsFirst: false })
   if (filters?.athleteId) q = q.eq('athlete_id', filters.athleteId)
   if (filters?.sport) q = q.eq('sport', filters.sport)
   const from = periodFrom(filters?.period)
-  if (from) q = q.gte('start_time', from)
+  if (from) q = q.gte('start_time_utc', from)
   if (filters?.limit != null) {
     const offset = filters.offset ?? 0
     q = q.range(offset, offset + filters.limit - 1)
@@ -322,7 +332,7 @@ export async function getSportSessionsCount(
     .select('id', { count: 'exact', head: true })
     .eq('professional_id', professionalId)
   const from = periodFrom(period)
-  if (from) q = q.gte('start_time', from)
+  if (from) q = q.gte('start_time_utc', from)
   const { count } = await q
   return count ?? 0
 }
@@ -401,7 +411,7 @@ export async function listThresholdTests(athleteId: string, limit = 50): Promise
         .select(c)
         .eq('athlete_id', athleteId)
         .eq('test_type', 'threshold_test')
-        .order('start_time', { ascending: false })
+        .order('start_time_utc', { ascending: false, nullsFirst: false })
         .limit(limit) as unknown as PromiseLike<{ data: Array<SportSessionRow & { threshold_test?: unknown }> | null; error: null }>,
     { label: 'sport_sessions threshold tests', required: ['id'] },
   )
@@ -489,10 +499,11 @@ export async function listSportAthletes(professionalId: string | null): Promise<
     .from('sport_sessions')
     .select('athlete_id, start_time, start_time_utc, tz_offset_minutes, trimp, rmssd_avg')
     .eq('professional_id', professionalId)
-    .order('start_time', { ascending: false })
+    .order('start_time_utc', { ascending: false, nullsFirst: false })
   const sessions = (sessRows ?? []) as Array<{
     athlete_id: string
     start_time: string
+    start_time_utc: string | null
     trimp: number | null
     rmssd_avg: number | null
   }>
@@ -549,14 +560,14 @@ export async function listSportAthletes(professionalId: string | null): Promise<
 }
 
 // Confronta la media di ln(RMSSD) dell'ultima settimana con quella precedente.
-function lnRmssdTrend(sessions: Array<{ start_time: string; rmssd_avg: number | null }>): TrendDirection {
+function lnRmssdTrend(sessions: Array<{ start_time: string; start_time_utc?: string | null; rmssd_avg: number | null }>): TrendDirection {
   const now = Date.now()
   const DAY = 86_400_000
   const ln = (v: number | null): number | null => (v != null && v > 0 ? Math.log(v) : null)
   const week: number[] = []
   const prevWeek: number[] = []
   for (const s of sessions) {
-    const age = now - new Date(s.start_time).getTime()
+    const age = now - (measuredInstant(s)?.getTime() ?? 0)
     const l = ln(s.rmssd_avg)
     if (l == null) continue
     if (age <= 7 * DAY) week.push(l)
@@ -640,26 +651,28 @@ export async function getSportDashboardStats(professionalId: string | null): Pro
   // Tutte le sessioni (servono count totale + grafico 12 settimane + atleti attivi).
   const { data: allRows } = await supabase
     .from('sport_sessions')
-    .select('id, athlete_id, start_time, trimp')
+    .select('id, athlete_id, start_time, start_time_utc, trimp')
     .eq('professional_id', professionalId)
-  const all = (allRows ?? []) as Array<{ id: string; athlete_id: string; start_time: string; trimp: number | null }>
+  const all = (allRows ?? []) as Array<{ id: string; athlete_id: string; start_time: string; start_time_utc: string | null; trimp: number | null }>
 
   const now = Date.now()
   const DAY = 86_400_000
   const weekAgo = now - 7 * DAY
   const monthAgo = now - 30 * DAY
 
-  const thisWeek = all.filter((s) => new Date(s.start_time).getTime() >= weekAgo)
+  // Confronti sull'ISTANTE: `start_time` è la forma legacy, due ore avanti.
+  const ist = (s: { start_time: string; start_time_utc?: string | null }) => measuredInstant(s)?.getTime() ?? 0
+  const thisWeek = all.filter((s) => ist(s) >= weekAgo)
   const weekTrimps = thisWeek.map((s) => s.trimp).filter((t): t is number => t != null)
-  const activeAthletes = new Set(
-    all.filter((s) => new Date(s.start_time).getTime() >= monthAgo).map((s) => s.athlete_id),
-  ).size
+  const activeAthletes = new Set(all.filter((s) => ist(s) >= monthAgo).map((s) => s.athlete_id)).size
 
   // Grafico ultime 12 settimane (ISO week buckets).
   const weeks = buildEmptyWeeks(12)
   const weekIndex = new Map(weeks.map((w, i) => [w.week, i]))
   for (const s of all) {
-    const key = isoWeekKey(new Date(s.start_time))
+    const giorno = measuredDayKey(s)
+    if (!giorno) continue
+    const key = isoWeekKey(giorno)
     const idx = weekIndex.get(key)
     if (idx != null) weeks[idx].count += 1
   }
@@ -676,9 +689,12 @@ export async function getSportDashboardStats(professionalId: string | null): Pro
   }
 }
 
-// Chiave ISO settimana (lunedì) in formato YYYY-MM-DD del lunedì.
-function isoWeekKey(d: Date): string {
-  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+// Chiave ISO settimana (lunedì) in formato YYYY-MM-DD, a partire dal GIORNO
+// ITALIANO della sessione: partendo dall'istante, un allenamento del lunedì
+// notte finiva nella settimana precedente.
+function isoWeekKey(giorno: string): string {
+  const [y, mo, d] = giorno.split('-').map(Number)
+  const date = new Date(Date.UTC(y, (mo ?? 1) - 1, d ?? 1))
   const day = (date.getUTCDay() + 6) % 7 // 0 = lunedì
   date.setUTCDate(date.getUTCDate() - day)
   return date.toISOString().slice(0, 10)
@@ -686,11 +702,8 @@ function isoWeekKey(d: Date): string {
 
 function buildEmptyWeeks(n: number): Array<{ week: string; label: string; count: number }> {
   const out: Array<{ week: string; label: string; count: number }> = []
-  const today = new Date()
   for (let i = n - 1; i >= 0; i--) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - i * 7)
-    const key = isoWeekKey(d)
+    const key = isoWeekKey(giornoItaFa(i * 7))
     const monday = new Date(key + 'T00:00:00Z')
     const label = `${String(monday.getUTCDate()).padStart(2, '0')}/${String(monday.getUTCMonth() + 1).padStart(2, '0')}`
     out.push({ week: key, label, count: 0 })

@@ -1,7 +1,7 @@
 import { Link } from '@/i18n/navigation'
 import { LinkCell } from '@/components/dashboard/LinkCell'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { formatIstante, formatMeasuredDate } from '@/lib/format'
+import { formatIstante, formatMeasuredDate, measuredInstant } from '@/lib/format'
 import type { ThresholdTestSummary } from '@/lib/sport-data'
 import { formatIntensity, thresholdModeLabel, THRESHOLD_MODE_UNIT, type AthleteThresholds } from '@/lib/threshold-types'
 import { ThresholdTrendChart } from '../../ThresholdCharts'
@@ -70,14 +70,14 @@ export async function ThresholdAthleteSection({
           <div className="text-xs font-medium text-anthracite-lighter mb-1">{t('threshold.trendTitle')}</div>
           <ThresholdTrendChart
             unit="bpm"
-            points={chrono.map((x) => ({ date: x.session.start_time, vt1: x.record.analysis?.vt1?.hr ?? null, vt2: x.record.analysis?.vt2?.hr ?? null }))}
+            points={chrono.map((x) => ({ date: measuredInstant(x.session)?.toISOString() ?? x.session.start_time, vt1: x.record.analysis?.vt1?.hr ?? null, vt2: x.record.analysis?.vt2?.hr ?? null }))}
           />
           {sameMode && (
             <>
               <div className="text-xs font-medium text-anthracite-lighter mt-3 mb-1">{t('threshold.intensityTitle', { unit: THRESHOLD_MODE_UNIT[tests[0].record.config.mode] })}</div>
               <ThresholdTrendChart
                 unit={THRESHOLD_MODE_UNIT[tests[0].record.config.mode]}
-                points={chrono.map((x) => ({ date: x.session.start_time, vt1: x.record.analysis?.vt1?.intensity ?? null, vt2: x.record.analysis?.vt2?.intensity ?? null }))}
+                points={chrono.map((x) => ({ date: measuredInstant(x.session)?.toISOString() ?? x.session.start_time, vt1: x.record.analysis?.vt1?.intensity ?? null, vt2: x.record.analysis?.vt2?.intensity ?? null }))}
               />
             </>
           )}

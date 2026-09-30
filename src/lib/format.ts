@@ -10,6 +10,7 @@ import { it, enUS, de } from 'date-fns/locale'
 import type { Locale as DateFnsLocale } from 'date-fns'
 import type { Tr } from '@/i18n/types'
 import { defaultLocale, intlLocale, isLocale, type Locale } from '@/i18n/routing'
+import { FUSO, measuredInstant, oraDaParete, type ConIstante } from './measured-time'
 
 function loc(locale?: string): Locale {
   return isLocale(locale) ? locale : defaultLocale
@@ -25,8 +26,6 @@ export function dateFnsLocale(locale?: string): DateFnsLocale {
 export function intlTag(locale?: string): string {
   return intlLocale[loc(locale)]
 }
-
-const FUSO = 'Europe/Rome'
 
 function intlDate(d: Date, locale: string | undefined, opts: Intl.DateTimeFormatOptions, tz?: string): string {
   return new Intl.DateTimeFormat(intlTag(locale), { ...opts, ...(tz ? { timeZone: tz } : {}) }).format(d)
@@ -55,115 +54,26 @@ export function formatTime(date: string | Date, locale?: string): string {
 
 // ── Timestamp delle misurazioni ──────────────────────────────────────────────
 //
-// Due convenzioni convivono nel database, distinte da `tz_offset_minutes`:
-//
-//   NULL          Riga scritta da una build PRE-FIX dell'app. `measured_at` /
-//                 `started_at` contengono l'ora LOCALE del dispositivo con
-//                 l'etichetta `+00`: l'app serializzava `DateTime.now()` senza
-//                 `.toUtc()` e Postgres rileggeva i componenti come UTC.
-//                 L'istante REALE si ottiene reinterpretando quei componenti
-//                 nel fuso italiano.
-//   valorizzato   Riga scritta da una build POST-FIX. Il timestamp è già
-//                 l'istante UTC corretto, e il valore è l'offset del
-//                 dispositivo al momento della misurazione.
-//
-// Il database espone anche le colonne normalizzate `measured_at_utc` /
-// `started_at_utc`, mantenute da trigger (vedi tz_normalized_columns.sql):
-// quando ci sono si usano direttamente, ed è la strada preferita perché la
-// regola vive in un punto solo. Il ramo di calcolo qui sotto serve per le righe
-// che arrivano da query che non le selezionano.
-//
-// ⚠️ ORDINAMENTI E FILTRI PER INTERVALLO non passano da qui: avvengono dentro
-// Postgres e devono usare le colonne `_utc`. Vedi i commenti in dashboard-data.ts.
-//
-// Questo modulo è un DEBITO A TERMINE: si rimuove quando lo storico è corretto
-// e nessuna build pre-fix è più attiva. Vedi docs/debiti-tecnici.md nel repo
-// dell'app, voce "Ramo legacy della convenzione oraria".
-
-// Componenti calendariali di un istante nel fuso italiano. `Intl` con
-// `timeZone` esplicito dà lo stesso risultato lato server (UTC) e lato browser,
-// quindi non ci sono disallineamenti di idratazione.
-function parteFuso(instant: Date): { y: number; mo: number; d: number; h: number; mi: number; s: number } {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: FUSO,
-    hour12: false,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-  }).formatToParts(instant)
-  const n = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0)
-  return { y: n('year'), mo: n('month'), d: n('day'), h: n('hour') % 24, mi: n('minute'), s: n('second') }
-}
-
-// Offset del fuso italiano, in minuti, all'istante dato.
-function offsetFuso(instant: Date): number {
-  const p = parteFuso(instant)
-  const comeUtc = Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi, p.s)
-  return (comeUtc - instant.getTime()) / 60000
-}
-
-// Inverso di `parteFuso`: dai componenti di un orologio da parete italiano
-// all'istante reale. Due passate perché l'offset dipende dall'istante che
-// stiamo cercando: la seconda risolve i confini di ora legale.
-function daOraItaliana(wallUtcMs: number): Date {
-  let off = offsetFuso(new Date(wallUtcMs))
-  const primo = new Date(wallUtcMs - off * 60000)
-  off = offsetFuso(primo)
-  return new Date(wallUtcMs - off * 60000)
-}
-
-/**
- * Riga con quanto serve a stabilire l'istante reale.
- *
- * Copre le tre tabelle che portano timestamp scritti dal client:
- * `measurement_analytics` (measured_at), `sessions` (started_at) e
- * `sport_sessions` (start_time). Tutte hanno il marcatore `tz_offset_minutes` e
- * la colonna normalizzata corrispondente.
- */
-export type ConIstante = {
-  measured_at?: string | null
-  measured_at_utc?: string | null
-  started_at?: string | null
-  started_at_utc?: string | null
-  start_time?: string | null
-  start_time_utc?: string | null
-  tz_offset_minutes?: number | null
-}
-
-/**
- * Istante REALE della misurazione.
- *
- * Da usare prima di QUALSIASI confronto, massimo, ordinamento o differenza
- * rispetto a `Date.now()`. Non usare mai `new Date(row.measured_at)` diretto:
- * su una riga pre-fix è spostato di due ore.
- */
-export function measuredInstant(row: ConIstante | null | undefined): Date | null {
-  if (!row) return null
-  // Preferenza alla colonna normalizzata dal database, se la query la seleziona.
-  const gia = row.measured_at_utc ?? row.started_at_utc ?? row.start_time_utc
-  if (gia) return new Date(gia)
-
-  const grezzo = row.measured_at ?? row.started_at ?? row.start_time
-  if (!grezzo) return null
-  const d = new Date(grezzo)
-  if (Number.isNaN(d.getTime())) return null
-
-  // Convenzione nuova: il timestamp è già l'istante corretto.
-  if (row.tz_offset_minutes != null) return d
-
-  // Convenzione pre-fix: i componenti UTC sono l'orologio da parete italiano.
-  return daOraItaliana(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(),
-             d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds()),
-  )
-}
-
-// Date i cui componenti LOCALI coincidono con l'orologio da parete italiano
-// dell'istante dato. Serve solo per passarla a `format` di date-fns (pattern
-// espliciti) senza cambiare il formato di output esistente.
-function oraDaParete(instant: Date): Date {
-  const p = parteFuso(instant)
-  return new Date(p.y, p.mo - 1, p.d, p.h, p.mi, p.s)
-}
+// La regola oraria (da quale colonna si prende l'istante, dove cadono i confini
+// di giornata italiana) vive in `measured-time.ts`: modulo senza dipendenze,
+// coperto da `format.test.ts`. Qui restano solo i formattatori, che hanno
+// bisogno della lingua. Si riesporta tutto perché i chiamanti continuano a
+// importare da `@/lib/format`.
+export {
+  conIstanteSessione,
+  fineGiornoIta,
+  giornoItaFa,
+  inizioGiornoIta,
+  inizioGiornoItaFa,
+  intervalloGiorniIta,
+  measuredDayKey,
+  measuredHour,
+  measuredInstant,
+  measuredWeekday,
+  oggiIta,
+  type ConIstante,
+  type ConIstanteSessione,
+} from './measured-time'
 
 export function formatMeasuredAt(row: ConIstante | null | undefined, locale?: string): string {
   const i = measuredInstant(row)
@@ -180,34 +90,6 @@ export function formatMeasuredDate(row: ConIstante | null | undefined, fmt?: str
 export function formatMeasuredTime(row: ConIstante | null | undefined, locale?: string): string {
   const i = measuredInstant(row)
   return i ? intlDate(i, locale, OPT_TIME, FUSO) : '—'
-}
-
-/**
- * Giorno di calendario italiano della misurazione, come 'YYYY-MM-DD'.
- *
- * Sostituisce `measured_at.slice(0, 10)`, che prende la data dalla stringa
- * grezza: oggi coincide con la data locale solo perché il valore è spostato,
- * e smetterebbe di coincidere sulle righe della convenzione nuova.
- */
-export function measuredDayKey(row: ConIstante | null | undefined): string | null {
-  const i = measuredInstant(row)
-  if (!i) return null
-  const p = parteFuso(i)
-  return `${p.y}-${String(p.mo).padStart(2, '0')}-${String(p.d).padStart(2, '0')}`
-}
-
-/** Ora del giorno (0-23) italiana della misurazione. */
-export function measuredHour(row: ConIstante | null | undefined): number | null {
-  const i = measuredInstant(row)
-  return i ? parteFuso(i).h : null
-}
-
-/** Giorno della settimana italiano, 0 = lunedì. */
-export function measuredWeekday(row: ConIstante | null | undefined): number | null {
-  const i = measuredInstant(row)
-  if (!i) return null
-  const p = parteFuso(i)
-  return (new Date(Date.UTC(p.y, p.mo - 1, p.d)).getUTCDay() + 6) % 7
 }
 
 /**
