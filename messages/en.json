@@ -1536,7 +1536,11 @@
     },
     "topbar": {
       "notifications": "Notifications",
-      "notificationsNew": "Notifications ({count, plural, one {# new} other {# new}})"
+      "notificationsEmpty": "No notifications.",
+      "notificationsError": "Could not load notifications.",
+      "notificationsLoading": "Loading…",
+      "notificationsNew": "Notifications ({count, plural, one {# new} other {# new}})",
+      "notificationsRetry": "Retry"
     }
   },
   "emails": {

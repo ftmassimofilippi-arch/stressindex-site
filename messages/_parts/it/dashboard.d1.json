@@ -27,7 +27,11 @@
   },
   "topbar": {
     "notifications": "Notifiche",
-    "notificationsNew": "Notifiche ({count, plural, one {# nuova} other {# nuove}})"
+    "notificationsNew": "Notifiche ({count, plural, one {# nuova} other {# nuove}})",
+    "notificationsLoading": "Caricamento…",
+    "notificationsEmpty": "Nessuna notifica.",
+    "notificationsError": "Non è stato possibile caricare le notifiche.",
+    "notificationsRetry": "Riprova"
   },
   "search": {
     "placeholder": "Cerca clienti, professionisti…",

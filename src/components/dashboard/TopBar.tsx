@@ -1,12 +1,12 @@
 'use client'
 
-import { Bell } from 'lucide-react'
 import { Suspense, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { usePathname } from '@/i18n/navigation'
 import { Link } from '@/i18n/navigation'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { GlobalSearch } from './GlobalSearch'
+import { NotificationsBell } from './NotificationsBell'
 
 // Segmento di URL → chiave in dashboard.breadcrumb. Gli slug restano italiani
 // in tutte le lingue; i segmenti non elencati (id di clienti e sessioni)
@@ -28,7 +28,6 @@ const SEGMENT_KEY: Record<string, string> = {
 
 export function TopBar({ alertCount = 0 }: { alertCount?: number }) {
   const t = useTranslations('dashboard.breadcrumb')
-  const tt = useTranslations('dashboard.topbar')
   // `usePathname` di @/i18n/navigation restituisce il percorso senza prefisso di lingua.
   const pathname = usePathname()
 
@@ -63,19 +62,7 @@ export function TopBar({ alertCount = 0 }: { alertCount?: number }) {
         <div className="flex items-center gap-2 ml-auto min-w-0 flex-1 lg:flex-initial justify-end">
           <GlobalSearch className="w-full max-w-xs sm:w-72" />
 
-          <button
-            type="button"
-            aria-label={alertCount ? tt('notificationsNew', { count: alertCount }) : tt('notifications')}
-            title={alertCount ? tt('notificationsNew', { count: alertCount }) : tt('notifications')}
-            className="relative w-10 h-10 rounded-xl hover:bg-surface flex items-center justify-center text-anthracite-lighter hover:text-anthracite transition-colors flex-shrink-0"
-          >
-            <Bell size={18} />
-            {alertCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center">
-                {alertCount > 9 ? '9+' : alertCount}
-              </span>
-            )}
-          </button>
+          <NotificationsBell alertCount={alertCount} />
 
           {/* Lo switcher legge i query param: Suspense evita il bail-out del
               rendering statico quando la TopBar finisce in una pagina non dinamica. */}

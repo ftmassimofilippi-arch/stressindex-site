@@ -3,6 +3,49 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-09-30 — orari e campanella delle notifiche
+
+### Orario delle misurazioni avanti di due ore
+Segnalazione di un professionista: una misurazione delle 17:16 usciva come
+19:16. Il database era corretto, sbagliava il sito.
+
+- **Causa.** Il trigger `set_started_at_compat` tiene `sessions.started_at`
+  nella forma legacy (ora italiana etichettata UTC) su TUTTE le righe, anche
+  quelle nuove, e l'istante reale in `started_at_utc`. Il sito leggeva la
+  colonna grezza e la riconvertiva nel fuso italiano, sommando altre due ore.
+- **Regola unica** in `src/lib/measured-time.ts`, modulo senza dipendenze
+  riesportato da `format.ts` e coperto da `src/lib/format.test.ts`
+  (8 test): l'istante si prende solo dalle colonne `_utc`, e
+  `tz_offset_minutes` non distingue più le due convenzioni.
+- **Ordinamenti, filtri e raggruppamenti** portati sulle colonne `_utc` e sui
+  confini di giornata ITALIANA (`inizioGiornoIta`, `fineGiornoIta`,
+  `intervalloGiorniIta`, `giornoItaFa`): dashboard, scheda cliente, analytics,
+  trend giornaliero, prima/dopo, report periodico, PDF, sport, pannello Super
+  Admin, pagina Organizzazione. Prima una misurazione dopo le 22:00 cadeva nel
+  giorno successivo e falsava trend, riepiloghi e confronti.
+- **`conIstanteSessione()`**: quando una query unisce `sessions` e
+  `measurement_analytics`, l'istante mostrato è quello della sessione.
+- **Sport**: `sport_sessions` passa a `start_time_utc` / `end_time_utc` in
+  query, filtri, serie e bucket per settimana ISO.
+
+### Migrazione 029 (da applicare a mano)
+`measurement_analytics.measured_at_utc` è sbagliata su 986 righe su 3736: il
+trigger di sincronizzazione della 007 copia in `measured_at` la forma legacy di
+`sessions.started_at` portandosi dietro `tz_offset_minutes`, e
+`set_measured_at_utc` conclude che il valore è già UTC. Su quelle righe la
+misurazione risulta avvenuta dopo il proprio `created_at`. La 029 riallinea la
+colonna a `sessions.started_at_utc`, corregge il trigger e lascia un backup
+`measurement_analytics_utc_backup_20260930`. Il sito mostra l'ora giusta anche
+prima di applicarla; restano approssimati ordinamenti e filtri che Postgres
+esegue su `measured_at_utc`.
+
+### Campanella delle notifiche
+Mostrava il contatore ma il clic non apriva nulla. Ora apre un pannello con
+l'elenco (alert del cron uniti agli eventi dell'app), ognuno collegato alla
+scheda del cliente, con chiusura da clic fuori o Esc. Nuova route
+`GET /api/notifiche` e componente `NotificationsBell`; stringhe IT/EN/DE in
+`dashboard.topbar`.
+
 ## 2026-09-30 — tag `site-2026-09-30`
 
 ### PDF rifatti con i componenti della dashboard

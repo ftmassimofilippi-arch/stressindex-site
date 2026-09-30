@@ -27,7 +27,11 @@
   },
   "topbar": {
     "notifications": "Notifications",
-    "notificationsNew": "Notifications ({count, plural, one {# new} other {# new}})"
+    "notificationsNew": "Notifications ({count, plural, one {# new} other {# new}})",
+    "notificationsLoading": "Loading…",
+    "notificationsEmpty": "No notifications.",
+    "notificationsError": "Could not load notifications.",
+    "notificationsRetry": "Retry"
   },
   "search": {
     "placeholder": "Search clients, professionals…",

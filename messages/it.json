@@ -1536,7 +1536,11 @@
     },
     "topbar": {
       "notifications": "Notifiche",
-      "notificationsNew": "Notifiche ({count, plural, one {# nuova} other {# nuove}})"
+      "notificationsEmpty": "Nessuna notifica.",
+      "notificationsError": "Non è stato possibile caricare le notifiche.",
+      "notificationsLoading": "Caricamento…",
+      "notificationsNew": "Notifiche ({count, plural, one {# nuova} other {# nuove}})",
+      "notificationsRetry": "Riprova"
     }
   },
   "emails": {

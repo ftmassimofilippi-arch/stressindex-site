@@ -27,7 +27,11 @@
   },
   "topbar": {
     "notifications": "Benachrichtigungen",
-    "notificationsNew": "Benachrichtigungen ({count, plural, one {# neue} other {# neue}})"
+    "notificationsNew": "Benachrichtigungen ({count, plural, one {# neue} other {# neue}})",
+    "notificationsLoading": "Wird geladen…",
+    "notificationsEmpty": "Keine Benachrichtigungen.",
+    "notificationsError": "Benachrichtigungen konnten nicht geladen werden.",
+    "notificationsRetry": "Erneut versuchen"
   },
   "search": {
     "placeholder": "Klienten, Fachkräfte suchen…",
