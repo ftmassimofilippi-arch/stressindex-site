@@ -63,7 +63,8 @@ html.print-mode body {
   page-break-before: always;
 }
 .print-page h2,
-.print-page h3 {
+.print-page h3,
+.print-page .print-section-title {
   break-after: avoid;
   page-break-after: avoid;
 }
