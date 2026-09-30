@@ -12,7 +12,8 @@
 import { useLocale, useTranslations } from 'next-intl'
 import { num } from '@/lib/format'
 
-export type GaugeColorScheme = 'stress' | 'recovery' | 'balance' | 'energy' | 'adaptation'
+import { zoneFor, type GaugeColorScheme } from '@/lib/gauge-zones'
+export type { GaugeColorScheme } from '@/lib/gauge-zones'
 
 type Props = {
   value?: number | null // 0–100
@@ -28,54 +29,7 @@ type Props = {
 export const GAUGE_PRINT_WIDTH = 150
 
 // Palette allineata ad AppColors dell'app
-const GREEN = '#2F8F6B' // AppColors.success
-const YELLOW = '#C78A2C' // AppColors.warning
-const ORANGE = '#E67E22'
-const RED = '#C44E4E' // AppColors.error
-const DARK_RED = '#A93226'
 const TRACK = '#E2E6EA' // AppColors.borderLight
-
-// `labelKey` è la chiave in `scores.bands.<scheme>`.
-type Zone = { max: number; labelKey: string; color: string }
-
-// Soglie identiche a proprietary_scores.dart (_stressZone, _recoveryZone, ...)
-const ZONES: Record<GaugeColorScheme, Zone[]> = {
-  stress: [
-    { max: 30, labelKey: 'low', color: GREEN },
-    { max: 50, labelKey: 'balance', color: YELLOW },
-    { max: 70, labelKey: 'medium', color: ORANGE },
-    { max: 85, labelKey: 'high', color: RED },
-    { max: Infinity, labelKey: 'fatigue', color: DARK_RED },
-  ],
-  recovery: [
-    { max: 25, labelKey: 'insufficient', color: RED },
-    { max: 45, labelKey: 'poor', color: ORANGE },
-    { max: 65, labelKey: 'moderate', color: YELLOW },
-    { max: 85, labelKey: 'good', color: GREEN },
-    { max: Infinity, labelKey: 'optimal', color: GREEN },
-  ],
-  balance: [
-    { max: 25, labelKey: 'strongImbalance', color: RED },
-    { max: 45, labelKey: 'moderateImbalance', color: ORANGE },
-    { max: 65, labelKey: 'sufficient', color: YELLOW },
-    { max: 85, labelKey: 'good', color: GREEN },
-    { max: Infinity, labelKey: 'optimal', color: GREEN },
-  ],
-  energy: [
-    { max: 25, labelKey: 'depleted', color: RED },
-    { max: 45, labelKey: 'low', color: ORANGE },
-    { max: 65, labelKey: 'moderate', color: YELLOW },
-    { max: 85, labelKey: 'good', color: GREEN },
-    { max: Infinity, labelKey: 'full', color: GREEN },
-  ],
-  adaptation: [
-    { max: 20, labelKey: 'fragile', color: RED },
-    { max: 40, labelKey: 'toImprove', color: ORANGE },
-    { max: 60, labelKey: 'reduced', color: YELLOW },
-    { max: 80, labelKey: 'good', color: GREEN },
-    { max: Infinity, labelKey: 'excellent', color: GREEN },
-  ],
-}
 
 // Segmenti dell'arco Stress, identici a _kZones di stress_gauge.dart
 const STRESS_ARC_SEGMENTS = [
@@ -85,11 +39,6 @@ const STRESS_ARC_SEGMENTS = [
   { start: 60, end: 80, color: '#E67E22' }, // Alto
   { start: 80, end: 100, color: '#E74C3C' }, // Affaticamento
 ]
-
-function zoneFor(scheme: GaugeColorScheme, v: number): Zone {
-  const zones = ZONES[scheme]
-  return zones.find((z) => v < z.max) ?? zones[zones.length - 1]
-}
 
 // Punto sull'arco: 0 → estremo sinistro (180°), 100 → estremo destro (360°)
 function polar(cx: number, cy: number, r: number, frac: number) {

@@ -43,6 +43,7 @@ export function ReportTab({ client }: { client: Client }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [report, setReport] = useState<GeneratedReport | null>(null)
+  const [clientVersion, setClientVersion] = useState(false)
 
   function applyPreset(p: Preset) {
     const cfg = PRESETS.find((x) => x.value === p)
@@ -64,7 +65,7 @@ export function ReportTab({ client }: { client: Client }) {
     try {
       // ?locale= → il PDF (e i suoi commenti automatici) escono nella lingua della pagina.
       const res = await fetch(
-        `/api/pdf/report-periodico?clientId=${encodeURIComponent(client.id)}&from=${from}&to=${to}&locale=${encodeURIComponent(locale)}`,
+        `/api/pdf/report-periodico?clientId=${encodeURIComponent(client.id)}&from=${from}&to=${to}&locale=${encodeURIComponent(locale)}&variant=${clientVersion ? 'client' : 'pro'}`,
         { method: 'GET' },
       )
       if (!res.ok) {
@@ -175,6 +176,16 @@ export function ReportTab({ client }: { client: Client }) {
           <div className="bg-surface rounded-xl p-4 text-sm text-anthracite-light">
             {t('selectedPeriod')} <span className="font-medium text-anthracite">{periodLabel}</span>
           </div>
+
+          <label className="flex items-center gap-2 text-sm text-anthracite cursor-pointer">
+            <input
+              type="checkbox"
+              checked={clientVersion}
+              onChange={(e) => { setClientVersion(e.target.checked); resetReport() }}
+              className="w-4 h-4 rounded border-gray-300 text-teal focus:ring-teal/30"
+            />
+            {t('clientVersion')}
+          </label>
 
           <div className="flex flex-wrap items-center gap-3">
             <button

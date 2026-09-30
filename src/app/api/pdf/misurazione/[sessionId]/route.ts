@@ -20,6 +20,7 @@ export async function GET(req: Request, { params }: { params: { sessionId: strin
   const url = new URL(req.url)
   const clientId = url.searchParams.get('clientId')
   if (!clientId) return apiError('pdf_missing_params', 400)
+  const variant = url.searchParams.get('variant') === 'client' ? 'client' : 'pro'
 
   if (pdfLegacyEnabled()) {
     return proxyLegacy(req, `/api/measurement-pdf?locale=${locale}`, {
@@ -42,13 +43,14 @@ export async function GET(req: Request, { params }: { params: { sessionId: strin
   const t = await getTranslator(locale, 'print')
   const tPdf = await getTranslator(locale, 'pdf.common')
   const cognome = sanitizeFilename(access.client.cognome ?? tPdf('clientFallback'))
-  const filename = `StressIndex_${cognome}_${sanitizeFilename(t('measurement.fileType'))}_${dateStamp(measuredInstant(measurement))}.pdf`
+  const suffix = variant === 'client' ? `_${sanitizeFilename(t('client.suffix'))}` : ''
+  const filename = `StressIndex_${cognome}_${sanitizeFilename(t('measurement.fileType'))}_${dateStamp(measuredInstant(measurement))}${suffix}.pdf`
 
   return pdfFromPrintPage({
     req,
     locale,
     path: `/stampa/misurazione/${params.sessionId}`,
-    query: { clientId },
+    query: { clientId, variant },
     token: { kind: 'measurement', id: params.sessionId, userId: user.id },
     filename,
   })

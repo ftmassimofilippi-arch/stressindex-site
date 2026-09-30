@@ -13,6 +13,8 @@ type Props = {
   // Usato solo come hint per il nome file mostrato in fallback (il server è autoritativo).
   filenameHint?: string
   variant?: Variant
+  /** `client`: versione semplificata per il cliente (solo score, lettura in parole, ritmogramma). */
+  audience?: 'pro' | 'client'
   className?: string
 }
 
@@ -21,6 +23,7 @@ export function DownloadMeasurementPdfButton({
   clientId,
   filenameHint,
   variant = 'button',
+  audience = 'pro',
   className = '',
 }: Props) {
   const t = useTranslations('pdf.download')
@@ -40,7 +43,7 @@ export function DownloadMeasurementPdfButton({
       // `?locale=` dice alla route in che lingua generare il PDF (testi, date, numeri).
       // Nuova generazione: pagina di stampa + Chrome headless (stessi componenti della dashboard).
       const res = await fetch(
-        `/api/pdf/misurazione/${encodeURIComponent(sessionId)}?clientId=${encodeURIComponent(clientId)}&locale=${encodeURIComponent(locale)}`,
+        `/api/pdf/misurazione/${encodeURIComponent(sessionId)}?clientId=${encodeURIComponent(clientId)}&locale=${encodeURIComponent(locale)}&variant=${audience}`,
         { method: 'GET' },
       )
       if (!res.ok) {
@@ -104,8 +107,8 @@ export function DownloadMeasurementPdfButton({
           type="button"
           onClick={handleDownload}
           disabled={loading}
-          aria-label={t('ariaDownload')}
-          title={t('button')}
+          aria-label={audience === 'client' ? t('ariaDownloadClient') : t('ariaDownload')}
+          title={audience === 'client' ? t('buttonClient') : t('button')}
           className="inline-flex items-center justify-center w-8 h-8 rounded-md text-teal-dark hover:bg-teal-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />}
@@ -131,7 +134,7 @@ export function DownloadMeasurementPdfButton({
         ) : (
           <>
             <Download size={15} />
-            {t('button')}
+            {audience === 'client' ? t('buttonClient') : t('button')}
           </>
         )}
       </button>

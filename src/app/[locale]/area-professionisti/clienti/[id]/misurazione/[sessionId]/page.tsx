@@ -83,7 +83,10 @@ export default async function SessionDetailPage({
               ].filter(Boolean).join(' · ')}
             </p>
           </div>
-          <DownloadMeasurementPdfButton sessionId={measurement.session_id} clientId={client.id} />
+          <div className="flex flex-wrap gap-2">
+            <DownloadMeasurementPdfButton sessionId={measurement.session_id} clientId={client.id} />
+            <DownloadMeasurementPdfButton sessionId={measurement.session_id} clientId={client.id} audience="client" />
+          </div>
         </div>
       </header>
 

@@ -4,7 +4,7 @@ import { createContext, useContext } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { AlertCircle, ArrowLeftRight, Footprints, Info, Minus, Sparkles, TimerOff, TrendingDown, TrendingUp, Wifi, WifiOff } from 'lucide-react'
-import type { SleepSession } from '@/lib/monitoring-types'
+import type { SleepDesaturationEvent, SleepSession } from '@/lib/monitoring-types'
 import {
   MON, SLEEP_PARAMS, STATE_COLOR, duration, fmtNum, hm, odi3Color, odi3Label, periodLabel, seconds, sleepComponentColor,
   sleepCoverageColor, sleepCoverageLabel, sleepOdiDisclaimer, sleepScoreColor, sleepScoreLabel, t90Color, t90Label,
@@ -25,34 +25,47 @@ import { Kv } from './MonitoringParamsTable'
 //
 // `print`: pagina di stampa A4 (/stampa/monitoraggio/[id]): stesse sezioni,
 // testi e colori, senza azioni, link e controlli; grafici a dimensione fissa,
-// card non spezzabili, salto pagina prima di Ossigenazione, Cuore ed Eventi.
+// singole card non spezzabili e nessun salto pagina forzato (le sezioni si
+// accodano; la tabella degli eventi scorre fra le pagine con l'intestazione
+// ripetuta).
+// `pro=false`: variante per il cliente, come il report cliente dell'app:
+// Sleep Score con le componenti, ossigenazione e polso in parole semplici,
+// le desaturazioni chiamate "cali di ossigeno", niente ODI / T90 / delta
+// index come sigle nude, niente tabella oraria né dettagli del surge.
 
-type Props = { session: SleepSession; readOnly?: boolean; clientHref?: string; print?: boolean }
+type Props = { session: SleepSession; readOnly?: boolean; clientHref?: string; print?: boolean; pro?: boolean }
 
 /** Larghezza utile dei grafici Recharts in stampa (card piena, padding escluso). */
 const PRINT_CHART_WIDTH = 620
 
+/** Eventi elencati al cliente (come il report dell'app: i primi 20). */
+const CLIENT_MAX_EVENTS = 20
+
 const PrintCtx = createContext(false)
+const ProCtx = createContext(true)
 
 function useSleep() {
   const t = useTranslations('monitoring')
   const locale = useLocale() as Lang
   const print = useContext(PrintCtx)
+  const pro = useContext(ProCtx)
   const st = (k: string) => sleepT(k, locale)
   const n = (v: number | null | undefined, d: number) => fmtNum(v, d, locale)
-  return { t, locale, st, n, print }
+  return { t, locale, st, n, print, pro }
 }
 
-export function SleepDetail({ session, readOnly = false, clientHref, print = false }: Props) {
+export function SleepDetail({ session, readOnly = false, clientHref, print = false, pro = true }: Props) {
   return (
     <PrintCtx.Provider value={print}>
-      <SleepBody session={session} readOnly={readOnly} clientHref={clientHref} />
+      <ProCtx.Provider value={pro}>
+        <SleepBody session={session} readOnly={readOnly} clientHref={clientHref} />
+      </ProCtx.Provider>
     </PrintCtx.Provider>
   )
 }
 
 function SleepBody({ session: s, readOnly, clientHref }: { session: SleepSession; readOnly: boolean; clientHref?: string }) {
-  const { t, locale, st, n, print } = useSleep()
+  const { t, locale, st, n, print, pro } = useSleep()
   const tc = useTranslations('common')
   const tz = s.tz_offset_minutes
   const night = s.night
@@ -67,6 +80,7 @@ function SleepBody({ session: s, readOnly, clientHref }: { session: SleepSession
   const endIso = night?.night_end ?? s.end_time
   const durMin = night?.duration_minutes ?? s.duration_minutes
   const clientName = s.client_name ?? t('client')
+  const avoid = print ? 'print-avoid' : ''
 
   return (
     <div className={print ? 'space-y-4' : 'space-y-6'}>
@@ -80,7 +94,7 @@ function SleepBody({ session: s, readOnly, clientHref }: { session: SleepSession
             </h1>
             <p className="mt-1 text-sm text-anthracite-lighter">{t('sleep.night')} · {periodLabel(startIso, endIso, tz, locale)} · {duration(durMin)}</p>
             <p className="mt-0.5 text-xs text-anthracite-lighter">
-              {s.device_name ?? 'Checkme O2 Max'}{s.device_serial ? ` · ${t('sleep.serial', { serial: s.device_serial })}` : ''} · {t('algorithm', { version: sl?.algorithm_version ?? s.algorithm_version ?? '—' })}
+              {s.device_name ?? 'Checkme O2 Max'}{s.device_serial ? ` · ${t('sleep.serial', { serial: s.device_serial })}` : ''}{pro ? ` · ${t('algorithm', { version: sl?.algorithm_version ?? s.algorithm_version ?? '—' })}` : ''}
             </p>
             <div className="flex flex-wrap items-center gap-1.5 mt-3">
               <Chip label={sleepCoverageLabel(sig?.coverage_label ?? null, locale, t)} color={sleepCoverageColor(sig?.coverage_label ?? null)} icon={sig?.coverage_label === 'poor' ? WifiOff : Wifi} />
@@ -130,30 +144,40 @@ function SleepBody({ session: s, readOnly, clientHref }: { session: SleepSession
           </div>
 
           {s.summary?.summary_phrase && (
-            <div className="flex items-start gap-3 p-4 rounded-2xl" style={{ backgroundColor: MON.sleepLight }}>
+            <div className={`flex items-start gap-3 p-4 rounded-2xl ${avoid}`} style={{ backgroundColor: MON.sleepLight }}>
               <Sparkles size={18} className="flex-shrink-0 mt-0.5" style={{ color: MON.sleepDark }} />
               <p className="text-[13px] leading-relaxed text-anthracite">{s.summary.summary_phrase}</p>
             </div>
           )}
 
+          {/* I tre numeri chiave: al professionista ODI3 / T90 / polso minimo, al cliente le stesse cose in parole. */}
           <div className={`grid gap-3 ${print ? 'grid-cols-3' : 'grid-cols-1 sm:grid-cols-3'}`}>
-            <Mini label={t('sleep.odi3Label', { label: odi3Label(o?.odi3_label, locale) })} value={o ? n(o.odi3, 1) : '—'} unit="/h" color={odi3Color(o?.odi3_label)} />
-            <Mini label={st('t90')} value={o ? n(o.t90_pct, 1) : '—'} unit="%" color={t90Color(o?.t90_label)} />
+            {pro ? (
+              <>
+                <Mini label={t('sleep.odi3Label', { label: odi3Label(o?.odi3_label, locale) })} value={o ? n(o.odi3, 1) : '—'} unit="/h" color={odi3Color(o?.odi3_label)} />
+                <Mini label={st('t90')} value={o ? n(o.t90_pct, 1) : '—'} unit="%" color={t90Color(o?.t90_label)} />
+              </>
+            ) : (
+              <>
+                <Mini label={t('simple.sleep.dropsPerHour')} value={o ? n(o.odi3, 1) : '—'} unit={o ? `· ${odi3Label(o.odi3_label, locale)}` : undefined} color={odi3Color(o?.odi3_label)} />
+                <Mini label={t('simple.sleep.timeBelow90')} value={o ? n(o.t90_pct, 1) : '—'} unit={o ? `% · ${t90Label(o.t90_label, locale)}` : '%'} color={t90Color(o?.t90_label)} />
+              </>
+            )}
             <Mini label={c?.min_pr_time ? t('sleep.prMinAt', { time: hm(c.min_pr_time, tz) }) : st('pr_min')} value={c ? `${Math.round(c.min_pr)}` : '—'} unit="bpm" color={MON.sleepDark} />
           </div>
 
           <div className={`grid gap-4 ${print ? 'grid-cols-2' : 'grid-cols-1 lg:grid-cols-2'}`}>
-            <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
+            <div className={`card p-4 ${avoid}`}>
               <div className="text-[13px] font-bold text-anthracite mb-1">{t('sleep.inBrief')}</div>
               <Kv k={t('sleep.recording')} v={`${hm(startIso, tz)} → ${hm(endIso, tz)} · ${duration(durMin)}`} />
-              <Kv k={st('valid_time')} v={duration(Math.round(sig?.valid_recording_minutes ?? 0))} />
-              <Kv k={st('spo2_mean')} v={o?.mean_spo2 == null ? '—' : `${n(o.mean_spo2, 1)} %`} />
-              <Kv k={st('events')} v={o ? `${o.event_count}` : '—'} />
+              {pro && <Kv k={st('valid_time')} v={duration(Math.round(sig?.valid_recording_minutes ?? 0))} />}
+              <Kv k={pro ? st('spo2_mean') : t('simple.sleep.oxyMean')} v={o?.mean_spo2 == null ? '—' : `${n(o.mean_spo2, 1)} %`} />
+              <Kv k={pro ? st('events') : t('simple.sleep.drops')} v={o ? `${o.event_count}` : '—'} />
               <Kv k={st('pr_mean')} v={c ? `${Math.round(c.mean_pr)} bpm` : '—'} />
               {mv?.available && <Kv k={st('awakenings')} v={`${mv.estimated_awakenings}`} />}
             </div>
             {sl.device?.o2_score != null && (
-              <div className={`card p-4 flex items-start gap-3 ${print ? 'print-avoid' : ''}`}>
+              <div className={`card p-4 flex items-start gap-3 ${avoid}`}>
                 <ArrowLeftRight size={24} className="text-anthracite-lighter flex-shrink-0" />
                 <div className="min-w-0">
                   <div className="text-[13px] font-bold text-anthracite">{t('sleep.deviceCompare')}</div>
@@ -167,46 +191,61 @@ function SleepBody({ session: s, readOnly, clientHref }: { session: SleepSession
           <p className="text-[10.5px] text-anthracite-lighter leading-relaxed">{t('sleep.disclaimer')}</p>
 
           {/* ── 4.2 Ossigenazione ──────────────────────────────────────────── */}
-          <section className={`card space-y-4 ${print ? 'p-4 print-break-before' : 'p-5'}`}>
+          <section className={`card space-y-4 ${print ? 'p-4' : 'p-5'}`}>
             <SectionTitle sleep>{st('oxygenation')}</SectionTitle>
             {o ? (
               <>
-                <div>
+                <div className={avoid}>
                   <div className="text-[13px] font-bold text-anthracite">{t('sleep.spo2AllNight')}</div>
-                  <div className="text-[10.5px] text-anthracite-lighter mb-2">{t('sleep.spo2ChartHint')}</div>
+                  <div className="text-[10.5px] text-anthracite-lighter mb-2">{pro ? t('sleep.spo2ChartHint') : t('simple.sleep.spo2ChartHint')}</div>
                   <Spo2NightChart windows={s.windows} events={sl.events} tz={tz} print={print} width={PRINT_CHART_WIDTH} />
                 </div>
-                <div className={`grid gap-3 ${print ? 'grid-cols-3' : 'grid-cols-1 sm:grid-cols-3'}`}>
-                  <Mini label="ODI3" value={n(o.odi3, 1)} unit="/h" color={odi3Color(o.odi3_label)} />
-                  <Mini label="ODI4" value={n(o.odi4, 1)} unit="/h" color={MON.sleepDark} />
-                  <Mini label="T90" value={o.t90_minutes < 10 ? n(o.t90_minutes, 1) : `${Math.round(o.t90_minutes)}`} unit="min" color={t90Color(o.t90_label)} />
-                </div>
-                <div className={`grid gap-4 ${print ? 'grid-cols-2' : 'grid-cols-1 lg:grid-cols-2'}`}>
-                  <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
-                    <div className="text-[13px] font-bold text-anthracite mb-1">{t('sleep.desatIndex')}</div>
-                    <Kv k={st('odi3')} v={`${n(o.odi3, 1)} · ${odi3Label(o.odi3_label, locale)}`} />
-                    <Kv k={st('odi4')} v={n(o.odi4, 1)} />
-                    <Kv k={t('sleep.totalEvents')} v={t('sleep.totalEventsValue', { count: o.event_count, count4: o.event_count_4 })} />
-                    <Kv k={t('sleep.validTimeUsed')} v={duration(Math.round(sig?.valid_recording_minutes ?? 0))} />
-                    {sl.device?.drops_4 != null && <Kv k={st('device_drops4')} v={`${sl.device.drops_4}`} />}
+                {pro ? (
+                  <>
+                    <div className={`grid gap-3 ${print ? 'grid-cols-3' : 'grid-cols-1 sm:grid-cols-3'}`}>
+                      <Mini label="ODI3" value={n(o.odi3, 1)} unit="/h" color={odi3Color(o.odi3_label)} />
+                      <Mini label="ODI4" value={n(o.odi4, 1)} unit="/h" color={MON.sleepDark} />
+                      <Mini label="T90" value={o.t90_minutes < 10 ? n(o.t90_minutes, 1) : `${Math.round(o.t90_minutes)}`} unit="min" color={t90Color(o.t90_label)} />
+                    </div>
+                    <div className={`grid gap-4 ${print ? 'grid-cols-2' : 'grid-cols-1 lg:grid-cols-2'}`}>
+                      <div className={`card p-4 ${avoid}`}>
+                        <div className="text-[13px] font-bold text-anthracite mb-1">{t('sleep.desatIndex')}</div>
+                        <Kv k={st('odi3')} v={`${n(o.odi3, 1)} · ${odi3Label(o.odi3_label, locale)}`} />
+                        <Kv k={st('odi4')} v={n(o.odi4, 1)} />
+                        <Kv k={t('sleep.totalEvents')} v={t('sleep.totalEventsValue', { count: o.event_count, count4: o.event_count_4 })} />
+                        <Kv k={t('sleep.validTimeUsed')} v={duration(Math.round(sig?.valid_recording_minutes ?? 0))} />
+                        {sl.device?.drops_4 != null && <Kv k={st('device_drops4')} v={`${sl.device.drops_4}`} />}
+                      </div>
+                      <div className={`card p-4 ${avoid}`}>
+                        <div className="text-[13px] font-bold text-anthracite mb-1">{st('below_threshold')}</div>
+                        <Kv k={t('sleep.below90')} v={`${n(o.t90_minutes, 1)} min · ${n(o.t90_pct, 1)} % · ${t90Label(o.t90_label, locale)}`} />
+                        <Kv k={t('sleep.below88')} v={`${n(o.t88_minutes, 1)} min · ${n(o.t88_pct, 1)} %`} />
+                        <Kv k={t('sleep.below85')} v={`${n(o.t85_minutes, 1)} min · ${n(o.t85_pct, 1)} %`} />
+                        <Kv k={st('ev_nadir')} v={o.nadir_time ? t('sleep.nadirAt', { v: o.nadir, time: hm(o.nadir_time, tz) }) : `${o.nadir} %`} />
+                        <Kv k={st('spo2_mean')} v={o.mean_spo2 == null ? '—' : `${n(o.mean_spo2, 1)} %`} />
+                        <Kv k={st('spo2_basal')} v={o.spo2_basal == null ? '—' : `${n(o.spo2_basal, 1)} %`} />
+                      </div>
+                      <div className={`card p-4 ${print ? 'col-span-2 print-avoid' : 'lg:col-span-2'}`}>
+                        <div className="text-[13px] font-bold text-anthracite mb-1">{t('sleep.signalStability')}</div>
+                        <Kv k={t('sleep.spo2Sd')} v={n(o.spo2_sd, 2)} />
+                        <Kv k={st('delta_index')} v={o.delta_index_12s == null ? '—' : `${n(o.delta_index_12s, 2)}${o.delta_index_12s > SLEEP_PARAMS.deltaIndexUnstable ? ` · ${t('sleep.unstable')}` : ''}`} />
+                        <Kv k={st('cyclic')} v={o.cyclic_runs === 0 ? st('cyclic_none') : t('sleep.cyclicRuns', { count: o.cyclic_runs, duration: duration(Math.round(o.cyclic_minutes)) })} />
+                        <p className="mt-1 text-[10.5px] text-anthracite-lighter leading-relaxed">{t('sleep.cyclicNote')}</p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  // Cliente: una sola card in parole semplici (cali, tempo sotto il 90 %, valore più basso, media).
+                  <div className={`card p-4 ${avoid}`}>
+                    <div className="text-[13px] font-bold text-anthracite mb-1">{t('simple.sleep.drops')}</div>
+                    <Kv k={t('simple.sleep.dropsPerHour')} v={`${n(o.odi3, 1)} · ${odi3Label(o.odi3_label, locale)}`} />
+                    <Kv k={t('simple.sleep.drops')} v={t('simple.sleep.dropsValue', { count: o.event_count, count4: o.event_count_4 })} />
+                    <Kv k={t('simple.sleep.timeBelow90')} v={`${n(o.t90_minutes, 1)} min · ${n(o.t90_pct, 1)} % · ${t90Label(o.t90_label, locale)}`} />
+                    <Kv k={t('simple.sleep.oxyLowest')} v={o.nadir_time ? t('sleep.nadirAt', { v: o.nadir, time: hm(o.nadir_time, tz) }) : `${o.nadir} %`} />
+                    <Kv k={t('simple.sleep.oxyMean')} v={o.mean_spo2 == null ? '—' : `${n(o.mean_spo2, 1)} %`} />
+                    <p className="mt-1 text-[10.5px] text-anthracite-lighter leading-relaxed">{t('simple.sleep.dropsPerHour')}: {t('simple.sleep.dropsPerHourHint')}.</p>
                   </div>
-                  <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
-                    <div className="text-[13px] font-bold text-anthracite mb-1">{st('below_threshold')}</div>
-                    <Kv k={t('sleep.below90')} v={`${n(o.t90_minutes, 1)} min · ${n(o.t90_pct, 1)} % · ${t90Label(o.t90_label, locale)}`} />
-                    <Kv k={t('sleep.below88')} v={`${n(o.t88_minutes, 1)} min · ${n(o.t88_pct, 1)} %`} />
-                    <Kv k={t('sleep.below85')} v={`${n(o.t85_minutes, 1)} min · ${n(o.t85_pct, 1)} %`} />
-                    <Kv k={st('ev_nadir')} v={o.nadir_time ? t('sleep.nadirAt', { v: o.nadir, time: hm(o.nadir_time, tz) }) : `${o.nadir} %`} />
-                    <Kv k={st('spo2_mean')} v={o.mean_spo2 == null ? '—' : `${n(o.mean_spo2, 1)} %`} />
-                    <Kv k={st('spo2_basal')} v={o.spo2_basal == null ? '—' : `${n(o.spo2_basal, 1)} %`} />
-                  </div>
-                  <div className={`card p-4 ${print ? 'col-span-2 print-avoid' : 'lg:col-span-2'}`}>
-                    <div className="text-[13px] font-bold text-anthracite mb-1">{t('sleep.signalStability')}</div>
-                    <Kv k={t('sleep.spo2Sd')} v={n(o.spo2_sd, 2)} />
-                    <Kv k={st('delta_index')} v={o.delta_index_12s == null ? '—' : `${n(o.delta_index_12s, 2)}${o.delta_index_12s > SLEEP_PARAMS.deltaIndexUnstable ? ` · ${t('sleep.unstable')}` : ''}`} />
-                    <Kv k={st('cyclic')} v={o.cyclic_runs === 0 ? st('cyclic_none') : t('sleep.cyclicRuns', { count: o.cyclic_runs, duration: duration(Math.round(o.cyclic_minutes)) })} />
-                    <p className="mt-1 text-[10.5px] text-anthracite-lighter leading-relaxed">{t('sleep.cyclicNote')}</p>
-                  </div>
-                </div>
+                )}
                 <Disclaimer />
               </>
             ) : (
@@ -215,51 +254,53 @@ function SleepBody({ session: s, readOnly, clientHref }: { session: SleepSession
           </section>
 
           {/* ── Cuore ──────────────────────────────────────────────────────── */}
-          <section className={`card space-y-4 ${print ? 'p-4 print-break-before' : 'p-5'}`}>
+          <section className={`card space-y-4 ${print ? 'p-4' : 'p-5'}`}>
             <SectionTitle sleep>{st('heart')}</SectionTitle>
             {c ? (
               <>
-                <div>
+                <div className={avoid}>
                   <div className="text-[13px] font-bold text-anthracite">{t('sleep.pulseRate')}</div>
-                  <div className="text-[10.5px] text-anthracite-lighter mb-2">{t('sleep.prChartHint')}</div>
-                  <PrNightChart windows={s.windows} events={sl.events} prBasal={c.pr_basal} tz={tz} print={print} width={PRINT_CHART_WIDTH} />
+                  <div className="text-[10.5px] text-anthracite-lighter mb-2">{pro ? t('sleep.prChartHint') : t('simple.sleep.prChartHint')}</div>
+                  <PrNightChart windows={s.windows} events={pro ? sl.events : []} prBasal={c.pr_basal} tz={tz} print={print} width={PRINT_CHART_WIDTH} />
                 </div>
                 <div className={`grid gap-3 ${print ? 'grid-cols-3' : 'grid-cols-1 sm:grid-cols-3'}`}>
                   <Mini label={t('sleep.mean')} value={`${Math.round(c.mean_pr)}`} unit="bpm" color={MON.textPrimary} />
                   <Mini label={c.min_pr_time ? t('sleep.minAt', { time: hm(c.min_pr_time, tz) }) : t('sleep.min')} value={`${Math.round(c.min_pr)}`} unit="bpm" color={MON.sleepDark} />
-                  <Mini label={t('sleep.basal')} value={`${Math.round(c.pr_basal)}`} unit="bpm" color={STATE_COLOR.recovery} />
+                  <Mini label={pro ? t('sleep.basal') : t('simple.sleep.prBasal')} value={`${Math.round(c.pr_basal)}`} unit="bpm" color={STATE_COLOR.recovery} />
                 </div>
                 <TrendCard c={c} />
-                <div className={`grid gap-4 ${print ? 'grid-cols-2' : 'grid-cols-1 lg:grid-cols-2'}`}>
-                  <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
-                    <div className="text-[13px] font-bold text-anthracite mb-1">{t('sleep.dipTitle')}</div>
-                    <Kv k={t('sleep.firstHourMedian')} v={`${Math.round(c.first_hour_median_pr)} bpm`} />
-                    <Kv k={t('sleep.dipToBasal')} v={`${n(c.dip_pct, 1)} %`} />
-                    <Kv k={t('sleep.max')} v={`${Math.round(c.max_pr)} bpm`} />
-                    <Kv k={st('surge_pct')} v={`${Math.round(c.surge_event_pct)} %`} />
-                    <p className="mt-1 text-[10.5px] text-anthracite-lighter leading-relaxed">{t('sleep.surgeNote')}</p>
-                  </div>
-                  {sl.hourly.length > 0 && (
-                    <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
-                      <div className="text-[13px] font-bold text-anthracite mb-2">{st('hourly')}</div>
-                      <div className={print ? '' : 'overflow-x-auto'}>
-                        <table className={`w-full text-[11px] ${print ? '' : 'min-w-[300px]'}`}>
-                          <thead><tr className="text-anthracite-lighter font-bold"><th className="text-left py-1">{st('hour')}</th><th className="text-right py-1">{st('spo2_mean')}</th><th className="text-right py-1">{st('pr')}</th><th className="text-right py-1">{t('sleep.eventsShort')}</th></tr></thead>
-                          <tbody>
-                            {sl.hourly.map((h, i) => (
-                              <tr key={i} className="border-t border-surface-border">
-                                <td className="py-1">{hm(h.hour_start, tz)}</td>
-                                <td className="py-1 text-right tabular-nums">{h.spo2 == null ? '—' : `${n(h.spo2, 1)} %`}</td>
-                                <td className="py-1 text-right tabular-nums">{h.pr == null ? '—' : `${Math.round(h.pr)} bpm`}</td>
-                                <td className="py-1 text-right tabular-nums">{h.events}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                {pro && (
+                  <div className={`grid gap-4 ${print ? 'grid-cols-2' : 'grid-cols-1 lg:grid-cols-2'}`}>
+                    <div className={`card p-4 ${avoid}`}>
+                      <div className="text-[13px] font-bold text-anthracite mb-1">{t('sleep.dipTitle')}</div>
+                      <Kv k={t('sleep.firstHourMedian')} v={`${Math.round(c.first_hour_median_pr)} bpm`} />
+                      <Kv k={t('sleep.dipToBasal')} v={`${n(c.dip_pct, 1)} %`} />
+                      <Kv k={t('sleep.max')} v={`${Math.round(c.max_pr)} bpm`} />
+                      <Kv k={st('surge_pct')} v={`${Math.round(c.surge_event_pct)} %`} />
+                      <p className="mt-1 text-[10.5px] text-anthracite-lighter leading-relaxed">{t('sleep.surgeNote')}</p>
                     </div>
-                  )}
-                </div>
+                    {sl.hourly.length > 0 && (
+                      <div className={`card p-4 ${avoid}`}>
+                        <div className="text-[13px] font-bold text-anthracite mb-2">{st('hourly')}</div>
+                        <div className={print ? '' : 'overflow-x-auto'}>
+                          <table className={`w-full text-[11px] ${print ? '' : 'min-w-[300px]'}`}>
+                            <thead><tr className="text-anthracite-lighter font-bold"><th className="text-left py-1">{st('hour')}</th><th className="text-right py-1">{st('spo2_mean')}</th><th className="text-right py-1">{st('pr')}</th><th className="text-right py-1">{t('sleep.eventsShort')}</th></tr></thead>
+                            <tbody>
+                              {sl.hourly.map((h, i) => (
+                                <tr key={i} className="border-t border-surface-border">
+                                  <td className="py-1">{hm(h.hour_start, tz)}</td>
+                                  <td className="py-1 text-right tabular-nums">{h.spo2 == null ? '—' : `${n(h.spo2, 1)} %`}</td>
+                                  <td className="py-1 text-right tabular-nums">{h.pr == null ? '—' : `${Math.round(h.pr)} bpm`}</td>
+                                  <td className="py-1 text-right tabular-nums">{h.events}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             ) : (
               <p className="text-sm text-anthracite-lighter">{t('sleep.prUnavailable')}</p>
@@ -267,39 +308,59 @@ function SleepBody({ session: s, readOnly, clientHref }: { session: SleepSession
           </section>
 
           {/* ── 4.3 Eventi ─────────────────────────────────────────────────── */}
-          <section className={`card space-y-4 ${print ? 'p-4 print-break-before' : 'p-5'}`}>
-            <SectionTitle sleep>{t('sleep.eventsTitle')}</SectionTitle>
-            <div className={print ? 'print-avoid' : ''}>
+          <section className={`card space-y-4 ${print ? 'p-4' : 'p-5'}`}>
+            <SectionTitle sleep>{pro ? t('sleep.eventsTitle') : t('simple.sleep.drops')}</SectionTitle>
+            <div className={avoid}>
               <div className="text-[13px] font-bold text-anthracite mb-2">{t('sleep.nightTimeline')}</div>
               <DesaturationStrip windows={s.windows} events={sl.events} tz={tz} print={print} />
               <div className="mt-2"><SleepStateLegend compact /></div>
             </div>
-            <div>
-              <div className="text-[13px] font-bold text-anthracite mb-2">{t('sleep.desatEvents', { count: sl.events.length })}</div>
-              {sl.events.length === 0 ? (
-                <p className="text-sm text-anthracite-lighter">{st('no_events')}</p>
-              ) : (
-                <div className={print ? '' : 'overflow-x-auto'}>
-                  <table className={`w-full text-[11px] ${print ? '' : 'min-w-[420px]'}`}>
-                    <thead><tr className="text-anthracite-lighter font-bold"><th className="text-left py-1">{st('ev_time')}</th><th className="text-right py-1">{st('ev_duration')}</th><th className="text-right py-1">{st('ev_drop')}</th><th className="text-right py-1">{st('ev_nadir')}</th><th className="text-right py-1">{st('ev_surge')}</th></tr></thead>
-                    <tbody>
-                      {sl.events.map((e, i) => (
-                        <tr key={i} className="border-t border-surface-border">
-                          <td className="py-1">{hm(e.start, tz)}</td>
-                          <td className="py-1 text-right tabular-nums">{e.duration_sec} s</td>
-                          <td className="py-1 text-right tabular-nums">−{n(e.drop, 1)}</td>
-                          <td className="py-1 text-right tabular-nums" style={{ color: e.nadir < SLEEP_PARAMS.t90Threshold ? MON.error : undefined }}>{e.nadir} %</td>
-                          <td className="py-1 text-right tabular-nums" style={{ color: (e.surge_bpm ?? 0) >= SLEEP_PARAMS.surgeThresholdBpm ? MON.warning : undefined }}>{e.surge_bpm == null ? '—' : `${e.surge_bpm >= 0 ? '+' : ''}${Math.round(e.surge_bpm)} bpm`}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+            <EventsTable events={sl.events} tz={tz} />
             <Disclaimer />
           </section>
         </>
+      )}
+    </div>
+  )
+}
+
+/** Tabella delle desaturazioni: intera al professionista (thead ripetuto in stampa), prime 20 e senza surge al cliente. */
+function EventsTable({ events, tz }: { events: SleepDesaturationEvent[]; tz: number }) {
+  const { t, st, n, print, pro } = useSleep()
+  const shown = pro ? events : events.slice(0, CLIENT_MAX_EVENTS)
+  return (
+    <div>
+      <div className="text-[13px] font-bold text-anthracite mb-2">{pro ? t('sleep.desatEvents', { count: events.length }) : t('simple.sleep.eventsTitle', { count: events.length })}</div>
+      {events.length === 0 ? (
+        <p className="text-sm text-anthracite-lighter">{pro ? st('no_events') : t('simple.sleep.noEvents')}</p>
+      ) : (
+        <div className={print ? '' : 'overflow-x-auto'}>
+          <table className={`w-full text-[11px] ${print ? '' : 'min-w-[420px]'}`}>
+            <thead>
+              <tr className="text-anthracite-lighter font-bold">
+                <th className="text-left py-1">{st('ev_time')}</th>
+                <th className="text-right py-1">{st('ev_duration')}</th>
+                <th className="text-right py-1">{st('ev_drop')}</th>
+                <th className="text-right py-1">{pro ? st('ev_nadir') : t('simple.sleep.eventLowest')}</th>
+                {pro && <th className="text-right py-1">{st('ev_surge')}</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((e, i) => (
+                <tr key={i} className="border-t border-surface-border">
+                  <td className="py-1">{hm(e.start, tz)}</td>
+                  <td className="py-1 text-right tabular-nums">{e.duration_sec} s</td>
+                  <td className="py-1 text-right tabular-nums">−{n(e.drop, 1)}</td>
+                  <td className="py-1 text-right tabular-nums" style={{ color: e.nadir < SLEEP_PARAMS.t90Threshold ? MON.error : undefined }}>{e.nadir} %</td>
+                  {pro && <td className="py-1 text-right tabular-nums" style={{ color: (e.surge_bpm ?? 0) >= SLEEP_PARAMS.surgeThresholdBpm ? MON.warning : undefined }}>{e.surge_bpm == null ? '—' : `${e.surge_bpm >= 0 ? '+' : ''}${Math.round(e.surge_bpm)} bpm`}</td>}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {shown.length < events.length && (
+            <p className="mt-2 text-[10.5px] text-anthracite-lighter">{t('simple.sleep.moreEvents', { count: events.length - shown.length })}</p>
+          )}
+        </div>
       )}
     </div>
   )
@@ -334,7 +395,7 @@ function Notices({ s }: { s: SleepSession }) {
 }
 
 function ScoreComponents({ score }: { score: NonNullable<SleepSession['summary']>['sleep_score'] & object }) {
-  const { st } = useSleep()
+  const { st, pro } = useSleep()
   const rows: Array<[string, number | null, number]> = [
     [st('comp_oxygenation'), score.oxygenation, score.weights.oxygenation],
     [st('comp_respiratory'), score.respiratory_stability, score.weights.respiratory_stability],
@@ -347,7 +408,7 @@ function ScoreComponents({ score }: { score: NonNullable<SleepSession['summary']
         const color = v == null ? MON.textMuted : sleepComponentColor(v)
         return (
           <div key={label} className="flex items-center gap-3">
-            <span className="w-40 text-[11px] text-anthracite-lighter truncate" title={label}>{label}{w > 0 ? ` · ${Math.round(w * 100)} %` : ''}</span>
+            <span className="w-40 text-[11px] text-anthracite-lighter truncate" title={label}>{label}{w > 0 && pro ? ` · ${Math.round(w * 100)} %` : ''}</span>
             <div className="flex-1 h-2.5 rounded-md bg-surface-border/60 overflow-hidden">
               <div className="h-full rounded-md" style={{ width: `${v == null ? 0 : Math.max(0, Math.min(100, v))}%`, backgroundColor: color }} />
             </div>
@@ -355,9 +416,12 @@ function ScoreComponents({ score }: { score: NonNullable<SleepSession['summary']
           </div>
         )
       })}
-      <p className="text-[10px] text-anthracite-lighter leading-relaxed">
-        {score.continuity == null ? st('weights_note_nomov') : st('weights_note')}
-      </p>
+      {/* La nota sui pesi della formula è per il professionista. */}
+      {pro && (
+        <p className="text-[10px] text-anthracite-lighter leading-relaxed">
+          {score.continuity == null ? st('weights_note_nomov') : st('weights_note')}
+        </p>
+      )}
     </div>
   )
 }
@@ -397,9 +461,9 @@ function Mini({ label, value, unit, color }: { label: string; value: string; uni
 }
 
 function Disclaimer() {
-  const { locale } = useSleep()
+  const { locale, print } = useSleep()
   return (
-    <div className="flex items-start gap-2 p-3.5 rounded-xl" style={{ backgroundColor: MON.sleepLight }}>
+    <div className={`flex items-start gap-2 p-3.5 rounded-xl ${print ? 'print-avoid' : ''}`} style={{ backgroundColor: MON.sleepLight }}>
       <Info size={17} className="flex-shrink-0 mt-0.5" style={{ color: MON.sleepDark }} />
       <p className="text-[11px] leading-relaxed text-anthracite">{sleepOdiDisclaimer(locale)}</p>
     </div>

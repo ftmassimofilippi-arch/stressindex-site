@@ -1,0 +1,39 @@
+{
+  "bandDescriptions": {
+    "stress": {
+      "low": "Low stress level, good balance.",
+      "balance": "Physiological stress, well managed.",
+      "medium": "Moderate activation or signs of accumulated load.",
+      "high": "High stress and reduced ability to adapt.",
+      "fatigue": "Under strong pressure, energy reserves very low."
+    },
+    "recovery": {
+      "insufficient": "Insufficient recovery: the body struggles to relax and recharge.",
+      "poor": "Poor recovery: more quality rest is needed.",
+      "moderate": "Moderate recovery, with room for improvement.",
+      "good": "Good recovery: the body regenerates well.",
+      "optimal": "Optimal recovery: excellent capacity to relax and recharge."
+    },
+    "balance": {
+      "strongImbalance": "Strong imbalance between activation and recovery.",
+      "moderateImbalance": "Moderate imbalance between activation and recovery.",
+      "sufficient": "Sufficient balance between drive and recovery.",
+      "good": "Good balance between drive and recovery.",
+      "optimal": "Optimal balance: speeding up and slowing down come easily."
+    },
+    "energy": {
+      "depleted": "Energy depleted: very low reserves.",
+      "low": "Low energy: few reserves available.",
+      "moderate": "Moderate energy: fair reserves.",
+      "good": "Good energy: resources readily available.",
+      "full": "Full energy: excellent resources available."
+    },
+    "adaptation": {
+      "fragile": "Fragile adaptation capacity: watch the loads.",
+      "toImprove": "Adaptation capacity to improve.",
+      "reduced": "Reduced recovery capacity, worth watching.",
+      "good": "Good capacity to adapt to loads and return to balance.",
+      "excellent": "Excellent capacity to adapt to loads and return to balance."
+    }
+  }
+}

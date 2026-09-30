@@ -37,9 +37,12 @@ import { MonitoringActions } from './MonitoringActions'
 //
 // `print`: pagina di stampa A4 (/stampa/monitoraggio/[id]). Stesse sezioni,
 // stessi testi e colori, ma senza azioni, link e controlli interattivi:
-// grafici a dimensione fissa, tutto espanso, card non spezzabili e salto
-// pagina prima delle sezioni lunghe. `pro=false` è la variante per il cliente
-// (senza Ritmo, Parametri e "Come si calcola").
+// grafici a dimensione fissa, tutto espanso, singole card non spezzabili
+// (`print-avoid`) e nessun salto pagina forzato, così le sezioni si accodano
+// e le tabelle lunghe scorrono fra le pagine con l'intestazione ripetuta.
+// `pro=false` è la variante per il cliente, come il report cliente
+// dell'app: nomi semplici, niente sigle non spiegate (RMSSD, ln RMSSD,
+// LF/HF), niente "Come si calcola", Mappa delle ore, Ritmo e Parametri.
 
 type Props = {
   session: Monitoring24hSession
@@ -110,7 +113,7 @@ function Monitoring24hBody({ session: s, readOnly, clientHref }: { session: Moni
               {periodLabel(s.start_time, s.end_time, tz, locale)} · {duration(s.duration_minutes)}
             </p>
             <p className="mt-0.5 text-xs text-anthracite-lighter">
-              {s.device_name ?? '—'} · {sourceLabel(s.source, t)}{s.rr_count != null ? ` · ${t('beats', { count: s.rr_count })}` : ''} · {t('algorithm', { version: s.algorithm_version || '—' })}
+              {s.device_name ?? '—'} · {sourceLabel(s.source, t)}{s.rr_count != null ? ` · ${t('beats', { count: s.rr_count })}` : ''}{pro ? ` · ${t('algorithm', { version: s.algorithm_version || '—' })}` : ''}
             </p>
             <div className="flex flex-wrap items-center gap-1.5 mt-3">
               <QualityChip quality={s.signal_quality} coverage={cov} />
@@ -201,13 +204,13 @@ function Monitoring24hBody({ session: s, readOnly, clientHref }: { session: Moni
       {pages.includes('notte') && <NightSection s={s} />}
 
       {/* ── 3.5 Andamento ────────────────────────────────────────────────── */}
-      <section className={`card ${print ? 'p-4 print-break-before' : 'p-5'}`}>
+      <section className={`card ${print ? 'p-4' : 'p-5'}`}>
         <SectionTitle>{t('detail24.trend')}</SectionTitle>
         <MonitoringTrendChart windows={s.windows} start={s.start_time} end={s.end_time} tz={tz} events={s.events} night={night} pro={pro} print={print} width={PRINT_CHART_WIDTH} />
       </section>
 
-      {/* ── 3.6 Mappa delle ore ──────────────────────────────────────────── */}
-      {pages.includes('mappa_ore') && (
+      {/* ── 3.6 Mappa delle ore (solo professionista in stampa: sigle HR, ln RMSSD, LF/HF) ── */}
+      {pages.includes('mappa_ore') && (pro || !print) && (
         <section className={`card ${print ? 'p-4' : 'p-5'}`}>
           <SectionTitle>{t('detail24.hourMap')}</SectionTitle>
           <MonitoringIndexCard
@@ -234,7 +237,7 @@ function Monitoring24hBody({ session: s, readOnly, clientHref }: { session: Moni
 
       {/* ── 3.9 Parametri ────────────────────────────────────────────────── */}
       {pages.includes('parametri') && (
-        <section className={`card ${print ? 'p-4 print-break-before' : 'p-5'}`}>
+        <section className={`card ${print ? 'p-4' : 'p-5'}`}>
           <SectionTitle>{t('detail24.params')}</SectionTitle>
           <MonitoringParamsTable session={s} print={print} />
         </section>
@@ -338,7 +341,7 @@ function KpiRow({ s }: { s: Monitoring24hSession }) {
 // ── Card degli indici (Parte D) ──────────────────────────────────────────────
 
 function ReserveCard({ s }: { s: Monitoring24hSession }) {
-  const { t, locale, print } = useMon()
+  const { t, locale, print, pro } = useMon()
   const a = s.summary?.advanced
   const r = a?.reserve
   const tz = s.tz_offset_minutes
@@ -353,6 +356,7 @@ function ReserveCard({ s }: { s: Monitoring24hSession }) {
       text={indexText('reserve', locale)}
       icon={BatteryCharging}
       print={print}
+      pro={pro}
       unavailableReason={a?.unavailable?.reserve ?? null}
       value={r ? reserveLabel(delta, locale) : null}
       level={r ? level.reserve(delta) : null}
@@ -362,7 +366,7 @@ function ReserveCard({ s }: { s: Monitoring24hSession }) {
 }
 
 function PausesCard({ s }: { s: Monitoring24hSession }) {
-  const { t, locale, m, print } = useMon()
+  const { t, locale, m, print, pro } = useMon()
   const a = s.summary?.advanced
   const p = a?.pauses
   const tz = s.tz_offset_minutes
@@ -375,6 +379,7 @@ function PausesCard({ s }: { s: Monitoring24hSession }) {
       text={indexText('recovery_pauses', locale)}
       icon={PauseCircle}
       print={print}
+      pro={pro}
       unavailableReason={a?.unavailable?.recovery_pauses ?? null}
       unreliable={a?.unreliable?.includes('recovery_pauses')}
       value={p ? `${p.count}` : null}
@@ -386,7 +391,7 @@ function PausesCard({ s }: { s: Monitoring24hSession }) {
 }
 
 function StretchCard({ s }: { s: Monitoring24hSession }) {
-  const { locale, m, print } = useMon()
+  const { locale, m, print, pro } = useMon()
   const a = s.summary?.advanced
   const ls = a?.longest_stretch
   const tz = s.tz_offset_minutes
@@ -395,6 +400,7 @@ function StretchCard({ s }: { s: Monitoring24hSession }) {
       text={indexText('longest_stretch', locale)}
       icon={Minus}
       print={print}
+      pro={pro}
       unavailableReason={a?.unavailable?.longest_stretch ?? null}
       unreliable={a?.unreliable?.includes('longest_stretch')}
       value={ls ? duration(ls.minutes) : null}
@@ -405,7 +411,7 @@ function StretchCard({ s }: { s: Monitoring24hSession }) {
 }
 
 function PeakCard({ s }: { s: Monitoring24hSession }) {
-  const { t, locale, print } = useMon()
+  const { t, locale, print, pro } = useMon()
   const peak = s.summary?.peak_stress_time ?? null
   const tz = s.tz_offset_minutes
   return (
@@ -413,6 +419,7 @@ function PeakCard({ s }: { s: Monitoring24hSession }) {
       text={indexText('peak', locale)}
       icon={Bolt}
       print={print}
+      pro={pro}
       unavailableReason={peak ? null : t('detail24.cards.peakUnavailable')}
       value={peak ? hm(peak, tz) : null}
       detail={peak ? dayPart(peak, tz, s.night, t) : null}
@@ -421,7 +428,7 @@ function PeakCard({ s }: { s: Monitoring24hSession }) {
 }
 
 function ReturnCard({ s }: { s: Monitoring24hSession }) {
-  const { t, locale, m, print } = useMon()
+  const { t, locale, m, print, pro } = useMon()
   const a = s.summary?.advanced
   const rt = a?.return_times
   const tz = s.tz_offset_minutes
@@ -436,6 +443,7 @@ function ReturnCard({ s }: { s: Monitoring24hSession }) {
       text={indexText('return_time', locale)}
       icon={Repeat}
       print={print}
+      pro={pro}
       unavailableReason={a?.unavailable?.return_time ?? null}
       unreliable={a?.unreliable?.includes('return_time')}
       value={rt?.median == null ? null : `${Math.round(rt.median)}`}
@@ -447,7 +455,7 @@ function ReturnCard({ s }: { s: Monitoring24hSession }) {
 }
 
 function DcCard({ s }: { s: Monitoring24hSession }) {
-  const { t, locale, n, print } = useMon()
+  const { t, locale, n, print, pro } = useMon()
   const a = s.summary?.advanced
   const pr = a?.prsa
   return (
@@ -455,17 +463,19 @@ function DcCard({ s }: { s: Monitoring24hSession }) {
       text={indexText('dc', locale)}
       icon={MoveDownRight}
       print={print}
+      pro={pro}
       unavailableReason={a?.unavailable?.dc ?? null}
       value={pr?.dc == null ? null : n(pr.dc, 1)}
       unit="ms"
       level={pr?.dc == null ? null : level.dc(pr.dc)}
-      detail={pr ? t('detail24.cards.dcDetail', { n: pr.n_dec, beats: pr.beats }) : null}
+      // Ancoraggi e battiti usati: dettaglio tecnico, solo al professionista (come il report dell'app).
+      detail={pr && pro ? t('detail24.cards.dcDetail', { n: pr.n_dec, beats: pr.beats }) : null}
     />
   )
 }
 
 function AcCard({ s }: { s: Monitoring24hSession }) {
-  const { t, locale, n, print } = useMon()
+  const { t, locale, n, print, pro } = useMon()
   const a = s.summary?.advanced
   const pr = a?.prsa
   return (
@@ -473,11 +483,12 @@ function AcCard({ s }: { s: Monitoring24hSession }) {
       text={indexText('ac', locale)}
       icon={MoveUpRight}
       print={print}
+      pro={pro}
       unavailableReason={a?.unavailable?.ac ?? null}
       value={pr?.ac == null ? null : n(pr.ac, 1)}
       unit="ms"
       level={pr?.ac == null ? null : level.ac(pr.ac)}
-      detail={pr ? t('detail24.cards.acDetail', { n: pr.n_acc }) : null}
+      detail={pr && pro ? t('detail24.cards.acDetail', { n: pr.n_acc }) : null}
     />
   )
 }
@@ -505,7 +516,7 @@ function FragmentationCard({ s, full = false }: { s: Monitoring24hSession; full?
 }
 
 function RespirationCard({ s, where }: { s: Monitoring24hSession; where: 'day' | 'night' }) {
-  const { t, locale, m, print } = useMon()
+  const { t, locale, m, print, pro } = useMon()
   const a = s.summary?.advanced
   const resp = a?.respiration
   if (where === 'night') {
@@ -514,6 +525,7 @@ function RespirationCard({ s, where }: { s: Monitoring24hSession; where: 'day' |
         text={indexText('respiration', locale)}
         icon={AIR}
         print={print}
+        pro={pro}
         unavailableReason={resp?.night == null ? (a?.unavailable?.respiration ?? t('detail24.cards.respNightUnavailable')) : null}
         value={resp?.night == null ? null : `${Math.round(resp.night)}`}
         unit={m('unit_bpm_night')}
@@ -527,6 +539,7 @@ function RespirationCard({ s, where }: { s: Monitoring24hSession; where: 'day' |
       text={indexText('respiration', locale)}
       icon={AIR}
       print={print}
+      pro={pro}
       unavailableReason={a?.unavailable?.respiration ?? null}
       value={dayVal == null ? null : `${Math.round(dayVal)}`}
       unit={resp?.day != null ? m('unit_bpm_day') : t('detail24.cards.breathsPerMin')}
@@ -554,7 +567,7 @@ function nightTrendText(trend: number | null | undefined, m: (k: string) => stri
 }
 
 function NightSection({ s }: { s: Monitoring24hSession }) {
-  const { t, locale, m, n, print } = useMon()
+  const { t, locale, m, n, print, pro } = useMon()
   const night = s.night
   const a = s.summary?.advanced
   const tz = s.tz_offset_minutes
@@ -586,18 +599,19 @@ function NightSection({ s }: { s: Monitoring24hSession }) {
   const episodes = night.awakenings_estimate ?? 0
 
   return (
-    <section className={`card space-y-4 ${print ? 'p-4 print-break-before' : 'p-5'}`}>
+    <section className={`card space-y-4 ${print ? 'p-4' : 'p-5'}`}>
       <SectionTitle>{t('detail24.night')}</SectionTitle>
-      <div className="flex items-center gap-3">
+      <div className={`flex items-center gap-3 ${print ? 'print-avoid' : ''}`}>
         <Bed size={26} style={{ color: MON.accent }} />
         <div className="min-w-0">
           <div className="text-base font-extrabold text-anthracite">{hm(night.night_start, tz)} → {hm(night.night_end, tz)} · {duration(night.duration_minutes)}</div>
           <div className="text-[11px] text-anthracite-lighter">{night.detected ? t('night.detected') : t('night.fromEvents')}</div>
         </div>
       </div>
-      <div>
-        <div className="text-[13px] font-bold text-anthracite mb-2">{m('night_chart')}</div>
-        <MonitoringNightChart night={night} tz={tz} print={print} />
+      <div className={print ? 'print-avoid' : ''}>
+        {/* Al cliente la variabilità è chiamata con il suo nome, non con la sigla RMSSD. */}
+        <div className="text-[13px] font-bold text-anthracite mb-2">{pro ? m('night_chart') : t('simple.nightChart')}</div>
+        <MonitoringNightChart night={night} tz={tz} print={print} simple={!pro} />
         <div className="mt-1"><StateLegend compact /></div>
       </div>
       <div className={`grid gap-3 ${print ? 'grid-cols-3' : 'grid-cols-1 sm:grid-cols-3'}`}>
@@ -610,6 +624,7 @@ function NightSection({ s }: { s: Monitoring24hSession }) {
           text={indexText('night_recovery', locale)}
           icon={Bed}
           print={print}
+          pro={pro}
           unavailableReason={q == null ? (why ?? t('night.scoresUnavailable')) : null}
           value={q == null ? null : `${Math.round(q)}`}
           unit="/ 100"
@@ -620,6 +635,7 @@ function NightSection({ s }: { s: Monitoring24hSession }) {
           text={indexText('hr_dip', locale)}
           icon={TrendingDown}
           print={print}
+          pro={pro}
           unavailableReason={night.hr_dip_percentage == null ? (a?.unavailable?.hr_dip ?? t('night.dayRefMissing')) : null}
           value={night.hr_dip_percentage == null ? null : `−${Math.round(night.hr_dip_percentage)}`}
           unit="%"
@@ -629,6 +645,7 @@ function NightSection({ s }: { s: Monitoring24hSession }) {
           text={indexText('time_to_min', locale)}
           icon={Hourglass}
           print={print}
+          pro={pro}
           unavailableReason={a?.unavailable?.time_to_min ?? (ttm ? null : (a ? null : t('night.legacyAnalysis')))}
           value={ttm ? duration(ttm.min) : null}
           detail={ttm ? m('time_to_min_detail').replace('{hr}', ttm.hr == null ? '—' : `${Math.round(ttm.hr)}`).replace('{at}', hm(ttm.at, tz)) : null}
@@ -639,11 +656,13 @@ function NightSection({ s }: { s: Monitoring24hSession }) {
           text={indexText('rest_waves', locale)}
           icon={Waves}
           print={print}
+          pro={pro}
           unavailableReason={a?.unavailable?.rest_waves ?? (u ? null : (a ? null : t('night.legacyAnalysis')))}
           unreliable={a?.unreliable?.includes('rest_waves')}
           value={u ? (u.present ? m('waves_present') : m('waves_faint')) : null}
           level={u ? level.waves(u.present) : null}
-          detail={u && u.period != null ? t('night.wavesDetail', { p: u.period, c: n(u.cycles, 1), s: n(u.strength, 2) }) : null}
+          // Al cliente periodo e cicli (come il report dell'app), senza la forza.
+          detail={u && u.period != null ? (pro ? t('night.wavesDetail', { p: u.period, c: n(u.cycles, 1), s: n(u.strength, 2) }) : m('waves_detail').replace('{p}', `${u.period}`).replace('{c}', n(u.cycles, 1))) : null}
         />
         {profile !== 'breve' && <RespirationCard s={s} where="night" />}
         <div className={`card p-4 flex items-start gap-3 ${print ? 'print-avoid' : ''}`}>
@@ -652,7 +671,7 @@ function NightSection({ s }: { s: Monitoring24hSession }) {
             <div className="text-[13px] font-bold text-anthracite">{m('recovery_trend')}</div>
             <div className="text-xs font-bold" style={{ color: trendColor }}>{trendText}</div>
             <div className="mt-1 text-[11px] text-anthracite-lighter leading-relaxed">
-              {t('night.trendDetail', { first3h: m('first_3h'), last3h: m('last_3h'), first: night.recovery_first_3h == null ? '—' : Math.round(night.recovery_first_3h), last: night.recovery_last_3h == null ? '—' : Math.round(night.recovery_last_3h) })}
+              {t(pro ? 'night.trendDetail' : 'simple.nightTrendDetail', { first3h: m('first_3h'), last3h: m('last_3h'), first: night.recovery_first_3h == null ? '—' : Math.round(night.recovery_first_3h), last: night.recovery_last_3h == null ? '—' : Math.round(night.recovery_last_3h) })}
               {' · '}{t('night.episodes', { count: episodes })}
             </div>
           </div>
@@ -664,13 +683,16 @@ function NightSection({ s }: { s: Monitoring24hSession }) {
       {s.scores_morning && (
         <div className={`card p-4 ${print ? 'print-avoid' : ''}`}><MonitoringScoreBars scores={s.scores_morning} title={m('morning_scores')} /></div>
       )}
-      <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
-        <div className="text-[13px] font-bold text-anthracite mb-1">{t('night.paramsTitle')}</div>
-        <Kv k={t('night.rmssdMean')} v={`${n(night.rmssd_mean_night, 1)} ms`} />
-        <Kv k="ln RMSSD" v={n(night.ln_rmssd_night, 2)} />
-        <Kv k={t('night.sdnnMean')} v={`${n(night.sdnn_night, 1)} ms`} />
-        <Kv k={t('night.hoursAnalyzed')} v={`${night.hourly.length}`} />
-      </div>
+      {/* Parametri della notte (RMSSD, ln RMSSD, SDNN): solo professionista. */}
+      {pro && (
+        <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
+          <div className="text-[13px] font-bold text-anthracite mb-1">{t('night.paramsTitle')}</div>
+          <Kv k={t('night.rmssdMean')} v={`${n(night.rmssd_mean_night, 1)} ms`} />
+          <Kv k="ln RMSSD" v={n(night.ln_rmssd_night, 2)} />
+          <Kv k={t('night.sdnnMean')} v={`${n(night.sdnn_night, 1)} ms`} />
+          <Kv k={t('night.hoursAnalyzed')} v={`${night.hourly.length}`} />
+        </div>
+      )}
     </section>
   )
 }
@@ -712,7 +734,7 @@ function RhythmSection({ s }: { s: Monitoring24hSession }) {
     }) + (cos.indicative ? ` · ${m('clock_indicative')}` : '') + (cosLn && cosLn.amp != null ? `\n${t('rhythm.clockLn', { amp: n(cosLn.amp, 2), peak: cosLn.acro == null ? '—' : hourFraction(cosLn.acro) })}` : '')
     : null
   return (
-    <section className={`card ${print ? 'p-4 print-break-before' : 'p-5'}`}>
+    <section className={`card ${print ? 'p-4' : 'p-5'}`}>
       <SectionTitle sub={t('detail24.rhythmSub')}>{t('detail24.rhythm')}</SectionTitle>
       <div className={`grid gap-3 ${print ? 'grid-cols-2' : 'grid-cols-1 lg:grid-cols-2'}`}>
         <div className={print ? 'col-span-2' : 'lg:col-span-2'}>

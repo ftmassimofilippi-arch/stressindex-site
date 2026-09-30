@@ -1,0 +1,28 @@
+{
+  "simple": {
+    "hr": "Heart rate",
+    "hrv": "Variability",
+    "hrLabel": "Heart rate",
+    "hrvLabel": "Heartbeat variability (RMSSD)",
+    "nightChart": "Heartbeat variability per hour (bars) and heart rate (line)",
+    "nightTrendDetail": "{first3h}: variability {first} ms · {last3h}: {last} ms",
+    "eventHr": "Heart rate (bpm)",
+    "eventHrv": "Variability (ms)",
+    "sleep": {
+      "dropsPerHour": "Oxygen drops per hour",
+      "dropsPerHourHint": "drops of at least 3 points per hour of recording",
+      "timeBelow90": "Time with oxygen below 90 %",
+      "oxyMean": "Mean oxygenation",
+      "oxyLowest": "Lowest value of the night",
+      "drops": "Oxygen drops",
+      "dropsValue": "{count, plural, one {# drop} other {# drops}}, of which {count4} of at least 4 points",
+      "prBasal": "Resting pulse",
+      "spo2ChartHint": "Mean oxygenation per minute; red band below 90 %; red dots at the oxygen drops.",
+      "prChartHint": "Mean pulse per minute; green line = resting pulse of the night.",
+      "eventsTitle": "Oxygen drops ({count})",
+      "eventLowest": "Lowest",
+      "moreEvents": "{count, plural, one {# further drop not listed} other {# further drops not listed}}",
+      "noEvents": "No significant oxygen drop during the night."
+    }
+  }
+}

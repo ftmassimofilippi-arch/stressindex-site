@@ -6,7 +6,8 @@ import { monT, type Lang } from '@/lib/monitoring-strings'
 // Grafico della notte (MonitoringNightChart dell'app): barre orarie di RMSSD
 // su sfondo colorato per stato prevalente dell'ora, linea HR sovrapposta.
 // `print`: larghezza della card di stampa, senza scroll orizzontale.
-export function MonitoringNightChart({ night, tz, height = 190, print = false }: { night: MonitoringNight; tz: number; height?: number; print?: boolean }) {
+// `simple`: etichette senza sigle (report cliente): "Variabilità" e "Battito".
+export function MonitoringNightChart({ night, tz, height = 190, print = false, simple = false }: { night: MonitoringNight; tz: number; height?: number; print?: boolean; simple?: boolean }) {
   const t = useTranslations('monitoring')
   const locale = useLocale() as Lang
   const hours = night.hourly ?? []
@@ -46,10 +47,10 @@ export function MonitoringNightChart({ night, tz, height = 190, print = false }:
         {hours.map((h, i) => h.mean_hr == null ? null : (
           <circle key={`c${i}`} cx={left + i * colW + colW / 2} cy={yHr(h.mean_hr)} r={2.5} fill={STATE_COLOR.stress} />
         ))}
-        <text x={0} y={top + 8} fontSize={9} fill={MON.accent}>RMSSD</text>
+        <text x={0} y={top + 8} fontSize={9} fill={MON.accent}>{simple ? t('simple.hrv') : 'RMSSD'}</text>
         <text x={0} y={top + 20} fontSize={9} fill={MON.textMuted}>{Math.round(rmssdMax)}</text>
         <text x={0} y={top + plotH} fontSize={9} fill={MON.textMuted}>0</text>
-        <text x={W - right + 4} y={top + 8} fontSize={9} fill={STATE_COLOR.stress}>HR</text>
+        <text x={W - right + 4} y={top + 8} fontSize={9} fill={STATE_COLOR.stress}>{simple ? t('simple.hr') : 'HR'}</text>
         <text x={W - right + 4} y={top + 20} fontSize={9} fill={MON.textMuted}>{hrMax}</text>
         <text x={W - right + 4} y={top + plotH} fontSize={9} fill={MON.textMuted}>{hrMin}</text>
         {hours.map((h, i) => (n > 8 && i % 2 === 1) ? null : (

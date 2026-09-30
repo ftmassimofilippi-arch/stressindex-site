@@ -1,0 +1,39 @@
+{
+  "bandDescriptions": {
+    "stress": {
+      "low": "Livello di stress basso, buon equilibrio.",
+      "balance": "Stress fisiologico, ben gestito.",
+      "medium": "Attivazione moderata o segni di carico accumulato.",
+      "high": "Stress elevato e ridotta capacità di adattamento.",
+      "fatigue": "Sotto forte pressione, riserve di energia molto ridotte."
+    },
+    "recovery": {
+      "insufficient": "Recupero insufficiente: il corpo fatica a rilassarsi e ricaricarsi.",
+      "poor": "Recupero scarso: serve più riposo di qualità.",
+      "moderate": "Recupero moderato, con margini di miglioramento.",
+      "good": "Buon recupero: il corpo si rigenera bene.",
+      "optimal": "Recupero ottimale: ottima capacità di rilassarsi e ricaricarsi."
+    },
+    "balance": {
+      "strongImbalance": "Forte sbilanciamento fra attivazione e recupero.",
+      "moderateImbalance": "Sbilanciamento moderato fra attivazione e recupero.",
+      "sufficient": "Equilibrio sufficiente fra carica e recupero.",
+      "good": "Buon equilibrio fra carica e recupero.",
+      "optimal": "Equilibrio ottimale: accelerare e rallentare avviene con facilità."
+    },
+    "energy": {
+      "depleted": "Energia esaurita: riserve molto basse.",
+      "low": "Energia bassa: poche riserve disponibili.",
+      "moderate": "Energia moderata: riserve discrete.",
+      "good": "Buona energia: buona disponibilità di risorse.",
+      "full": "Energia piena: ottima disponibilità di risorse."
+    },
+    "adaptation": {
+      "fragile": "Capacità di adattamento fragile: attenzione ai carichi.",
+      "toImprove": "Capacità di adattamento da migliorare.",
+      "reduced": "Capacità di recupero ridotta, da tenere sotto osservazione.",
+      "good": "Buona capacità di adattarsi ai carichi e tornare in equilibrio.",
+      "excellent": "Eccellente capacità di adattarsi ai carichi e tornare in equilibrio."
+    }
+  }
+}

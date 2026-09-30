@@ -57,7 +57,11 @@ export function MonitoringTrendChart({ windows, start, end, tz, events = [], nig
   const opt = options.find((o) => o.key === key) ?? options[0]
 
   if (print) {
-    const printOpts = PRINT_KEYS.map((k) => options.find((o) => o.key === k)).filter((o): o is ParamOption => !!o)
+    // Report cliente: le due curve con il loro nome per esteso, non con la sola sigla.
+    const printOpts = PRINT_KEYS
+      .map((k) => options.find((o) => o.key === k))
+      .filter((o): o is ParamOption => !!o)
+      .map((o) => (pro ? o : { ...o, label: o.key === 'hr' ? t('simple.hrLabel') : t('simple.hrvLabel') }))
     return (
       <div className="space-y-4">
         {printOpts.map((o) => (

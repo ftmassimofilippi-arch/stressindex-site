@@ -90,7 +90,7 @@ export function MonitoringEvents({ sessionId, events, tz, start, end, night, rea
         <p className="py-6 text-center text-sm text-anthracite-lighter leading-relaxed">{t('events.empty')}</p>
       )}
       {sorted.map((e) => (
-        <EventCard key={e.id} event={e} tz={tz} night={night} readOnly={readOnly} print={print} onEdit={() => setEditing(e)} onDelete={() => setDeleting(e)} />
+        <EventCard key={e.id} event={e} tz={tz} night={night} readOnly={readOnly} print={print} pro={pro} onEdit={() => setEditing(e)} onDelete={() => setDeleting(e)} />
       ))}
       {pro && (
         <p className="text-[10.5px] text-anthracite-lighter leading-relaxed">{t('events.howComputed', { method: text.method, req: text.req })}</p>
@@ -128,7 +128,7 @@ export function MonitoringEvents({ sessionId, events, tz, start, end, night, rea
   )
 }
 
-function EventCard({ event, tz, night, readOnly, print = false, onEdit, onDelete }: { event: MonitoringEvent; tz: number; night: MonitoringNight | null; readOnly: boolean; print?: boolean; onEdit: () => void; onDelete: () => void }) {
+function EventCard({ event, tz, night, readOnly, print = false, pro = true, onEdit, onDelete }: { event: MonitoringEvent; tz: number; night: MonitoringNight | null; readOnly: boolean; print?: boolean; pro?: boolean; onEdit: () => void; onDelete: () => void }) {
   const t = useTranslations('monitoring')
   const locale = useLocale() as Lang
   const r = event.response
@@ -166,14 +166,15 @@ function EventCard({ event, tz, night, readOnly, print = false, onEdit, onDelete
               </tr>
             </thead>
             <tbody className="text-anthracite">
+              {/* Al cliente le due righe con il nome per esteso (report cliente dell'app). */}
               <tr>
-                <td className="py-1 font-bold">HR (bpm)</td>
+                <td className="py-1 font-bold">{pro ? 'HR (bpm)' : t('simple.eventHr')}</td>
                 <td className="py-1 text-right tabular-nums">{r.hr_before == null ? '—' : Math.round(r.hr_before)}</td>
                 <td className="py-1 text-right tabular-nums">{r.hr_after == null ? '—' : Math.round(r.hr_after)}{delta(r.delta_hr)}</td>
                 <td className="py-1 text-right tabular-nums">{r.hr_late == null ? '—' : Math.round(r.hr_late)}{delta(r.delta_hr_late)}</td>
               </tr>
               <tr>
-                <td className="py-1 font-bold">RMSSD (ms)</td>
+                <td className="py-1 font-bold">{pro ? 'RMSSD (ms)' : t('simple.eventHrv')}</td>
                 <td className="py-1 text-right tabular-nums">{fmtRm(r.ln_rmssd_before)}</td>
                 <td className="py-1 text-right tabular-nums">{fmtRm(r.ln_rmssd_after)}{r.delta_ln_rmssd_pct == null ? '' : ` (${r.delta_ln_rmssd_pct >= 0 ? '+' : ''}${Math.round(r.delta_ln_rmssd_pct)}%)`}</td>
                 <td className="py-1 text-right tabular-nums">{fmtRm(r.ln_rmssd_late)}</td>

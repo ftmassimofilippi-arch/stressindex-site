@@ -7,7 +7,11 @@ import { resolvePrintAccess } from '@/lib/print-access'
 import { getMonitoringSession } from '@/lib/monitoring-data'
 import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
 import { loadOwnerProfile } from '@/lib/report-data'
-import { isSleepSession } from '@/lib/monitoring-types'
+import { isSleepSession, type MonitoringSession } from '@/lib/monitoring-types'
+import type { ProfessionalProfile } from '@/lib/types'
+import { fixtureProfessional, fixturesEnabled } from '@/lib/print-fixtures'
+import { fixtureMonitoring24hSession, fixtureSleepSession, isMonitoringFixtureKind } from '@/lib/print-fixtures-monitoring'
+import type { Lang } from '@/lib/monitoring-strings'
 import {
   duration, effectiveProfile, periodLabel, profileLabel, signalQualityLabel, sleepCoverageLabel, typeLabel,
 } from '@/lib/monitoring-format'
@@ -20,28 +24,45 @@ export const dynamic = 'force-dynamic'
 // tutto espanso). Aperta da Chrome headless dalla route
 // /api/pdf/monitoraggio/[id]?variant=pro|client.
 //
+// `variant=client` è il report per il cliente: stesse semplificazioni della
+// dashboard cliente e del PDF legacy (nomi semplici, niente sigle non
+// spiegate, niente "Come si calcola", Mappa delle ore, Ritmo e Parametri).
+//
 // Solo la via con sessione (cookie) è supportata: getMonitoringSession legge
 // con la sessione utente (RLS) e con il ponte service_role del professionista
 // loggato, quindi la via "solo token" non ha un client da cui leggere.
+// Fuori produzione (o con PDF_FIXTURES=true) `?fixture=sleep|24h` mostra dati
+// di simulazione senza sessione, per verificare i layout.
+async function loadForPrint(id: string, lang: Lang, searchParams?: { token?: string; fixture?: string }): Promise<{ session: MonitoringSession; professional: ProfessionalProfile | null }> {
+  if (fixturesEnabled() && isMonitoringFixtureKind(searchParams?.fixture)) {
+    return {
+      session: searchParams!.fixture === 'sleep' ? fixtureSleepSession(lang) : fixtureMonitoring24hSession(lang),
+      professional: fixtureProfessional(),
+    }
+  }
+  const access = await resolvePrintAccess(searchParams?.token, { kind: 'monitoring', id })
+  if (!access.ok || access.viaToken) notFound()
+  const { supabase, userId } = access
+
+  const session = await getMonitoringSession(id, userId)
+  if (!session) notFound()
+  if (filterMonitoringByModules([session], await getMyAccountAccess()).length === 0) notFound()
+
+  const ownerId = session.professionista_id ?? userId
+  return { session, professional: await loadOwnerProfile(supabase, ownerId) }
+}
+
 export default async function PrintMonitoringPage({
   params,
   searchParams,
 }: {
   params: { locale: string; id: string }
-  searchParams?: { token?: string; variant?: string }
+  searchParams?: { token?: string; variant?: string; fixture?: string }
 }) {
-  const access = await resolvePrintAccess(searchParams?.token, { kind: 'monitoring', id: params.id })
-  if (!access.ok || access.viaToken) notFound()
-  const { supabase, userId } = access
-
-  const session = await getMonitoringSession(params.id, userId)
-  if (!session) notFound()
-  if (filterMonitoringByModules([session], await getMyAccountAccess()).length === 0) notFound()
-
-  const ownerId = session.professionista_id ?? userId
-  const professional = await loadOwnerProfile(supabase, ownerId)
-
   const locale = await getLocale()
+  // `const` (non `let`): il tipo discriminato si restringe con isSleepSession più sotto.
+  const { session, professional } = await loadForPrint(params.id, locale as Lang, searchParams)
+
   const t = await getTranslations('print')
   const tMon = await getTranslations('monitoring')
   const tPdf = await getTranslations('pdf.common')
@@ -103,17 +124,17 @@ export default async function PrintMonitoringPage({
         </div>
       </section>
 
-      {/* 2. Le stesse sezioni della dashboard */}
+      {/* 2. Le stesse sezioni della dashboard (senza salti pagina forzati: le card si accodano) */}
       <div className="mt-6">
         {sleep ? (
-          <SleepDetail session={session} readOnly print />
+          <SleepDetail session={session} readOnly print pro={pro} />
         ) : (
           <Monitoring24hDetail session={session} readOnly print pro={pro} />
         )}
       </div>
 
       {/* 3. Disclaimer completo */}
-      <PrintSection title={t('disclaimer.title')} className="print-break-before">
+      <PrintSection title={t('disclaimer.title')} avoid>
         <div className="print-card p-4 text-[10px] leading-relaxed text-anthracite-light space-y-2">
           <p>{tPdf('disclaimerPart1')}</p>
           <p>{tPdf('disclaimerPart2')}</p>

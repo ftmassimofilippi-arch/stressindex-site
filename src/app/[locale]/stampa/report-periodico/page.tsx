@@ -25,8 +25,9 @@ export default async function PrintPeriodicReportPage({
   searchParams,
 }: {
   params: { locale: string }
-  searchParams?: { clientId?: string; from?: string; to?: string; token?: string; fixture?: string }
+  searchParams?: { clientId?: string; from?: string; to?: string; token?: string; fixture?: string; variant?: string }
 }) {
+  const clientVariant = searchParams?.variant === 'client'
   const from = searchParams?.from
   const to = searchParams?.to
   if (!from || !to || !ISO_DATE.test(from) || !ISO_DATE.test(to) || from > to) notFound()
@@ -118,8 +119,8 @@ export default async function PrintPeriodicReportPage({
   return (
     <PrintShell clientLine={fullName(client)} dateLine={periodLabel} professional={professional}>
       <section className="print-card p-5">
-        <h1 className="font-serif text-[24px] leading-tight text-anthracite">{t('report.title')}</h1>
-        <p className="text-[11px] text-anthracite-lighter mt-1">{t('report.subtitle')}</p>
+        <h1 className="font-serif text-[24px] leading-tight text-anthracite">{clientVariant ? t('client.reportTitle') : t('report.title')}</h1>
+        <p className="text-[11px] text-anthracite-lighter mt-1">{clientVariant ? t('client.reportSubtitle') : t('report.subtitle')}</p>
         <div className="grid grid-cols-4 gap-x-4 gap-y-3 mt-4">
           <PrintKv label={t('cover.client')} value={fullName(client) || tPdfCommon('clientFallback')} />
           <PrintKv label={t('cover.age')} value={clientAge != null ? t('cover.years', { count: clientAge }) : '—'} />
@@ -161,7 +162,9 @@ export default async function PrintPeriodicReportPage({
                     <div className="text-[9px] uppercase tracking-wide text-anthracite-lighter truncate">{tScores(SCORE_NAME_KEYS[k])}</div>
                     <div className="font-serif text-[26px] leading-none text-anthracite mt-1">{cur.mean == null ? '—' : num(cur.mean, 0, locale)}</div>
                     <div className="text-[9px] text-anthracite-lighter mt-1">
-                      {t('report.mean')} · min {cur.min == null ? '—' : num(cur.min, 0, locale)} · max {cur.max == null ? '—' : num(cur.max, 0, locale)}
+                      {clientVariant
+                        ? t('report.mean')
+                        : `${t('report.mean')} · min ${cur.min == null ? '—' : num(cur.min, 0, locale)} · max ${cur.max == null ? '—' : num(cur.max, 0, locale)}`}
                     </div>
                     <div className="text-[10px] font-medium mt-1" style={{ color: d ? SCORE_COLORS[k] : '#8A94A0' }}>
                       {d ?? t('report.previousNone')}
@@ -204,7 +207,8 @@ export default async function PrintPeriodicReportPage({
             </PrintSection>
           )}
 
-          {/* Elenco misurazioni */}
+          {/* Elenco misurazioni (solo versione professionista) */}
+          {!clientVariant && (
           <PrintSection title={t('report.listTitle')}>
             <div className="print-card overflow-hidden">
               <table className="w-full text-[9.5px]">
@@ -234,11 +238,12 @@ export default async function PrintPeriodicReportPage({
               </table>
             </div>
           </PrintSection>
+          )}
         </>
       )}
 
-      {/* Sport (Piano Pro) */}
-      {sport && (
+      {/* Sport (Piano Pro, solo versione professionista) */}
+      {sport && !clientVariant && (
         <PrintSection title={t('report.sportTitle')} subtitle={t('report.sportSubtitle')} avoid>
           {sport.length === 0 ? (
             <div className="print-card p-4 text-[10.5px] text-anthracite-lighter">{t('report.noSport')}</div>

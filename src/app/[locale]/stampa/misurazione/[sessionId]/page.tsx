@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { PrintShell, PrintSection, PrintKv } from '@/components/print/PrintShell'
 import { GaugeScore } from '@/components/dashboard/GaugeScore'
+import { gaugeZoneKey } from '@/lib/gauge-zones'
 import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
 import { PoincareScatter, Rhythmogram, PsdPlaceholder, PsdPie } from '@/app/[locale]/area-professionisti/clienti/[id]/misurazione/[sessionId]/HrvCharts'
 import { HrvParamsTable, ParamsSummaryCard } from '@/app/[locale]/area-professionisti/clienti/[id]/misurazione/[sessionId]/HrvParamsTable'
@@ -35,8 +36,9 @@ export default async function PrintMeasurementPage({
   searchParams,
 }: {
   params: { locale: string; sessionId: string }
-  searchParams?: { clientId?: string; token?: string; fixture?: string }
+  searchParams?: { clientId?: string; token?: string; fixture?: string; variant?: string }
 }) {
+  const clientVariant = searchParams?.variant === 'client'
   let measurement: MeasurementWithNotes
   let client: Client
   let professional: ProfessionalProfile | null
@@ -96,8 +98,110 @@ export default async function PrintMeasurementPage({
     { scheme: 'adaptation' as const, value: measurement.score_modulazione_infiammatoria, d: delta(measurement.score_modulazione_infiammatoria, previous?.score_modulazione_infiammatoria) },
   ]
 
+  const tBands = await getTranslations('scores.bands')
+  const tDesc = await getTranslations('scores.bandDescriptions')
+  const dateLine = `${formatMeasuredAt(measurement, locale)} · ${typeLabel}`
+
+  if (clientVariant) {
+    // Versione per il cliente: solo i 5 score con i tachimetri, bilancio
+    // sintetico, ritmogramma, indicazioni e disclaimer. Niente tabelle di
+    // parametri né sigle tecniche.
+    return (
+      <PrintShell clientLine={fullName(client)} dateLine={dateLine} professional={professional}>
+        <section className="print-card p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="font-serif text-[24px] leading-tight text-anthracite">{t('client.measurementTitle')}</h1>
+              <p className="text-[11px] text-anthracite-lighter mt-1">{t('client.measurementSubtitle')}</p>
+            </div>
+            <MeasurementTypeBadge testType={measurement.test_type} />
+          </div>
+          <div className="grid grid-cols-4 gap-x-4 gap-y-3 mt-4">
+            <PrintKv label={t('cover.client')} value={fullName(client) || tPdf('clientFallback')} />
+            <PrintKv label={t('cover.dateTime')} value={formatMeasuredAt(measurement, locale)} />
+            <PrintKv label={t('cover.duration')} value={formatDurationHuman(measurement.duration_seconds)} />
+            <PrintKv label={t('cover.testType')} value={typeLabel} />
+            {pro.length > 0 && (
+              <div className="col-span-4">
+                <PrintKv label={t('cover.professional')} value={pro.slice(0, 3).join(' · ')} />
+              </div>
+            )}
+          </div>
+        </section>
+
+        <PrintSection title={t('client.scoresTitle')} subtitle={t('client.scoresSubtitle')} avoid>
+          <div className="grid grid-cols-5 gap-2">
+            {scores.map((s) => (
+              <GaugeScore key={s.scheme} label={tScores(s.scheme)} value={s.value} colorScheme={s.scheme} delta={s.d} print />
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div className="print-card p-4">
+              <div className="font-serif text-[14px] text-anthracite">{t('measurement.compositeTitle')}</div>
+              <div className="text-[10px] text-anthracite-lighter">{t('measurement.compositeSubtitle')}</div>
+              <div className="flex items-baseline gap-1.5 mt-2">
+                <span className="font-serif text-[34px] leading-none text-anthracite">{num(measurement.score_composito, 0, locale)}</span>
+                <span className="text-[10px] text-anthracite-lighter">/ 100</span>
+              </div>
+            </div>
+            <div className="print-card p-4">
+              <div className="font-serif text-[14px] text-anthracite">{t('measurement.adaptationTitle')}</div>
+              <div className="text-[10px] text-anthracite-lighter">{t('measurement.adaptationSubtitle')}</div>
+              <div className="flex items-baseline gap-1.5 mt-2">
+                <span className="font-serif text-[34px] leading-none text-anthracite">{num(measurement.score_modulazione_infiammatoria, 0, locale)}</span>
+                <span className="text-[10px] text-anthracite-lighter">/ 100</span>
+              </div>
+            </div>
+          </div>
+        </PrintSection>
+
+        <PrintSection title={t('client.readingTitle')} avoid>
+          <div className="print-card p-4 divide-y divide-surface-border">
+            {scores.map((s) => {
+              const zone = s.value != null ? gaugeZoneKey(s.scheme, s.value) : null
+              return (
+                <div key={s.scheme} className="py-2 flex items-baseline gap-3 text-[10.5px]">
+                  <span className="w-28 shrink-0 font-medium text-anthracite">{tScores(s.scheme)}</span>
+                  {zone ? (
+                    <span className="text-anthracite-light">
+                      <span className="font-medium text-anthracite">{tBands(`${s.scheme}.${zone}`)}.</span> {tDesc(`${s.scheme}.${zone}`)}
+                    </span>
+                  ) : (
+                    <span className="text-anthracite-lighter">—</span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </PrintSection>
+
+        {typeKey !== 'orthostatic' && (
+          <PrintSection title={t('client.rhythmTitle')} subtitle={t('client.rhythmSubtitle')} avoid>
+            <div className="print-card p-4">
+              <Rhythmogram rr={measurement.rr_intervals ?? null} print width={640} height={220} />
+            </div>
+          </PrintSection>
+        )}
+
+        {measurement.indicazioni && (
+          <PrintSection title={t('client.indicationsTitle')} avoid>
+            <div className="print-card p-4 text-[10.5px] whitespace-pre-wrap">{measurement.indicazioni}</div>
+          </PrintSection>
+        )}
+
+        <PrintSection title={t('disclaimer.title')} avoid>
+          <div className="print-card p-4 text-[10px] leading-relaxed text-anthracite-light space-y-2">
+            <p>{tPdf('disclaimerPart1')}</p>
+            <p>{tPdf('disclaimerPart2')}</p>
+            <p className="text-anthracite-lighter">{t('disclaimer.generated', { site: 'stressindex.io', date: todayLong(locale) })}</p>
+          </div>
+        </PrintSection>
+      </PrintShell>
+    )
+  }
+
   return (
-    <PrintShell clientLine={fullName(client)} dateLine={`${formatMeasuredAt(measurement, locale)} · ${typeLabel}`} professional={professional}>
+    <PrintShell clientLine={fullName(client)} dateLine={dateLine} professional={professional}>
       {/* 1. Copertina compatta */}
       <section className="print-card p-5">
         <div className="flex items-start justify-between gap-4">

@@ -96,7 +96,7 @@ export function LevelChip({ level, size }: { level: IndexLevel; size?: 'sm' | 'm
 /** Titolo di sezione con il colore accento del modulo. */
 export function SectionTitle({ children, sleep, sub }: { children: React.ReactNode; sleep?: boolean; sub?: string }) {
   return (
-    <div className="mb-3 min-w-0">
+    <div className="mb-3 min-w-0 print-section-title">
       <h2 className="font-serif text-lg break-words" style={{ color: sleep ? MON.sleepDark : MON.accentDark }}>{children}</h2>
       {sub && <p className="text-xs text-anthracite-lighter mt-0.5">{sub}</p>}
     </div>

@@ -1,0 +1,16 @@
+{
+  "client": {
+    "suffix": "cliente",
+    "measurementTitle": "Il tuo report HRV",
+    "measurementSubtitle": "Come sta il tuo sistema nervoso oggi",
+    "scoresTitle": "I tuoi 5 score",
+    "scoresSubtitle": "Ogni score va da 0 a 100. La variazione è rispetto alla misurazione precedente.",
+    "rhythmTitle": "Il tuo battito durante la misurazione",
+    "rhythmSubtitle": "La distanza fra un battito e il successivo: più varia a riposo, meglio è.",
+    "readingTitle": "In sintesi",
+    "reportTitle": "Il tuo andamento",
+    "reportSubtitle": "Come sono cambiati i tuoi score nel periodo",
+    "indicationsTitle": "Indicazioni del tuo professionista",
+    "fileType": "Cliente"
+  }
+}

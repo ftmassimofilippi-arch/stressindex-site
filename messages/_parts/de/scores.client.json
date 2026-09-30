@@ -1,0 +1,39 @@
+{
+  "bandDescriptions": {
+    "stress": {
+      "low": "Niedriges Stressniveau, gutes Gleichgewicht.",
+      "balance": "Physiologischer Stress, gut bewältigt.",
+      "medium": "Mäßige Aktivierung oder Anzeichen angesammelter Belastung.",
+      "high": "Hoher Stress und verminderte Anpassungsfähigkeit.",
+      "fatigue": "Unter starkem Druck, Energiereserven stark reduziert."
+    },
+    "recovery": {
+      "insufficient": "Unzureichende Erholung: Der Körper kann sich schwer entspannen und aufladen.",
+      "poor": "Schwache Erholung: Es braucht mehr Ruhe von guter Qualität.",
+      "moderate": "Mäßige Erholung mit Verbesserungspotenzial.",
+      "good": "Gute Erholung: Der Körper regeneriert gut.",
+      "optimal": "Optimale Erholung: ausgezeichnete Fähigkeit, sich zu entspannen und aufzuladen."
+    },
+    "balance": {
+      "strongImbalance": "Starkes Ungleichgewicht zwischen Aktivierung und Erholung.",
+      "moderateImbalance": "Mäßiges Ungleichgewicht zwischen Aktivierung und Erholung.",
+      "sufficient": "Ausreichendes Gleichgewicht zwischen Antrieb und Erholung.",
+      "good": "Gutes Gleichgewicht zwischen Antrieb und Erholung.",
+      "optimal": "Optimales Gleichgewicht: Hoch- und Herunterfahren gelingt mühelos."
+    },
+    "energy": {
+      "depleted": "Energie erschöpft: sehr geringe Reserven.",
+      "low": "Niedrige Energie: wenige Reserven verfügbar.",
+      "moderate": "Mäßige Energie: ordentliche Reserven.",
+      "good": "Gute Energie: Ressourcen gut verfügbar.",
+      "full": "Volle Energie: ausgezeichnete Ressourcen verfügbar."
+    },
+    "adaptation": {
+      "fragile": "Fragile Anpassungsfähigkeit: auf Belastungen achten.",
+      "toImprove": "Anpassungsfähigkeit zu verbessern.",
+      "reduced": "Verminderte Erholungsfähigkeit, zu beobachten.",
+      "good": "Gute Fähigkeit, sich an Belastungen anzupassen und ins Gleichgewicht zurückzufinden.",
+      "excellent": "Ausgezeichnete Fähigkeit, sich an Belastungen anzupassen und ins Gleichgewicht zurückzufinden."
+    }
+  }
+}

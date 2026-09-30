@@ -1,0 +1,16 @@
+{
+  "client": {
+    "suffix": "client",
+    "measurementTitle": "Your HRV report",
+    "measurementSubtitle": "How your nervous system is doing today",
+    "scoresTitle": "Your 5 scores",
+    "scoresSubtitle": "Each score goes from 0 to 100. The change is versus your previous measurement.",
+    "rhythmTitle": "Your heartbeat during the measurement",
+    "rhythmSubtitle": "The gap between one beat and the next: the more it varies at rest, the better.",
+    "readingTitle": "In short",
+    "reportTitle": "Your progress",
+    "reportSubtitle": "How your scores changed over the period",
+    "indicationsTitle": "Guidance from your professional",
+    "fileType": "Client"
+  }
+}

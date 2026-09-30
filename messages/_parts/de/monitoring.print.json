@@ -1,0 +1,28 @@
+{
+  "simple": {
+    "hr": "Herzfrequenz",
+    "hrv": "Variabilität",
+    "hrLabel": "Herzfrequenz",
+    "hrvLabel": "Variabilität des Herzschlags (RMSSD)",
+    "nightChart": "Variabilität des Herzschlags pro Stunde (Balken) und Herzfrequenz (Linie)",
+    "nightTrendDetail": "{first3h}: Variabilität {first} ms · {last3h}: {last} ms",
+    "eventHr": "Herzfrequenz (bpm)",
+    "eventHrv": "Variabilität (ms)",
+    "sleep": {
+      "dropsPerHour": "Sauerstoffabfälle pro Stunde",
+      "dropsPerHourHint": "Abfälle von mindestens 3 Punkten pro Stunde Aufzeichnung",
+      "timeBelow90": "Zeit mit Sauerstoff unter 90 %",
+      "oxyMean": "Mittlere Sauerstoffsättigung",
+      "oxyLowest": "Niedrigster Wert der Nacht",
+      "drops": "Sauerstoffabfälle",
+      "dropsValue": "{count, plural, one {# Abfall} other {# Abfälle}}, davon {count4} von mindestens 4 Punkten",
+      "prBasal": "Ruhepuls",
+      "spo2ChartHint": "Mittlere Sauerstoffsättigung pro Minute; rotes Band unter 90 %; rote Punkte an den Sauerstoffabfällen.",
+      "prChartHint": "Mittlerer Puls pro Minute; grüne Linie = Ruhepuls der Nacht.",
+      "eventsTitle": "Sauerstoffabfälle ({count})",
+      "eventLowest": "Niedrigster",
+      "moreEvents": "{count, plural, one {# weiterer Abfall nicht aufgeführt} other {# weitere Abfälle nicht aufgeführt}}",
+      "noEvents": "Kein nennenswerter Sauerstoffabfall in der Nacht."
+    }
+  }
+}

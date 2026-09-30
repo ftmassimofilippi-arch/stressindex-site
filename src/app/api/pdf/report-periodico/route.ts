@@ -24,6 +24,7 @@ export async function GET(req: Request) {
   if (!clientId || !from || !to) return apiError('pdf_missing_params', 400)
   if (!ISO_DATE.test(from) || !ISO_DATE.test(to)) return apiError('invalid_date_format', 400)
   if (from > to) return apiError('invalid_date_range', 400)
+  const variant = url.searchParams.get('variant') === 'client' ? 'client' : 'pro'
 
   if (pdfLegacyEnabled()) {
     return proxyLegacy(req, `/api/client-report?locale=${locale}`, {
@@ -51,13 +52,14 @@ export async function GET(req: Request) {
   const t = await getTranslator(locale, 'print')
   const tPdf = await getTranslator(locale, 'pdf.common')
   const cognome = sanitizeFilename(access.client.cognome ?? tPdf('clientFallback'))
-  const filename = `StressIndex_${cognome}_${sanitizeFilename(t('report.fileType'))}_${from}_${to}.pdf`
+  const suffix = variant === 'client' ? `_${sanitizeFilename(t('client.suffix'))}` : ''
+  const filename = `StressIndex_${cognome}_${sanitizeFilename(t('report.fileType'))}_${from}_${to}${suffix}.pdf`
 
   return pdfFromPrintPage({
     req,
     locale,
     path: '/stampa/report-periodico',
-    query: { clientId, from, to },
+    query: { clientId, from, to, variant },
     token: { kind: 'report', id: `${clientId}:${from}:${to}`, userId: user.id },
     filename,
     extraHeaders: { 'X-Measurement-Count': String(count) },

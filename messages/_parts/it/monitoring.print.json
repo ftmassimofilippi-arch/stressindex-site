@@ -1,0 +1,28 @@
+{
+  "simple": {
+    "hr": "Battito",
+    "hrv": "Variabilità",
+    "hrLabel": "Frequenza cardiaca",
+    "hrvLabel": "Variabilità del battito (RMSSD)",
+    "nightChart": "Variabilità del battito per ora (barre) e frequenza cardiaca (linea)",
+    "nightTrendDetail": "{first3h}: variabilità {first} ms · {last3h}: {last} ms",
+    "eventHr": "Battito (bpm)",
+    "eventHrv": "Variabilità (ms)",
+    "sleep": {
+      "dropsPerHour": "Cali di ossigeno all'ora",
+      "dropsPerHourHint": "cali di almeno 3 punti per ora di registrazione",
+      "timeBelow90": "Tempo con ossigeno sotto il 90 %",
+      "oxyMean": "Ossigenazione media",
+      "oxyLowest": "Valore più basso della notte",
+      "drops": "Cali di ossigeno",
+      "dropsValue": "{count, plural, one {# calo} other {# cali}}, di cui {count4} di almeno 4 punti",
+      "prBasal": "Polso a riposo",
+      "spo2ChartHint": "Ossigenazione media per minuto; banda rossa sotto il 90 %; punti rossi sui cali di ossigeno.",
+      "prChartHint": "Polso medio per minuto; linea verde = polso a riposo della notte.",
+      "eventsTitle": "Cali di ossigeno ({count})",
+      "eventLowest": "Più basso",
+      "moreEvents": "{count, plural, one {# altro calo non elencato} other {# altri cali non elencati}}",
+      "noEvents": "Nessun calo di ossigeno significativo nella notte."
+    }
+  }
+}
