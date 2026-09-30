@@ -4,7 +4,7 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { ArrowLeft } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
-import { getClient, getMeasurementBySessionId, getProfessionalProfile, listAlerts } from '@/lib/dashboard-data'
+import { getClient, getMeasurementBySessionId, getProfessionalProfile } from '@/lib/dashboard-data'
 import { fullName, formatMeasuredAt } from '@/lib/format'
 import { PoincareScatter } from '../misurazione/[sessionId]/HrvCharts'
 import { ComparisonTable } from './ComparisonTable'
@@ -33,10 +33,9 @@ export default async function ComparisonPage({
 
   const t = await getTranslations('clients.compare')
   const locale = await getLocale()
-  const [client, professional, alerts, ma, mb] = await Promise.all([
+  const [client, professional, ma, mb] = await Promise.all([
     getClient(params.id),
     getProfessionalProfile(),
-    listAlerts({ status: ['new'] }),
     getMeasurementBySessionId(a, params.id),
     getMeasurementBySessionId(b, params.id),
   ])
@@ -46,7 +45,7 @@ export default async function ComparisonPage({
   const backHref = `/area-professionisti/clienti/${client.id}${qs}${qs ? '&' : '?'}tab=prima-dopo`
 
   return (
-    <DashboardLayout professional={professional} alertCount={alerts.length}>
+    <DashboardLayout professional={professional}>
       <div className="mb-6">
         <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm text-anthracite-lighter hover:text-anthracite transition-colors">
           <ArrowLeft size={14} /> {t('backLabel', { name: fullName(client) })}

@@ -1539,8 +1539,11 @@
       "notificationsEmpty": "Keine Benachrichtigungen.",
       "notificationsError": "Benachrichtigungen konnten nicht geladen werden.",
       "notificationsLoading": "Wird geladen…",
+      "notificationsMarkAllRead": "Als gelesen markieren",
       "notificationsNew": "Benachrichtigungen ({count, plural, one {# neue} other {# neue}})",
-      "notificationsRetry": "Erneut versuchen"
+      "notificationsReadOn": "Gelesen am {date}",
+      "notificationsRetry": "Erneut versuchen",
+      "notificationsUnread": "Ungelesen"
     }
   },
   "emails": {

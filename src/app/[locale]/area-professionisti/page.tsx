@@ -76,7 +76,6 @@ export default async function DashboardHome() {
   const alerts = mergeAlerts(cronAlerts, appEvents, 6)
 
   const clientMap = new Map(allClients.map((c) => [c.id, c]))
-  const newAlertCount = alerts.filter((a) => a.status === 'new').length
   const totalActive = allClients.length
   const fmtNum = (v: number) => num(v, decimalsOf(v), locale)
   const clientName = (id: string) => {
@@ -85,7 +84,7 @@ export default async function DashboardHome() {
   }
 
   return (
-    <DashboardLayout professional={professional} alertCount={newAlertCount}>
+    <DashboardLayout professional={professional}>
       <InviteBanner invites={invites} />
       <header className="mb-8">
         <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">

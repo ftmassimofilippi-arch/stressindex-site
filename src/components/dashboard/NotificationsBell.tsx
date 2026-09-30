@@ -8,17 +8,25 @@ import { AlertBadge } from './AlertBadge'
 import { formatIstante } from '@/lib/format'
 
 // Campanella della TopBar. Prima mostrava solo il contatore e il clic non
-// apriva nulla: l'elenco arriva ora da /api/notifiche (alert del cron del sito
-// uniti agli eventi valutati dall'app), caricato alla prima apertura.
+// apriva nulla: l'elenco arriva ora da /api/notifiche, caricato alla prima
+// apertura.
+//
+// La lettura NON cancella e non modifica gli alert: il server aggiunge solo una
+// data di lettura per utente (tabella `notification_reads`, migration
+// sito-030), quindi lo storico resta intero e il contatore mostra le non lette
+// di chi guarda. Se la migration non è ancora applicata il server risponde
+// `canMarkRead: false` e il pannello nasconde i comandi di lettura.
 
 type Notification = {
   id: string
+  source: 'cron' | 'app'
   clientId: string
   clientName: string | null
   title: string
   detail: string
   severity: 'low' | 'medium' | 'high'
   unread: boolean
+  readAt: string | null
   createdAt: string
 }
 
@@ -29,6 +37,8 @@ export function NotificationsBell({ alertCount = 0 }: { alertCount?: number }) {
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState<Notification[] | null>(null)
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [canMarkRead, setCanMarkRead] = useState(false)
+  const [marking, setMarking] = useState(false)
   const [count, setCount] = useState(alertCount)
   const boxRef = useRef<HTMLDivElement>(null)
 
@@ -41,14 +51,40 @@ export function NotificationsBell({ alertCount = 0 }: { alertCount?: number }) {
     try {
       const res = await fetch('/api/notifiche', { cache: 'no-store' })
       if (!res.ok) throw new Error(String(res.status))
-      const data = (await res.json()) as { unread: number; notifications: Notification[] }
+      const data = (await res.json()) as { unread: number; canMarkRead: boolean; notifications: Notification[] }
       setItems(data.notifications)
       setCount(data.unread)
+      setCanMarkRead(data.canMarkRead)
       setState('idle')
     } catch {
       setState('error')
     }
   }, [])
+
+  // Segna come lette: senza `ids` vale per tutte le non lette. L'elenco resta
+  // dov'è, cambiano solo l'evidenza e il contatore.
+  const markRead = useCallback(async (ids?: Array<{ source: 'cron' | 'app'; id: string }>) => {
+    if (!canMarkRead || marking) return
+    setMarking(true)
+    try {
+      const res = await fetch('/api/notifiche', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(ids ? { ids } : {}),
+      })
+      if (!res.ok) return
+      const data = (await res.json()) as { unread: number }
+      setCount(data.unread)
+      const segnati = new Set((ids ?? []).map((i) => `${i.source}:${i.id}`))
+      setItems((prev) => prev?.map((n) =>
+        !ids || segnati.has(`${n.source}:${n.id}`) ? { ...n, unread: false } : n) ?? prev)
+    } catch {
+      // Silenzioso: la lettura è un di più, non deve interrompere la
+      // navigazione verso la scheda del cliente.
+    } finally {
+      setMarking(false)
+    }
+  }, [canMarkRead, marking])
 
   // Chiusura con clic fuori o Esc.
   useEffect(() => {
@@ -72,6 +108,7 @@ export function NotificationsBell({ alertCount = 0 }: { alertCount?: number }) {
   }
 
   const label = count ? t('notificationsNew', { count }) : t('notifications')
+  const hasUnread = (items ?? []).some((n) => n.unread)
 
   return (
     <div className="relative flex-shrink-0" ref={boxRef}>
@@ -100,13 +137,25 @@ export function NotificationsBell({ alertCount = 0 }: { alertCount?: number }) {
         >
           <div className="px-4 py-3 border-b border-surface-border flex items-center justify-between gap-2">
             <span className="text-sm font-medium text-anthracite">{t('notifications')}</span>
-            <Link
-              href="/area-professionisti/clienti"
-              onClick={() => setOpen(false)}
-              className="text-xs text-teal-dark hover:underline whitespace-nowrap"
-            >
-              {tc('seeAll')}
-            </Link>
+            <div className="flex items-center gap-3">
+              {canMarkRead && hasUnread && (
+                <button
+                  type="button"
+                  onClick={() => void markRead()}
+                  disabled={marking}
+                  className="text-xs text-teal-dark hover:underline whitespace-nowrap disabled:opacity-50"
+                >
+                  {t('notificationsMarkAllRead')}
+                </button>
+              )}
+              <Link
+                href="/area-professionisti/clienti"
+                onClick={() => setOpen(false)}
+                className="text-xs text-teal-dark hover:underline whitespace-nowrap"
+              >
+                {tc('seeAll')}
+              </Link>
+            </div>
           </div>
 
           {state === 'loading' && (
@@ -126,22 +175,36 @@ export function NotificationsBell({ alertCount = 0 }: { alertCount?: number }) {
           {state === 'idle' && items !== null && items.length > 0 && (
             <ul className="divide-y divide-surface-border">
               {items.map((n) => (
-                <li key={n.id}>
+                <li key={`${n.source}:${n.id}`}>
                   <Link
                     href={`/area-professionisti/clienti/${n.clientId}`}
-                    onClick={() => setOpen(false)}
+                    onClick={() => {
+                      // Aprire la notifica la segna letta. Non si attende la
+                      // risposta: la navigazione parte subito.
+                      if (n.unread) void markRead([{ source: n.source, id: n.id }])
+                      setOpen(false)
+                    }}
                     className={`flex items-start gap-3 px-4 py-3 hover:bg-surface transition-colors ${n.unread ? 'bg-teal/[0.04]' : ''}`}
                   >
                     <AlertBadge severity={n.severity} />
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-anthracite truncate">
-                        {n.clientName || tc('client')}
+                      <div className="text-sm font-medium text-anthracite truncate flex items-center gap-1.5">
+                        {n.unread && (
+                          <span
+                            aria-label={t('notificationsUnread')}
+                            title={t('notificationsUnread')}
+                            className="w-1.5 h-1.5 rounded-full bg-teal flex-shrink-0"
+                          />
+                        )}
+                        <span className="truncate">{n.clientName || tc('client')}</span>
                       </div>
                       <div className="text-xs text-anthracite-lighter mt-0.5">
                         {n.title}{n.detail ? ` · ${n.detail}` : ''}
                       </div>
                       <div className="text-[11px] text-anthracite-lighter/80 mt-0.5">
-                        {formatIstante(n.createdAt, undefined, locale)}
+                        {n.readAt
+                          ? t('notificationsReadOn', { date: formatIstante(n.readAt, undefined, locale) })
+                          : formatIstante(n.createdAt, undefined, locale)}
                       </div>
                     </div>
                   </Link>

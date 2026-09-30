@@ -58,7 +58,7 @@ export default async function ClientPage({
   if (!client) notFound()
 
   return (
-    <DashboardLayout professional={professional} alertCount={allAlerts.length}>
+    <DashboardLayout professional={professional}>
       <ClientProfile
         client={client}
         measurements={measurements}

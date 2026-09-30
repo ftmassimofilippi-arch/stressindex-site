@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { DownloadMeasurementPdfButton } from '@/components/dashboard/DownloadMeasurementPdfButton'
 import { GaugeScore } from '@/components/dashboard/GaugeScore'
-import { getClient, getMeasurementBySessionId, getProfessionalProfile, listAlerts } from '@/lib/dashboard-data'
+import { getClient, getMeasurementBySessionId, getProfessionalProfile } from '@/lib/dashboard-data'
 import { fullName, formatMeasuredAt, num, toNum } from '@/lib/format'
 import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
 import { normalizeTestType, isLongMeasurement, formatDurationHuman } from '@/lib/measurement-type'
@@ -34,11 +34,10 @@ export default async function SessionDetailPage({
   const t = await getTranslations('measurement.detail')
   const tScores = await getTranslations('scores.names')
 
-  const [measurement, client, professional, alerts] = await Promise.all([
+  const [measurement, client, professional] = await Promise.all([
     getMeasurementBySessionId(params.sessionId, params.id),
     getClient(params.id),
     getProfessionalProfile(),
-    listAlerts({ status: ['new'] }),
   ])
 
   if (!measurement || !client) notFound()
@@ -60,7 +59,7 @@ export default async function SessionDetailPage({
   const em = (c: ReactNode) => <em className="italic">{c}</em>
 
   return (
-    <DashboardLayout professional={professional} alertCount={alerts.length}>
+    <DashboardLayout professional={professional}>
       <div className="mb-6">
         <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm text-anthracite-lighter hover:text-anthracite transition-colors">
           <ArrowLeft size={14} /> {t('backLink', { name: fullName(client) })}

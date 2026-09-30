@@ -1,6 +1,7 @@
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 import { getMyAccountAccess, hasModule } from '@/lib/account-access'
+import { loadNotifications } from '@/lib/notifications'
 
 type Props = {
   children: React.ReactNode
@@ -10,11 +11,13 @@ type Props = {
     professione?: string | null
     logo_url?: string | null
   } | null
-  alertCount?: number
 }
 
-export async function DashboardLayout({ children, professional, alertCount }: Props) {
-  const access = await getMyAccountAccess()
+// Il contatore della campanella lo calcola il layout, non le pagine: prima ogni
+// pagina passava un numero diverso (alert totali, alert nuovi, zero) e il badge
+// cambiava valore navigando. `loadNotifications` è memoizzata per richiesta.
+export async function DashboardLayout({ children, professional }: Props) {
+  const [access, notifiche] = await Promise.all([getMyAccountAccess(), loadNotifications()])
   return (
     <div className="min-h-screen bg-surface">
       <Sidebar
@@ -24,7 +27,7 @@ export async function DashboardLayout({ children, professional, alertCount }: Pr
         hasMonitoring={hasModule(access, 'monitoring') || hasModule(access, 'sleep')}
       />
       <div className="lg:pl-[260px]">
-        <TopBar alertCount={alertCount} />
+        <TopBar alertCount={notifiche.unread} />
         <main className="px-4 sm:px-8 py-6 sm:py-10 max-w-[1400px] mx-auto">
           {children}
         </main>

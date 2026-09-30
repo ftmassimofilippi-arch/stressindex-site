@@ -6,7 +6,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
 import { Monitoring24hDetail } from '@/components/monitoring/Monitoring24hDetail'
 import { SleepDetail } from '@/components/monitoring/SleepDetail'
-import { getProfessionalProfile, listAlerts, resolveViewingProfessional } from '@/lib/dashboard-data'
+import { getProfessionalProfile, resolveViewingProfessional } from '@/lib/dashboard-data'
 import { getMonitoringSession } from '@/lib/monitoring-data'
 import { isSleepSession } from '@/lib/monitoring-types'
 import { ModuleLocked } from '@/components/dashboard/ModuleLocked'
@@ -29,16 +29,15 @@ export default async function MonitoringDetailPage({
   const t = await getTranslations('monitoring')
   const { viewing, currentUserId } = await resolveViewingProfessional(searchParams?.professionista)
   const professionalId = viewing?.user_id ?? currentUserId
-  const [professional, alerts, session] = await Promise.all([
+  const [professional, session] = await Promise.all([
     getProfessionalProfile(),
-    listAlerts({ status: ['new'] }),
     getMonitoringSession(params.id, professionalId),
   ])
   if (!session) notFound()
   if (filterMonitoringByModules([session], await getMyAccountAccess()).length === 0) {
     const sleep = isSleepSession(session)
     return (
-      <DashboardLayout professional={professional} alertCount={alerts.length}>
+      <DashboardLayout professional={professional}>
         <ModuleLocked
           title={sleep ? t('detail.lockedSleepTitle') : t('detail.lockedMonitoringTitle')}
           description={sleep ? t('detail.lockedSleepDescription') : t('detail.lockedMonitoringDescription')}
@@ -53,7 +52,7 @@ export default async function MonitoringDetailPage({
   const clientHref = session.client_id ? `/area-professionisti/clienti/${session.client_id}${baseQuery}` : undefined
 
   return (
-    <DashboardLayout professional={professional} alertCount={alerts.length}>
+    <DashboardLayout professional={professional}>
       {viewing && currentUserId && isSuperadminView && (
         <SuperadminAccessLog adminId={currentUserId} professionistaId={viewing.user_id} professionalName={viewing.full_name} />
       )}

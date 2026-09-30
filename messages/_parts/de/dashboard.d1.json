@@ -31,7 +31,10 @@
     "notificationsLoading": "Wird geladen…",
     "notificationsEmpty": "Keine Benachrichtigungen.",
     "notificationsError": "Benachrichtigungen konnten nicht geladen werden.",
-    "notificationsRetry": "Erneut versuchen"
+    "notificationsRetry": "Erneut versuchen",
+    "notificationsMarkAllRead": "Als gelesen markieren",
+    "notificationsUnread": "Ungelesen",
+    "notificationsReadOn": "Gelesen am {date}"
   },
   "search": {
     "placeholder": "Klienten, Fachkräfte suchen…",

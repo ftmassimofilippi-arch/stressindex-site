@@ -55,7 +55,7 @@ export default async function SportSessionPage({
   ]
 
   return (
-    <DashboardLayout professional={professional} alertCount={0}>
+    <DashboardLayout professional={professional}>
       <Link
         href={`/area-professionisti/sport${baseQuery}`}
         className="inline-flex items-center gap-1.5 text-sm text-anthracite-lighter hover:text-anthracite mb-5"

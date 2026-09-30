@@ -26,7 +26,7 @@ export default async function TeamLivePage({
   // Gating Pro: riservato ai professionisti plan='pro' (il superadmin ha accesso).
   if (!access.isPro) {
     return (
-      <DashboardLayout professional={professional} alertCount={0}>
+      <DashboardLayout professional={professional}>
         <div className="max-w-xl mx-auto card p-10 text-center mt-10">
           <div className="mx-auto w-14 h-14 rounded-2xl bg-teal-light text-teal-dark flex items-center justify-center mb-5">
             <Lock size={26} />
@@ -46,7 +46,7 @@ export default async function TeamLivePage({
   const baseQuery = viewing ? `?professionista=${viewing.user_id}` : ''
 
   return (
-    <DashboardLayout professional={professional} alertCount={0}>
+    <DashboardLayout professional={professional}>
       {viewing && access.userId && isSuperadminView && (
         <SuperadminAccessLog adminId={access.userId} professionistaId={viewing.user_id} professionalName={viewing.full_name} />
       )}

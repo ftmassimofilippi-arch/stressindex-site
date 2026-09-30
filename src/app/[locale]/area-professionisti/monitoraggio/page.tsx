@@ -3,7 +3,7 @@ import { Link } from '@/i18n/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
-import { getProfessionalProfile, listAlerts, listClientsEnriched, resolveViewingProfessional } from '@/lib/dashboard-data'
+import { getProfessionalProfile, listClientsEnriched, resolveViewingProfessional } from '@/lib/dashboard-data'
 import { listMonitoringSessionsForProfessional } from '@/lib/monitoring-data'
 import { MON } from '@/lib/monitoring-format'
 import { MonitoringIndex } from './MonitoringIndex'
@@ -21,16 +21,15 @@ export default async function MonitoringPage({ searchParams }: { params: { local
   const t = await getTranslations('monitoring')
   const { viewing, currentUserId } = await resolveViewingProfessional(searchParams?.professionista)
   const professionalId = viewing?.user_id ?? currentUserId
-  const [professional, alerts, allSessions, clients, access] = await Promise.all([
+  const [professional, allSessions, clients, access] = await Promise.all([
     getProfessionalProfile(),
-    listAlerts({ status: ['new'] }),
     professionalId ? listMonitoringSessionsForProfessional(professionalId) : Promise.resolve([]),
     listClientsEnriched(viewing ? { professionistaId: viewing.user_id } : undefined),
     getMyAccountAccess(),
   ])
   if (!hasModule(access, 'monitoring') && !hasModule(access, 'sleep')) {
     return (
-      <DashboardLayout professional={professional} alertCount={alerts.length}>
+      <DashboardLayout professional={professional}>
         <ModuleLocked title={t('index.lockedTitle')} description={t('index.lockedDescription')} />
       </DashboardLayout>
     )
@@ -43,7 +42,7 @@ export default async function MonitoringPage({ searchParams }: { params: { local
     .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
-    <DashboardLayout professional={professional} alertCount={alerts.length}>
+    <DashboardLayout professional={professional}>
       {viewing && currentUserId && isSuperadminView && (
         <SuperadminAccessLog adminId={currentUserId} professionistaId={viewing.user_id} professionalName={viewing.full_name} />
       )}

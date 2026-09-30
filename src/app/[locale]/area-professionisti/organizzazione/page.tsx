@@ -5,7 +5,6 @@ import {
   getOrgMembersStats,
   getOrgOverview,
   getProfessionalProfile,
-  listAlerts,
 } from '@/lib/dashboard-data'
 import { CreateOrganizationForm } from './CreateOrganizationForm'
 import { OrganizationTabs } from './OrganizationTabs'
@@ -19,16 +18,15 @@ export async function generateMetadata({ params }: { params: { locale: string } 
 }
 
 export default async function OrganizationPage() {
-  const [professional, alerts, ctx, t] = await Promise.all([
+  const [professional, ctx, t] = await Promise.all([
     getProfessionalProfile(),
-    listAlerts({ status: ['new'] }),
     getOrganizationContext(),
     getTranslations('organization'),
   ])
 
   if (!ctx.organization) {
     return (
-      <DashboardLayout professional={professional} alertCount={alerts.length}>
+      <DashboardLayout professional={professional}>
         <header className="mb-6">
           <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
             {t.rich('createTitle', { em: (c) => <em className="italic text-teal-dark">{c}</em> })}
@@ -43,7 +41,7 @@ export default async function OrganizationPage() {
   if (ctx.role === 'owner' || ctx.role === 'admin') {
     const [stats, overview] = await Promise.all([getOrgMembersStats(), getOrgOverview()])
     return (
-      <DashboardLayout professional={professional} alertCount={alerts.length}>
+      <DashboardLayout professional={professional}>
         <header className="mb-6">
           <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
             {ctx.organization.name}
@@ -62,7 +60,7 @@ export default async function OrganizationPage() {
   }
 
   return (
-    <DashboardLayout professional={professional} alertCount={alerts.length}>
+    <DashboardLayout professional={professional}>
       <header className="mb-6">
         <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
           {ctx.organization.name}

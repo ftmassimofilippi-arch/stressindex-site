@@ -47,7 +47,7 @@ export default async function ClientiPage({
   const newAlertCount = alerts.filter((a) => a.status === 'new').length
 
   return (
-    <DashboardLayout professional={professional} alertCount={newAlertCount}>
+    <DashboardLayout professional={professional}>
       {viewing && currentUserId && isSuperadminView && (
         <SuperadminAccessLog adminId={currentUserId} professionistaId={viewing.user_id} professionalName={viewing.full_name} />
       )}

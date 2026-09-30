@@ -31,7 +31,10 @@
     "notificationsLoading": "Loading…",
     "notificationsEmpty": "No notifications.",
     "notificationsError": "Could not load notifications.",
-    "notificationsRetry": "Retry"
+    "notificationsRetry": "Retry",
+    "notificationsMarkAllRead": "Mark as read",
+    "notificationsUnread": "Unread",
+    "notificationsReadOn": "Read on {date}"
   },
   "search": {
     "placeholder": "Search clients, professionals…",

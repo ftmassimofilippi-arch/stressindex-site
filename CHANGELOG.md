@@ -43,8 +43,28 @@ esegue su `measured_at_utc`.
 Mostrava il contatore ma il clic non apriva nulla. Ora apre un pannello con
 l'elenco (alert del cron uniti agli eventi dell'app), ognuno collegato alla
 scheda del cliente, con chiusura da clic fuori o Esc. Nuova route
-`GET /api/notifiche` e componente `NotificationsBell`; stringhe IT/EN/DE in
+`/api/notifiche` e componente `NotificationsBell`; stringhe IT/EN/DE in
 `dashboard.topbar`.
+
+- **Marcatura come letto, per singolo utente.** Aprire una notifica la segna
+  letta; in testa al pannello c'è "Segna come lette". `alerts` e `alert_events`
+  non vengono toccate: si aggiunge solo una riga in `notification_reads`
+  (migration `sito-030`, da applicare a mano) con la data della prima lettura.
+  Lo storico resta intero e la lettura di un osservatore non azzera il
+  contatore del professionista titolare.
+- **Il contatore lo calcola il layout**, non più ogni pagina: prima chi passava
+  gli alert totali, chi i nuovi, chi zero, e il badge cambiava valore navigando.
+  Tolte le letture di `alerts` diventate inutili in otto pagine.
+- Senza la `sito-030` applicata tutto continua a funzionare: il conteggio ricade
+  sullo stato delle sorgenti e i comandi di lettura restano nascosti.
+
+### Nomi delle migrazioni fra i due repo
+`hrv_app` e `stressindex-site` applicano migrazioni allo stesso database e le
+numerazioni si erano sovrapposte: esistevano due `029` diverse. Da ora il nome
+porta il prefisso del repo, `sito-NNN_` qui e `app-NNN_` nell'app; i numeri non
+cambiano, quindi i riferimenti storici ("la 022 del sito") restano validi.
+Rinominati i 30 file di questo repo e aggiornati README e documenti; la regola è
+nel `CLAUDE.md` dei due repo, sezione "Migrazioni: nomi fra i due repo".
 
 ## 2026-09-30 — tag `site-2026-09-30`
 

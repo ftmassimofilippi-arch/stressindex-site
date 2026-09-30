@@ -1539,8 +1539,11 @@
       "notificationsEmpty": "No notifications.",
       "notificationsError": "Could not load notifications.",
       "notificationsLoading": "Loading…",
+      "notificationsMarkAllRead": "Mark as read",
       "notificationsNew": "Notifications ({count, plural, one {# new} other {# new}})",
-      "notificationsRetry": "Retry"
+      "notificationsReadOn": "Read on {date}",
+      "notificationsRetry": "Retry",
+      "notificationsUnread": "Unread"
     }
   },
   "emails": {

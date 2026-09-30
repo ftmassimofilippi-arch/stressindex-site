@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { getNotificationPreferences, getProfessionalProfile, listAlerts } from '@/lib/dashboard-data'
+import { getNotificationPreferences, getProfessionalProfile } from '@/lib/dashboard-data'
 import { SettingsTabs } from './SettingsTabs'
 
 export const dynamic = 'force-dynamic'
@@ -16,15 +16,14 @@ export default async function SettingsPage({
   // ?tab=notifiche: ci arriva il link "cambia le preferenze" in fondo alle email.
   searchParams?: { tab?: string }
 }) {
-  const [professional, prefs, alerts, t] = await Promise.all([
+  const [professional, prefs, t] = await Promise.all([
     getProfessionalProfile(),
     getNotificationPreferences(),
-    listAlerts({ status: ['new'] }),
     getTranslations('settings'),
   ])
 
   return (
-    <DashboardLayout professional={professional} alertCount={alerts.length}>
+    <DashboardLayout professional={professional}>
       <header className="mb-6">
         <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">{t('title')}</h1>
         <p className="mt-1.5 text-sm text-anthracite-lighter">{t('intro')}</p>

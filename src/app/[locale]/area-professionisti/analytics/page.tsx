@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { getCurrentUser, getProfessionalProfile, listAlerts, listAllMeasurements, listClientsEnriched } from '@/lib/dashboard-data'
+import { getCurrentUser, getProfessionalProfile, listAllMeasurements, listClientsEnriched } from '@/lib/dashboard-data'
 import { listMonitoringSessionsForProfessional } from '@/lib/monitoring-data'
 import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
 import { AnalyticsClient } from './AnalyticsClient'
@@ -15,16 +15,15 @@ export async function generateMetadata({ params }: { params: { locale: string } 
 export default async function AnalyticsPage() {
   const t = await getTranslations('dashboard.analytics')
   const user = await getCurrentUser()
-  const [professional, clients, alerts, measurements, monitoring] = await Promise.all([
+  const [professional, clients, measurements, monitoring] = await Promise.all([
     getProfessionalProfile(),
     listClientsEnriched(),
-    listAlerts({ status: ['new'] }),
     listAllMeasurements(),
     user ? listMonitoringSessionsForProfessional(user.id) : Promise.resolve([]),
   ])
 
   return (
-    <DashboardLayout professional={professional} alertCount={alerts.length}>
+    <DashboardLayout professional={professional}>
       <header className="mb-6">
         <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
           {t.rich('title', { em: (c) => <em className="italic text-teal-dark">{c}</em> })}

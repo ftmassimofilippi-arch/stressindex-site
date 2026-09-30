@@ -1539,8 +1539,11 @@
       "notificationsEmpty": "Nessuna notifica.",
       "notificationsError": "Non è stato possibile caricare le notifiche.",
       "notificationsLoading": "Caricamento…",
+      "notificationsMarkAllRead": "Segna come lette",
       "notificationsNew": "Notifiche ({count, plural, one {# nuova} other {# nuove}})",
-      "notificationsRetry": "Riprova"
+      "notificationsReadOn": "Letta il {date}",
+      "notificationsRetry": "Riprova",
+      "notificationsUnread": "Non letta"
     }
   },
   "emails": {

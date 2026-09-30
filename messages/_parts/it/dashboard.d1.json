@@ -31,7 +31,10 @@
     "notificationsLoading": "Caricamento…",
     "notificationsEmpty": "Nessuna notifica.",
     "notificationsError": "Non è stato possibile caricare le notifiche.",
-    "notificationsRetry": "Riprova"
+    "notificationsRetry": "Riprova",
+    "notificationsMarkAllRead": "Segna come lette",
+    "notificationsUnread": "Non letta",
+    "notificationsReadOn": "Letta il {date}"
   },
   "search": {
     "placeholder": "Cerca clienti, professionisti…",

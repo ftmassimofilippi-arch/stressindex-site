@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { ArrowLeft, Lock } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
-import { getProfessionalProfile, listAlerts } from '@/lib/dashboard-data'
+import { getProfessionalProfile } from '@/lib/dashboard-data'
 import {
   getSportDashboardStats,
   listSportAthletes,
@@ -26,16 +26,15 @@ export default async function SportPage({
 }) {
   const t = await getTranslations('sport')
   const { professionalId, viewing, access } = await resolveSportContext(searchParams?.professionista)
-  const [professional, alerts] = await Promise.all([
+  const [professional] = await Promise.all([
     getProfessionalProfile(),
-    listAlerts({ status: ['new'] }),
   ])
 
   // Gating Pro: la sezione è riservata ai professionisti con plan='pro'
   // (il superadmin ha sempre accesso). Per gli altri mostriamo un invito all'upgrade.
   if (!access.isPro) {
     return (
-      <DashboardLayout professional={professional} alertCount={alerts.length}>
+      <DashboardLayout professional={professional}>
         <div className="max-w-xl mx-auto card p-10 text-center mt-10">
           <div className="mx-auto w-14 h-14 rounded-2xl bg-teal-light text-teal-dark flex items-center justify-center mb-5">
             <Lock size={26} />
@@ -66,7 +65,7 @@ export default async function SportPage({
   const basePath = viewing ? `?professionista=${viewing.user_id}` : ''
 
   return (
-    <DashboardLayout professional={professional} alertCount={alerts.length}>
+    <DashboardLayout professional={professional}>
       {viewing && access.userId && isSuperadminView && (
         <SuperadminAccessLog adminId={access.userId} professionistaId={viewing.user_id} professionalName={viewing.full_name} />
       )}
