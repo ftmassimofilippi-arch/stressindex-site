@@ -9,7 +9,8 @@
 //  Sotto l'arco: numero grande, "/ 100", badge della zona
 //  (soglie da proprietary_scores.dart; etichette dal namespace `scores.bands`).
 
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { num } from '@/lib/format'
 
 export type GaugeColorScheme = 'stress' | 'recovery' | 'balance' | 'energy' | 'adaptation'
 
@@ -17,7 +18,14 @@ type Props = {
   value?: number | null // 0–100
   label: string // nome dello score, già tradotto (es. t('scores.names.stress'))
   colorScheme: GaugeColorScheme
+  /** Variazione rispetto alla misurazione precedente (punti): se presente, riga "▲ +5" / "▼ -3" sotto il badge. */
+  delta?: number | null
+  /** Pagina di stampa: card a larghezza fissa (150 px), nessuna transizione. */
+  print?: boolean
 }
+
+// Larghezza della card in stampa (px): quattro gauge affiancate in un A4.
+export const GAUGE_PRINT_WIDTH = 150
 
 // Palette allineata ad AppColors dell'app
 const GREEN = '#2F8F6B' // AppColors.success
@@ -95,13 +103,21 @@ function arcPath(cx: number, cy: number, r: number, fromFrac: number, toFrac: nu
   return `M ${p0.x} ${p0.y} A ${r} ${r} 0 0 1 ${p1.x} ${p1.y}`
 }
 
-export function GaugeScore({ value, label, colorScheme }: Props) {
+export function GaugeScore({ value, label, colorScheme, delta, print = false }: Props) {
+  const locale = useLocale()
   const t = useTranslations('scores')
   const tCommon = useTranslations('common')
   const hasValue = value != null && Number.isFinite(value)
   const v = hasValue ? Math.max(0, Math.min(100, value as number)) : 0
   const zone = zoneFor(colorScheme, v)
   const zoneLabel = t(`bands.${colorScheme}.${zone.labelKey}`)
+
+  // Variazione rispetto alla precedente: colore per segno (su, giù), neutro
+  // rispetto alla direzione "buona" dello score, che dipende dalla scala.
+  const hasDelta = hasValue && delta != null && Number.isFinite(delta)
+  const d = hasDelta ? Math.round(delta as number) : 0
+  const deltaText = d === 0 ? t('deltaUnchanged') : `${d > 0 ? '▲ +' : '▼ '}${num(d, 0, locale)}`
+  const deltaTone = d > 0 ? 'text-emerald-700' : d < 0 ? 'text-red-700' : 'text-anthracite-lighter'
 
   // Geometria (stesse proporzioni dei painter dell'app)
   const W = 200
@@ -114,13 +130,16 @@ export function GaugeScore({ value, label, colorScheme }: Props) {
   const needle = polar(cx, cy, r * 0.76, frac)
 
   return (
-    <div className="card p-5 flex flex-col items-center">
+    <div
+      className={`card flex flex-col items-center ${print ? 'p-3 flex-shrink-0 break-inside-avoid' : 'p-5'}`}
+      style={print ? { width: GAUGE_PRINT_WIDTH, maxWidth: GAUGE_PRINT_WIDTH } : undefined}
+    >
       <div className="text-xs font-medium text-anthracite-lighter uppercase tracking-wide text-center">{label}</div>
 
       <svg
         width="100%"
         viewBox={`0 0 ${W} ${H}`}
-        className="mt-2 max-w-[200px]"
+        className={print ? 'mt-1 max-w-[126px]' : 'mt-2 max-w-[200px]'}
         role="img"
         aria-label={`${label}: ${t('outOf100', { n: hasValue ? Math.round(v) : '—' })}`}
       >
@@ -164,7 +183,7 @@ export function GaugeScore({ value, label, colorScheme }: Props) {
                 stroke={zone.color}
                 strokeWidth={sw}
                 fill="none"
-                style={{ transition: 'all 0.5s ease' }}
+                style={print ? undefined : { transition: 'all 0.5s ease' }}
               />
             )}
           </>
@@ -205,6 +224,14 @@ export function GaugeScore({ value, label, colorScheme }: Props) {
       >
         {hasValue ? zoneLabel : tCommon('noData')}
       </div>
+
+      {/* Variazione rispetto alla misurazione precedente */}
+      {hasDelta && (
+        <div className={`mt-1.5 text-[11px] font-semibold tabular-nums ${deltaTone}`} title={t('deltaVsPrevious')}>
+          <span aria-hidden>{deltaText}</span>
+          <span className="sr-only">{`${d > 0 ? '+' : ''}${num(d, 0, locale)} ${t('deltaVsPrevious')}`}</span>
+        </div>
+      )}
     </div>
   )
 }

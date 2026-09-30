@@ -10,8 +10,8 @@ import { getClient, getMeasurementBySessionId, getProfessionalProfile, listAlert
 import { fullName, formatMeasuredAt, num, toNum } from '@/lib/format'
 import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
 import { normalizeTestType, isLongMeasurement, formatDurationHuman } from '@/lib/measurement-type'
-import { PoincareScatter, Rhythmogram, PsdPlaceholder } from './HrvCharts'
-import { HrvParamsTable } from './HrvParamsTable'
+import { PoincareScatter, Rhythmogram, PsdPlaceholder, PsdPie } from './HrvCharts'
+import { HrvParamsTable, ParamsSummaryCard } from './HrvParamsTable'
 import { OrthostaticView } from './OrthostaticView'
 import { CoherenceView } from './CoherenceView'
 import { LongMeasurementView } from './LongMeasurementView'
@@ -131,6 +131,9 @@ export default async function SessionDetailPage({
       )}
 
       <section className="card p-6 mb-6">
+        <div className="mb-4">
+          <ParamsSummaryCard measurement={measurement} />
+        </div>
         <details>
           <summary className="font-serif text-lg text-anthracite cursor-pointer">{t('fullParams')}</summary>
           <div className="mt-4">
@@ -157,6 +160,11 @@ export default async function SessionDetailPage({
                 hf={measurement.hf_power}
                 lfHfRatio={measurement.lf_hf_ratio}
               />
+              <div className="mt-6 pt-5 border-t border-surface-border">
+                <h4 className="font-serif text-base text-anthracite mb-1">{t('psdPieTitle')}</h4>
+                <p className="text-xs text-anthracite-lighter mb-3">{t('psdPieSubtitle')}</p>
+                <PsdPie vlf={measurement.vlf_power} lf={measurement.lf_power} hf={measurement.hf_power} />
+              </div>
             </div>
           </section>
 

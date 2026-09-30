@@ -12,6 +12,7 @@ import { EventIcon } from './EventIcon'
 // valide, bordo scuro sulla notte, marcatori degli eventi sopra con l'icona
 // del tipo, asse orario sotto, e — se c'è — la curva della Riserva allineata
 // sullo stesso asse. Hover/tap su un punto: ora, stato, HR, RMSSD.
+// `print`: pagina di stampa A4, larghezza della card, senza hover né hint.
 
 type Props = {
   windows: MonitoringWindow[]
@@ -22,11 +23,12 @@ type Props = {
   night?: MonitoringNight | null
   reserve?: ReserveCurve | null
   height?: number
+  print?: boolean
 }
 
 const W = 1000 // larghezza logica dell'SVG (viewBox)
 
-export function MonitoringTimeline({ windows, start, end, tz, events = [], night, reserve, height = 34 }: Props) {
+export function MonitoringTimeline({ windows, start, end, tz, events = [], night, reserve, height = 34, print = false }: Props) {
   const t = useTranslations('monitoring')
   const locale = useLocale()
   const startMs = new Date(start).getTime()
@@ -107,8 +109,8 @@ export function MonitoringTimeline({ windows, start, end, tz, events = [], night
   })
 
   return (
-    <div className="overflow-x-auto">
-      <div className="min-w-[640px]">
+    <div className={print ? '' : 'overflow-x-auto'}>
+      <div className={print ? '' : 'min-w-[640px]'}>
         {/* marcatori eventi */}
         <div className="relative h-6">
           {visibleEvents.map((e) => (
@@ -137,11 +139,11 @@ export function MonitoringTimeline({ windows, start, end, tz, events = [], night
         <svg
           viewBox={`0 0 ${W} ${height}`}
           preserveAspectRatio="none"
-          className="w-full block rounded-md cursor-crosshair"
+          className={`w-full block rounded-md ${print ? '' : 'cursor-crosshair'}`}
           style={{ height }}
-          onMouseMove={(ev) => pick(ev.clientX, ev.currentTarget)}
-          onMouseLeave={() => setPicked(null)}
-          onClick={(ev) => pick(ev.clientX, ev.currentTarget)}
+          onMouseMove={print ? undefined : (ev) => pick(ev.clientX, ev.currentTarget)}
+          onMouseLeave={print ? undefined : () => setPicked(null)}
+          onClick={print ? undefined : (ev) => pick(ev.clientX, ev.currentTarget)}
           role="img"
           aria-label={t('timeline.statesAria')}
         >
@@ -181,15 +183,17 @@ export function MonitoringTimeline({ windows, start, end, tz, events = [], night
           ))}
         </div>
 
-        <div className="mt-2 min-h-[28px]">
-          {picked ? (
-            <div className="inline-block px-2.5 py-1.5 rounded-lg text-[11px] font-medium" style={{ backgroundColor: MON.accentLight, color: MON.accentDark }}>
-              {pickedLabel(picked, tz, locale, t)}
-            </div>
-          ) : (
-            <div className="text-[10.5px] text-anthracite-lighter">{t('timeline.hint')}</div>
-          )}
-        </div>
+        {!print && (
+          <div className="mt-2 min-h-[28px]">
+            {picked ? (
+              <div className="inline-block px-2.5 py-1.5 rounded-lg text-[11px] font-medium" style={{ backgroundColor: MON.accentLight, color: MON.accentDark }}>
+                {pickedLabel(picked, tz, locale, t)}
+              </div>
+            ) : (
+              <div className="text-[10.5px] text-anthracite-lighter">{t('timeline.hint')}</div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

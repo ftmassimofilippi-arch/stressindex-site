@@ -1,0 +1,14 @@
+{
+  "monitoring": {
+    "title24h": "24h monitoring report",
+    "titleSleep": "Night report, Sleep module",
+    "subtitle": "Continuous recording processed by the app: the site shows it without recalculating any value.",
+    "type": "Type",
+    "profile": "Recording profile",
+    "estimated": "estimated",
+    "device": "Device",
+    "clientVariant": "Client version",
+    "fileType24h": "24h",
+    "fileTypeSleep": "Sleep"
+  }
+}

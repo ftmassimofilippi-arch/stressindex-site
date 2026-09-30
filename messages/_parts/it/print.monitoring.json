@@ -1,0 +1,14 @@
+{
+  "monitoring": {
+    "title24h": "Report monitoraggio 24h",
+    "titleSleep": "Report notte, modulo Sonno",
+    "subtitle": "Registrazione continua elaborata dall'app: il sito la mostra senza ricalcolare nessun valore.",
+    "type": "Tipo",
+    "profile": "Profilo di registrazione",
+    "estimated": "stimato",
+    "device": "Dispositivo",
+    "clientVariant": "Versione per il cliente",
+    "fileType24h": "24h",
+    "fileTypeSleep": "Sonno"
+  }
+}

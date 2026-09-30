@@ -39,21 +39,24 @@ function signed(v: number, digits: number, locale: string): string {
   return `${v > 0 ? '+' : ''}${num(v, digits, locale)}`
 }
 
-export function LongMeasurementView({ measurement }: { measurement: MeasurementAnalytics }) {
+// `print`: pagina di stampa A4. Serie continua (metrica di default, senza
+// selettore né brush) e grafico dei segmenti con dimensioni fisse
+// (`width`, default 680 px), senza tooltip.
+export function LongMeasurementView({ measurement, print = false, width = 680 }: { measurement: MeasurementAnalytics; print?: boolean; width?: number }) {
   const rolling = Array.isArray(measurement.rolling_series) ? measurement.rolling_series : []
   const segments = Array.isArray(measurement.segments) ? measurement.segments : []
 
   return (
-    <div className="space-y-6">
-      <RollingChart rolling={rolling} />
-      <StartEndComparison segments={segments} />
-      <SegmentAnalysis segments={segments} />
+    <div className={print ? 'space-y-4' : 'space-y-6'}>
+      <RollingChart rolling={rolling} print={print} width={width} />
+      <StartEndComparison segments={segments} print={print} />
+      <SegmentAnalysis segments={segments} print={print} width={width} />
     </div>
   )
 }
 
 // ── Andamento continuo con Brush ─────────────────────────────────────────────
-function RollingChart({ rolling }: { rolling: RollingSeriesPoint[] }) {
+function RollingChart({ rolling, print = false, width = 680 }: { rolling: RollingSeriesPoint[]; print?: boolean; width?: number }) {
   const locale = useLocale()
   const t = useTranslations('measurement.long')
   const tAxes = useTranslations('charts.axes')
@@ -71,7 +74,8 @@ function RollingChart({ rolling }: { rolling: RollingSeriesPoint[] }) {
   const labelFor = (k: string) => (ROLLING_META[k] ? t(`metrics.${k}`) : k)
 
   const [metric, setMetric] = useState<string>('')
-  const activeMetric = metric && metrics.includes(metric) ? metric : metrics[0]
+  // In stampa si mostra sempre la metrica di default (la prima disponibile).
+  const activeMetric = !print && metric && metrics.includes(metric) ? metric : metrics[0]
 
   const data = useMemo(() => {
     if (!activeMetric) return []
@@ -104,9 +108,45 @@ function RollingChart({ rolling }: { rolling: RollingSeriesPoint[] }) {
   const label = labelFor(activeMetric)
   const totalSec = data.length ? data[data.length - 1].t : 0
   const tickStep = totalSec > 3600 ? 600 : totalSec > 1200 ? 300 : totalSec > 300 ? 60 : 30
+  const chartW = width - 32
+  const chartH = print ? 240 : 340
+
+  const chart = (
+    <LineChart data={data} {...(print ? { width: chartW, height: chartH } : {})} margin={{ top: 8, right: 20, bottom: 32, left: 8 }}>
+      <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" />
+      <XAxis
+        dataKey="t"
+        type="number"
+        domain={[0, 'dataMax']}
+        stroke="#6B7280"
+        fontSize={10}
+        ticks={Array.from({ length: Math.floor(totalSec / tickStep) + 1 }, (_, i) => i * tickStep)}
+        tickFormatter={(v) => formatClock(Number(v))}
+        label={{ value: tAxes('timeClock'), position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
+      />
+      <YAxis
+        stroke="#6B7280"
+        fontSize={10}
+        domain={['auto', 'auto']}
+        tickFormatter={(v) => num(v, meta.digits ?? 0, locale)}
+        label={{ value: meta.unit ? `${label} (${meta.unit})` : label, angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
+      />
+      {!print && (
+        <Tooltip
+          contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 11 }}
+          labelFormatter={(v) => `t = ${formatClock(Number(v))}`}
+          formatter={(v) => [`${num(v, meta.digits ?? 1, locale)}${meta.unit ? ' ' + meta.unit : ''}`, label]}
+        />
+      )}
+      <Line type="monotone" dataKey="v" stroke={meta.color} strokeWidth={1.6} dot={false} isAnimationActive={false} />
+      {!print && (
+        <Brush dataKey="t" height={26} stroke={meta.color} travellerWidth={8} tickFormatter={(v) => formatClock(Number(v))} />
+      )}
+    </LineChart>
+  )
 
   return (
-    <section className="card p-6">
+    <section className={`card ${print ? 'p-4 break-inside-avoid' : 'p-6'}`}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="min-w-0">
           <h3 className="font-serif text-base text-anthracite mb-1">
@@ -114,43 +154,25 @@ function RollingChart({ rolling }: { rolling: RollingSeriesPoint[] }) {
           </h3>
           <p className="text-xs text-anthracite-lighter">{t('seriesInfo', { duration: formatClock(totalSec) })}</p>
         </div>
-        <select
-          value={activeMetric}
-          onChange={(e) => setMetric(e.target.value)}
-          className="px-3 py-2 text-sm bg-white border border-surface-border rounded-xl max-w-full"
-        >
-          {metrics.map((k) => <option key={k} value={k}>{labelFor(k)}</option>)}
-        </select>
+        {print ? (
+          <span className="inline-flex items-center gap-1.5 text-xs text-anthracite">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: meta.color }} /> {label}
+          </span>
+        ) : (
+          <select
+            value={activeMetric}
+            onChange={(e) => setMetric(e.target.value)}
+            className="px-3 py-2 text-sm bg-white border border-surface-border rounded-xl max-w-full"
+          >
+            {metrics.map((k) => <option key={k} value={k}>{labelFor(k)}</option>)}
+          </select>
+        )}
       </div>
-      <ResponsiveContainer width="100%" height={340}>
-        <LineChart data={data} margin={{ top: 8, right: 20, bottom: 32, left: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" />
-          <XAxis
-            dataKey="t"
-            type="number"
-            domain={[0, 'dataMax']}
-            stroke="#6B7280"
-            fontSize={10}
-            ticks={Array.from({ length: Math.floor(totalSec / tickStep) + 1 }, (_, i) => i * tickStep)}
-            tickFormatter={(v) => formatClock(Number(v))}
-            label={{ value: tAxes('timeClock'), position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
-          />
-          <YAxis
-            stroke="#6B7280"
-            fontSize={10}
-            domain={['auto', 'auto']}
-            tickFormatter={(v) => num(v, meta.digits ?? 0, locale)}
-            label={{ value: meta.unit ? `${label} (${meta.unit})` : label, angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
-          />
-          <Tooltip
-            contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 11 }}
-            labelFormatter={(v) => `t = ${formatClock(Number(v))}`}
-            formatter={(v) => [`${num(v, meta.digits ?? 1, locale)}${meta.unit ? ' ' + meta.unit : ''}`, label]}
-          />
-          <Line type="monotone" dataKey="v" stroke={meta.color} strokeWidth={1.6} dot={false} isAnimationActive={false} />
-          <Brush dataKey="t" height={26} stroke={meta.color} travellerWidth={8} tickFormatter={(v) => formatClock(Number(v))} />
-        </LineChart>
-      </ResponsiveContainer>
+      {print ? (
+        <div style={{ width: chartW, height: chartH }}>{chart}</div>
+      ) : (
+        <ResponsiveContainer width="100%" height={chartH}>{chart}</ResponsiveContainer>
+      )}
     </section>
   )
 }
@@ -179,7 +201,7 @@ function segVal(seg: MeasurementSegment | undefined, group: 'score' | 'hrv', key
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 }
 
-function StartEndComparison({ segments }: { segments: MeasurementSegment[] }) {
+function StartEndComparison({ segments, print = false }: { segments: MeasurementSegment[]; print?: boolean }) {
   const locale = useLocale()
   const t = useTranslations('measurement.long')
   const tScores = useTranslations('scores.names')
@@ -190,7 +212,7 @@ function StartEndComparison({ segments }: { segments: MeasurementSegment[] }) {
   const range = (s: MeasurementSegment) => `${formatClock(s.start_ms / 1000)}–${formatClock(s.end_ms / 1000)}`
 
   return (
-    <section className="card p-6">
+    <section className={`card ${print ? 'p-4 break-inside-avoid' : 'p-6'}`}>
       <h3 className="font-serif text-base text-anthracite mb-1">
         {t.rich('compareTitle', { em: (c) => <em className="italic">{c}</em> })}
       </h3>
@@ -242,13 +264,15 @@ function StartEndComparison({ segments }: { segments: MeasurementSegment[] }) {
 }
 
 // ── Analisi segmentata ───────────────────────────────────────────────────────
-function SegmentAnalysis({ segments }: { segments: MeasurementSegment[] }) {
+function SegmentAnalysis({ segments, print = false, width = 680 }: { segments: MeasurementSegment[]; print?: boolean; width?: number }) {
   const locale = useLocale()
   const t = useTranslations('measurement.long')
   const tScores = useTranslations('scores.names')
   const tAxes = useTranslations('charts.axes')
   if (segments.length < 2) return null
   const sorted = segments.slice().sort((a, b) => a.start_ms - b.start_ms)
+  const chartW = width - 32
+  const chartH = print ? 220 : 280
 
   const data = sorted.map((s, i) => ({
     seg: i + 1,
@@ -268,35 +292,46 @@ function SegmentAnalysis({ segments }: { segments: MeasurementSegment[] }) {
     { key: 'energy', label: tScores('energy'), color: '#F59E0B' },
   ]
 
+  const chart = (
+    <LineChart data={data} {...(print ? { width: chartW, height: chartH } : {})} margin={{ top: 8, right: 20, bottom: 32, left: 8 }}>
+      <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" />
+      <XAxis
+        dataKey="tMid"
+        type="number"
+        domain={['dataMin', 'dataMax']}
+        stroke="#6B7280"
+        fontSize={10}
+        tickFormatter={(v) => formatClock(Number(v))}
+        label={{ value: tAxes('timeClock'), position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
+      />
+      <YAxis domain={[0, 100]} stroke="#6B7280" fontSize={10} label={{ value: tAxes('score'), angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }} />
+      {!print && (
+        <Tooltip
+          contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 11 }}
+          labelFormatter={(v) => `t = ${formatClock(Number(v))}`}
+          formatter={(v) => num(v, 0, locale)}
+        />
+      )}
+      {scoreLines.map((l) => (
+        <Line key={l.key} type="monotone" dataKey={l.key} name={l.label} stroke={l.color} strokeWidth={1.8} dot={{ r: 2 }} isAnimationActive={false} connectNulls />
+      ))}
+    </LineChart>
+  )
+
   return (
-    <section className="card p-6">
+    <section className={`card ${print ? 'p-4' : 'p-6'}`}>
+      {/* In stampa titolo, sottotitolo e grafico restano insieme sulla stessa pagina. */}
+      <div className={print ? 'break-inside-avoid' : ''}>
       <h3 className="font-serif text-base text-anthracite mb-1">
         {t.rich('segmentsTitle', { em: (c) => <em className="italic">{c}</em> })}
       </h3>
       <p className="text-xs text-anthracite-lighter mb-4">{t('segmentsSubtitle', { count: sorted.length })}</p>
-      <ResponsiveContainer width="100%" height={280}>
-        <LineChart data={data} margin={{ top: 8, right: 20, bottom: 32, left: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" />
-          <XAxis
-            dataKey="tMid"
-            type="number"
-            domain={['dataMin', 'dataMax']}
-            stroke="#6B7280"
-            fontSize={10}
-            tickFormatter={(v) => formatClock(Number(v))}
-            label={{ value: tAxes('timeClock'), position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
-          />
-          <YAxis domain={[0, 100]} stroke="#6B7280" fontSize={10} label={{ value: tAxes('score'), angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }} />
-          <Tooltip
-            contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 11 }}
-            labelFormatter={(v) => `t = ${formatClock(Number(v))}`}
-            formatter={(v) => num(v, 0, locale)}
-          />
-          {scoreLines.map((l) => (
-            <Line key={l.key} type="monotone" dataKey={l.key} name={l.label} stroke={l.color} strokeWidth={1.8} dot={{ r: 2 }} isAnimationActive={false} connectNulls />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
+      {print ? (
+        <div style={{ width: chartW, height: chartH }}>{chart}</div>
+      ) : (
+        <ResponsiveContainer width="100%" height={chartH}>{chart}</ResponsiveContainer>
+      )}
+      </div>
       <div className="flex flex-wrap gap-3 mt-3">
         {scoreLines.map((l) => (
           <span key={l.key} className="inline-flex items-center gap-1.5 text-xs text-anthracite-lighter">

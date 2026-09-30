@@ -7,10 +7,11 @@ import { monT, type Lang } from '@/lib/monitoring-strings'
 // righe (HR, ln RMSSD, LF/HF) colorate per intensità relativa alla
 // registrazione, e sotto lo stato prevalente dell'ora. Ore senza dati
 // tratteggiate. Scroll orizzontale su mobile.
+// `print`: la griglia si adatta alla larghezza della card (celle più strette).
 
 export { intensityColor }
 
-export function MonitoringHourMap({ hours, tz, pro = true }: { hours: HourPattern[]; tz: number; pro?: boolean }) {
+export function MonitoringHourMap({ hours, tz, pro = true, print = false }: { hours: HourPattern[]; tz: number; pro?: boolean; print?: boolean }) {
   const t = useTranslations('monitoring')
   const locale = useLocale() as Lang
   if (hours.length === 0) return null
@@ -25,8 +26,8 @@ export function MonitoringHourMap({ hours, tz, pro = true }: { hours: HourPatter
   })
   return (
     <div className="space-y-3">
-      <div className="overflow-x-auto">
-        <table className="border-separate border-spacing-[2px] text-[10px]" style={{ minWidth: Math.max(520, hours.length * 34 + 70) }}>
+      <div className={print ? '' : 'overflow-x-auto'}>
+        <table className={`border-separate border-spacing-[2px] ${print ? 'w-full text-[8.5px]' : 'text-[10px]'}`} style={print ? undefined : { minWidth: Math.max(520, hours.length * 34 + 70) }}>
           <tbody>
             {rows.map((r, ri) => (
               <tr key={r.label}>
@@ -36,7 +37,7 @@ export function MonitoringHourMap({ hours, tz, pro = true }: { hours: HourPatter
                   const rg = ranges[ri]
                   const color = v == null || !rg ? STATE_COLOR.invalid : intensityColor(rg.mx - rg.mn < 1e-9 ? 0.5 : (v - rg.mn) / (rg.mx - rg.mn), r.warm)
                   return (
-                    <td key={i} className="rounded-sm text-center tabular-nums h-7 min-w-[30px]" style={{ backgroundColor: color, color: MON.textPrimary }} title={`${hm(h.h, tz)} · ${r.label} ${v == null ? '—' : r.fmt(v)}`}>
+                    <td key={i} className={`rounded-sm text-center tabular-nums ${print ? 'h-6 px-0' : 'h-7 min-w-[30px]'}`} style={{ backgroundColor: color, color: MON.textPrimary }} title={`${hm(h.h, tz)} · ${r.label} ${v == null ? '—' : r.fmt(v)}`}>
                       {v == null ? '' : r.fmt(v)}
                     </td>
                   )
@@ -75,8 +76,8 @@ export function MonitoringHourMap({ hours, tz, pro = true }: { hours: HourPatter
       </div>
       <p className="text-[10.5px] text-anthracite-lighter">{monT('hour_map_note', locale)}</p>
       {pro && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-[11px] min-w-[420px]">
+        <div className={print ? '' : 'overflow-x-auto'}>
+          <table className={`w-full text-[11px] ${print ? '' : 'min-w-[420px]'}`}>
             <thead>
               <tr className="text-left" style={{ color: MON.accentDark }}>
                 <th className="py-1 font-extrabold">{monT('ev_time', locale)}</th><th className="py-1 font-extrabold text-right">HR</th><th className="py-1 font-extrabold text-right">ln RMSSD</th><th className="py-1 font-extrabold text-right">LF/HF</th><th className="py-1 font-extrabold">{t('hourMap.state')}</th><th className="py-1 font-extrabold text-right">n</th>

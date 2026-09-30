@@ -10,8 +10,11 @@ import { sleepT } from '@/lib/sleep-strings'
 // Grafici del modulo Sonno (Spo2NightChart, PrNightChart, DesaturationStrip
 // dell'app) sulle finestre da 1 minuto già calcolate dall'app: le finestre
 // non valide spezzano la linea. Nessun valore è ricalcolato.
+// `print`: pagina di stampa A4, dimensioni fisse (`width`), senza tooltip né brush.
 
 type Pt = { t: number; v: number | null; min: number | null }
+
+type PrintProps = { print?: boolean; width?: number }
 
 function usePoints(windows: SleepWindow[], pick: (w: SleepWindow) => number | null) {
   return useMemo(() => {
@@ -37,7 +40,7 @@ function hourTicks(total: number): number[] {
 const TIP = { background: '#fff', borderRadius: 12, border: `1px solid ${MON.borderLight}`, fontSize: 11 }
 
 /** SpO₂ media per minuto; banda rossa sotto il 90 %; punti rossi sui nadir degli eventi. */
-export function Spo2NightChart({ windows, events, tz, height = 220 }: { windows: SleepWindow[]; events: SleepDesaturationEvent[]; tz: number; height?: number }) {
+export function Spo2NightChart({ windows, events, tz, height = 220, print = false, width = 620 }: { windows: SleepWindow[]; events: SleepDesaturationEvent[]; tz: number; height?: number } & PrintProps) {
   const tc = useTranslations('common')
   const { pts, start, total } = usePoints(windows, (w) => w.spo2)
   if (pts.length === 0) return <div className="text-sm text-anthracite-lighter">{tc('noData')}</div>
@@ -46,31 +49,33 @@ export function Spo2NightChart({ windows, events, tz, height = 220 }: { windows:
   for (const p of pts) { const v = p.min ?? p.v; if (v != null && v < minY) minY = v }
   for (const e of events) if (e.nadir < minY) minY = e.nadir
   const yMin = Math.max(50, Math.floor(minY - 3) - (Math.floor(minY - 3) % 2))
+  const chart = (
+    <LineChart data={pts} {...(print ? { width, height } : {})} margin={{ top: 8, right: 16, bottom: 4, left: 0 }}>
+      <CartesianGrid strokeDasharray="3 3" stroke={MON.borderLight} vertical={false} />
+      <ReferenceArea y1={yMin} y2={SLEEP_PARAMS.t90Threshold} fill={MON.error} fillOpacity={0.1} strokeOpacity={0} />
+      <ReferenceLine y={SLEEP_PARAMS.t90Threshold} stroke={MON.error} strokeOpacity={0.55} strokeDasharray="4 4" label={{ value: '90 %', position: 'insideTopRight', fontSize: 9, fill: MON.error }} />
+      <XAxis dataKey="t" type="number" domain={[0, total]} ticks={hourTicks(total)} tickFormatter={(v) => hm(toIso(Number(v)), tz)} stroke={MON.textSecondary} fontSize={10} />
+      <YAxis domain={[yMin, 100]} stroke={MON.textSecondary} fontSize={10} width={34} tickFormatter={(v) => `${Math.round(Number(v))}`} />
+      {!print && <Tooltip contentStyle={TIP} labelFormatter={(v) => hm(toIso(Number(v)), tz)} formatter={(v: unknown) => [v == null ? '—' : `${Math.round(Number(v))} %`, 'SpO₂']} />}
+      <Line type="linear" dataKey="v" stroke={MON.sleep} strokeWidth={1.6} dot={false} connectNulls={false} isAnimationActive={false} />
+      {events.map((e, i) => (
+        <ReferenceDot key={i} x={(new Date(e.nadir_time).getTime() - start) / 60_000} y={e.nadir} r={events.length > 120 ? 1.6 : 2.6} fill={STATE_COLOR.stress} stroke="none" ifOverflow="hidden" />
+      ))}
+      {!print && <Brush dataKey="t" height={22} stroke={MON.sleep} travellerWidth={8} tickFormatter={(v) => hm(toIso(Number(v)), tz)} />}
+    </LineChart>
+  )
+  if (print) return <div style={{ width, height }}>{chart}</div>
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[560px]">
-        <ResponsiveContainer width="100%" height={height}>
-          <LineChart data={pts} margin={{ top: 8, right: 16, bottom: 4, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={MON.borderLight} vertical={false} />
-            <ReferenceArea y1={yMin} y2={SLEEP_PARAMS.t90Threshold} fill={MON.error} fillOpacity={0.1} strokeOpacity={0} />
-            <ReferenceLine y={SLEEP_PARAMS.t90Threshold} stroke={MON.error} strokeOpacity={0.55} strokeDasharray="4 4" label={{ value: '90 %', position: 'insideTopRight', fontSize: 9, fill: MON.error }} />
-            <XAxis dataKey="t" type="number" domain={[0, total]} ticks={hourTicks(total)} tickFormatter={(v) => hm(toIso(Number(v)), tz)} stroke={MON.textSecondary} fontSize={10} />
-            <YAxis domain={[yMin, 100]} stroke={MON.textSecondary} fontSize={10} width={34} tickFormatter={(v) => `${Math.round(Number(v))}`} />
-            <Tooltip contentStyle={TIP} labelFormatter={(v) => hm(toIso(Number(v)), tz)} formatter={(v: unknown) => [v == null ? '—' : `${Math.round(Number(v))} %`, 'SpO₂']} />
-            <Line type="linear" dataKey="v" stroke={MON.sleep} strokeWidth={1.6} dot={false} connectNulls={false} isAnimationActive={false} />
-            {events.map((e, i) => (
-              <ReferenceDot key={i} x={(new Date(e.nadir_time).getTime() - start) / 60_000} y={e.nadir} r={events.length > 120 ? 1.6 : 2.6} fill={STATE_COLOR.stress} stroke="none" ifOverflow="hidden" />
-            ))}
-            <Brush dataKey="t" height={22} stroke={MON.sleep} travellerWidth={8} tickFormatter={(v) => hm(toIso(Number(v)), tz)} />
-          </LineChart>
-        </ResponsiveContainer>
+        <ResponsiveContainer width="100%" height={height}>{chart}</ResponsiveContainer>
       </div>
     </div>
   )
 }
 
 /** Polso medio per minuto; linea verde tratteggiata = polso basale; punti gialli = eventi con surge ≥ 6 bpm. */
-export function PrNightChart({ windows, events, prBasal, tz, height = 200 }: { windows: SleepWindow[]; events: SleepDesaturationEvent[]; prBasal: number | null; tz: number; height?: number }) {
+export function PrNightChart({ windows, events, prBasal, tz, height = 200, print = false, width = 620 }: { windows: SleepWindow[]; events: SleepDesaturationEvent[]; prBasal: number | null; tz: number; height?: number } & PrintProps) {
   const t = useTranslations('monitoring')
   const tc = useTranslations('common')
   const locale = useLocale()
@@ -84,32 +89,34 @@ export function PrNightChart({ windows, events, prBasal, tz, height = 200 }: { w
   const yMin = Math.floor((minY - 5) / 5) * 5
   const yMax = Math.ceil((maxY + 5) / 5) * 5
   const markers = events.filter((e) => (e.surge_bpm ?? 0) >= SLEEP_PARAMS.surgeThresholdBpm)
+  const chart = (
+    <LineChart data={pts} {...(print ? { width, height } : {})} margin={{ top: 8, right: 16, bottom: 4, left: 0 }}>
+      <CartesianGrid strokeDasharray="3 3" stroke={MON.borderLight} vertical={false} />
+      {prBasal != null && (
+        <ReferenceLine y={prBasal} stroke={STATE_COLOR.recovery} strokeOpacity={0.7} strokeDasharray="4 4" label={{ value: t('sleep.basalLine', { v: Math.round(prBasal) }), position: 'insideTopRight', fontSize: 9, fill: STATE_COLOR.recovery }} />
+      )}
+      <XAxis dataKey="t" type="number" domain={[0, total]} ticks={hourTicks(total)} tickFormatter={(v) => hm(toIso(Number(v)), tz)} stroke={MON.textSecondary} fontSize={10} />
+      <YAxis domain={[yMin, yMax]} stroke={MON.textSecondary} fontSize={10} width={34} tickFormatter={(v) => `${Math.round(Number(v))}`} />
+      {!print && <Tooltip contentStyle={TIP} labelFormatter={(v) => hm(toIso(Number(v)), tz)} formatter={(v: unknown) => [v == null ? '—' : `${Math.round(Number(v))} bpm`, sleepT('pr', locale as 'it' | 'en' | 'de')]} />}
+      <Line type="linear" dataKey="v" stroke={STATE_COLOR.stress} strokeWidth={1.6} dot={false} connectNulls={false} isAnimationActive={false} />
+      {markers.map((e, i) => (
+        <ReferenceDot key={i} x={(new Date(e.nadir_time).getTime() - start) / 60_000} y={prBasal ?? yMin + 1} r={markers.length > 120 ? 1.4 : 2.2} fill={MON.warning} stroke="none" ifOverflow="hidden" />
+      ))}
+      {!print && <Brush dataKey="t" height={22} stroke={STATE_COLOR.stress} travellerWidth={8} tickFormatter={(v) => hm(toIso(Number(v)), tz)} />}
+    </LineChart>
+  )
+  if (print) return <div style={{ width, height }}>{chart}</div>
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[560px]">
-        <ResponsiveContainer width="100%" height={height}>
-          <LineChart data={pts} margin={{ top: 8, right: 16, bottom: 4, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={MON.borderLight} vertical={false} />
-            {prBasal != null && (
-              <ReferenceLine y={prBasal} stroke={STATE_COLOR.recovery} strokeOpacity={0.7} strokeDasharray="4 4" label={{ value: t('sleep.basalLine', { v: Math.round(prBasal) }), position: 'insideTopRight', fontSize: 9, fill: STATE_COLOR.recovery }} />
-            )}
-            <XAxis dataKey="t" type="number" domain={[0, total]} ticks={hourTicks(total)} tickFormatter={(v) => hm(toIso(Number(v)), tz)} stroke={MON.textSecondary} fontSize={10} />
-            <YAxis domain={[yMin, yMax]} stroke={MON.textSecondary} fontSize={10} width={34} tickFormatter={(v) => `${Math.round(Number(v))}`} />
-            <Tooltip contentStyle={TIP} labelFormatter={(v) => hm(toIso(Number(v)), tz)} formatter={(v: unknown) => [v == null ? '—' : `${Math.round(Number(v))} bpm`, sleepT('pr', locale as 'it' | 'en' | 'de')]} />
-            <Line type="linear" dataKey="v" stroke={STATE_COLOR.stress} strokeWidth={1.6} dot={false} connectNulls={false} isAnimationActive={false} />
-            {markers.map((e, i) => (
-              <ReferenceDot key={i} x={(new Date(e.nadir_time).getTime() - start) / 60_000} y={prBasal ?? yMin + 1} r={markers.length > 120 ? 1.4 : 2.2} fill={MON.warning} stroke="none" ifOverflow="hidden" />
-            ))}
-            <Brush dataKey="t" height={22} stroke={STATE_COLOR.stress} travellerWidth={8} tickFormatter={(v) => hm(toIso(Number(v)), tz)} />
-          </LineChart>
-        </ResponsiveContainer>
+        <ResponsiveContainer width="100%" height={height}>{chart}</ResponsiveContainer>
       </div>
     </div>
   )
 }
 
-/** Striscia della notte: sfondo per stato del minuto e tacche sugli eventi, alte in proporzione al calo. */
-export function DesaturationStrip({ windows, events, tz, height = 64 }: { windows: SleepWindow[]; events: SleepDesaturationEvent[]; tz: number; height?: number }) {
+/** Striscia della notte: sfondo per stato del minuto e tacche sugli eventi, alte in proporzione al calo. `print`: senza scroll orizzontale. */
+export function DesaturationStrip({ windows, events, tz, height = 64, print = false }: { windows: SleepWindow[]; events: SleepDesaturationEvent[]; tz: number; height?: number; print?: boolean }) {
   const t = useTranslations('monitoring')
   const locale = useLocale()
   if (windows.length === 0) return null
@@ -136,8 +143,8 @@ export function DesaturationStrip({ windows, events, tz, height = 64 }: { window
     tk += step * 3_600_000
   }
   return (
-    <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${height}`} className="w-full min-w-[520px] block" style={{ height }} role="img" aria-label={t('sleep.nightTimeline')}>
+    <div className={print ? '' : 'overflow-x-auto'}>
+      <svg viewBox={`0 0 ${W} ${height}`} className={`w-full block ${print ? '' : 'min-w-[520px]'}`} style={{ height }} role="img" aria-label={t('sleep.nightTimeline')}>
         {runs.map((r, i) => <rect key={i} x={r.x0} y={0} width={Math.max(0.5, r.x1 - r.x0)} height={plotH} fill={SLEEP_STATE_COLOR[r.state]} />)}
         {events.map((e, i) => {
           const h = Math.max(0.35, Math.min(1, 0.35 + (((e.drop ?? 3) - 3) / 7) * 0.65)) * plotH

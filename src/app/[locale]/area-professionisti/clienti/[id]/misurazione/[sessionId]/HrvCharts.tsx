@@ -6,9 +6,12 @@ import {
   AreaChart,
   Brush,
   CartesianGrid,
+  Cell,
   Customized,
   Line,
   LineChart,
+  Pie,
+  PieChart,
   ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
@@ -18,6 +21,7 @@ import {
   XAxis,
   YAxis,
   ZAxis,
+  type PieLabelRenderProps,
 } from 'recharts'
 import { useLocale, useTranslations } from 'next-intl'
 import { intlTag, num, toNum } from '@/lib/format'
@@ -62,11 +66,31 @@ function signed(v: number, digits: number, locale: string): string {
   return `${v > 0 ? '+' : ''}${num(v, digits, locale)}`
 }
 
+// Modalità stampa (PDF A4 via Chrome headless): niente ResponsiveContainer
+// (il grafico riceve width/height in px), niente tooltip, brush o comandi,
+// scala fissa e nessuna animazione. `width` vale solo in stampa.
+type PrintProps = { print?: boolean; width?: number }
+
+// Dimensioni di default in stampa (px a 96 dpi; l'area utile di un A4 con
+// margini normali è circa 680 px).
+export const PRINT_SIZES = {
+  poincare: 300,
+  rhythmogram: { width: 680, height: 240 },
+  psd: { width: 340, height: 220 },
+  psdPie: 200,
+} as const
+
 // ============================================================================
 // POINCARÉ — scatter quadrato 1:1 con linea identità, centroide ed ellisse SD1/SD2
 // ============================================================================
 
-export function PoincareScatter({ rr: rawRr, sd1: rawSd1, sd2: rawSd2 }: { rr: unknown[] | null; sd1: unknown; sd2: unknown }) {
+export function PoincareScatter({
+  rr: rawRr,
+  sd1: rawSd1,
+  sd2: rawSd2,
+  print = false,
+  width,
+}: { rr: unknown[] | null; sd1: unknown; sd2: unknown } & PrintProps) {
   const locale = useLocale()
   const t = useTranslations('charts')
   const axisInt = useAxisInt(locale)
@@ -78,7 +102,8 @@ export function PoincareScatter({ rr: rawRr, sd1: rawSd1, sd2: rawSd2 }: { rr: u
   // Scala fissa di default (stessi valori dell'app: 400–1400 ms, estesa a
   // 300–1600), così due misurazioni — o le due fasi di un ortostatico — si
   // confrontano a colpo d'occhio. "Zoom" passa alla scala adattiva.
-  const [zoom, setZoom] = useState(false)
+  const [zoomState, setZoom] = useState(false)
+  const zoom = print ? false : zoomState
   if (rr.length < 2) {
     return <Placeholder text={t('poincare.noRr')} />
   }
@@ -92,74 +117,86 @@ export function PoincareScatter({ rr: rawRr, sd1: rawSd1, sd2: rawSd2 }: { rr: u
   const scale = zoom ? rrScaleAdaptive(rr) : rrScaleFor(rr)
   const min = scale.min
   const max = scale.max
+  const size = width ?? PRINT_SIZES.poincare
+
+  const chart = (
+    <ScatterChart
+      {...(print ? { width: size, height: size } : {})}
+      margin={{ top: 12, right: 16, bottom: 32, left: 8 }}
+    >
+      <CartesianGrid stroke="#E2E6EA" />
+      <XAxis
+        type="number"
+        dataKey="x"
+        domain={[min, max]}
+        stroke="#6B7280"
+        fontSize={10}
+        tickFormatter={(v) => axisInt.format(Number(v))}
+        label={{ value: t('axes.rrN'), position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
+      />
+      <YAxis
+        type="number"
+        dataKey="y"
+        domain={[min, max]}
+        stroke="#6B7280"
+        fontSize={10}
+        tickFormatter={(v) => axisInt.format(Number(v))}
+        label={{ value: t('axes.rrN1'), angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
+      />
+      <ZAxis range={[14, 14]} />
+      <ReferenceLine
+        segment={[{ x: min, y: min }, { x: max, y: max }]}
+        stroke="#94A3B8"
+        strokeDasharray="4 4"
+        ifOverflow="hidden"
+      />
+      {!print && (
+        <Tooltip
+          cursor={{ strokeDasharray: '3 3' }}
+          contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 11 }}
+          content={({ active, payload }) => {
+            if (!active || !payload || !payload.length) return null
+            const p = payload[0].payload as { x: number; y: number }
+            const diff = p.y - p.x
+            return (
+              <div className="bg-white border border-surface-border rounded-xl shadow-elevated px-3 py-2 text-[11px]">
+                <div className="text-anthracite">RR(n): <b>{num(p.x, 0, locale)}</b> ms</div>
+                <div className="text-anthracite">RR(n+1): <b>{num(p.y, 0, locale)}</b> ms</div>
+                <div className="text-anthracite-lighter">{t('poincare.diff')}: <b>{signed(diff, 0, locale)}</b> ms</div>
+              </div>
+            )
+          }}
+        />
+      )}
+      <Scatter data={sample} fill="#4FA39A" fillOpacity={0.4} isAnimationActive={false} />
+      <Customized component={(props: unknown) => (
+        <PoincareOverlay
+          chart={props as ChartInternals}
+          meanRr={meanRr}
+          sd1={sd1}
+          sd2={sd2}
+          locale={locale}
+        />
+      )} />
+    </ScatterChart>
+  )
 
   return (
     <div>
-      <ScaleToggle zoom={zoom} onToggle={() => setZoom((z) => !z)} extended={scale.extended} />
-      <div className="aspect-square w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <ScatterChart margin={{ top: 12, right: 16, bottom: 32, left: 8 }}>
-            <CartesianGrid stroke="#E2E6EA" />
-            <XAxis
-              type="number"
-              dataKey="x"
-              domain={[min, max]}
-              stroke="#6B7280"
-              fontSize={10}
-              tickFormatter={(v) => axisInt.format(Number(v))}
-              label={{ value: t('axes.rrN'), position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
-            />
-            <YAxis
-              type="number"
-              dataKey="y"
-              domain={[min, max]}
-              stroke="#6B7280"
-              fontSize={10}
-              tickFormatter={(v) => axisInt.format(Number(v))}
-              label={{ value: t('axes.rrN1'), angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
-            />
-            <ZAxis range={[14, 14]} />
-            <ReferenceLine
-              segment={[{ x: min, y: min }, { x: max, y: max }]}
-              stroke="#94A3B8"
-              strokeDasharray="4 4"
-              ifOverflow="hidden"
-            />
-            <Tooltip
-              cursor={{ strokeDasharray: '3 3' }}
-              contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 11 }}
-              content={({ active, payload }) => {
-                if (!active || !payload || !payload.length) return null
-                const p = payload[0].payload as { x: number; y: number }
-                const diff = p.y - p.x
-                return (
-                  <div className="bg-white border border-surface-border rounded-xl shadow-elevated px-3 py-2 text-[11px]">
-                    <div className="text-anthracite">RR(n): <b>{num(p.x, 0, locale)}</b> ms</div>
-                    <div className="text-anthracite">RR(n+1): <b>{num(p.y, 0, locale)}</b> ms</div>
-                    <div className="text-anthracite-lighter">{t('poincare.diff')}: <b>{signed(diff, 0, locale)}</b> ms</div>
-                  </div>
-                )
-              }}
-            />
-            <Scatter data={sample} fill="#4FA39A" fillOpacity={0.4} />
-            <Customized component={(props: unknown) => (
-              <PoincareOverlay
-                chart={props as ChartInternals}
-                meanRr={meanRr}
-                sd1={sd1}
-                sd2={sd2}
-                locale={locale}
-              />
-            )} />
-          </ScatterChart>
-        </ResponsiveContainer>
-      </div>
-      <PoincareLegend sd1={sd1} sd2={sd2} />
+      {!print && <ScaleToggle zoom={zoom} onToggle={() => setZoom((z) => !z)} extended={scale.extended} />}
+      {print ? (
+        <div style={{ width: size, height: size }}>{chart}</div>
+      ) : (
+        <div className="aspect-square w-full">
+          <ResponsiveContainer width="100%" height="100%">{chart}</ResponsiveContainer>
+        </div>
+      )}
+      <PoincareLegend sd1={sd1} sd2={sd2} print={print} />
     </div>
   )
 }
 
-function PoincareLegend({ sd1, sd2 }: { sd1: number | null; sd2: number | null }) {
+function PoincareLegend({ sd1, sd2, print = false }: { sd1: number | null; sd2: number | null; print?: boolean }) {
   const locale = useLocale()
   const t = useTranslations('charts.poincare')
   const ratio = sd1 != null && sd2 != null && sd2 > 0 ? sd1 / sd2 : null
@@ -170,7 +207,7 @@ function PoincareLegend({ sd1, sd2 }: { sd1: number | null; sd2: number | null }
     else interp = { label: t('balanced'), tone: 'text-emerald-700' }
   }
   return (
-    <div className="mt-3 space-y-2">
+    <div className={`${print ? 'mt-2' : 'mt-3'} space-y-2 break-inside-avoid`}>
       <div className="grid grid-cols-3 gap-2 text-xs">
         <div className="rounded-lg border border-surface-border bg-surface px-3 py-2 min-w-0">
           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-anthracite-lighter">
@@ -273,13 +310,19 @@ function PoincareOverlay({ chart, meanRr, sd1, sd2, locale }: { chart: ChartInte
 // RITMOGRAMMA — full-width con Brush per zoom temporale + linea media
 // ============================================================================
 
-export function Rhythmogram({ rr: rawRr }: { rr: unknown[] | null }) {
+export function Rhythmogram({
+  rr: rawRr,
+  print = false,
+  width,
+  height,
+}: { rr: unknown[] | null; height?: number } & PrintProps) {
   const locale = useLocale()
   const t = useTranslations('charts')
   const axisInt = useAxisInt(locale)
   const rr = toNumArray(rawRr)
   // Asse Y fisso (400–1400 ms, esteso 300–1600) come nell'app; "Zoom" = adattivo.
-  const [zoom, setZoom] = useState(false)
+  const [zoomState, setZoom] = useState(false)
+  const zoom = print ? false : zoomState
   if (rr.length === 0) {
     return <Placeholder text={t('poincare.noRr')} />
   }
@@ -293,41 +336,56 @@ export function Rhythmogram({ rr: rawRr }: { rr: unknown[] | null }) {
   const meanRr = rr.reduce((a, b) => a + b, 0) / rr.length
   const totalSec = data[data.length - 1]?.t ?? 0
   const tickStep = totalSec > 300 ? 60 : totalSec > 120 ? 30 : 15
+  const w = width ?? PRINT_SIZES.rhythmogram.width
+  const h = height ?? (print ? PRINT_SIZES.rhythmogram.height : 320)
 
-  return (
-    <div>
-    <ScaleToggle zoom={zoom} onToggle={() => setZoom((z) => !z)} extended={scale.extended} />
-    <ResponsiveContainer width="100%" height={320}>
-      <LineChart data={sample} margin={{ top: 8, right: 20, bottom: 32, left: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" />
-        <XAxis
-          dataKey="t"
-          stroke="#6B7280"
-          fontSize={10}
-          type="number"
-          domain={[0, 'dataMax']}
-          ticks={Array.from({ length: Math.floor(totalSec / tickStep) + 1 }, (_, i) => i * tickStep)}
-          tickFormatter={(v) => `${axisInt.format(Number(v))}s`}
-          label={{ value: t('axes.timeS'), position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
-        />
-        <YAxis
-          stroke="#6B7280"
-          fontSize={10}
-          domain={[scale.min, scale.max]}
-          allowDataOverflow
-          tickFormatter={(v) => axisInt.format(Number(v))}
-          label={{ value: t('axes.rrMs'), angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
-        />
-        <ReferenceLine y={meanRr} stroke="#9CA3AF" strokeDasharray="4 4" label={{ value: t('rhythmogram.mean', { value: num(meanRr, 0, locale) }), position: 'right', fontSize: 10, fill: '#6B7280' }} />
+  const chart = (
+    <LineChart
+      data={sample}
+      {...(print ? { width: w, height: h } : {})}
+      margin={{ top: 8, right: 20, bottom: 32, left: 8 }}
+    >
+      <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" />
+      <XAxis
+        dataKey="t"
+        stroke="#6B7280"
+        fontSize={10}
+        type="number"
+        domain={[0, 'dataMax']}
+        ticks={Array.from({ length: Math.floor(totalSec / tickStep) + 1 }, (_, i) => i * tickStep)}
+        tickFormatter={(v) => `${axisInt.format(Number(v))}s`}
+        label={{ value: t('axes.timeS'), position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
+      />
+      <YAxis
+        stroke="#6B7280"
+        fontSize={10}
+        domain={[scale.min, scale.max]}
+        allowDataOverflow
+        tickFormatter={(v) => axisInt.format(Number(v))}
+        label={{ value: t('axes.rrMs'), angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
+      />
+      <ReferenceLine y={meanRr} stroke="#9CA3AF" strokeDasharray="4 4" label={{ value: t('rhythmogram.mean', { value: num(meanRr, 0, locale) }), position: 'right', fontSize: 10, fill: '#6B7280' }} />
+      {!print && (
         <Tooltip
           contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 11 }}
           labelFormatter={(v) => t('rhythmogram.tooltipTime', { value: num(v, 1, locale) })}
           formatter={(v) => [`${num(v, 0, locale)} ms`, 'RR']}
         />
-        <Line type="monotone" dataKey="rr" stroke="#4FA39A" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+      )}
+      <Line type="monotone" dataKey="rr" stroke="#4FA39A" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+      {!print && (
         <Brush dataKey="t" height={26} stroke="#4FA39A" travellerWidth={8} tickFormatter={(v) => `${axisInt.format(Number(v))}s`} />
-      </LineChart>
-    </ResponsiveContainer>
+      )}
+    </LineChart>
+  )
+
+  if (print) {
+    return <div style={{ width: w, height: h }}>{chart}</div>
+  }
+  return (
+    <div>
+      <ScaleToggle zoom={zoom} onToggle={() => setZoom((z) => !z)} extended={scale.extended} />
+      <ResponsiveContainer width="100%" height={h}>{chart}</ResponsiveContainer>
     </div>
   )
 }
@@ -350,7 +408,10 @@ export function PsdPlaceholder({
   hf: rawHf,
   lfHfRatio: rawLfHfRatio,
   resonanceHz: rawResonanceHz,
-}: { vlf: unknown; lf: unknown; hf: unknown; lfHfRatio?: unknown; resonanceHz?: unknown }) {
+  print = false,
+  width,
+  height,
+}: { vlf: unknown; lf: unknown; hf: unknown; lfHfRatio?: unknown; resonanceHz?: unknown; height?: number } & PrintProps) {
   const locale = useLocale()
   const t = useTranslations('charts')
   const axisInt = useAxisInt(locale)
@@ -362,7 +423,8 @@ export function PsdPlaceholder({
   // Asse Y logaritmico fisso (10 – 1.000.000 ms²/Hz, esteso 1 – 10.000.000,
   // tick solo sulle potenze di 10) e asse X 0 – 0,5 Hz, come nell'app.
   // "Zoom" torna alla scala lineare adattiva.
-  const [zoom, setZoom] = useState(false)
+  const [zoomState, setZoom] = useState(false)
+  const zoom = print ? false : zoomState
   if (vlf == null && lf == null && hf == null) return <Placeholder text={t('psd.noData')} />
 
   const fMax = PSD_X_MAX
@@ -381,74 +443,201 @@ export function PsdPlaceholder({
   // non spariscono: meglio una scala dichiarata che dei punti tagliati fuori.
   const data = zoom ? raw : raw.map((d) => ({ f: d.f, psd: psdClamp(d.psd, scale) }))
   const decades = psdDecades(scale)
+  const w = width ?? PRINT_SIZES.psd.width
+  const h = height ?? (print ? PRINT_SIZES.psd.height : 260)
+
+  const chart = (
+    <AreaChart
+      data={data}
+      {...(print ? { width: w, height: h } : {})}
+      margin={{ top: 24, right: 16, bottom: 28, left: 8 }}
+    >
+      <defs>
+        <linearGradient id="psd-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#2F343A" stopOpacity={0.25} />
+          <stop offset="100%" stopColor="#2F343A" stopOpacity={0.05} />
+        </linearGradient>
+      </defs>
+      <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" />
+      <XAxis
+        dataKey="f"
+        type="number"
+        domain={[PSD_X_MIN, fMax]}
+        ticks={PSD_X_TICKS}
+        stroke="#6B7280"
+        fontSize={10}
+        tickFormatter={(v) => num(v, 2, locale)}
+        label={{ value: t('axes.freqHz'), position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
+      />
+      {zoom ? (
+        <YAxis
+          stroke="#6B7280"
+          fontSize={10}
+          domain={[0, Math.ceil(maxPsd * 1.15)]}
+          tickFormatter={(v) => axisInt.format(Number(v))}
+          label={{ value: t('axes.psd'), angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
+        />
+      ) : (
+        <YAxis
+          stroke="#6B7280"
+          fontSize={10}
+          scale="log"
+          domain={[scale.min, scale.max]}
+          ticks={decades}
+          allowDataOverflow
+          tickFormatter={(v) => psdLabel(Number(v))}
+          label={{ value: t('axes.psd'), angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
+        />
+      )}
+      <ReferenceArea x1={PSD_BANDS.vlf.from} x2={PSD_BANDS.vlf.to} fill={PSD_COLORS.vlf} fillOpacity={0.18} label={{ value: 'VLF', position: 'insideTop', fill: '#991B1B', fontSize: 11, fontWeight: 600 }} />
+      <ReferenceArea x1={PSD_BANDS.lf.from} x2={PSD_BANDS.lf.to} fill={PSD_COLORS.lf} fillOpacity={0.18} label={{ value: 'LF', position: 'insideTop', fill: '#92400E', fontSize: 11, fontWeight: 600 }} />
+      <ReferenceArea x1={PSD_BANDS.hf.from} x2={PSD_BANDS.hf.to} fill={PSD_COLORS.hf} fillOpacity={0.18} label={{ value: 'HF', position: 'insideTop', fill: '#115E59', fontSize: 11, fontWeight: 600 }} />
+      {resonanceHz != null && resonanceHz > 0 && resonanceHz <= fMax && (
+        <ReferenceLine
+          x={+resonanceHz.toFixed(4)}
+          stroke="#8B5CF6"
+          strokeWidth={2}
+          label={{ value: t('psd.resonance', { value: num(resonanceHz, 3, locale) }), position: 'top', fill: '#6D28D9', fontSize: 10, fontWeight: 700 }}
+        />
+      )}
+      {!print && (
+        <Tooltip
+          contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 11 }}
+          labelFormatter={(v) => t('psd.tooltipFreq', { value: num(v, 3, locale) })}
+          formatter={(v) => [`${num(v, 1, locale)} ms²/Hz`, 'PSD']}
+        />
+      )}
+      <Area type="monotone" dataKey="psd" stroke="#2F343A" strokeWidth={1.8} fill="url(#psd-fill)" isAnimationActive={false} />
+    </AreaChart>
+  )
 
   return (
-    <div>
-      <ScaleToggle zoom={zoom} onToggle={() => setZoom((z) => !z)} extended={scale.extended} />
-      <ResponsiveContainer width="100%" height={260}>
-        <AreaChart data={data} margin={{ top: 24, right: 16, bottom: 28, left: 8 }}>
-          <defs>
-            <linearGradient id="psd-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2F343A" stopOpacity={0.25} />
-              <stop offset="100%" stopColor="#2F343A" stopOpacity={0.05} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" />
-          <XAxis
-            dataKey="f"
-            type="number"
-            domain={[PSD_X_MIN, fMax]}
-            ticks={PSD_X_TICKS}
-            stroke="#6B7280"
-            fontSize={10}
-            tickFormatter={(v) => num(v, 2, locale)}
-            label={{ value: t('axes.freqHz'), position: 'insideBottom', offset: -8, fontSize: 11, fill: '#6B7280' }}
-          />
-          {zoom ? (
-            <YAxis
-              stroke="#6B7280"
-              fontSize={10}
-              domain={[0, Math.ceil(maxPsd * 1.15)]}
-              tickFormatter={(v) => axisInt.format(Number(v))}
-              label={{ value: t('axes.psd'), angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
-            />
-          ) : (
-            <YAxis
-              stroke="#6B7280"
-              fontSize={10}
-              scale="log"
-              domain={[scale.min, scale.max]}
-              ticks={decades}
-              allowDataOverflow
-              tickFormatter={(v) => psdLabel(Number(v))}
-              label={{ value: t('axes.psd'), angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }}
-            />
-          )}
-          <ReferenceArea x1={PSD_BANDS.vlf.from} x2={PSD_BANDS.vlf.to} fill="#DC2626" fillOpacity={0.18} label={{ value: 'VLF', position: 'insideTop', fill: '#991B1B', fontSize: 11, fontWeight: 600 }} />
-          <ReferenceArea x1={PSD_BANDS.lf.from} x2={PSD_BANDS.lf.to} fill="#F59E0B" fillOpacity={0.18} label={{ value: 'LF', position: 'insideTop', fill: '#92400E', fontSize: 11, fontWeight: 600 }} />
-          <ReferenceArea x1={PSD_BANDS.hf.from} x2={PSD_BANDS.hf.to} fill="#4FA39A" fillOpacity={0.18} label={{ value: 'HF', position: 'insideTop', fill: '#115E59', fontSize: 11, fontWeight: 600 }} />
-          {resonanceHz != null && resonanceHz > 0 && resonanceHz <= fMax && (
-            <ReferenceLine
-              x={+resonanceHz.toFixed(4)}
-              stroke="#8B5CF6"
-              strokeWidth={2}
-              label={{ value: t('psd.resonance', { value: num(resonanceHz, 3, locale) }), position: 'top', fill: '#6D28D9', fontSize: 10, fontWeight: 700 }}
-            />
-          )}
-          <Tooltip
-            contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 11 }}
-            labelFormatter={(v) => t('psd.tooltipFreq', { value: num(v, 3, locale) })}
-            formatter={(v) => [`${num(v, 1, locale)} ms²/Hz`, 'PSD']}
-          />
-          <Area type="monotone" dataKey="psd" stroke="#2F343A" strokeWidth={1.8} fill="url(#psd-fill)" isAnimationActive={false} />
-        </AreaChart>
-      </ResponsiveContainer>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
-        <PowerCell label="VLF" value={vlf} color="#DC2626" unit="ms²" locale={locale} />
-        <PowerCell label="LF" value={lf} color="#F59E0B" unit="ms²" locale={locale} />
-        <PowerCell label="HF" value={hf} color="#4FA39A" unit="ms²" locale={locale} />
+    <div className={print ? 'break-inside-avoid' : undefined}>
+      {!print && <ScaleToggle zoom={zoom} onToggle={() => setZoom((z) => !z)} extended={scale.extended} />}
+      {print ? (
+        <div style={{ width: w, height: h }}>{chart}</div>
+      ) : (
+        <ResponsiveContainer width="100%" height={h}>{chart}</ResponsiveContainer>
+      )}
+      <div className={`grid ${print ? 'grid-cols-4' : 'grid-cols-2 sm:grid-cols-4'} gap-2 ${print ? 'mt-2' : 'mt-3'}`}>
+        <PowerCell label="VLF" value={vlf} color={PSD_COLORS.vlf} unit="ms²" locale={locale} />
+        <PowerCell label="LF" value={lf} color={PSD_COLORS.lf} unit="ms²" locale={locale} />
+        <PowerCell label="HF" value={hf} color={PSD_COLORS.hf} unit="ms²" locale={locale} />
         <PowerCell label="LF/HF" value={lfHfRatio ?? (lf != null && hf ? lf / hf : null)} color="#2F343A" locale={locale} />
       </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// TORTA VLF / LF / HF — quota di ogni banda sulla potenza totale
+// ============================================================================
+
+// Stessi colori delle bande dello spettro PSD.
+export const PSD_COLORS = { vlf: '#DC2626', lf: '#F59E0B', hf: '#4FA39A' } as const
+
+type PieSlice = { key: 'vlf' | 'lf' | 'hf'; label: string; value: number; color: string; pct: number }
+
+export function PsdPie({
+  vlf: rawVlf,
+  lf: rawLf,
+  hf: rawHf,
+  print = false,
+  size,
+}: { vlf: unknown; lf: unknown; hf: unknown; print?: boolean; size?: number }) {
+  const locale = useLocale()
+  const t = useTranslations('charts')
+  const tDetail = useTranslations('measurement.detail')
+  const vlf = toNum(rawVlf)
+  const lf = toNum(rawLf)
+  const hf = toNum(rawHf)
+  const total = (vlf ?? 0) + (lf ?? 0) + (hf ?? 0)
+  if ((vlf == null && lf == null && hf == null) || !(total > 0)) return <Placeholder text={t('psd.noData')} />
+
+  const slices: PieSlice[] = (
+    [
+      { key: 'vlf', label: 'VLF', value: vlf, color: PSD_COLORS.vlf },
+      { key: 'lf', label: 'LF', value: lf, color: PSD_COLORS.lf },
+      { key: 'hf', label: 'HF', value: hf, color: PSD_COLORS.hf },
+    ] as const
+  )
+    .filter((s): s is typeof s & { value: number } => s.value != null && s.value > 0)
+    .map((s) => ({ ...s, pct: (s.value / total) * 100 }))
+
+  const px = size ?? PRINT_SIZES.psdPie
+  const outer = Math.floor(px / 2) - 20
+
+  // Etichetta percentuale dentro la fetta (a metà raggio), solo se la fetta è
+  // abbastanza grande da contenerla.
+  const RAD = Math.PI / 180
+  const renderLabel = (p: PieLabelRenderProps) => {
+    const pct = (p.percent ?? 0) * 100
+    if (pct < 6) return null
+    const cx = Number(p.cx ?? 0)
+    const cy = Number(p.cy ?? 0)
+    const ir = Number(p.innerRadius ?? 0)
+    const or = Number(p.outerRadius ?? outer)
+    const r = ir + (or - ir) * 0.55
+    const mid = Number(p.midAngle ?? 0)
+    const x = cx + r * Math.cos(-mid * RAD)
+    const y = cy + r * Math.sin(-mid * RAD)
+    return (
+      <text x={x} y={y} fill="#fff" fontSize={11} fontWeight={700} textAnchor="middle" dominantBaseline="central">
+        {num(pct, 0, locale)}%
+      </text>
+    )
+  }
+
+  const chart = (
+    <PieChart {...(print ? { width: px, height: px } : {})} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+      <Pie
+        data={slices}
+        dataKey="value"
+        nameKey="label"
+        cx="50%"
+        cy="50%"
+        outerRadius={outer}
+        stroke="#fff"
+        strokeWidth={2}
+        isAnimationActive={false}
+        labelLine={false}
+        label={renderLabel}
+      >
+        {slices.map((s) => <Cell key={s.key} fill={s.color} />)}
+      </Pie>
+      {!print && (
+        <Tooltip
+          contentStyle={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E6EA', fontSize: 11 }}
+          formatter={(v, name) => [`${num(v, 1, locale)} ms²`, String(name)]}
+        />
+      )}
+    </PieChart>
+  )
+
+  return (
+    <div className={`flex ${print ? 'flex-row items-center gap-4 break-inside-avoid' : 'flex-col sm:flex-row items-center gap-4'}`}>
+      {print ? (
+        <div style={{ width: px, height: px }} className="flex-shrink-0">{chart}</div>
+      ) : (
+        <div style={{ width: px, height: px }} className="flex-shrink-0">
+          <ResponsiveContainer width="100%" height="100%">{chart}</ResponsiveContainer>
+        </div>
+      )}
+      <dl className="flex-1 min-w-0 w-full space-y-1.5 text-xs">
+        {slices.map((s) => (
+          <div key={s.key} className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
+            <dt className="w-8 font-medium text-anthracite">{s.label}</dt>
+            <dd className="tabular-nums text-anthracite">
+              <span className="font-semibold">{num(s.pct, 0, locale)}%</span>
+              <span className="text-anthracite-lighter ml-1.5">{num(s.value, 1, locale)} ms²</span>
+            </dd>
+          </div>
+        ))}
+        <div className="pt-1.5 border-t border-surface-border text-[11px] text-anthracite-lighter">
+          {tDetail('psdPieTotal', { value: num(total, 1, locale) })}
+        </div>
+      </dl>
     </div>
   )
 }

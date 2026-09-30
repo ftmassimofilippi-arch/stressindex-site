@@ -6,8 +6,9 @@ import { monT, type Lang } from '@/lib/monitoring-strings'
 // Pagina "Parametri" (solo professionista): tabella intera / notte / giorno
 // con i parametri HRV calcolati dall'app nei tratti continui, la sezione
 // Registrazione e la scala individuale usata per la classificazione.
+// `print`: pagina di stampa, griglia a due colonne fissa e nessuno scroll.
 
-export function MonitoringParamsTable({ session }: { session: Monitoring24hSession }) {
+export function MonitoringParamsTable({ session, print = false }: { session: Monitoring24hSession; print?: boolean }) {
   const t = useTranslations('monitoring')
   const locale = useLocale() as Lang
   const m = (k: string) => monT(k, locale)
@@ -45,8 +46,8 @@ export function MonitoringParamsTable({ session }: { session: Monitoring24hSessi
   return (
     <div className="space-y-4">
       <p className="text-[11px] text-anthracite-lighter leading-relaxed">{m('tract_note')}</p>
-      <div className="card overflow-x-auto">
-        <table className="w-full text-xs min-w-[420px]">
+      <div className={`card ${print ? '' : 'overflow-x-auto'}`}>
+        <table className={`w-full text-xs ${print ? '' : 'min-w-[420px]'}`}>
           <thead>
             <tr>
               <th className="px-3 py-2" />
@@ -63,8 +64,8 @@ export function MonitoringParamsTable({ session }: { session: Monitoring24hSessi
           </tbody>
         </table>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="card p-4">
+      <div className={`grid gap-4 ${print ? 'grid-cols-2' : 'grid-cols-1 lg:grid-cols-2'}`}>
+        <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
           <div className="text-[13px] font-bold text-anthracite mb-2">{m('meta')}</div>
           <Kv k={m('profile')} v={`${profileLabel(profile, locale)}${estimated ? ` * ${t('params.estimatedSuffix')}` : ''}`} />
           <Kv k={m('rr_total')} v={`${session.rr_count ?? '—'}`} />
@@ -78,7 +79,7 @@ export function MonitoringParamsTable({ session }: { session: Monitoring24hSessi
           <Kv k={t('params.source')} v={`${sourceLabel(session.source, t)}${session.device_name ? ` · ${session.device_name}` : ''}`} />
           <Kv k={m('algorithm')} v={session.algorithm_version || '—'} />
         </div>
-        <div className="card p-4">
+        <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
           <div className="text-[13px] font-bold text-anthracite mb-2">{t('params.scaleTitle')}</div>
           <Kv k={t('params.hrRest')} v={f(sum?.hr_rest, 0, 'bpm')} />
           <Kv k={t('params.hrMax')} v={f(sum?.hr_max_used, 0, 'bpm')} />

@@ -1,0 +1,14 @@
+{
+  "monitoring": {
+    "title24h": "Bericht 24h-Monitoring",
+    "titleSleep": "Nachtbericht, Modul Schlaf",
+    "subtitle": "Von der App verarbeitete Daueraufzeichnung: die Website zeigt sie an, ohne einen Wert neu zu berechnen.",
+    "type": "Typ",
+    "profile": "Aufzeichnungsprofil",
+    "estimated": "geschätzt",
+    "device": "Gerät",
+    "clientVariant": "Version für den Klienten",
+    "fileType24h": "24h",
+    "fileTypeSleep": "Schlaf"
+  }
+}

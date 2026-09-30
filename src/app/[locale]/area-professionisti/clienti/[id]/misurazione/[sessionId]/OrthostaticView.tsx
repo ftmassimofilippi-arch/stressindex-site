@@ -62,7 +62,10 @@ function signed(v: number, digits: number, locale: string): string {
   return `${v > 0 ? '+' : ''}${num(v, digits, locale)}`
 }
 
-export function OrthostaticView({ data }: { data: OrthostaticData | null }) {
+// `print`: pagina di stampa A4. I grafici per fase ricevono dimensioni fisse
+// (due colonne dentro `width`, default 680 px), senza tooltip, brush o zoom.
+// Tabella supino/in piedi e indice di reattività restano invariati.
+export function OrthostaticView({ data, print = false, width = 680 }: { data: OrthostaticData | null; print?: boolean; width?: number }) {
   const locale = useLocale()
   const t = useTranslations('measurement.orthostatic')
 
@@ -169,27 +172,36 @@ export function OrthostaticView({ data }: { data: OrthostaticData | null }) {
       </section>
 
       {/* Poincaré + ritmogramma per fase */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <PhaseCharts title={t('phaseSupine')} phase={supine} />
-        <PhaseCharts title={t('phaseStanding')} phase={standing} />
+      <div className={`grid ${print ? 'grid-cols-2 gap-4' : 'grid-cols-1 lg:grid-cols-2 gap-6'}`}>
+        <PhaseCharts title={t('phaseSupine')} phase={supine} print={print} width={print ? Math.floor((width - 16) / 2) : undefined} />
+        <PhaseCharts title={t('phaseStanding')} phase={standing} print={print} width={print ? Math.floor((width - 16) / 2) : undefined} />
       </div>
     </div>
   )
 }
 
-function PhaseCharts({ title, phase }: { title: string; phase: OrthostaticPhaseMetrics | null | undefined }) {
+function PhaseCharts({
+  title,
+  phase,
+  print = false,
+  width,
+}: { title: string; phase: OrthostaticPhaseMetrics | null | undefined; print?: boolean; width?: number }) {
   const t = useTranslations('measurement.orthostatic')
   const rr = Array.isArray(phase?.rrIntervals) ? (phase!.rrIntervals as number[]) : null
+  // In stampa la colonna è larga `width` (al netto del padding della card):
+  // Poincaré quadrato non oltre 260 px, ritmogramma a tutta colonna.
+  const inner = width != null ? Math.max(160, width - 32) : undefined
+  const poincareSize = inner != null ? Math.min(260, inner) : undefined
   return (
-    <div className="card p-6 space-y-6">
+    <div className={`card ${print ? 'p-4 space-y-4 break-inside-avoid' : 'p-6 space-y-6'}`}>
       <h3 className="font-serif text-base text-anthracite">{title}</h3>
       <div>
         <div className="text-xs text-anthracite-lighter mb-2">{t('poincare')}</div>
-        <PoincareScatter rr={rr} sd1={val(phase, 'sd1')} sd2={val(phase, 'sd2')} />
+        <PoincareScatter rr={rr} sd1={val(phase, 'sd1')} sd2={val(phase, 'sd2')} print={print} width={poincareSize} />
       </div>
       <div>
         <div className="text-xs text-anthracite-lighter mb-2">{t('rhythmogram')}</div>
-        <Rhythmogram rr={rr} />
+        <Rhythmogram rr={rr} print={print} width={inner} height={print ? 200 : undefined} />
       </div>
     </div>
   )

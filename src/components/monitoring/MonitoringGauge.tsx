@@ -14,9 +14,11 @@ type Props = {
   rightLabel?: string
   centerMark?: boolean
   compact?: boolean
+  /** Pagina di stampa: card non spezzabile tra due pagine. */
+  print?: boolean
 }
 
-export function MonitoringGauge({ value, title, label, colorFor, leftLabel, rightLabel, centerMark = false, compact = false }: Props) {
+export function MonitoringGauge({ value, title, label, colorFor, leftLabel, rightLabel, centerMark = false, compact = false, print = false }: Props) {
   const t = useTranslations('monitoring')
   const v = value == null || !Number.isFinite(value) ? null : Math.max(0, Math.min(100, value))
   const color = v == null ? MON.textMuted : colorFor(v)
@@ -35,7 +37,7 @@ export function MonitoringGauge({ value, title, label, colorFor, leftLabel, righ
     return `M ${p0.x} ${p0.y} A ${r} ${r} 0 ${to - from > 0.5 ? 1 : 0} 1 ${p1.x} ${p1.y}`
   }
   return (
-    <div className={`card flex flex-col items-center min-w-0 ${compact ? 'p-3' : 'p-4'}`}>
+    <div className={`card flex flex-col items-center min-w-0 ${compact ? 'p-3' : 'p-4'} ${print ? 'print-avoid' : ''}`}>
       <div className="text-xs font-semibold text-anthracite-lighter text-center">{title}</div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[220px] mt-1" role="img" aria-label={`${title}: ${v == null ? t('gauge.na') : Math.round(v)}`}>
         {Array.from({ length: segments }, (_, i) => (

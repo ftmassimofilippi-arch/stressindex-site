@@ -1,0 +1,27 @@
+{
+  "detail": {
+    "psdPieTitle": "Distribuzione delle bande",
+    "psdPieSubtitle": "Quota di VLF, LF e HF sulla potenza totale",
+    "psdPieTotal": "Potenza totale: {value} ms²"
+  },
+  "params": {
+    "reference": {
+      "title": "Intervallo di riferimento indicativo: {from}–{to} (adulto sano, registrazione di 5-10 minuti)",
+      "legend": "Intervalli di riferimento indicativi per adulto sano, registrazione di 5-10 minuti: verde dentro l'intervallo, giallo al limite, rosso fuori, grigio senza riferimento.",
+      "status": {
+        "in": "Nella norma",
+        "edge": "Al limite",
+        "out": "Fuori range",
+        "none": "Senza intervallo di riferimento"
+      }
+    },
+    "summary": {
+      "title": "Parametri e intervalli di riferimento",
+      "subtitle": "{total, plural, =0 {Nessun parametro con intervallo di riferimento disponibile} one {# parametro confrontato con un intervallo di riferimento indicativo} other {# parametri confrontati con intervalli di riferimento indicativi}} (adulto sano, 5-10 minuti)",
+      "inRange": "Nella norma",
+      "edge": "Al limite",
+      "outOfRange": "Fuori range",
+      "sentence": "{inRange, plural, one {# parametro nella norma} other {# parametri nella norma}}, {edge} al limite, {outOfRange} fuori range"
+    }
+  }
+}

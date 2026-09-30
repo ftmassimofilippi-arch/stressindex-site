@@ -1,0 +1,27 @@
+{
+  "detail": {
+    "psdPieTitle": "Band distribution",
+    "psdPieSubtitle": "Share of VLF, LF and HF in total power",
+    "psdPieTotal": "Total power: {value} ms²"
+  },
+  "params": {
+    "reference": {
+      "title": "Indicative reference range: {from}–{to} (healthy adult, 5-10 minute recording)",
+      "legend": "Indicative reference ranges for a healthy adult, 5-10 minute recording: green within the range, yellow borderline, red outside, grey without a reference.",
+      "status": {
+        "in": "Within range",
+        "edge": "Borderline",
+        "out": "Out of range",
+        "none": "No reference range"
+      }
+    },
+    "summary": {
+      "title": "Parameters and reference ranges",
+      "subtitle": "{total, plural, =0 {No parameter with a reference range available} one {# parameter compared with an indicative reference range} other {# parameters compared with indicative reference ranges}} (healthy adult, 5-10 minutes)",
+      "inRange": "Within range",
+      "edge": "Borderline",
+      "outOfRange": "Out of range",
+      "sentence": "{inRange, plural, one {# parameter within range} other {# parameters within range}}, {edge} borderline, {outOfRange} out of range"
+    }
+  }
+}

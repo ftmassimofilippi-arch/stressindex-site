@@ -7,8 +7,8 @@ import { MON, STATE_COLOR, wallDate } from '@/lib/monitoring-format'
 
 const AX = { fontSize: 9, fill: MON.textSecondary }
 
-/** Cosinor: punti orari (mediane) e sinusoide stimata, con MESOR, acrofase (rosso) e batifase (verde). */
-export function CosinorChart({ hours, fit, tz, pick, height = 180 }: { hours: HourPattern[]; fit: CosinorSummary; tz: number; pick: (h: HourPattern) => number | null; height?: number }) {
+/** Cosinor: punti orari (mediane) e sinusoide stimata, con MESOR, acrofase (rosso) e batifase (verde). `print`: senza scroll orizzontale. */
+export function CosinorChart({ hours, fit, tz, pick, height = 180, print = false }: { hours: HourPattern[]; fit: CosinorSummary; tz: number; pick: (h: HourPattern) => number | null; height?: number; print?: boolean }) {
   const t = useTranslations('monitoring')
   const W = 1000
   const left = 40, bottom = 18, top = 8
@@ -34,8 +34,8 @@ export function CosinorChart({ hours, fit, tz, pick, height = 180 }: { hours: Ho
     return `${i === 0 ? 'M' : 'L'}${x(t).toFixed(1)},${y(v).toFixed(1)}`
   }).join(' ')
   return (
-    <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${height}`} className="w-full min-w-[520px] block" style={{ height }} role="img" aria-label={t('charts.cosinorAria')}>
+    <div className={print ? '' : 'overflow-x-auto'}>
+      <svg viewBox={`0 0 ${W} ${height}`} className={`w-full block ${print ? '' : 'min-w-[520px]'}`} style={{ height }} role="img" aria-label={t('charts.cosinorAria')}>
         {[0, 1, 2, 3, 4].map((i) => {
           const v = vMin + ((vMax - vMin) * i) / 4
           return (

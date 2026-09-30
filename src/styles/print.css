@@ -1,0 +1,94 @@
+/* Pagine di stampa (/stampa/...): A4 verticale, moodboard Stress Index.
+   Header e footer si ripetono su ogni pagina grazie a thead/tfoot della
+   tabella-cornice (PrintShell); il numero di pagina lo aggiunge Chrome. */
+
+@page {
+  size: A4 portrait;
+  margin: 10mm 12mm 12mm 12mm;
+}
+
+html.print-mode,
+html.print-mode body {
+  background: #ffffff !important;
+  color: #2f343a;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-page {
+  width: 186mm;
+  margin: 0 auto;
+  font-size: 10.5pt;
+  line-height: 1.45;
+}
+
+@media screen {
+  .print-page {
+    padding: 12mm 0;
+  }
+}
+
+.print-frame {
+  width: 100%;
+  border-collapse: collapse;
+}
+.print-frame > thead > tr > td,
+.print-frame > tfoot > tr > td,
+.print-frame > tbody > tr > td {
+  padding: 0;
+  vertical-align: top;
+}
+.print-frame > thead {
+  display: table-header-group;
+}
+.print-frame > tfoot {
+  display: table-footer-group;
+}
+
+.print-avoid,
+.print-card,
+.print-section h2,
+.print-section h3,
+.print-page tr,
+.print-page figure,
+.print-page svg {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.print-page thead {
+  display: table-header-group;
+}
+.print-break-before {
+  break-before: page;
+  page-break-before: always;
+}
+.print-page h2,
+.print-page h3 {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* Le card della dashboard riusate in stampa: bordo sottile, angoli morbidi. */
+.print-page .card,
+.print-card {
+  background: #ffffff;
+  border: 1px solid #e2e6ea;
+  border-radius: 12px;
+}
+
+/* Nessuna animazione o transizione in stampa. */
+.print-page *,
+.print-page *::before,
+.print-page *::after {
+  animation: none !important;
+  transition: none !important;
+}
+.print-page .stagger-children > * {
+  opacity: 1 !important;
+}
+
+/* I grafici Recharts hanno dimensioni fisse: il wrapper non deve limitarli. */
+.print-page .recharts-wrapper,
+.print-page .recharts-surface {
+  overflow: visible;
+}

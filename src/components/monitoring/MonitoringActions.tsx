@@ -10,9 +10,11 @@ import { isSleepSession } from '@/lib/monitoring-types'
 import { MON, dayMedium, dayNumeric } from '@/lib/monitoring-format'
 
 // Azioni del dettaglio (3.10): PDF professionista, PDF cliente, export RR
-// grezzi (dal bucket), export finestre, invio al cliente. Tutte le route
-// stanno in /api/monitoring/[id]/*. La lingua corrente viaggia come
-// `?locale=` così PDF, CSV ed errori escono nella lingua della pagina.
+// grezzi (dal bucket), export finestre, invio al cliente. I PDF escono da
+// /api/pdf/monitoraggio/[id] (stampa della pagina /stampa/monitoraggio con
+// Chrome headless); CSV ed email restano in /api/monitoring/[id]/*. La lingua
+// corrente viaggia come `?locale=` così PDF, CSV ed errori escono nella
+// lingua della pagina.
 
 type ErrT = ((key: string, values?: Record<string, string | number | Date>) => string) & { has?: (key: string) => boolean }
 
@@ -48,6 +50,7 @@ export function MonitoringActions({ session, readOnly = false }: { session: Moni
   const [emailOpen, setEmailOpen] = useState(false)
   const sleep = isSleepSession(session)
   const base = `/api/monitoring/${session.id}`
+  const pdfBase = `/api/pdf/monitoraggio/${session.id}`
   const accent = sleep ? MON.sleep : MON.accent
   const date = dayNumeric(session.start_time, session.tz_offset_minutes).replace(/\//g, '-')
   const generic = t('actions.genericError')
@@ -76,8 +79,8 @@ export function MonitoringActions({ session, readOnly = false }: { session: Moni
   return (
     <div className="flex flex-col items-stretch lg:items-end gap-2 min-w-0">
       <div className="flex flex-wrap gap-1.5 lg:justify-end">
-        <Btn k="pdf-pro" icon={FileText} label={t('actions.pdfPro')} primary onClick={() => run('pdf-pro', () => download(`${base}/pdf${q('&variant=pro')}`, `monitoring_${date}.pdf`, generic, te))} />
-        <Btn k="pdf-client" icon={FileText} label={t('actions.pdfClient')} onClick={() => run('pdf-client', () => download(`${base}/pdf${q('&variant=client')}`, `monitoring_client_${date}.pdf`, generic, te))} />
+        <Btn k="pdf-pro" icon={FileText} label={t('actions.pdfPro')} primary onClick={() => run('pdf-pro', () => download(`${pdfBase}${q('&variant=pro')}`, `monitoring_${date}.pdf`, generic, te))} />
+        <Btn k="pdf-client" icon={FileText} label={t('actions.pdfClient')} onClick={() => run('pdf-client', () => download(`${pdfBase}${q('&variant=client')}`, `monitoring_client_${date}.pdf`, generic, te))} />
         {!sleep && session.rr_storage_path && (
           <Btn k="rr" icon={Download} label={t('actions.rrCsv')} onClick={() => run('rr', () => download(`${base}/rr-csv${q()}`, `rr_${date}.csv`, generic, te))} />
         )}

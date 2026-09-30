@@ -144,7 +144,22 @@ type Props = {
   storageKey?: string
   /** mostra il brush sotto al grafico (nascosto su mobile per scelta UX) */
   showBrush?: boolean
+  /**
+   * Pagina di stampa: nessun comando, nessun localStorage, grafico a
+   * dimensioni fisse (`width` x `height`), legenda statica, niente tooltip.
+   * Periodo = `range` (o `defaultPreset`), metriche = `metrics` (o `defaultSelected`).
+   */
+  print?: boolean
+  /** Larghezza in px, solo in stampa (default 680). */
+  width?: number
+  /** Periodo esplicito (yyyy-mm-dd, estremi inclusi), solo in stampa. */
+  range?: { from: string; to: string }
+  /** Metriche da tracciare (chiavi di TREND_METRICS), solo in stampa. */
+  metrics?: string[]
 }
+
+// Larghezza di default del grafico in stampa (px, area utile di un A4).
+export const TREND_PRINT_WIDTH = 680
 
 export function AdvancedTrendChart({
   data,
@@ -153,6 +168,10 @@ export function AdvancedTrendChart({
   height = 300,
   storageKey,
   showBrush = true,
+  print = false,
+  width,
+  range,
+  metrics,
 }: Props) {
   const locale = useLocale()
   const t = useTranslations('charts')
@@ -181,9 +200,9 @@ export function AdvancedTrendChart({
   const [expandedGroups, setExpandedGroups] = useState<Set<Group>>(() => new Set(['score']))
   const [brushKey, setBrushKey] = useState(0)
 
-  // hydration da localStorage
+  // hydration da localStorage (mai in stampa: contano solo le prop)
   useEffect(() => {
-    if (typeof window === 'undefined' || !storageKey) return
+    if (print || typeof window === 'undefined' || !storageKey) return
     const savedPreset = window.localStorage.getItem(`${storageKey}:range`)
     const savedMetrics = window.localStorage.getItem(`${storageKey}:metrics`)
     const savedHidden = window.localStorage.getItem(`${storageKey}:hidden`)
@@ -279,17 +298,23 @@ export function AdvancedTrendChart({
     })
   }
 
+  // In stampa periodo e metriche vengono solo dalle prop: lo stato interno
+  // (e il localStorage) non entra in gioco.
+  const effectiveKey: PresetKey = print ? (range ? 'custom' : defaultPreset) : activeKey
+  const effectiveFrom = print && range ? range.from : customFrom
+  const effectiveTo = print && range ? range.to : customTo
+
   // filtra dati per periodo
   const filtered = useMemo(() => {
     if (!data.length) return []
-    if (activeKey === 'all') return data
+    if (effectiveKey === 'all') return data
     let fromDate: string
     let toDate: string
-    if (activeKey === 'custom') {
-      fromDate = customFrom
-      toDate = customTo
+    if (effectiveKey === 'custom') {
+      fromDate = effectiveFrom
+      toDate = effectiveTo
     } else {
-      const p = PRESETS.find((x) => x.key === activeKey)
+      const p = PRESETS.find((x) => x.key === effectiveKey)
       const days = p?.days ?? 30
       fromDate = isoDay(subDays(new Date(), days))
       toDate = isoDay(new Date())
@@ -298,12 +323,14 @@ export function AdvancedTrendChart({
       const d = String(p.date)
       return d >= fromDate && d <= toDate
     })
-  }, [data, activeKey, customFrom, customTo])
+  }, [data, effectiveKey, effectiveFrom, effectiveTo])
 
   // serie da renderizzare (selezionate ∧ non nascoste)
   const renderedKeys = useMemo(
-    () => Array.from(selected).filter((k) => METRIC_MAP[k] && !hidden.has(k)),
-    [selected, hidden],
+    () => (print
+      ? (metrics ?? defaultSelected).filter((k) => METRIC_MAP[k])
+      : Array.from(selected).filter((k) => METRIC_MAP[k] && !hidden.has(k))),
+    [print, metrics, defaultSelected, selected, hidden],
   )
   const renderedMetrics = useMemo(() => renderedKeys.map((k) => METRIC_MAP[k]).filter(Boolean), [renderedKeys])
 
@@ -323,6 +350,110 @@ export function AdvancedTrendChart({
         ? 'bg-teal-dark text-white border-teal-dark'
         : 'bg-white border-surface-border text-anthracite-lighter hover:bg-surface hover:text-anthracite'
     }`
+
+  const chartW = width ?? TREND_PRINT_WIDTH
+  const chart = (
+    <LineChart
+      key={brushKey}
+      data={filtered}
+      {...(print ? { width: chartW, height } : {})}
+      margin={{ top: 8, right: hasRightAxis ? 8 : 16, left: hasLeftAxis ? -8 : 0, bottom: 0 }}
+    >
+      <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" vertical={false} />
+      <XAxis
+        dataKey="date"
+        stroke="#6B7280"
+        fontSize={11}
+        tickLine={false}
+        axisLine={false}
+        tickFormatter={fmtTick}
+      />
+      {hasLeftAxis && (
+        <YAxis
+          yAxisId="left"
+          orientation="left"
+          domain={[0, 100]}
+          stroke="#6B7280"
+          fontSize={11}
+          tickLine={false}
+          axisLine={false}
+          width={36}
+        />
+      )}
+      {hasRightAxis && (
+        <YAxis
+          yAxisId="right"
+          orientation="right"
+          domain={['auto', 'auto']}
+          stroke="#6B7280"
+          fontSize={11}
+          tickLine={false}
+          axisLine={false}
+          width={48}
+          tickFormatter={(v) => num(v, 0, locale)}
+        />
+      )}
+      {/* se non c'è left, usa right come default per le linee left (fallback non dovrebbe servire) */}
+      {!print && (
+        <Tooltip
+          content={<CustomTooltip locale={locale} fullDate={fullDate} tMetrics={tMetrics} />}
+          cursor={{ stroke: '#94A3B8', strokeDasharray: '3 3' }}
+        />
+      )}
+      {renderedMetrics.map((m) => (
+        <Line
+          key={m.key}
+          yAxisId={m.axis === 'left' ? (hasLeftAxis ? 'left' : 'right') : 'right'}
+          type="monotone"
+          dataKey={m.key}
+          stroke={m.color}
+          strokeWidth={2}
+          dot={print ? { r: 2 } : false}
+          activeDot={print ? false : { r: 4 }}
+          connectNulls
+          isAnimationActive={false}
+        />
+      ))}
+      {!print && showBrush && filtered.length > 8 && (
+        <Brush
+          dataKey="date"
+          height={28}
+          stroke="#4FA39A"
+          travellerWidth={8}
+          tickFormatter={fmtTick}
+          className="hidden md:block"
+        />
+      )}
+    </LineChart>
+  )
+
+  if (print) {
+    return (
+      <div className="break-inside-avoid">
+        {filtered.length === 0 ? (
+          <div className="py-6 text-center text-sm text-anthracite-lighter">{t('trend.noDataInPeriod')}</div>
+        ) : renderedMetrics.length === 0 ? (
+          <div className="py-6 text-center text-sm text-anthracite-lighter">
+            {t.rich('trend.noMetricSelected', { em: (c) => <em>{c}</em> })}
+          </div>
+        ) : (
+          <>
+            <div style={{ width: chartW, height }}>{chart}</div>
+            {/* LEGENDA STATICA */}
+            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+              {renderedMetrics.map((m) => (
+                <span key={m.key} className="inline-flex items-center gap-1.5 text-[11px] text-anthracite">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: m.color }} />
+                  {metricLabel(m, tMetrics)}
+                  {m.unit && <span className="text-anthracite-lighter">({m.unit})</span>}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -390,73 +521,7 @@ export function AdvancedTrendChart({
         </div>
       ) : (
         <>
-          <ResponsiveContainer width="100%" height={height}>
-            <LineChart key={brushKey} data={filtered} margin={{ top: 8, right: hasRightAxis ? 8 : 16, left: hasLeftAxis ? -8 : 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" vertical={false} />
-              <XAxis
-                dataKey="date"
-                stroke="#6B7280"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={fmtTick}
-              />
-              {hasLeftAxis && (
-                <YAxis
-                  yAxisId="left"
-                  orientation="left"
-                  domain={[0, 100]}
-                  stroke="#6B7280"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                  width={36}
-                />
-              )}
-              {hasRightAxis && (
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  domain={['auto', 'auto']}
-                  stroke="#6B7280"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                  width={48}
-                  tickFormatter={(v) => num(v, 0, locale)}
-                />
-              )}
-              {/* se non c'è left, usa right come default per le linee left (fallback non dovrebbe servire) */}
-              <Tooltip
-                content={<CustomTooltip locale={locale} fullDate={fullDate} tMetrics={tMetrics} />}
-                cursor={{ stroke: '#94A3B8', strokeDasharray: '3 3' }}
-              />
-              {renderedMetrics.map((m) => (
-                <Line
-                  key={m.key}
-                  yAxisId={m.axis === 'left' ? (hasLeftAxis ? 'left' : 'right') : 'right'}
-                  type="monotone"
-                  dataKey={m.key}
-                  stroke={m.color}
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                  connectNulls
-                  isAnimationActive={false}
-                />
-              ))}
-              {showBrush && filtered.length > 8 && (
-                <Brush
-                  dataKey="date"
-                  height={28}
-                  stroke="#4FA39A"
-                  travellerWidth={8}
-                  tickFormatter={fmtTick}
-                  className="hidden md:block"
-                />
-              )}
-            </LineChart>
-          </ResponsiveContainer>
+          <ResponsiveContainer width="100%" height={height}>{chart}</ResponsiveContainer>
 
           {/* LEGENDA INTERATTIVA */}
           <div className="flex flex-wrap gap-1.5 mt-3">

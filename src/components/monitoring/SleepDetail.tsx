@@ -1,5 +1,6 @@
 'use client'
 
+import { createContext, useContext } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { AlertCircle, ArrowLeftRight, Footprints, Info, Minus, Sparkles, TimerOff, TrendingDown, TrendingUp, Wifi, WifiOff } from 'lucide-react'
@@ -21,19 +22,37 @@ import { Kv } from './MonitoringParamsTable'
 // windows da 1 minuto) e le quattro pagine dell'app: Riepilogo,
 // Ossigenazione, Cuore, Eventi. I testi che esistono nell'app arrivano da
 // sleep-strings.ts (st); nessun valore è ricalcolato.
+//
+// `print`: pagina di stampa A4 (/stampa/monitoraggio/[id]): stesse sezioni,
+// testi e colori, senza azioni, link e controlli; grafici a dimensione fissa,
+// card non spezzabili, salto pagina prima di Ossigenazione, Cuore ed Eventi.
 
-type Props = { session: SleepSession; readOnly?: boolean; clientHref?: string }
+type Props = { session: SleepSession; readOnly?: boolean; clientHref?: string; print?: boolean }
+
+/** Larghezza utile dei grafici Recharts in stampa (card piena, padding escluso). */
+const PRINT_CHART_WIDTH = 620
+
+const PrintCtx = createContext(false)
 
 function useSleep() {
   const t = useTranslations('monitoring')
   const locale = useLocale() as Lang
+  const print = useContext(PrintCtx)
   const st = (k: string) => sleepT(k, locale)
   const n = (v: number | null | undefined, d: number) => fmtNum(v, d, locale)
-  return { t, locale, st, n }
+  return { t, locale, st, n, print }
 }
 
-export function SleepDetail({ session: s, readOnly = false, clientHref }: Props) {
-  const { t, locale, st, n } = useSleep()
+export function SleepDetail({ session, readOnly = false, clientHref, print = false }: Props) {
+  return (
+    <PrintCtx.Provider value={print}>
+      <SleepBody session={session} readOnly={readOnly} clientHref={clientHref} />
+    </PrintCtx.Provider>
+  )
+}
+
+function SleepBody({ session: s, readOnly, clientHref }: { session: SleepSession; readOnly: boolean; clientHref?: string }) {
+  const { t, locale, st, n, print } = useSleep()
   const tc = useTranslations('common')
   const tz = s.tz_offset_minutes
   const night = s.night
@@ -50,14 +69,14 @@ export function SleepDetail({ session: s, readOnly = false, clientHref }: Props)
   const clientName = s.client_name ?? t('client')
 
   return (
-    <div className="space-y-6">
+    <div className={print ? 'space-y-4' : 'space-y-6'}>
       {/* ── 4.1 Intestazione ─────────────────────────────────────────────── */}
-      <header className="card p-5 sm:p-6" style={{ borderTop: `4px solid ${MON.sleep}` }}>
-        <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+      <header className={`card ${print ? 'p-4 print-avoid' : 'p-5 sm:p-6'}`} style={{ borderTop: `4px solid ${MON.sleep}` }}>
+        <div className={`flex gap-4 ${print ? '' : 'flex-col lg:flex-row lg:items-start'}`}>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-2"><TypeChip type="sleep" /></div>
-            <h1 className="font-serif text-2xl sm:text-3xl text-anthracite break-words">
-              {clientHref && s.client_id ? <Link href={clientHref} className="hover:underline">{clientName}</Link> : clientName}
+            <h1 className={`font-serif text-anthracite break-words ${print ? 'text-xl' : 'text-2xl sm:text-3xl'}`}>
+              {!print && clientHref && s.client_id ? <Link href={clientHref} className="hover:underline">{clientName}</Link> : clientName}
             </h1>
             <p className="mt-1 text-sm text-anthracite-lighter">{t('sleep.night')} · {periodLabel(startIso, endIso, tz, locale)} · {duration(durMin)}</p>
             <p className="mt-0.5 text-xs text-anthracite-lighter">
@@ -70,19 +89,19 @@ export function SleepDetail({ session: s, readOnly = false, clientHref }: Props)
               {s.professional_name && <Chip label={s.professional_name} color={MON.textSecondary} />}
             </div>
           </div>
-          <MonitoringActions session={s} readOnly={readOnly} />
+          {!print && <MonitoringActions session={s} readOnly={readOnly} />}
         </div>
       </header>
 
       <Notices s={s} />
 
       {!sl ? (
-        <section className="card p-6">
+        <section className={`card ${print ? 'p-4 print-avoid' : 'p-6'}`}>
           <div className="font-serif text-base text-anthracite">{t('sleep.noSleepBlock')}</div>
           <p className="text-sm text-anthracite-lighter mt-1">{t('sleep.noSleepBlockHint')}</p>
         </section>
       ) : !analyzable ? (
-        <section className="card p-5">
+        <section className={`card ${print ? 'p-4 print-avoid' : 'p-5'}`}>
           <div className="text-[13px] font-bold text-anthracite mb-1">{t('sleep.whatRead')}</div>
           <Kv k={t('sleep.recording')} v={`${hm(startIso, tz)} → ${hm(endIso, tz)}`} />
           <Kv k={st('duration')} v={duration(durMin)} />
@@ -92,7 +111,7 @@ export function SleepDetail({ session: s, readOnly = false, clientHref }: Props)
       ) : (
         <>
           {/* ── Riepilogo ──────────────────────────────────────────────────── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className={`grid gap-4 ${print ? 'grid-cols-3' : 'grid-cols-1 lg:grid-cols-3'}`}>
             <MonitoringGauge
               value={score?.total ?? null}
               title={st('sleep_score')}
@@ -100,9 +119,10 @@ export function SleepDetail({ session: s, readOnly = false, clientHref }: Props)
               colorFor={sleepScoreColor}
               leftLabel="0"
               rightLabel="100"
+              print={print}
             />
             {score && (
-              <div className="card p-4 lg:col-span-2">
+              <div className={`card p-4 ${print ? 'col-span-2 print-avoid' : 'lg:col-span-2'}`}>
                 <div className="text-[13px] font-bold text-anthracite mb-2">{st('components')}</div>
                 <ScoreComponents score={score} />
               </div>
@@ -116,14 +136,14 @@ export function SleepDetail({ session: s, readOnly = false, clientHref }: Props)
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className={`grid gap-3 ${print ? 'grid-cols-3' : 'grid-cols-1 sm:grid-cols-3'}`}>
             <Mini label={t('sleep.odi3Label', { label: odi3Label(o?.odi3_label, locale) })} value={o ? n(o.odi3, 1) : '—'} unit="/h" color={odi3Color(o?.odi3_label)} />
             <Mini label={st('t90')} value={o ? n(o.t90_pct, 1) : '—'} unit="%" color={t90Color(o?.t90_label)} />
             <Mini label={c?.min_pr_time ? t('sleep.prMinAt', { time: hm(c.min_pr_time, tz) }) : st('pr_min')} value={c ? `${Math.round(c.min_pr)}` : '—'} unit="bpm" color={MON.sleepDark} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="card p-4">
+          <div className={`grid gap-4 ${print ? 'grid-cols-2' : 'grid-cols-1 lg:grid-cols-2'}`}>
+            <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
               <div className="text-[13px] font-bold text-anthracite mb-1">{t('sleep.inBrief')}</div>
               <Kv k={t('sleep.recording')} v={`${hm(startIso, tz)} → ${hm(endIso, tz)} · ${duration(durMin)}`} />
               <Kv k={st('valid_time')} v={duration(Math.round(sig?.valid_recording_minutes ?? 0))} />
@@ -133,7 +153,7 @@ export function SleepDetail({ session: s, readOnly = false, clientHref }: Props)
               {mv?.available && <Kv k={st('awakenings')} v={`${mv.estimated_awakenings}`} />}
             </div>
             {sl.device?.o2_score != null && (
-              <div className="card p-4 flex items-start gap-3">
+              <div className={`card p-4 flex items-start gap-3 ${print ? 'print-avoid' : ''}`}>
                 <ArrowLeftRight size={24} className="text-anthracite-lighter flex-shrink-0" />
                 <div className="min-w-0">
                   <div className="text-[13px] font-bold text-anthracite">{t('sleep.deviceCompare')}</div>
@@ -147,22 +167,22 @@ export function SleepDetail({ session: s, readOnly = false, clientHref }: Props)
           <p className="text-[10.5px] text-anthracite-lighter leading-relaxed">{t('sleep.disclaimer')}</p>
 
           {/* ── 4.2 Ossigenazione ──────────────────────────────────────────── */}
-          <section className="card p-5 space-y-4">
+          <section className={`card space-y-4 ${print ? 'p-4 print-break-before' : 'p-5'}`}>
             <SectionTitle sleep>{st('oxygenation')}</SectionTitle>
             {o ? (
               <>
                 <div>
                   <div className="text-[13px] font-bold text-anthracite">{t('sleep.spo2AllNight')}</div>
                   <div className="text-[10.5px] text-anthracite-lighter mb-2">{t('sleep.spo2ChartHint')}</div>
-                  <Spo2NightChart windows={s.windows} events={sl.events} tz={tz} />
+                  <Spo2NightChart windows={s.windows} events={sl.events} tz={tz} print={print} width={PRINT_CHART_WIDTH} />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className={`grid gap-3 ${print ? 'grid-cols-3' : 'grid-cols-1 sm:grid-cols-3'}`}>
                   <Mini label="ODI3" value={n(o.odi3, 1)} unit="/h" color={odi3Color(o.odi3_label)} />
                   <Mini label="ODI4" value={n(o.odi4, 1)} unit="/h" color={MON.sleepDark} />
                   <Mini label="T90" value={o.t90_minutes < 10 ? n(o.t90_minutes, 1) : `${Math.round(o.t90_minutes)}`} unit="min" color={t90Color(o.t90_label)} />
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="card p-4">
+                <div className={`grid gap-4 ${print ? 'grid-cols-2' : 'grid-cols-1 lg:grid-cols-2'}`}>
+                  <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
                     <div className="text-[13px] font-bold text-anthracite mb-1">{t('sleep.desatIndex')}</div>
                     <Kv k={st('odi3')} v={`${n(o.odi3, 1)} · ${odi3Label(o.odi3_label, locale)}`} />
                     <Kv k={st('odi4')} v={n(o.odi4, 1)} />
@@ -170,7 +190,7 @@ export function SleepDetail({ session: s, readOnly = false, clientHref }: Props)
                     <Kv k={t('sleep.validTimeUsed')} v={duration(Math.round(sig?.valid_recording_minutes ?? 0))} />
                     {sl.device?.drops_4 != null && <Kv k={st('device_drops4')} v={`${sl.device.drops_4}`} />}
                   </div>
-                  <div className="card p-4">
+                  <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
                     <div className="text-[13px] font-bold text-anthracite mb-1">{st('below_threshold')}</div>
                     <Kv k={t('sleep.below90')} v={`${n(o.t90_minutes, 1)} min · ${n(o.t90_pct, 1)} % · ${t90Label(o.t90_label, locale)}`} />
                     <Kv k={t('sleep.below88')} v={`${n(o.t88_minutes, 1)} min · ${n(o.t88_pct, 1)} %`} />
@@ -179,7 +199,7 @@ export function SleepDetail({ session: s, readOnly = false, clientHref }: Props)
                     <Kv k={st('spo2_mean')} v={o.mean_spo2 == null ? '—' : `${n(o.mean_spo2, 1)} %`} />
                     <Kv k={st('spo2_basal')} v={o.spo2_basal == null ? '—' : `${n(o.spo2_basal, 1)} %`} />
                   </div>
-                  <div className="card p-4 lg:col-span-2">
+                  <div className={`card p-4 ${print ? 'col-span-2 print-avoid' : 'lg:col-span-2'}`}>
                     <div className="text-[13px] font-bold text-anthracite mb-1">{t('sleep.signalStability')}</div>
                     <Kv k={t('sleep.spo2Sd')} v={n(o.spo2_sd, 2)} />
                     <Kv k={st('delta_index')} v={o.delta_index_12s == null ? '—' : `${n(o.delta_index_12s, 2)}${o.delta_index_12s > SLEEP_PARAMS.deltaIndexUnstable ? ` · ${t('sleep.unstable')}` : ''}`} />
@@ -195,23 +215,23 @@ export function SleepDetail({ session: s, readOnly = false, clientHref }: Props)
           </section>
 
           {/* ── Cuore ──────────────────────────────────────────────────────── */}
-          <section className="card p-5 space-y-4">
+          <section className={`card space-y-4 ${print ? 'p-4 print-break-before' : 'p-5'}`}>
             <SectionTitle sleep>{st('heart')}</SectionTitle>
             {c ? (
               <>
                 <div>
                   <div className="text-[13px] font-bold text-anthracite">{t('sleep.pulseRate')}</div>
                   <div className="text-[10.5px] text-anthracite-lighter mb-2">{t('sleep.prChartHint')}</div>
-                  <PrNightChart windows={s.windows} events={sl.events} prBasal={c.pr_basal} tz={tz} />
+                  <PrNightChart windows={s.windows} events={sl.events} prBasal={c.pr_basal} tz={tz} print={print} width={PRINT_CHART_WIDTH} />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className={`grid gap-3 ${print ? 'grid-cols-3' : 'grid-cols-1 sm:grid-cols-3'}`}>
                   <Mini label={t('sleep.mean')} value={`${Math.round(c.mean_pr)}`} unit="bpm" color={MON.textPrimary} />
                   <Mini label={c.min_pr_time ? t('sleep.minAt', { time: hm(c.min_pr_time, tz) }) : t('sleep.min')} value={`${Math.round(c.min_pr)}`} unit="bpm" color={MON.sleepDark} />
                   <Mini label={t('sleep.basal')} value={`${Math.round(c.pr_basal)}`} unit="bpm" color={STATE_COLOR.recovery} />
                 </div>
                 <TrendCard c={c} />
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="card p-4">
+                <div className={`grid gap-4 ${print ? 'grid-cols-2' : 'grid-cols-1 lg:grid-cols-2'}`}>
+                  <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
                     <div className="text-[13px] font-bold text-anthracite mb-1">{t('sleep.dipTitle')}</div>
                     <Kv k={t('sleep.firstHourMedian')} v={`${Math.round(c.first_hour_median_pr)} bpm`} />
                     <Kv k={t('sleep.dipToBasal')} v={`${n(c.dip_pct, 1)} %`} />
@@ -220,10 +240,10 @@ export function SleepDetail({ session: s, readOnly = false, clientHref }: Props)
                     <p className="mt-1 text-[10.5px] text-anthracite-lighter leading-relaxed">{t('sleep.surgeNote')}</p>
                   </div>
                   {sl.hourly.length > 0 && (
-                    <div className="card p-4">
+                    <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
                       <div className="text-[13px] font-bold text-anthracite mb-2">{st('hourly')}</div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-[11px] min-w-[300px]">
+                      <div className={print ? '' : 'overflow-x-auto'}>
+                        <table className={`w-full text-[11px] ${print ? '' : 'min-w-[300px]'}`}>
                           <thead><tr className="text-anthracite-lighter font-bold"><th className="text-left py-1">{st('hour')}</th><th className="text-right py-1">{st('spo2_mean')}</th><th className="text-right py-1">{st('pr')}</th><th className="text-right py-1">{t('sleep.eventsShort')}</th></tr></thead>
                           <tbody>
                             {sl.hourly.map((h, i) => (
@@ -247,11 +267,11 @@ export function SleepDetail({ session: s, readOnly = false, clientHref }: Props)
           </section>
 
           {/* ── 4.3 Eventi ─────────────────────────────────────────────────── */}
-          <section className="card p-5 space-y-4">
+          <section className={`card space-y-4 ${print ? 'p-4 print-break-before' : 'p-5'}`}>
             <SectionTitle sleep>{t('sleep.eventsTitle')}</SectionTitle>
-            <div>
+            <div className={print ? 'print-avoid' : ''}>
               <div className="text-[13px] font-bold text-anthracite mb-2">{t('sleep.nightTimeline')}</div>
-              <DesaturationStrip windows={s.windows} events={sl.events} tz={tz} />
+              <DesaturationStrip windows={s.windows} events={sl.events} tz={tz} print={print} />
               <div className="mt-2"><SleepStateLegend compact /></div>
             </div>
             <div>
@@ -259,8 +279,8 @@ export function SleepDetail({ session: s, readOnly = false, clientHref }: Props)
               {sl.events.length === 0 ? (
                 <p className="text-sm text-anthracite-lighter">{st('no_events')}</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-[11px] min-w-[420px]">
+                <div className={print ? '' : 'overflow-x-auto'}>
+                  <table className={`w-full text-[11px] ${print ? '' : 'min-w-[420px]'}`}>
                     <thead><tr className="text-anthracite-lighter font-bold"><th className="text-left py-1">{st('ev_time')}</th><th className="text-right py-1">{st('ev_duration')}</th><th className="text-right py-1">{st('ev_drop')}</th><th className="text-right py-1">{st('ev_nadir')}</th><th className="text-right py-1">{st('ev_surge')}</th></tr></thead>
                     <tbody>
                       {sl.events.map((e, i) => (
@@ -343,13 +363,13 @@ function ScoreComponents({ score }: { score: NonNullable<SleepSession['summary']
 }
 
 function TrendCard({ c }: { c: NonNullable<NonNullable<SleepSession['night']>['sleep']['cardiac']> }) {
-  const { t, n } = useSleep()
+  const { t, n, print } = useSleep()
   const trend = c.trend_bpm
   const text = trend == null ? t('sleep.trendNa') : trend > 0 ? t('sleep.trendUp') : trend < 0 ? t('sleep.trendDown') : t('sleep.trendFlat')
   const color = trend == null ? MON.textMuted : trend > 0 ? STATE_COLOR.recovery : trend < 0 ? STATE_COLOR.stress : MON.sleep
   const Icon = trend == null ? Minus : trend > 0 ? TrendingDown : trend < 0 ? TrendingUp : Minus
   return (
-    <div className="card p-4 flex items-start gap-3">
+    <div className={`card p-4 flex items-start gap-3 ${print ? 'print-avoid' : ''}`}>
       <Icon size={30} style={{ color }} className="flex-shrink-0" />
       <div className="min-w-0">
         <div className="text-[13px] font-bold text-anthracite">{t('sleep.trendTitle')}</div>
@@ -364,8 +384,9 @@ function TrendCard({ c }: { c: NonNullable<NonNullable<SleepSession['night']>['s
 }
 
 function Mini({ label, value, unit, color }: { label: string; value: string; unit?: string; color: string }) {
+  const { print } = useSleep()
   return (
-    <div className="card p-3.5 min-w-0">
+    <div className={`card p-3.5 min-w-0 ${print ? 'print-avoid' : ''}`}>
       <div className="text-[11px] text-anthracite-lighter">{label}</div>
       <div className="mt-0.5 flex items-baseline gap-1">
         <span className="font-serif text-2xl" style={{ color }}>{value}</span>

@@ -20,6 +20,7 @@ import { EventIcon } from './EventIcon'
 // modificare o eliminare eventi: il sito salva `events` e alza il flag
 // events_modified_on_web; NON ricalcola la reazione, che resta "in attesa di
 // ricalcolo" finché l'app non rielabora la sessione.
+// `print`: pagina di stampa, eventi in sola lettura senza pulsanti né finestre.
 
 type Props = {
   sessionId: string
@@ -31,9 +32,11 @@ type Props = {
   readOnly?: boolean
   pendingRecalc?: boolean
   pro?: boolean
+  print?: boolean
 }
 
-export function MonitoringEvents({ sessionId, events, tz, start, end, night, readOnly = false, pendingRecalc = false, pro = true }: Props) {
+export function MonitoringEvents({ sessionId, events, tz, start, end, night, readOnly: readOnlyProp = false, pendingRecalc = false, pro = true, print = false }: Props) {
+  const readOnly = readOnlyProp || print
   const t = useTranslations('monitoring')
   const tc = useTranslations('common')
   const te = useTranslations('errors.api')
@@ -87,47 +90,51 @@ export function MonitoringEvents({ sessionId, events, tz, start, end, night, rea
         <p className="py-6 text-center text-sm text-anthracite-lighter leading-relaxed">{t('events.empty')}</p>
       )}
       {sorted.map((e) => (
-        <EventCard key={e.id} event={e} tz={tz} night={night} readOnly={readOnly} onEdit={() => setEditing(e)} onDelete={() => setDeleting(e)} />
+        <EventCard key={e.id} event={e} tz={tz} night={night} readOnly={readOnly} print={print} onEdit={() => setEditing(e)} onDelete={() => setDeleting(e)} />
       ))}
       {pro && (
         <p className="text-[10.5px] text-anthracite-lighter leading-relaxed">{t('events.howComputed', { method: text.method, req: text.req })}</p>
       )}
 
-      {editing && (
-        <EventForm
-          initial={editing === 'new' ? null : editing}
-          tz={tz}
-          start={start}
-          end={end}
-          busy={busy}
-          onClose={() => setEditing(null)}
-          onSave={(ev) => {
-            const next = editing === 'new' ? [...events, ev] : events.map((x) => (x.id === ev.id ? ev : x))
-            void persist(next)
-          }}
-        />
+      {!print && (
+        <>
+          {editing && (
+            <EventForm
+              initial={editing === 'new' ? null : editing}
+              tz={tz}
+              start={start}
+              end={end}
+              busy={busy}
+              onClose={() => setEditing(null)}
+              onSave={(ev) => {
+                const next = editing === 'new' ? [...events, ev] : events.map((x) => (x.id === ev.id ? ev : x))
+                void persist(next)
+              }}
+            />
+          )}
+          <ConfirmDialog
+            open={!!deleting}
+            onClose={() => setDeleting(null)}
+            onConfirm={() => { if (deleting) return persist(events.filter((x) => x.id !== deleting.id)) }}
+            title={t('events.removeTitle')}
+            description={deleting ? `${deleting.label} · ${hm(deleting.timestamp, tz)}` : undefined}
+            confirmText={t('events.remove')}
+            cancelText={tc('cancel')}
+            destructive
+          />
+        </>
       )}
-      <ConfirmDialog
-        open={!!deleting}
-        onClose={() => setDeleting(null)}
-        onConfirm={() => { if (deleting) return persist(events.filter((x) => x.id !== deleting.id)) }}
-        title={t('events.removeTitle')}
-        description={deleting ? `${deleting.label} · ${hm(deleting.timestamp, tz)}` : undefined}
-        confirmText={t('events.remove')}
-        cancelText={tc('cancel')}
-        destructive
-      />
     </div>
   )
 }
 
-function EventCard({ event, tz, night, readOnly, onEdit, onDelete }: { event: MonitoringEvent; tz: number; night: MonitoringNight | null; readOnly: boolean; onEdit: () => void; onDelete: () => void }) {
+function EventCard({ event, tz, night, readOnly, print = false, onEdit, onDelete }: { event: MonitoringEvent; tz: number; night: MonitoringNight | null; readOnly: boolean; print?: boolean; onEdit: () => void; onDelete: () => void }) {
   const t = useTranslations('monitoring')
   const locale = useLocale() as Lang
   const r = event.response
   const marker = isSleepMarker(event.type)
   return (
-    <div className="card p-4">
+    <div className={`card p-4 ${print ? 'print-avoid' : ''}`}>
       <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: MON.accentLight, color: MON.accentDark }}>
           <EventIcon type={event.type} size={18} />
@@ -151,8 +158,8 @@ function EventCard({ event, tz, night, readOnly, onEdit, onDelete }: { event: Mo
         )}
       </div>
       {r && r.label !== RESPONSE_INSUFFICIENT ? (
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full text-[11px] min-w-[360px]">
+        <div className={`mt-3 ${print ? '' : 'overflow-x-auto'}`}>
+          <table className={`w-full text-[11px] ${print ? '' : 'min-w-[360px]'}`}>
             <thead>
               <tr className="text-anthracite-lighter font-bold">
                 <th className="text-left py-1" /><th className="text-right py-1">{monT('ev_before', locale)}</th><th className="text-right py-1">{monT('ev_after', locale)}</th><th className="text-right py-1">{monT('ev_late', locale)}</th>

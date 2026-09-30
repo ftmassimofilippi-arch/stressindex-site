@@ -1,0 +1,27 @@
+{
+  "detail": {
+    "psdPieTitle": "Verteilung der Bänder",
+    "psdPieSubtitle": "Anteil von VLF, LF und HF an der Gesamtleistung",
+    "psdPieTotal": "Gesamtleistung: {value} ms²"
+  },
+  "params": {
+    "reference": {
+      "title": "Indikativer Referenzbereich: {from}–{to} (gesunder Erwachsener, Aufzeichnung von 5-10 Minuten)",
+      "legend": "Indikative Referenzbereiche für einen gesunden Erwachsenen, Aufzeichnung von 5-10 Minuten: grün innerhalb des Bereichs, gelb im Grenzbereich, rot außerhalb, grau ohne Referenz.",
+      "status": {
+        "in": "Im Referenzbereich",
+        "edge": "Im Grenzbereich",
+        "out": "Außerhalb des Bereichs",
+        "none": "Kein Referenzbereich"
+      }
+    },
+    "summary": {
+      "title": "Parameter und Referenzbereiche",
+      "subtitle": "{total, plural, =0 {Kein Parameter mit verfügbarem Referenzbereich} one {# Parameter mit einem indikativen Referenzbereich verglichen} other {# Parameter mit indikativen Referenzbereichen verglichen}} (gesunder Erwachsener, 5-10 Minuten)",
+      "inRange": "Im Referenzbereich",
+      "edge": "Im Grenzbereich",
+      "outOfRange": "Außerhalb des Bereichs",
+      "sentence": "{inRange, plural, one {# Parameter im Referenzbereich} other {# Parameter im Referenzbereich}}, {edge} im Grenzbereich, {outOfRange} außerhalb des Bereichs"
+    }
+  }
+}

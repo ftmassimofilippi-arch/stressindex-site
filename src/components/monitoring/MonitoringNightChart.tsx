@@ -5,7 +5,8 @@ import { monT, type Lang } from '@/lib/monitoring-strings'
 
 // Grafico della notte (MonitoringNightChart dell'app): barre orarie di RMSSD
 // su sfondo colorato per stato prevalente dell'ora, linea HR sovrapposta.
-export function MonitoringNightChart({ night, tz, height = 190 }: { night: MonitoringNight; tz: number; height?: number }) {
+// `print`: larghezza della card di stampa, senza scroll orizzontale.
+export function MonitoringNightChart({ night, tz, height = 190, print = false }: { night: MonitoringNight; tz: number; height?: number; print?: boolean }) {
   const t = useTranslations('monitoring')
   const locale = useLocale() as Lang
   const hours = night.hourly ?? []
@@ -31,8 +32,8 @@ export function MonitoringNightChart({ night, tz, height = 190 }: { night: Monit
   if (cur) segments.push(cur)
 
   return (
-    <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${height}`} className="w-full min-w-[520px] block" style={{ height }} role="img" aria-label={monT('night_chart', locale)}>
+    <div className={print ? '' : 'overflow-x-auto'}>
+      <svg viewBox={`0 0 ${W} ${height}`} className={`w-full block ${print ? '' : 'min-w-[520px]'}`} style={{ height }} role="img" aria-label={monT('night_chart', locale)}>
         {hours.map((h, i) => (
           <rect key={`bg${i}`} x={left + i * colW} y={top} width={colW} height={plotH} fill={STATE_COLOR[h.state]} fillOpacity={0.18} />
         ))}

@@ -3218,6 +3218,9 @@
       "poincareSubtitle": "SD1 vs SD2: variabilità a breve e lungo termine",
       "poincareTitle": "Diagramma di Poincaré",
       "proNotes": "Note del professionista",
+      "psdPieSubtitle": "Quota di VLF, LF e HF sulla potenza totale",
+      "psdPieTitle": "Distribuzione delle bande",
+      "psdPieTotal": "Potenza totale: {value} ms²",
       "psdSubtitle": "Densità spettrale di potenza, bande VLF / LF / HF",
       "psdTitle": "Spettro di potenza HRV (PSD)",
       "rhythmSubtitle": "Intervalli RR nel tempo · usa il selettore inferiore per lo zoom temporale",
@@ -3301,7 +3304,25 @@
         "good": "Buona",
         "poor": "Scarsa"
       },
-      "signalQuality": "Qualità segnale"
+      "reference": {
+        "legend": "Intervalli di riferimento indicativi per adulto sano, registrazione di 5-10 minuti: verde dentro l'intervallo, giallo al limite, rosso fuori, grigio senza riferimento.",
+        "status": {
+          "edge": "Al limite",
+          "in": "Nella norma",
+          "none": "Senza intervallo di riferimento",
+          "out": "Fuori range"
+        },
+        "title": "Intervallo di riferimento indicativo: {from}–{to} (adulto sano, registrazione di 5-10 minuti)"
+      },
+      "signalQuality": "Qualità segnale",
+      "summary": {
+        "edge": "Al limite",
+        "inRange": "Nella norma",
+        "outOfRange": "Fuori range",
+        "sentence": "{inRange, plural, one {# parametro nella norma} other {# parametri nella norma}}, {edge} al limite, {outOfRange} fuori range",
+        "subtitle": "{total, plural, =0 {Nessun parametro con intervallo di riferimento disponibile} one {# parametro confrontato con un intervallo di riferimento indicativo} other {# parametri confrontati con intervalli di riferimento indicativi}} (adulto sano, 5-10 minuti)",
+        "title": "Parametri e intervalli di riferimento"
+      }
     },
     "types": {
       "coherence": {
@@ -4121,6 +4142,116 @@
       "worstDay": "Giorno peggiore (stress massimo)"
     }
   },
+  "print": {
+    "cover": {
+      "age": "Età",
+      "artifacts": "Artefatti {value}%",
+      "client": "Cliente",
+      "dateTime": "Data e ora",
+      "duration": "Durata",
+      "generatedOn": "Generato il {date}",
+      "measurements": "Misurazioni",
+      "period": "Periodo",
+      "professional": "Professionista",
+      "sensor": "Sensore",
+      "sex": "Sesso",
+      "sexF": "Donna",
+      "sexM": "Uomo",
+      "sexX": "Altro",
+      "signalQuality": "Qualità del segnale",
+      "testType": "Tipo di test",
+      "years": "{count, plural, one {# anno} other {# anni}}"
+    },
+    "disclaimer": {
+      "generated": "Report generato con Stress Index ({site}) il {date}.",
+      "title": "Informazioni e disclaimer"
+    },
+    "footerDisclaimer": "Indicatori di benessere: non sostituiscono la valutazione di un professionista sanitario.",
+    "measurement": {
+      "adaptationSubtitle": "Capacità di recupero e adattamento ai carichi",
+      "adaptationTitle": "Adattamento",
+      "chartsTitle": "Grafici HRV",
+      "coherenceTitle": "Respirazione di coerenza",
+      "compositeSubtitle": "Sintesi di Recupero, Equilibrio, Stress ed Energia",
+      "compositeTitle": "Stress Index Score",
+      "fileType": "Misurazione",
+      "indications": "Indicazioni",
+      "longTitle": "Andamento nella sessione",
+      "noNotes": "Nessuna nota per questa misurazione.",
+      "notesTitle": "Etichette e note",
+      "orthostaticTitle": "Test ortostatico",
+      "paramsSubtitle": "Time Domain, Frequency Domain, non lineari e geometrici, con range di riferimento indicativi",
+      "paramsTitle": "Parametri completi",
+      "pieSubtitle": "Quota di VLF, LF e HF sulla potenza totale",
+      "pieTitle": "Distribuzione delle potenze",
+      "poincareSubtitle": "RR(n) su RR(n+1) con ellisse SD1/SD2",
+      "poincareTitle": "Diagramma di Poincaré",
+      "proNotes": "Note del professionista",
+      "psdSubtitle": "Bande VLF, LF e HF",
+      "psdTitle": "Spettro di potenza (PSD)",
+      "rhythmSubtitle": "Intervalli RR nel tempo, con la media della sessione",
+      "rhythmTitle": "Ritmogramma RR",
+      "scoresSubtitle": "Gli stessi tachimetri della dashboard: fasce e colori identici. La variazione è rispetto alla misurazione precedente.",
+      "scoresTitle": "Score",
+      "subtitle": "Analisi della variabilità della frequenza cardiaca",
+      "summaryTitle": "Sintesi",
+      "tags": "Etichette",
+      "title": "Report misurazione HRV"
+    },
+    "monitoring": {
+      "clientVariant": "Versione per il cliente",
+      "device": "Dispositivo",
+      "estimated": "stimato",
+      "fileType24h": "24h",
+      "fileTypeSleep": "Sonno",
+      "profile": "Profilo di registrazione",
+      "subtitle": "Registrazione continua elaborata dall'app: il sito la mostra senza ricalcolare nessun valore.",
+      "title24h": "Report monitoraggio 24h",
+      "titleSleep": "Report notte, modulo Sonno",
+      "type": "Tipo"
+    },
+    "report": {
+      "averagesSubtitle": "Media degli score con variazione rispetto al periodo precedente ({from} - {to})",
+      "averagesTitle": "Medie del periodo",
+      "bestDay": "Giorno migliore",
+      "bestDayHint": "stress più basso",
+      "colAdaptation": "Adattamento",
+      "colBalance": "Equilibrio",
+      "colDate": "Data",
+      "colDfa": "DFA α1",
+      "colDuration": "Durata",
+      "colEnergy": "Energia",
+      "colHr": "HR",
+      "colRecovery": "Recupero",
+      "colRmssd": "RMSSD",
+      "colSport": "Sport",
+      "colStress": "Stress",
+      "colTrimp": "TRIMP",
+      "colType": "Tipo",
+      "commentSubtitle": "Generato da regole sui dati del periodo, senza interpretazione",
+      "commentTitle": "Commento automatico",
+      "comparisonTitle": "Confronto con il periodo precedente",
+      "delta": "variazione",
+      "fileType": "Report",
+      "listTitle": "Misurazioni del periodo",
+      "mean": "media",
+      "measurementsCount": "{count, plural, one {# misurazione} other {# misurazioni}}",
+      "noMeasurements": "Nessuna misurazione nel periodo selezionato.",
+      "noSport": "Nessuna sessione sport nel periodo.",
+      "periodRange": "dal {from} al {to}",
+      "previousNone": "Nessuna misurazione nel periodo precedente",
+      "sportCount": "{count, plural, one {# sessione} other {# sessioni}} · TRIMP totale {trimp}",
+      "sportSubtitle": "Sessioni sport nel periodo (Piano Pro)",
+      "sportTitle": "Sport",
+      "stressValue": "Stress {value} / 100",
+      "subtitle": "Andamento degli score nel periodo",
+      "title": "Report periodico HRV",
+      "trendSubtitle": "Stessa vista della dashboard: una linea per score, scala 0-100",
+      "trendTitle": "Trend dei 5 score",
+      "worstDay": "Giorno da attenzionare",
+      "worstDayHint": "stress più alto"
+    }
+  },
   "registration": {
     "confirm": {
       "help": "Hai bisogno di aiuto? <link>Contattaci</link>",
@@ -4223,6 +4354,8 @@
         "medium": "Medio"
       }
     },
+    "deltaUnchanged": "invariato",
+    "deltaVsPrevious": "rispetto alla precedente",
     "disclaimer": "Indicatori di benessere generale. Non sostituiscono il parere di un medico.",
     "names": {
       "adaptation": "Adattamento",

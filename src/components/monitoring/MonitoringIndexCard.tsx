@@ -14,6 +14,8 @@ import { LevelChip } from './MonitoringChips'
 // professionista): nome tecnico, metodo, requisito minimo, referenza.
 // Se l'indice non è calcolabile la card diventa una riga con il motivo
 // scritto dall'app, mai un trattino muto.
+// `print`: pagina di stampa, card non spezzabile; il livello 2 non sta dietro
+// un popover ma è stampato in fondo alla card (solo professionista).
 
 type Props = {
   text: IndexText
@@ -28,13 +30,15 @@ type Props = {
   children?: React.ReactNode
   /** Sfondo neutro per le card nel report cliente (senza "Come si calcola"). */
   className?: string
+  print?: boolean
 }
 
-export function MonitoringIndexCard({ text, value, unit, level, detail, unavailableReason, unreliable, pro = true, icon: Icon, children, className = '' }: Props) {
+export function MonitoringIndexCard({ text, value, unit, level, detail, unavailableReason, unreliable, pro = true, icon: Icon, children, className = '', print = false }: Props) {
   const t = useTranslations('monitoring')
+  const locale = useLocale() as Lang
   if (unavailableReason) {
     return (
-      <div className={`rounded-xl px-3.5 py-2.5 flex items-start gap-2 text-[12px] ${className}`} style={{ backgroundColor: MON.secondarySurface, color: MON.textSecondary }}>
+      <div className={`rounded-xl px-3.5 py-2.5 flex items-start gap-2 text-[12px] ${print ? 'print-avoid' : ''} ${className}`} style={{ backgroundColor: MON.secondarySurface, color: MON.textSecondary }}>
         {Icon ? <Icon size={16} className="mt-0.5 flex-shrink-0" style={{ color: MON.textMuted }} /> : <MinusCircle size={16} className="mt-0.5 flex-shrink-0" style={{ color: MON.textMuted }} />}
         <div><span className="font-bold text-anthracite">{text.name}: </span>{unavailableReason}</div>
       </div>
@@ -42,7 +46,7 @@ export function MonitoringIndexCard({ text, value, unit, level, detail, unavaila
   }
   const color = level ? LEVEL_COLOR[level] : MON.accentDark
   return (
-    <div className={`card p-4 ${className}`}>
+    <div className={`card p-4 ${print ? 'print-avoid' : ''} ${className}`}>
       <div className="flex items-start gap-3">
         {Icon && (
           <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: MON.accentLight, color: MON.accentDark }}>
@@ -55,7 +59,7 @@ export function MonitoringIndexCard({ text, value, unit, level, detail, unavaila
             {unreliable && (
               <span title={t('indexCard.unreliable')} className="text-amber-600"><AlertTriangle size={15} /></span>
             )}
-            {pro && <HowPopover text={text} />}
+            {pro && !print && <HowPopover text={text} />}
           </div>
           {value != null && (
             <div className="mt-0.5 flex flex-wrap items-end gap-x-1.5 gap-y-1">
@@ -69,6 +73,15 @@ export function MonitoringIndexCard({ text, value, unit, level, detail, unavaila
       </div>
       <p className="mt-2 text-[12px] leading-relaxed text-anthracite">{text.phrase}</p>
       {children && <div className="mt-3">{children}</div>}
+      {pro && print && (
+        <div className="mt-3 pt-2 border-t border-surface-border text-[9.5px] leading-snug text-anthracite-lighter">
+          <div className="font-bold mb-1" style={{ color: MON.accent }}>{t('indexCard.how')}</div>
+          <Kv k={monT('how_tech', locale)} v={text.tech} />
+          <Kv k={monT('how_method', locale)} v={text.method} />
+          <Kv k={monT('how_req', locale)} v={text.req} />
+          <Kv k={monT('how_ref', locale)} v={text.ref} />
+        </div>
+      )}
     </div>
   )
 }
@@ -115,6 +128,6 @@ export function HowPopover({ text }: { text: IndexText }) {
 
 function Kv({ k, v }: { k: string; v: string }) {
   return (
-    <div className="mb-1.5"><span className="font-bold text-anthracite">{k}: </span>{v}</div>
+    <div className="mb-1"><span className="font-bold text-anthracite">{k}: </span>{v}</div>
   )
 }
