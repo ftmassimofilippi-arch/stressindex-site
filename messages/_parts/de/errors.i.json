@@ -12,6 +12,7 @@
     "measurement_not_found": "Messung nicht gefunden. Wenn der Klient sie über seine App erfasst hat, prüfen Sie, ob die Verknüpfung mit der Praxis noch aktiv ist.",
     "pdf_render_failed": "Die Messung wurde gefunden, das Dokument konnte jedoch nicht erstellt werden. Versuchen Sie es erneut; falls das Problem bestehen bleibt, melden Sie es uns.",
     "report_read_failed": "Die Messungen des Zeitraums konnten nicht gelesen werden. Bitte versuchen Sie es in Kürze erneut.",
-    "report_render_failed": "Die Daten wurden gelesen, das Dokument konnte jedoch nicht erstellt werden. Versuchen Sie es erneut; falls das Problem bestehen bleibt, melden Sie es uns."
+    "report_render_failed": "Die Daten wurden gelesen, das Dokument konnte jedoch nicht erstellt werden. Versuchen Sie es erneut; falls das Problem bestehen bleibt, melden Sie es uns.",
+    "pdf_secret_missing": "Die PDF-Erstellung ist auf dem Server nicht konfiguriert (Signaturschlüssel fehlt). Bitte wenden Sie sich an den Support."
   }
 }

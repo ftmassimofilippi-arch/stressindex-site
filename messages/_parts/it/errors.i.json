@@ -12,6 +12,7 @@
     "measurement_not_found": "Misurazione non trovata. Se è stata registrata dal cliente dalla sua app, verifica che il collegamento con lo studio sia ancora attivo.",
     "pdf_render_failed": "La misurazione è stata trovata ma il documento non è stato generato. Riprova; se il problema persiste, segnalacelo.",
     "report_read_failed": "Non è stato possibile leggere le misurazioni del periodo. Riprova tra qualche istante.",
-    "report_render_failed": "I dati sono stati letti ma il documento non è stato generato. Riprova; se il problema persiste, segnalacelo."
+    "report_render_failed": "I dati sono stati letti ma il documento non è stato generato. Riprova; se il problema persiste, segnalacelo.",
+    "pdf_secret_missing": "Generazione PDF non configurata sul server (segreto di firma mancante). Contatta il supporto."
   }
 }

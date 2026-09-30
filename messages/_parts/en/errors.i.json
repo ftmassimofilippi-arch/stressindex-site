@@ -12,6 +12,7 @@
     "measurement_not_found": "Measurement not found. If the client recorded it from their app, check that the link with the practice is still active.",
     "pdf_render_failed": "The measurement was found but the document could not be generated. Try again; if the problem persists, let us know.",
     "report_read_failed": "The measurements for the period could not be read. Please try again in a moment.",
-    "report_render_failed": "The data were read but the document could not be generated. Try again; if the problem persists, let us know."
+    "report_render_failed": "The data were read but the document could not be generated. Try again; if the problem persists, let us know.",
+    "pdf_secret_missing": "PDF generation is not configured on the server (signing secret missing). Please contact support."
   }
 }

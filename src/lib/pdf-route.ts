@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { apiError } from '@/lib/api-error'
-import { createPrintToken, type PrintKind } from '@/lib/print-token'
+import { createPrintToken, printSecretConfigured, type PrintKind } from '@/lib/print-token'
 import { renderPagePdf, siteOrigin } from '@/lib/pdf-render'
 import { withLocale, type Locale } from '@/i18n/routing'
 
@@ -21,6 +21,11 @@ export async function pdfFromPrintPage(opts: {
   extraHeaders?: Record<string, string>
 }): Promise<NextResponse> {
   const { req, locale, path, query, token, filename, extraHeaders } = opts
+  if (!printSecretConfigured()) {
+    // Nessun fallback in produzione: senza segreto non si firmano token.
+    console.error('[pdf] PDF_TOKEN_SECRET mancante: impossibile firmare il token della pagina di stampa. Impostare la variabile su Vercel.')
+    return apiError('pdf_secret_missing', 500)
+  }
   const url = new URL(withLocale(path, locale), siteOrigin(req))
   for (const [k, v] of Object.entries(query ?? {})) if (v) url.searchParams.set(k, v)
   url.searchParams.set('token', createPrintToken(token))
