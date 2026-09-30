@@ -16,6 +16,15 @@ for (const locale of ['it', 'en', 'de']) {
   const prefix = locale === 'it' ? '' : `/${locale}`
   jobs.push({ name: `report-periodico-${locale}`, url: `${base}${prefix}/stampa/report-periodico?fixture=report&from=2026-08-31&to=2026-09-30` })
 }
+// Monitoraggio 24h e Sonno (dati simulati di src/lib/print-fixtures-monitoring.ts), versione professionista e cliente.
+for (const kind of ['sleep', '24h']) {
+  for (const variant of ['pro', 'client']) {
+    for (const locale of ['it', 'en', 'de']) {
+      const prefix = locale === 'it' ? '' : `/${locale}`
+      jobs.push({ name: `monitoraggio-${kind}-${variant}-${locale}`, url: `${base}${prefix}/stampa/monitoraggio/fixture?fixture=${kind}&variant=${variant}` })
+    }
+  }
+}
 const only = process.argv[2]
 mkdirSync('docs/pdf-esempi', { recursive: true })
 const browser = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--no-sandbox'], defaultViewport: { width: 1000, height: 1400 } })
