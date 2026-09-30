@@ -163,7 +163,13 @@ pagina con `puppeteer-core` (Chrome locale in sviluppo, `@sparticuz/chromium`
 su Vercel, `maxDuration` 60) inoltrando i cookie di sessione e un **token
 firmato** a 60 secondi (`src/lib/print-token.ts`), attende
 `window.__REPORT_READY__` (font e grafici pronti) e restituisce `page.pdf`
-A4. Le pagine `/stampa/*` rispondono 404 senza sessione o token. Con
+A4. Le pagine `/stampa/*` rispondono 404 senza sessione o token; il token è
+monouso (una seconda verifica fallisce) e `PDF_TOKEN_SECRET` è obbligatorio
+in produzione (senza, le route rispondono 500 `pdf_secret_missing`; solo in
+sviluppo esiste un fallback derivato dalla service role). `?variant=client`
+produce la versione per il cliente finale (score con tachimetri, lettura in
+parole, ritmogramma, niente tabelle né sigle), usata anche dal link
+nell'email del monitoraggio. Con
 `PDF_LEGACY=true` le route inoltrano ai vecchi generatori react-pdf
 (`/api/measurement-pdf`, `/api/client-report`, `/api/monitoring/[id]/pdf`),
 da rimuovere dopo una settimana di esercizio.
@@ -173,7 +179,10 @@ produzione o con `PDF_FIXTURES=true`): `?fixture=standard|orthostatic|coherence|
 sulla pagina misurazione, `?fixture=report` sul report periodico;
 `node scripts/pdf-esempi-fixture.mjs` genera i PDF in `docs/pdf-esempi/`
 (ignorati da git), `node scripts/pdf-esempi.mjs` fa lo stesso con dati reali
-del proprio account. Variabili: `PDF_TOKEN_SECRET` (facoltativa, altrimenti
+del proprio account. `node scripts/test-pdf-permessi.mjs --base <url>
+--superadmin <email>` crea due professionisti di prova e verifica permessi,
+token (scaduti, riusati, contraffatti) e sola lettura del superadmin, poi
+cancella tutto. Variabili: `PDF_TOKEN_SECRET` (facoltativa, altrimenti
 derivata dalla service role), `CHROME_PATH` (facoltativa in locale).
 
 ## Route API (`src/app/api/`)

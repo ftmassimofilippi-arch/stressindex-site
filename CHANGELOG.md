@@ -27,6 +27,12 @@ produzione è nel `README.md`.
   delta rispetto alla misurazione precedente sui gauge (in stampa).
 - Dati di simulazione (`?fixture=`) fuori produzione e script
   `scripts/pdf-esempi*.mjs` per generare PDF di prova.
+- Rifiniture: `PDF_TOKEN_SECRET` obbligatorio in produzione (500 senza),
+  token monouso; variante cliente (`?variant=client`) per misurazione, report
+  periodico e monitoraggio con le formulazioni del PDF legacy, bottone "PDF
+  cliente" e opzione nella tab Report; PDF 24h senza salti pagina fissi;
+  fixture sonno e 24h dal simulatore dell'app; `scripts/test-pdf-permessi.mjs`
+  (19 controlli su permessi, token e sola lettura superadmin).
 
 ### Sito trilingue (i18n)
 - **Italiano, inglese e tedesco** con `next-intl`: pagine spostate in

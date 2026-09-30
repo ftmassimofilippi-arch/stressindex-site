@@ -1224,6 +1224,7 @@
       "viewingSupport": "Sie sehen die Daten von <b>{name}</b>: Support-Modus"
     },
     "report": {
+      "clientVersion": "Version für Klienten (nur Scores und Kommentare, ohne Tabellen)",
       "download": "PDF herunterladen",
       "emailHint": "Die E-Mail öffnet Ihr Mailprogramm mit vorausgefülltem Betreff und Text für {name} ({email}). Hängen Sie das heruntergeladene PDF vor dem Senden manuell an.",
       "from": "Von",
@@ -1664,6 +1665,7 @@
       "password_too_short": "Passwort zu kurz (mind. 8 Zeichen).",
       "pdf_missing_params": "Erforderliche Parameter fehlen.",
       "pdf_render_failed": "Die Messung wurde gefunden, das Dokument konnte jedoch nicht erstellt werden. Versuchen Sie es erneut; falls das Problem bestehen bleibt, melden Sie es uns.",
+      "pdf_secret_missing": "Die PDF-Erstellung ist auf dem Server nicht konfiguriert (Signaturschlüssel fehlt). Bitte wenden Sie sich an den Support.",
       "piano_non_valido": "Ungültiger Tarif.",
       "professional_mismatch": "Das Profil gehört einer anderen Fachkraft: Verwenden Sie zuerst \"Verschieben\".",
       "professional_not_found": "Fachkraft nicht gefunden.",
@@ -3776,6 +3778,32 @@
       "na": "Qualität n. v.",
       "poor": "Unzureichende Qualität"
     },
+    "simple": {
+      "eventHr": "Herzfrequenz (bpm)",
+      "eventHrv": "Variabilität (ms)",
+      "hr": "Herzfrequenz",
+      "hrLabel": "Herzfrequenz",
+      "hrv": "Variabilität",
+      "hrvLabel": "Variabilität des Herzschlags (RMSSD)",
+      "nightChart": "Variabilität des Herzschlags pro Stunde (Balken) und Herzfrequenz (Linie)",
+      "nightTrendDetail": "{first3h}: Variabilität {first} ms · {last3h}: {last} ms",
+      "sleep": {
+        "drops": "Sauerstoffabfälle",
+        "dropsPerHour": "Sauerstoffabfälle pro Stunde",
+        "dropsPerHourHint": "Abfälle von mindestens 3 Punkten pro Stunde Aufzeichnung",
+        "dropsValue": "{count, plural, one {# Abfall} other {# Abfälle}}, davon {count4} von mindestens 4 Punkten",
+        "eventLowest": "Niedrigster",
+        "eventsTitle": "Sauerstoffabfälle ({count})",
+        "moreEvents": "{count, plural, one {# weiterer Abfall nicht aufgeführt} other {# weitere Abfälle nicht aufgeführt}}",
+        "noEvents": "Kein nennenswerter Sauerstoffabfall in der Nacht.",
+        "oxyLowest": "Niedrigster Wert der Nacht",
+        "oxyMean": "Mittlere Sauerstoffsättigung",
+        "prBasal": "Ruhepuls",
+        "prChartHint": "Mittlerer Puls pro Minute; grüne Linie = Ruhepuls der Nacht.",
+        "spo2ChartHint": "Mittlere Sauerstoffsättigung pro Minute; rotes Band unter 90 %; rote Punkte an den Sauerstoffabfällen.",
+        "timeBelow90": "Zeit mit Sauerstoff unter 90 %"
+      }
+    },
     "sleep": {
       "basal": "Basal (10. Perz.)",
       "basalLine": "basal {v}",
@@ -4037,7 +4065,9 @@
     },
     "download": {
       "ariaDownload": "PDF der Messung herunterladen",
+      "ariaDownloadClient": "PDF für Klienten herunterladen",
       "button": "PDF herunterladen",
+      "buttonClient": "PDF für Klienten",
       "closeMessage": "Meldung schließen",
       "generating": "Wird erstellt...",
       "genericError": "Das PDF konnte nicht erstellt werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
@@ -4143,6 +4173,20 @@
     }
   },
   "print": {
+    "client": {
+      "fileType": "Klient",
+      "indicationsTitle": "Hinweise Ihrer Fachkraft",
+      "measurementSubtitle": "Wie es Ihrem Nervensystem heute geht",
+      "measurementTitle": "Ihr HRV-Bericht",
+      "readingTitle": "Kurz gesagt",
+      "reportSubtitle": "Wie sich Ihre Scores im Zeitraum verändert haben",
+      "reportTitle": "Ihr Verlauf",
+      "rhythmSubtitle": "Der Abstand zwischen zwei Schlägen: Je mehr er in Ruhe variiert, desto besser.",
+      "rhythmTitle": "Ihr Herzschlag während der Messung",
+      "scoresSubtitle": "Jeder Score reicht von 0 bis 100. Die Veränderung bezieht sich auf Ihre vorherige Messung.",
+      "scoresTitle": "Ihre 5 Scores",
+      "suffix": "Klient"
+    },
     "cover": {
       "age": "Alter",
       "artifacts": "Artefakte {value}%",
@@ -4317,6 +4361,43 @@
     }
   },
   "scores": {
+    "bandDescriptions": {
+      "adaptation": {
+        "excellent": "Ausgezeichnete Fähigkeit, sich an Belastungen anzupassen und ins Gleichgewicht zurückzufinden.",
+        "fragile": "Fragile Anpassungsfähigkeit: auf Belastungen achten.",
+        "good": "Gute Fähigkeit, sich an Belastungen anzupassen und ins Gleichgewicht zurückzufinden.",
+        "reduced": "Verminderte Erholungsfähigkeit, zu beobachten.",
+        "toImprove": "Anpassungsfähigkeit zu verbessern."
+      },
+      "balance": {
+        "good": "Gutes Gleichgewicht zwischen Antrieb und Erholung.",
+        "moderateImbalance": "Mäßiges Ungleichgewicht zwischen Aktivierung und Erholung.",
+        "optimal": "Optimales Gleichgewicht: Hoch- und Herunterfahren gelingt mühelos.",
+        "strongImbalance": "Starkes Ungleichgewicht zwischen Aktivierung und Erholung.",
+        "sufficient": "Ausreichendes Gleichgewicht zwischen Antrieb und Erholung."
+      },
+      "energy": {
+        "depleted": "Energie erschöpft: sehr geringe Reserven.",
+        "full": "Volle Energie: ausgezeichnete Ressourcen verfügbar.",
+        "good": "Gute Energie: Ressourcen gut verfügbar.",
+        "low": "Niedrige Energie: wenige Reserven verfügbar.",
+        "moderate": "Mäßige Energie: ordentliche Reserven."
+      },
+      "recovery": {
+        "good": "Gute Erholung: Der Körper regeneriert gut.",
+        "insufficient": "Unzureichende Erholung: Der Körper kann sich schwer entspannen und aufladen.",
+        "moderate": "Mäßige Erholung mit Verbesserungspotenzial.",
+        "optimal": "Optimale Erholung: ausgezeichnete Fähigkeit, sich zu entspannen und aufzuladen.",
+        "poor": "Schwache Erholung: Es braucht mehr Ruhe von guter Qualität."
+      },
+      "stress": {
+        "balance": "Physiologischer Stress, gut bewältigt.",
+        "fatigue": "Unter starkem Druck, Energiereserven stark reduziert.",
+        "high": "Hoher Stress und verminderte Anpassungsfähigkeit.",
+        "low": "Niedriges Stressniveau, gutes Gleichgewicht.",
+        "medium": "Mäßige Aktivierung oder Anzeichen angesammelter Belastung."
+      }
+    },
     "bands": {
       "adaptation": {
         "excellent": "Ausgezeichnet",

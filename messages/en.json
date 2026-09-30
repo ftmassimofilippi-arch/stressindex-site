@@ -1224,6 +1224,7 @@
       "viewingSupport": "You are viewing <b>{name}</b>'s data: support mode"
     },
     "report": {
+      "clientVersion": "Client version (scores and comments only, no tables)",
       "download": "Download PDF",
       "emailHint": "The email opens your mail client with subject and body pre-filled for {name} ({email}). Attach the downloaded PDF manually before sending.",
       "from": "From",
@@ -1664,6 +1665,7 @@
       "password_too_short": "Password too short (min 8).",
       "pdf_missing_params": "Required parameters are missing.",
       "pdf_render_failed": "The measurement was found but the document could not be generated. Try again; if the problem persists, let us know.",
+      "pdf_secret_missing": "PDF generation is not configured on the server (signing secret missing). Please contact support.",
       "piano_non_valido": "Invalid plan.",
       "professional_mismatch": "The record belongs to another professional: use \"Move\" before linking it.",
       "professional_not_found": "Professional not found.",
@@ -3776,6 +3778,32 @@
       "na": "Quality n/a",
       "poor": "Insufficient quality"
     },
+    "simple": {
+      "eventHr": "Heart rate (bpm)",
+      "eventHrv": "Variability (ms)",
+      "hr": "Heart rate",
+      "hrLabel": "Heart rate",
+      "hrv": "Variability",
+      "hrvLabel": "Heartbeat variability (RMSSD)",
+      "nightChart": "Heartbeat variability per hour (bars) and heart rate (line)",
+      "nightTrendDetail": "{first3h}: variability {first} ms · {last3h}: {last} ms",
+      "sleep": {
+        "drops": "Oxygen drops",
+        "dropsPerHour": "Oxygen drops per hour",
+        "dropsPerHourHint": "drops of at least 3 points per hour of recording",
+        "dropsValue": "{count, plural, one {# drop} other {# drops}}, of which {count4} of at least 4 points",
+        "eventLowest": "Lowest",
+        "eventsTitle": "Oxygen drops ({count})",
+        "moreEvents": "{count, plural, one {# further drop not listed} other {# further drops not listed}}",
+        "noEvents": "No significant oxygen drop during the night.",
+        "oxyLowest": "Lowest value of the night",
+        "oxyMean": "Mean oxygenation",
+        "prBasal": "Resting pulse",
+        "prChartHint": "Mean pulse per minute; green line = resting pulse of the night.",
+        "spo2ChartHint": "Mean oxygenation per minute; red band below 90 %; red dots at the oxygen drops.",
+        "timeBelow90": "Time with oxygen below 90 %"
+      }
+    },
     "sleep": {
       "basal": "Basal (10th pct)",
       "basalLine": "basal {v}",
@@ -4037,7 +4065,9 @@
     },
     "download": {
       "ariaDownload": "Download measurement PDF",
+      "ariaDownloadClient": "Download the client PDF",
       "button": "Download PDF",
+      "buttonClient": "Client PDF",
       "closeMessage": "Close message",
       "generating": "Generating...",
       "genericError": "The PDF could not be generated. Check your connection and try again."
@@ -4143,6 +4173,20 @@
     }
   },
   "print": {
+    "client": {
+      "fileType": "Client",
+      "indicationsTitle": "Guidance from your professional",
+      "measurementSubtitle": "How your nervous system is doing today",
+      "measurementTitle": "Your HRV report",
+      "readingTitle": "In short",
+      "reportSubtitle": "How your scores changed over the period",
+      "reportTitle": "Your progress",
+      "rhythmSubtitle": "The gap between one beat and the next: the more it varies at rest, the better.",
+      "rhythmTitle": "Your heartbeat during the measurement",
+      "scoresSubtitle": "Each score goes from 0 to 100. The change is versus your previous measurement.",
+      "scoresTitle": "Your 5 scores",
+      "suffix": "client"
+    },
     "cover": {
       "age": "Age",
       "artifacts": "Artifacts {value}%",
@@ -4317,6 +4361,43 @@
     }
   },
   "scores": {
+    "bandDescriptions": {
+      "adaptation": {
+        "excellent": "Excellent capacity to adapt to loads and return to balance.",
+        "fragile": "Fragile adaptation capacity: watch the loads.",
+        "good": "Good capacity to adapt to loads and return to balance.",
+        "reduced": "Reduced recovery capacity, worth watching.",
+        "toImprove": "Adaptation capacity to improve."
+      },
+      "balance": {
+        "good": "Good balance between drive and recovery.",
+        "moderateImbalance": "Moderate imbalance between activation and recovery.",
+        "optimal": "Optimal balance: speeding up and slowing down come easily.",
+        "strongImbalance": "Strong imbalance between activation and recovery.",
+        "sufficient": "Sufficient balance between drive and recovery."
+      },
+      "energy": {
+        "depleted": "Energy depleted: very low reserves.",
+        "full": "Full energy: excellent resources available.",
+        "good": "Good energy: resources readily available.",
+        "low": "Low energy: few reserves available.",
+        "moderate": "Moderate energy: fair reserves."
+      },
+      "recovery": {
+        "good": "Good recovery: the body regenerates well.",
+        "insufficient": "Insufficient recovery: the body struggles to relax and recharge.",
+        "moderate": "Moderate recovery, with room for improvement.",
+        "optimal": "Optimal recovery: excellent capacity to relax and recharge.",
+        "poor": "Poor recovery: more quality rest is needed."
+      },
+      "stress": {
+        "balance": "Physiological stress, well managed.",
+        "fatigue": "Under strong pressure, energy reserves very low.",
+        "high": "High stress and reduced ability to adapt.",
+        "low": "Low stress level, good balance.",
+        "medium": "Moderate activation or signs of accumulated load."
+      }
+    },
     "bands": {
       "adaptation": {
         "excellent": "Excellent",

@@ -1224,6 +1224,7 @@
       "viewingSupport": "Stai visualizzando i dati di <b>{name}</b>: modalità supporto"
     },
     "report": {
+      "clientVersion": "Versione per il cliente (solo score e commenti, senza tabelle)",
       "download": "Scarica PDF",
       "emailHint": "L'email apre il client di posta con oggetto e corpo precompilati per {name} ({email}). Allega manualmente il PDF scaricato prima di inviare.",
       "from": "Dal",
@@ -1664,6 +1665,7 @@
       "password_too_short": "Password troppo corta (min 8).",
       "pdf_missing_params": "Parametri obbligatori mancanti.",
       "pdf_render_failed": "La misurazione è stata trovata ma il documento non è stato generato. Riprova; se il problema persiste, segnalacelo.",
+      "pdf_secret_missing": "Generazione PDF non configurata sul server (segreto di firma mancante). Contatta il supporto.",
       "piano_non_valido": "Piano non valido.",
       "professional_mismatch": "La scheda appartiene a un altro professionista: usa \"Sposta\" prima di collegarla.",
       "professional_not_found": "Professionista non trovato.",
@@ -3776,6 +3778,32 @@
       "na": "Qualità n.d.",
       "poor": "Qualità insufficiente"
     },
+    "simple": {
+      "eventHr": "Battito (bpm)",
+      "eventHrv": "Variabilità (ms)",
+      "hr": "Battito",
+      "hrLabel": "Frequenza cardiaca",
+      "hrv": "Variabilità",
+      "hrvLabel": "Variabilità del battito (RMSSD)",
+      "nightChart": "Variabilità del battito per ora (barre) e frequenza cardiaca (linea)",
+      "nightTrendDetail": "{first3h}: variabilità {first} ms · {last3h}: {last} ms",
+      "sleep": {
+        "drops": "Cali di ossigeno",
+        "dropsPerHour": "Cali di ossigeno all'ora",
+        "dropsPerHourHint": "cali di almeno 3 punti per ora di registrazione",
+        "dropsValue": "{count, plural, one {# calo} other {# cali}}, di cui {count4} di almeno 4 punti",
+        "eventLowest": "Più basso",
+        "eventsTitle": "Cali di ossigeno ({count})",
+        "moreEvents": "{count, plural, one {# altro calo non elencato} other {# altri cali non elencati}}",
+        "noEvents": "Nessun calo di ossigeno significativo nella notte.",
+        "oxyLowest": "Valore più basso della notte",
+        "oxyMean": "Ossigenazione media",
+        "prBasal": "Polso a riposo",
+        "prChartHint": "Polso medio per minuto; linea verde = polso a riposo della notte.",
+        "spo2ChartHint": "Ossigenazione media per minuto; banda rossa sotto il 90 %; punti rossi sui cali di ossigeno.",
+        "timeBelow90": "Tempo con ossigeno sotto il 90 %"
+      }
+    },
     "sleep": {
       "basal": "Basale (10° pct)",
       "basalLine": "basale {v}",
@@ -4037,7 +4065,9 @@
     },
     "download": {
       "ariaDownload": "Scarica PDF misurazione",
+      "ariaDownloadClient": "Scarica il PDF per il cliente",
       "button": "Scarica PDF",
+      "buttonClient": "PDF cliente",
       "closeMessage": "Chiudi messaggio",
       "generating": "Generazione...",
       "genericError": "Non è stato possibile generare il PDF. Controlla la connessione e riprova."
@@ -4143,6 +4173,20 @@
     }
   },
   "print": {
+    "client": {
+      "fileType": "Cliente",
+      "indicationsTitle": "Indicazioni del tuo professionista",
+      "measurementSubtitle": "Come sta il tuo sistema nervoso oggi",
+      "measurementTitle": "Il tuo report HRV",
+      "readingTitle": "In sintesi",
+      "reportSubtitle": "Come sono cambiati i tuoi score nel periodo",
+      "reportTitle": "Il tuo andamento",
+      "rhythmSubtitle": "La distanza fra un battito e il successivo: più varia a riposo, meglio è.",
+      "rhythmTitle": "Il tuo battito durante la misurazione",
+      "scoresSubtitle": "Ogni score va da 0 a 100. La variazione è rispetto alla misurazione precedente.",
+      "scoresTitle": "I tuoi 5 score",
+      "suffix": "cliente"
+    },
     "cover": {
       "age": "Età",
       "artifacts": "Artefatti {value}%",
@@ -4317,6 +4361,43 @@
     }
   },
   "scores": {
+    "bandDescriptions": {
+      "adaptation": {
+        "excellent": "Eccellente capacità di adattarsi ai carichi e tornare in equilibrio.",
+        "fragile": "Capacità di adattamento fragile: attenzione ai carichi.",
+        "good": "Buona capacità di adattarsi ai carichi e tornare in equilibrio.",
+        "reduced": "Capacità di recupero ridotta, da tenere sotto osservazione.",
+        "toImprove": "Capacità di adattamento da migliorare."
+      },
+      "balance": {
+        "good": "Buon equilibrio fra carica e recupero.",
+        "moderateImbalance": "Sbilanciamento moderato fra attivazione e recupero.",
+        "optimal": "Equilibrio ottimale: accelerare e rallentare avviene con facilità.",
+        "strongImbalance": "Forte sbilanciamento fra attivazione e recupero.",
+        "sufficient": "Equilibrio sufficiente fra carica e recupero."
+      },
+      "energy": {
+        "depleted": "Energia esaurita: riserve molto basse.",
+        "full": "Energia piena: ottima disponibilità di risorse.",
+        "good": "Buona energia: buona disponibilità di risorse.",
+        "low": "Energia bassa: poche riserve disponibili.",
+        "moderate": "Energia moderata: riserve discrete."
+      },
+      "recovery": {
+        "good": "Buon recupero: il corpo si rigenera bene.",
+        "insufficient": "Recupero insufficiente: il corpo fatica a rilassarsi e ricaricarsi.",
+        "moderate": "Recupero moderato, con margini di miglioramento.",
+        "optimal": "Recupero ottimale: ottima capacità di rilassarsi e ricaricarsi.",
+        "poor": "Recupero scarso: serve più riposo di qualità."
+      },
+      "stress": {
+        "balance": "Stress fisiologico, ben gestito.",
+        "fatigue": "Sotto forte pressione, riserve di energia molto ridotte.",
+        "high": "Stress elevato e ridotta capacità di adattamento.",
+        "low": "Livello di stress basso, buon equilibrio.",
+        "medium": "Attivazione moderata o segni di carico accumulato."
+      }
+    },
     "bands": {
       "adaptation": {
         "excellent": "Eccellente",
