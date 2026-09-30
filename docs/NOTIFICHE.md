@@ -25,8 +25,8 @@ Da applicare a mano nel **SQL Editor** di Supabase, una alla volta.
 
 | # | File | Note |
 | - | ---- | ---- |
-| 1 | `supabase-migrations/025_notifiche_misurazioni.sql` | Si applica così com'è. |
-| 2 | `supabase-migrations/026_notifiche_cron.sql` | **Va modificata prima**: sostituisci `INCOLLA_QUI_IL_SEGRETO` con il valore di `NOTIFY_SECRET` (punto 2). Applicala **dopo** aver deployato `notify-digest`. |
+| 1 | `supabase-migrations/sito-025_notifiche_misurazioni.sql` | Si applica così com'è. |
+| 2 | `supabase-migrations/sito-026_notifiche_cron.sql` | **Va modificata prima**: sostituisci `INCOLLA_QUI_IL_SEGRETO` con il valore di `NOTIFY_SECRET` (punto 2). Applicala **dopo** aver deployato `notify-digest`. |
 
 Cosa fa la **025**:
 

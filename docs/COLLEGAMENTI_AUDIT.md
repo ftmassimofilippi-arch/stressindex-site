@@ -303,7 +303,7 @@ Tutti gli orari in UTC (ora italiana = +2 h). Professionista: `1f8a818b` = info@
 
 ## 3. Script di riparazione (FASE 3): anteprima dei conteggi
 
-File: `supabase-migrations/021_collegamenti_backup.sql` (backup) e `supabase-migrations/022_collegamenti_riparazione.sql` (riparazione). Entrambi rieseguiti il **12 settembre** su un Postgres 16 locale caricato con i dati di produzione del 12 settembre, con il ciclo completo 019 → 020 → 021 → 022 anteprima → 022 applicazione → 022 anteprima di nuovo: la seconda anteprima riporta **solo i blocchi di report** (C da decidere a mano, D scheda di sé stesso, G, I), quindi lo script è idempotente. Prerequisito: `019_collegamenti_flusso_unico.sql`. Modalità: eseguito così com'è fa solo l'**anteprima** e lascia i conteggi in `collegamenti_riparazione_log`; per applicare, nella stessa sessione del SQL Editor eseguire prima `select set_config('collegamenti.apply', 'on', false);`.
+File: `supabase-migrations/sito-021_collegamenti_backup.sql` (backup) e `supabase-migrations/sito-022_collegamenti_riparazione.sql` (riparazione). Entrambi rieseguiti il **12 settembre** su un Postgres 16 locale caricato con i dati di produzione del 12 settembre, con il ciclo completo 019 → 020 → 021 → 022 anteprima → 022 applicazione → 022 anteprima di nuovo: la seconda anteprima riporta **solo i blocchi di report** (C da decidere a mano, D scheda di sé stesso, G, I), quindi lo script è idempotente. Prerequisito: `019_collegamenti_flusso_unico.sql`. Modalità: eseguito così com'è fa solo l'**anteprima** e lascia i conteggi in `collegamenti_riparazione_log`; per applicare, nella stessa sessione del SQL Editor eseguire prima `select set_config('collegamenti.apply', 'on', false);`.
 
 Cosa è cambiato nella 022 rispetto alla prima stesura (richieste A–F del 12 settembre):
 
@@ -518,7 +518,7 @@ Elenco delle singole sessioni (data, durata, tipo):
 
 Gruppi: 1778435728417→1778869925505: 38, 1781353689443→1781200000000: 2, None→1783917628964: 17, None→1786945842116: 1.
 
-## 4. Flusso unico (FASE 4): `supabase-migrations/019_collegamenti_flusso_unico.sql`
+## 4. Flusso unico (FASE 4): `supabase-migrations/sito-019_collegamenti_flusso_unico.sql`
 
 Testata su Postgres 16 locale con i dati dell'11 settembre (scenari T1–T9: Sara, doppioni con sessioni, riattivazione, trigger su pending→active, ponte da profilo nuovo, profilo inesistente, RLS scheda archiviata, due professionisti). Idempotente.
 
@@ -573,7 +573,7 @@ Reagisce solo alla **transizione** a `active` (insert o update da altro stato, c
 7. **Migrazioni nel repo app**: ~~`client_crm_autocreate_on_link.sql` (vecchio trigger) e `client_professional_links_unique.sql` (mai applicata) vanno tolte o marcate "sostituite da stressindex-site 019/022"; `sessions_client_assignment.sql` è sostituita dalla variante `_text` della 019.~~ **Fatto** il 12 settembre (commit 2453baf dell'app: i tre file sono svuotati e rimandano alla 019/022).
 8. `client_email_aliases`: non usata da nessuno; può essere eliminata.
 
-## 5. Controllo permanente (FASE 5): `supabase-migrations/020_collegamenti_salute.sql`
+## 5. Controllo permanente (FASE 5): `supabase-migrations/sito-020_collegamenti_salute.sql`
 
 ### 5.1 View `v_collegamenti_salute`
 
@@ -593,11 +593,11 @@ Sui dati del 12 settembre, prima della riparazione: scheda_duplicata 21, profilo
 
 **Stato al 13 settembre 2026.** 019, 020 e 021 applicate. La 022 è stata eseguita in applicazione il 13/09 alle 04:51 UTC (run `bc252a79`, flag `collegamenti.apply` rimasto attivo nella sessione del SQL Editor): B, C (15 unioni), D (5 ponti), E (3 schede), H (58 analytics) sono **fatti**; A è stato annullato dalla FK `client_professional_links_client_id_fkey` → `auth.users` (A2 provava ad allineare i link di 2 utenti cancellati). Backup pre-run: `*_backup_20260913`.
 
-1. `supabase-migrations/019_collegamenti_flusso_unico.sql` (funzioni, trigger, policy, RPC).
-2. `supabase-migrations/020_collegamenti_salute.sql` (view, alert, cron).
-3. `supabase-migrations/021_collegamenti_backup.sql` (tabelle `*_backup_YYYYMMDD`).
-4. `supabase-migrations/023_collegamenti_esclusioni.sql`: i 6 gruppi con la stessa email ma persone diverse (Dettori/"Mamma Mamma", Liga Briviba, ecc.) segnati "da non unire"; la view e la 022 li ignorano finché non compare una scheda nuova con quell'email. Dal pannello: tab Salute → "Non unire".
-5. `supabase-migrations/022_collegamenti_riparazione.sql` **in anteprima** (così com'è): leggere `collegamenti_riparazione_log` e `collegamenti_riparazione_c_dettaglio`.
+1. `supabase-migrations/sito-019_collegamenti_flusso_unico.sql` (funzioni, trigger, policy, RPC).
+2. `supabase-migrations/sito-020_collegamenti_salute.sql` (view, alert, cron).
+3. `supabase-migrations/sito-021_collegamenti_backup.sql` (tabelle `*_backup_YYYYMMDD`).
+4. `supabase-migrations/sito-023_collegamenti_esclusioni.sql`: i 6 gruppi con la stessa email ma persone diverse (Dettori/"Mamma Mamma", Liga Briviba, ecc.) segnati "da non unire"; la view e la 022 li ignorano finché non compare una scheda nuova con quell'email. Dal pannello: tab Salute → "Non unire".
+5. `supabase-migrations/sito-022_collegamenti_riparazione.sql` **in anteprima** (così com'è): leggere `collegamenti_riparazione_log` e `collegamenti_riparazione_c_dettaglio`.
 6. Eventuali coppie confermate in `collegamenti_riparazione_link_ok` (§3.G).
 7. Applicazione **per blocco**, in un'unica esecuzione: `begin; select set_config('collegamenti.apply','on',true); select set_config('collegamenti.blocks','A',true);` + contenuto della 022 + `commit;`. Senza `collegamenti.blocks` la 022 si ferma prima di scrivere; i flag vengono azzerati a ogni esecuzione.
 8. `notify pgrst, 'reload schema';` poi deploy del sito e della Edge Function.

@@ -227,41 +227,50 @@ lingua. In sintesi:
 
 ## Migrazioni (`supabase-migrations/`, a mano nel SQL Editor, in ordine)
 
+**Nome dei file: `sito-NNN_descrizione.sql`.** Due repo scrivono sullo stesso
+database Supabase e le numerazioni si erano sovrapposte (esistevano due `029`,
+una qui e una in `hrv_app`). Il prefisso dice da quale repo viene la migrazione;
+il numero è rimasto quello di prima, quindi ogni riferimento storico ("la 022
+del sito") continua a valere. L'app usa `app-NNN_`; i suoi file più vecchi hanno
+un nome descrittivo senza numero e restano così. La regola completa è in
+`CLAUDE.md`, sezione "Migrazioni: nomi fra i due repo".
+
 Stato verificato sul catalogo di produzione il 27/09/2026.
 
 | File | Scopo | Stato |
 |---|---|---|
 | `supabase-migration.sql` (radice) | registrazione trial | applicata |
-| 001 `dashboard_tables` | tabelle dashboard (`clients.id` TEXT) | applicata |
-| 002 `pg_cron_alerts` | alert automatici da `client_settings` | applicata |
-| 003 `rls_measurement_analytics` | RLS + indici | applicata |
-| 004 `hrv_demographic_norms` | norme Nunan/Voss/Schumann | applicata |
-| 005 `compute_proprietary_scores` | `calc_score_*` in SQL | applicata |
-| 006 `backfill_measurement_analytics` | backfill da `sessions.hrv_data` | applicata |
-| 007 `sync_sessions_to_measurement_analytics` | trigger di sync | applicata |
-| 008 `organizations` | organizzazioni | applicata, policy con nomi diversi |
-| 009 `client_peso_altezza` | peso/altezza | applicata |
-| 010 `superadmin_read` | `is_superadmin()` + read | applicata, nomi diversi; mancano read su `client_settings`, `alerts`, `messages` |
-| 011 `superadmin_sport_read` | read sport | applicata |
-| 012 `sport_live_data` | Team Live | parziale (tabella nella forma dell'app) |
-| 013 `superadmin_update_plan` | cambio piano | applicata |
-| 014 `restore_demographic_trigger` | trigger non sovrascrittivo (attivo) | applicata |
-| 015 `recalc_degraded_rows` | ricalcolo righe | applicata |
-| 016 `linked_clients_last_remote_session` | ultima misura remota | applicata |
-| 017 `client_user_id_admin_ops` | ponte + admin ops + audit | applicata (STEP 2 no) |
-| 018 `monitoring_site` | monitoraggio sul sito | applicata |
-| 019 `collegamenti_flusso_unico` | `link_client_to_professional` | applicata (13/09) |
-| 020 `collegamenti_salute` | vista salute, cron settimanale | applicata |
-| 021 `collegamenti_backup` | backup `_20260913` | applicata |
-| 022 `collegamenti_riparazione` | riparazione blocchi A–I | applicata; **indice `uq_client_professional_active` mancante** |
-| 023 `collegamenti_esclusioni` | "non unire" verificati | applicata (27/09) |
-| 024 `commerciale_account` | stato, abbonamenti, moduli, `has_module_access` | applicata (27/09) |
-| 024b `stato_attivo_e_sonno` | tutti attivi, `sleep` in pro e prova | applicata |
-| 025 `notifiche_misurazioni` | preferenze, coda, log | applicata |
-| 026 `notifiche_cron` | cron notifiche (segreto sostituito a mano) | applicata |
-| 027 `accesso_cliente` | registro accessi, `must_change_password` | applicata |
-| 028 `fix_cancellazione_utenti` | FK e registro compatibili con `deleteUser` | applicata |
-| 029 `measured_at_utc_dalla_sessione` | `measurement_analytics.measured_at_utc` riallineata a `sessions.started_at_utc` + trigger corretto | **da applicare** |
+| sito-001 `dashboard_tables` | tabelle dashboard (`clients.id` TEXT) | applicata |
+| sito-002 `pg_cron_alerts` | alert automatici da `client_settings` | applicata |
+| sito-003 `rls_measurement_analytics` | RLS + indici | applicata |
+| sito-004 `hrv_demographic_norms` | norme Nunan/Voss/Schumann | applicata |
+| sito-005 `compute_proprietary_scores` | `calc_score_*` in SQL | applicata |
+| sito-006 `backfill_measurement_analytics` | backfill da `sessions.hrv_data` | applicata |
+| sito-007 `sync_sessions_to_measurement_analytics` | trigger di sync | applicata |
+| sito-008 `organizations` | organizzazioni | applicata, policy con nomi diversi |
+| sito-009 `client_peso_altezza` | peso/altezza | applicata |
+| sito-010 `superadmin_read` | `is_superadmin()` + read | applicata, nomi diversi; mancano read su `client_settings`, `alerts`, `messages` |
+| sito-011 `superadmin_sport_read` | read sport | applicata |
+| sito-012 `sport_live_data` | Team Live | parziale (tabella nella forma dell'app) |
+| sito-013 `superadmin_update_plan` | cambio piano | applicata |
+| sito-014 `restore_demographic_trigger` | trigger non sovrascrittivo (attivo) | applicata |
+| sito-015 `recalc_degraded_rows` | ricalcolo righe | applicata |
+| sito-016 `linked_clients_last_remote_session` | ultima misura remota | applicata |
+| sito-017 `client_user_id_admin_ops` | ponte + admin ops + audit | applicata (STEP 2 no) |
+| sito-018 `monitoring_site` | monitoraggio sul sito | applicata |
+| sito-019 `collegamenti_flusso_unico` | `link_client_to_professional` | applicata (13/09) |
+| sito-020 `collegamenti_salute` | vista salute, cron settimanale | applicata |
+| sito-021 `collegamenti_backup` | backup `_20260913` | applicata |
+| sito-022 `collegamenti_riparazione` | riparazione blocchi A–I | applicata; **indice `uq_client_professional_active` mancante** |
+| sito-023 `collegamenti_esclusioni` | "non unire" verificati | applicata (27/09) |
+| sito-024 `commerciale_account` | stato, abbonamenti, moduli, `has_module_access` | applicata (27/09) |
+| sito-024b `stato_attivo_e_sonno` | tutti attivi, `sleep` in pro e prova | applicata |
+| sito-025 `notifiche_misurazioni` | preferenze, coda, log | applicata |
+| sito-026 `notifiche_cron` | cron notifiche (segreto sostituito a mano) | applicata |
+| sito-027 `accesso_cliente` | registro accessi, `must_change_password` | applicata |
+| sito-028 `fix_cancellazione_utenti` | FK e registro compatibili con `deleteUser` | applicata |
+| sito-029 `measured_at_utc_dalla_sessione` | `measurement_analytics.measured_at_utc` riallineata a `sessions.started_at_utc` + trigger corretto | **da applicare** |
+| sito-030 `notifiche_lette` | `notification_reads`: data di lettura delle notifiche per singolo utente | **da applicare** |
 
 Le migrazioni dell'app (`hrv_app/supabase/migrations/`) e il loro stato sono
 nel contesto dell'app, `docs/STRESS_INDEX_CONTEXT_v4.md` §12.

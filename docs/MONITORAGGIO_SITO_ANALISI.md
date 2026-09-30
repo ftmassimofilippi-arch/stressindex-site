@@ -361,7 +361,7 @@ nelle ore 23-07 locali → `notte`, con gli indici notturni "non disponibili".
 - **Email**: il sito non ha un canale di consegna (MessageComposer archivia in `messages` con `delivered: false`, Edge Function `send-message` ancora da fare). "Invia al cliente" crea la riga in `messages` con oggetto, testo e link al PDF cliente e lo dice in chiaro: nessuna email parte davvero, nessuna simulazione.
 
 ### 8.4 Migrazione del sito
-`supabase-migrations/018_monitoring_site.sql` (da applicare a mano, idempotente, blocchi con `EXCEPTION WHEN OTHERS`, `notify pgrst, 'reload schema'`):
+`supabase-migrations/sito-018_monitoring_site.sql` (da applicare a mano, idempotente, blocchi con `EXCEPTION WHEN OTHERS`, `notify pgrst, 'reload schema'`):
 1. `monitoring_sessions.events_modified_on_web` boolean + `events_modified_on_web_at`;
 2. RPC `get_linked_client_monitoring_sessions_by_client_id` riscritta con il ponte `clients.client_user_id` (017) oltre a id/email, stessa firma;
 3. policy SELECT esplicita per `is_superadmin()`.

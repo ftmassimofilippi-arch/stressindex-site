@@ -36,8 +36,9 @@ Istruzioni per le sessioni Claude Code in questo repo. Aggiornate al
   scrivere.
 - **Collegamenti**: ogni scrittura passa da `link_client_to_professional`
   (route admin comprese).
-- **Migrazioni** in `supabase-migrations/`, numerate, idempotenti, a mano nel
-  SQL Editor. Lettura del DB di produzione con `supabase db query --linked`
+- **Migrazioni** in `supabase-migrations/`, nome `sito-NNN_descrizione.sql`,
+  idempotenti, a mano nel SQL Editor. Vedi "Migrazioni: nomi fra i due repo"
+  qui sotto. Lettura del DB di produzione con `supabase db query --linked`
   (solo SELECT senza via libera). Lo stato reale è nel README, sezione
   Migrazioni.
 - `src/lib/supabase-server.ts` usa `next/headers`: i moduli "puri" importati
@@ -53,6 +54,33 @@ Istruzioni per le sessioni Claude Code in questo repo. Aggiornate al
   `@/i18n/navigation`; date e numeri con la `locale` (`src/lib/format.ts`).
   Convenzioni in `docs/i18n-convenzioni.md`, glossario in `docs/i18n-glossario.md`.
 - Mai fare push forzato su `main`; `supabase/.temp/` è locale e ignorato.
+
+## Migrazioni: nomi fra i due repo
+
+`hrv_app` e `stressindex-site` applicano migrazioni **allo stesso database
+Supabase**, ognuno dalla propria cartella. Le due numerazioni si erano
+sovrapposte: esistevano due `029` diverse, una per repo.
+
+**Regola.** Il nome porta il prefisso del repo che possiede la migrazione, e il
+numero resta quello del repo:
+
+| Repo | Cartella | Nome |
+|---|---|---|
+| `stressindex-site` | `supabase-migrations/` | `sito-NNN_descrizione.sql` |
+| `hrv_app` | `supabase/migrations/` | `app-NNN_descrizione.sql` |
+
+- Il numero **non** si condivide fra i repo e non deve essere unico fra i due:
+  a distinguerle è il prefisso. `sito-029` e `app-029` sono due migrazioni
+  diverse e va bene così.
+- Un numero nuovo si prende guardando **solo** la propria cartella, l'ultimo più
+  uno. Non serve coordinarsi con l'altro repo.
+- I numeri esistenti non sono stati cambiati, solo prefissati: i riferimenti
+  storici ("la 022 del sito", "la 028 dell'app") restano validi.
+- I file più vecchi di `hrv_app` hanno un nome descrittivo senza numero
+  (`alerts.sql`, `tz_offset_minutes.sql`): si lasciano come sono, non
+  collidono con niente. Ogni file NUOVO segue la regola.
+- Nel parlato e nei documenti si dice sempre di chi è la migrazione: "la
+  `sito-030`", "la `app-033`". Mai il numero nudo.
 
 ## Prima di chiudere una sessione
 
