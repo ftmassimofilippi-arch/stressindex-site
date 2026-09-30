@@ -146,6 +146,36 @@ adattiva). Default: scala fissa.
   (`generate_threshold_alerts_hourly`, `generate_missed_alerts_6h`) che
   scrivono in `alerts`. I due sistemi coesistono.
 
+## PDF (pagine di stampa + Chrome headless)
+
+I PDF di misurazione, report periodico e monitoraggio sono la **stampa di una
+pagina del sito** che riusa gli stessi componenti della dashboard (gauge,
+Poincaré, ritmogramma, PSD, trend, tabelle) in modalità `print`:
+
+| Route API | Pagina di stampa | Bottone |
+|---|---|---|
+| `GET /api/pdf/misurazione/[sessionId]?clientId=&locale=` | `/stampa/misurazione/[sessionId]` | `DownloadMeasurementPdfButton` |
+| `GET /api/pdf/report-periodico?clientId=&from=&to=&locale=` | `/stampa/report-periodico` | tab Report |
+| `GET /api/pdf/monitoraggio/[id]?variant=&locale=` | `/stampa/monitoraggio/[id]` | azioni del monitoraggio, email |
+
+La route verifica i permessi (RLS, superadmin in sola lettura), apre la
+pagina con `puppeteer-core` (Chrome locale in sviluppo, `@sparticuz/chromium`
+su Vercel, `maxDuration` 60) inoltrando i cookie di sessione e un **token
+firmato** a 60 secondi (`src/lib/print-token.ts`), attende
+`window.__REPORT_READY__` (font e grafici pronti) e restituisce `page.pdf`
+A4. Le pagine `/stampa/*` rispondono 404 senza sessione o token. Con
+`PDF_LEGACY=true` le route inoltrano ai vecchi generatori react-pdf
+(`/api/measurement-pdf`, `/api/client-report`, `/api/monitoring/[id]/pdf`),
+da rimuovere dopo una settimana di esercizio.
+
+Dati di simulazione per verificare i layout senza database (solo fuori
+produzione o con `PDF_FIXTURES=true`): `?fixture=standard|orthostatic|coherence|long`
+sulla pagina misurazione, `?fixture=report` sul report periodico;
+`node scripts/pdf-esempi-fixture.mjs` genera i PDF in `docs/pdf-esempi/`
+(ignorati da git), `node scripts/pdf-esempi.mjs` fa lo stesso con dati reali
+del proprio account. Variabili: `PDF_TOKEN_SECRET` (facoltativa, altrimenti
+derivata dalla service role), `CHROME_PATH` (facoltativa in locale).
+
 ## Route API (`src/app/api/`)
 - `/api/admin/*` — `requireSuperadmin()` + `service_role`: utenti, account
   (stato, abbonamento, moduli), email, password, ruolo, sessioni, monitoraggi,

@@ -63,11 +63,10 @@ export function ReportTab({ client }: { client: Client }) {
     resetReport()
     try {
       // ?locale= → il PDF (e i suoi commenti automatici) escono nella lingua della pagina.
-      const res = await fetch(`/api/client-report?locale=${encodeURIComponent(locale)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: client.id, dateFrom: from, dateTo: to }),
-      })
+      const res = await fetch(
+        `/api/pdf/report-periodico?clientId=${encodeURIComponent(client.id)}&from=${from}&to=${to}&locale=${encodeURIComponent(locale)}`,
+        { method: 'GET' },
+      )
       if (!res.ok) {
         let message = t('genericError')
         try {

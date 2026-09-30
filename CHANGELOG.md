@@ -5,6 +5,29 @@ produzione è nel `README.md`.
 
 ## 2026-09-30 — tag `site-2026-09-30`
 
+### PDF rifatti con i componenti della dashboard
+- **Pagine di stampa** `/stampa/misurazione/[sessionId]`, `/stampa/report-periodico`
+  e `/stampa/monitoraggio/[id]` (A4, moodboard Stress Index, header e footer
+  su ogni pagina, disclaimer wellness) che riusano gauge, Poincaré,
+  ritmogramma, PSD, torta VLF/LF/HF, tabella parametri con semaforo e range
+  di riferimento, viste ortostatico/coerenza/lunga, `AdvancedTrendChart`
+  statico. Prop `print` sui componenti (dimensioni fisse, niente animazioni
+  né controlli).
+- **Generazione con Chrome headless** (`puppeteer-core` + `@sparticuz/chromium`
+  su Vercel): route `GET /api/pdf/misurazione/[sessionId]`,
+  `/api/pdf/report-periodico`, `/api/pdf/monitoraggio/[id]`; token firmato a
+  60 s, cookie di sessione inoltrati, attesa di `window.__REPORT_READY__`,
+  nome file `StressIndex_[Cognome]_[tipo]_[data].pdf`. Vecchi generatori
+  react-pdf dietro `PDF_LEGACY=true`.
+- **Report periodico**: trend dei 5 score, medie con confronto col periodo
+  precedente, giorno migliore/peggiore, commento automatico, elenco
+  misurazioni, sezione Sport (Piano Pro).
+- Dashboard: nuova torta VLF/LF/HF sotto lo spettro, semaforo e card
+  "parametri nella norma / al limite / fuori range" nella tabella parametri,
+  delta rispetto alla misurazione precedente sui gauge (in stampa).
+- Dati di simulazione (`?fixture=`) fuori produzione e script
+  `scripts/pdf-esempi*.mjs` per generare PDF di prova.
+
 ### Sito trilingue (i18n)
 - **Italiano, inglese e tedesco** con `next-intl`: pagine spostate in
   `src/app/[locale]/`, italiano senza prefisso (URL invariate), `/en/...` e
