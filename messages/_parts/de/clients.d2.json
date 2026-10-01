@@ -181,7 +181,7 @@
     "stateUnreachable": "Zugangsstatus nicht erreichbar.",
     "actionFailed": "Vorgang fehlgeschlagen.",
     "networkError": "Netzwerkfehler.",
-    "noAccount": "{name} hat noch kein Konto für die App. Sie können es in der Klientenliste mit <b>Neuer Klient</b> anlegen, mit derselben E-Mail wie in diesem Profil: das bestehende Profil wird verknüpft, nicht dupliziert.",
+    "noAccount": "{name} hat noch kein Konto für die App. Sie können es hier anlegen: das Ergebnis sagen wir Ihnen sofort, wie es auch ausfällt.",
     "refresh": "Aktualisieren",
     "refreshTitle": "Status neu lesen",
     "neverUsedTitle": "Konto nie verwendet",
@@ -230,6 +230,18 @@
       "set_temp_password": "Temporäres Passwort festgelegt",
       "send_reset_email": "Wiederherstellungs-E-Mail gesendet",
       "copy_reset_link": "Wiederherstellungslink erstellt"
+    },
+    "createAccess": "App-Zugang anlegen",
+    "creating": "Wird angelegt…",
+    "createAccessHint": "Die Einladung bzw. die Verbindungsanfrage geht an {email}.",
+    "createAccessNoEmail": "Dieser Eintrag hat keine E-Mail-Adresse: bitte zuerst eine hinzufügen.",
+    "createResults": {
+      "invited": "Einladung gesendet: der Klient erhält eine E-Mail zum Festlegen des Passworts, die Verbindung ist aktiv.",
+      "link_pending": "Diese E-Mail hat bereits ein Stress-Index-Konto: die Verbindung wurde angelegt und wartet auf die Bestätigung des Klienten in der App. Bis zur Bestätigung sehen Sie keine Daten.",
+      "already_linked_other": "Dieses Konto ist bereits mit einem anderen Fachanwender verbunden: es wurde nichts geändert.",
+      "already_linked_self": "Dieser Klient ist bereits mit Ihnen verbunden: es gab nichts zu tun.",
+      "is_professional": "Diese E-Mail gehört zu einem Fachanwender-Konto: sie kann kein Klient werden. Es wurde nichts geändert.",
+      "unknown": "Unbekanntes Ergebnis ({result}): bitte vor einem neuen Versuch das Protokoll prüfen."
     }
   },
   "pdfExport": {

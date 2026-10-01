@@ -9,6 +9,10 @@
     "set_password_failed": "Das Passwort konnte nicht festgelegt werden.",
     "access_no_email": "Dieser Klient hat keine E-Mail-Adresse.",
     "reset_failed": "Die Wiederherstellungs-E-Mail konnte nicht gesendet werden.",
-    "access_link_failed": "Link nicht erstellt."
+    "access_link_failed": "Link nicht erstellt.",
+    "migration_031_missing": "Eine ausstehende Verbindung erfordert die Migration sito-031, die noch nicht angewendet wurde. Es wurde keine Verbindung angelegt: eine aktive Verbindung ohne Bestätigung des Klienten wird nicht erstellt.",
+    "create_access_failed": "Der Zugang konnte nicht angelegt werden.",
+    "email_exists_retry": "Ein Konto mit dieser E-Mail wurde gerade erstellt: bitte erneut versuchen, um das richtige Ergebnis zu sehen.",
+    "links_unreadable": "Die Verbindungen dieses Kontos konnten nicht gelesen werden: bitte erneut versuchen."
   }
 }

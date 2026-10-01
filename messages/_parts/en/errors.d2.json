@@ -9,6 +9,10 @@
     "set_password_failed": "The password could not be set.",
     "access_no_email": "This client has no email address.",
     "reset_failed": "The recovery email could not be sent.",
-    "access_link_failed": "Link not generated."
+    "access_link_failed": "Link not generated.",
+    "migration_031_missing": "A pending connection requires migration sito-031, which has not been applied yet. No connection was created: an active connection without the client's confirmation is never created.",
+    "create_access_failed": "Could not create the access.",
+    "email_exists_retry": "An account with this email was just created: try again to see the correct outcome.",
+    "links_unreadable": "This account's connections could not be read: please try again."
   }
 }

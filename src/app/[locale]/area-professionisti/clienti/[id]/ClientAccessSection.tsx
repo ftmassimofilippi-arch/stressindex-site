@@ -92,6 +92,13 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
         setResetLink({ link: json.link, message: json.message })
       }
       const coda: string[] = []
+      // `create_access` non ha un esito unico: ogni valore di `result` ha il
+      // suo messaggio, gli stessi che dà l'app. Un esito sconosciuto si dice
+      // com'è, invece di passare per riuscito.
+      if (action === 'create_access') {
+        const r = String(json?.result ?? '')
+        coda.push(t.has(`createResults.${r}`) ? t(`createResults.${r}`) : t('createResults.unknown', { result: r }))
+      }
       if (action === 'set_temp_password') coda.push(t('results.tempPasswordSet'))
       if (action === 'send_reset_email') coda.push(json?.email ? t('results.resetSent', { email: json.email }) : t('results.resetSentNoEmail'))
       if (action === 'copy_reset_link') coda.push(t('results.linkGenerated'))
@@ -148,7 +155,7 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
     )
   }
 
-  // ── Nessun account app ────────────────────────────────────────────────────
+  // ── Nessun account app: si può crearlo da qui ─────────────────────────────
   if (!state.hasAccount) {
     return (
       <section className="card p-6">
@@ -156,6 +163,24 @@ export function ClientAccessSection({ clientId, clientName }: Props) {
         <p className="text-sm text-anthracite-lighter">
           {t.rich('noAccount', { name: clientName, b: (chunks) => <strong>{chunks}</strong> })}
         </p>
+        {state.email ? (
+          <>
+            <button
+              type="button"
+              onClick={() => void azione('create_access')}
+              disabled={busy !== null}
+              className="btn-primary mt-4 text-sm"
+            >
+              {busy === 'create_access' ? t('creating') : t('createAccess')}
+            </button>
+            <p className="mt-2 text-xs text-anthracite-lighter">{t('createAccessHint', { email: state.email })}</p>
+          </>
+        ) : (
+          <p className="mt-4 text-sm text-amber-700">{t('createAccessNoEmail')}</p>
+        )}
+        {esito && (
+          <p className={`mt-3 text-sm ${esito.kind === 'ok' ? 'text-teal-dark' : 'text-red-600'}`}>{esito.text}</p>
+        )}
       </section>
     )
   }

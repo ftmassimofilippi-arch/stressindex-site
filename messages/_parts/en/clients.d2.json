@@ -181,7 +181,7 @@
     "stateUnreachable": "Access status unreachable.",
     "actionFailed": "The operation failed.",
     "networkError": "Network error.",
-    "noAccount": "{name} does not have an app account yet. You can create one from the client list with <b>New client</b>, using the same email as this record: the existing record is linked, not duplicated.",
+    "noAccount": "{name} does not have an app account yet. You can create one here: whatever happens, we tell you right away.",
     "refresh": "Refresh",
     "refreshTitle": "Re-read the status",
     "neverUsedTitle": "Account never used",
@@ -230,6 +230,18 @@
       "set_temp_password": "Temporary password set",
       "send_reset_email": "Recovery email sent",
       "copy_reset_link": "Recovery link generated"
+    },
+    "createAccess": "Create app access",
+    "creating": "Creating…",
+    "createAccessHint": "The invitation, or the connection request, goes to {email}.",
+    "createAccessNoEmail": "This record has no email address: add one before creating access.",
+    "createResults": {
+      "invited": "Invitation sent: the client gets an email to set their password, and the connection is active.",
+      "link_pending": "This email already has a Stress Index account: the connection has been created and is waiting for the client to confirm it in the app. Until they confirm, you cannot see their data.",
+      "already_linked_other": "This account is already connected to another professional: nothing was changed.",
+      "already_linked_self": "This client is already connected to you: there was nothing to do.",
+      "is_professional": "This email belongs to a professional account: it cannot become a client. Nothing was changed.",
+      "unknown": "Unrecognised outcome ({result}): check the log before trying again."
     }
   },
   "pdfExport": {

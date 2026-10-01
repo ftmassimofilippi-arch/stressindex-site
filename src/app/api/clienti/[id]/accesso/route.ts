@@ -12,6 +12,7 @@ import {
   RATE_LIMIT_24H,
   type AccessAction,
 } from '@/lib/client-access'
+import { requestClientAccess } from '@/lib/client-link-request'
 import { apiError } from '@/lib/api-error'
 import { getRequestLocale, getTranslator } from '@/lib/i18n-server'
 
@@ -23,9 +24,17 @@ export const dynamic = 'force-dynamic'
 // =============================================================================
 //
 // GET  → stato dell'accesso (mai usato / attivo, ultimo accesso, azioni residue)
-// POST → { action: 'set_temp_password', password }  solo su account MAI usato
+// POST → { action: 'create_access' }                 crea l'accesso app
+//        { action: 'set_temp_password', password }  solo su account MAI usato
 //        { action: 'send_reset_email' }             email di ripristino
 //        { action: 'copy_reset_link' }              link di recupero da copiare
+//
+// `create_access` è l'unica che lavora su un account che ancora NON esiste, e
+// l'unica con un esito a più valori: `invited`, `link_pending`,
+// `already_linked_other`, `is_professional` (più `already_linked_self`). I
+// valori e l'albero delle decisioni stanno in `src/lib/client-link-request.ts`
+// e devono restare in pari con l'Edge Function create-client-access, che è la
+// stessa funzione per l'app Flutter.
 //
 // Ogni chiamata: professionista autenticato con role='professional', scheda sua,
 // collegamento `active` con l'account del cliente. La service_role serve per
@@ -43,7 +52,7 @@ export const dynamic = 'force-dynamic'
 // testi rivolti al cliente (avviso email, messaggio da incollare) escono nella
 // lingua del professionista che agisce (getRequestLocale).
 
-const AZIONI: AccessAction[] = ['set_temp_password', 'send_reset_email', 'copy_reset_link']
+const AZIONI: AccessAction[] = ['set_temp_password', 'send_reset_email', 'copy_reset_link', 'create_access']
 
 function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://stressindex.io').replace(/\/+$/, '')
@@ -74,7 +83,62 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return apiError('invalid_action', 400)
   }
 
-  // Tutte queste azioni toccano un account che esiste già: serve il link attivo.
+  // ═══ 0. Crea accesso — l'unica azione per cui l'account NON esiste ancora ══
+  // Non pretende il link attivo (non c'è), ma pretende che la scheda sia di
+  // chi chiama. L'esito è esplicito: la UI ha un messaggio per ognuno.
+  if (action === 'create_access') {
+    const s = await requireClientScope(admin, guard.user.id, params.id)
+    if (s.error) return s.error
+    const { clientId: cid, email: cEmail, nome, cognome } = s.scope
+
+    if (!cEmail) return apiError('no_email', 409)
+
+    const rateCreate = await checkRateLimit(admin, guard.user.id, cid)
+    if (!rateCreate.ok) {
+      return apiError('rate_limited', 429, { used: rateCreate.used, max: RATE_LIMIT_24H, retryAfter: rateCreate.retryAfter })
+    }
+
+    const esito = await requestClientAccess(admin, {
+      professionalId: guard.user.id,
+      clientId: cid,
+      email: cEmail,
+      nome: (nome ?? '').trim(),
+      cognome: (cognome ?? '').trim(),
+    })
+
+    // Ogni esito va nel registro, anche quelli che non cambiano niente:
+    // "non è stato fatto nulla, e perché" è esattamente ciò che serve sapere.
+    const log = await logAccessAction(admin, {
+      professionalId: guard.user.id,
+      clientId: cid,
+      clientUserId: esito.clientUserId ?? null,
+      action: 'create_access',
+      details: {
+        result: esito.result,
+        email: cEmail,
+        code: esito.code ?? null,
+        detail: esito.detail ?? null,
+        link_status: esito.linkStatus ?? null,
+        role: esito.role ?? null,
+        other_professionals: esito.otherProfessionals ?? null,
+        merged: esito.merged ?? [],
+      },
+    })
+
+    if (esito.result === 'error') {
+      return apiError(esito.code ?? 'create_access_failed', 500, { detail: esito.detail ?? null })
+    }
+    return NextResponse.json({
+      ok: true,
+      result: esito.result,
+      clientUserId: esito.clientUserId ?? null,
+      linkStatus: esito.linkStatus ?? null,
+      merged: esito.merged ?? [],
+      logged: log.logged,
+    })
+  }
+
+  // Tutte le altre azioni toccano un account che esiste già: serve il link attivo.
   const scope = await requireClientScope(admin, guard.user.id, params.id, { requireActiveLink: true })
   if (scope.error) return scope.error
   const { clientId, clientUserId } = scope.scope

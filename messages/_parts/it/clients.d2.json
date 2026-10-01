@@ -181,7 +181,7 @@
     "stateUnreachable": "Stato dell'accesso non raggiungibile.",
     "actionFailed": "Operazione non riuscita.",
     "networkError": "Errore di rete.",
-    "noAccount": "{name} non ha ancora un account per l'app. Puoi crearlo dalla lista clienti, con <b>Nuovo cliente</b>, usando la stessa email di questa scheda: la scheda esistente viene collegata, non duplicata.",
+    "noAccount": "{name} non ha ancora un account per l'app. Puoi crearlo da qui: l'esito te lo diciamo subito, qualunque sia.",
     "refresh": "Aggiorna",
     "refreshTitle": "Rileggi lo stato",
     "neverUsedTitle": "Account mai usato",
@@ -230,6 +230,18 @@
       "set_temp_password": "Password temporanea impostata",
       "send_reset_email": "Email di ripristino inviata",
       "copy_reset_link": "Link di ripristino generato"
+    },
+    "createAccess": "Crea accesso all'app",
+    "creating": "Creazione…",
+    "createAccessHint": "L'invito, o la richiesta di collegamento, va a {email}.",
+    "createAccessNoEmail": "Questa scheda non ha una email: aggiungila prima di creare l'accesso.",
+    "createResults": {
+      "invited": "Invito inviato: il cliente riceve una email per impostare la password e il collegamento è attivo.",
+      "link_pending": "Questa email ha già un account Stress Index: il collegamento è stato creato e resta in attesa che il cliente lo confermi dall'app. Finché non conferma non vedi i suoi dati.",
+      "already_linked_other": "Questo account è già collegato a un altro professionista: non è stato cambiato niente.",
+      "already_linked_self": "Questo cliente è già collegato a te: non c'era niente da fare.",
+      "is_professional": "Questa email appartiene a un account professionista: non può diventare un cliente. Non è stato cambiato niente.",
+      "unknown": "Esito non riconosciuto ({result}): controlla il registro prima di riprovare."
     }
   },
   "pdfExport": {

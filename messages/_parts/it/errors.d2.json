@@ -9,6 +9,10 @@
     "set_password_failed": "Non è stato possibile impostare la password.",
     "access_no_email": "Questo cliente non ha un indirizzo email.",
     "reset_failed": "Invio dell'email di ripristino non riuscito.",
-    "access_link_failed": "Link non generato."
+    "access_link_failed": "Link non generato.",
+    "migration_031_missing": "Il collegamento in attesa richiede la migration sito-031, non ancora applicata. Non è stato creato nessun collegamento: un collegamento attivo senza la conferma del cliente non si crea.",
+    "create_access_failed": "Creazione dell'accesso non riuscita.",
+    "email_exists_retry": "Un account con questa email è stato creato proprio ora: riprova per vedere l'esito corretto.",
+    "links_unreadable": "I collegamenti di questo account non sono leggibili: riprova."
   }
 }
