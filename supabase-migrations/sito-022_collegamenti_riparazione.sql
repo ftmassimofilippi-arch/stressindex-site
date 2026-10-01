@@ -34,7 +34,24 @@
 --      (client_id, professional_id)); client_id ha una FK, letta da
 --      pg_constraint (A2_fk_client_id): le righe il cui utente non esiste
 --      nella tabella referenziata non vengono toccate
---      (A2_report_client_id_non_allineabile)
+--      (A2_report_client_id_non_allineabile). Le righe REVOCATE sono fuori
+--      dall'allineamento (A2_report_revocati_esclusi): per ogni coppia una
+--      sola riga può portare client_id, e darlo a una revocata lo toglierebbe
+--      al link vivo, che è l'unico che conta
+--
+-- NOTE DI LETTURA DEL REPORT
+--   • La prima riga del log è VERSIONE_FILE: dice quale versione di questo
+--     file ha prodotto il resto. Il log vive nella stessa transazione del run,
+--     quindi un'esecuzione finita in ROLLBACK non lascia traccia: senza quella
+--     riga non c'è modo di sapere a posteriori cosa era stato incollato.
+--   • La colonna `mode` è PER BLOCCO: dice 'applicazione' solo sui blocchi
+--     davvero applicati. I sotto-blocchi di solo report (A2_fk_client_id,
+--     A2_report_*, C_schede_duplicate_da_decidere_a_mano,
+--     D_report_scheda_di_se_stesso, D_ponte_ambiguo_piu_profili,
+--     G_sessioni_remote_invisibili_report, tutto I) dicono SEMPRE 'anteprima',
+--     perché non scrivono niente qualunque blocco sia attivo.
+--   • Il dettaglio coppia-per-coppia del blocco C si legge con
+--     `sito-022_dettaglio_c.sql`, da lanciare subito dopo.
 --   B  link active il cui profilo cliente non esiste più → revocati
 --   C  (3.2) schede duplicate sotto lo stesso professionista (stessa email,
 --      STESSA PERSONA: cognome o nome+cognome uguali, oppure una delle due
@@ -188,6 +205,17 @@ begin
   select c.id from public.clients c where c.client_user_id is not null;
   raise notice '=== collegamenti riparazione: modalità % (run %) ===', v_mode, v_run;
 
+  -- Prima riga del report: QUALE versione di questo file ha prodotto il resto.
+  -- Serve perché il log vive nella stessa transazione del run: un'esecuzione
+  -- finita in ROLLBACK non lascia traccia, e senza questa riga non c'è modo di
+  -- sapere a posteriori se era stata incollata la versione giusta. Da alzare a
+  -- mano quando il file cambia in modo che conti.
+  perform public.collegamenti_riparazione_logb(v_run, 'anteprima', 'VERSIONE_FILE', 3,
+            jsonb_build_array(jsonb_build_object(
+              'versione', '2026-10-01 (A2 senza righe revocate, temp table ricreate, report sempre in anteprima)',
+              'fk_client_id_gestita', true,
+              'indice_creato_prima_di_A2', true)));
+
   -- ── A. link duplicati + indice univoco ─────────────────────────────────────
   v_apply := v_apply_req and 'A' = any(v_blocks);
   v_mode := case when v_apply then 'applicazione' else 'anteprima' end;
@@ -240,6 +268,13 @@ begin
     --     righe il cui client_user_id esiste lì. Gli utenti cancellati (i link
     --     del blocco B) restano con client_id NULL e finiscono nel report
     --     A2_report_client_id_non_allineabile.
+    --     Le righe REVOCATE sono fuori: l'indice univoco esistente
+    --     (client_id, professional_id) non è parziale, quindi per ogni coppia
+    --     una sola riga può portare client_id. Darlo a una riga revocata
+    --     brucerebbe l'unico posto disponibile e lascerebbe senza il link
+    --     vivo, che è l'unico che conta. In produzione sono anche le uniche
+    --     righe che violavano la FK (5, di 2 utenti che non esistono né in
+    --     auth.users né in profiles).
     select c.confrelid::regclass::text, a.attname
       into v_fk_table, v_fk_col
       from pg_constraint c
@@ -249,24 +284,32 @@ begin
        and array_length(c.conkey, 1) = 1
        and c.conkey[1] = (select attnum from pg_attribute
                            where attrelid = 'public.client_professional_links'::regclass and attname = 'client_id');
-    perform public.collegamenti_riparazione_logb(v_run, v_mode, 'A2_fk_client_id', case when v_fk_table is null then 0 else 1 end,
+    perform public.collegamenti_riparazione_logb(v_run, 'anteprima', 'A2_fk_client_id', case when v_fk_table is null then 0 else 1 end,
               jsonb_build_array(jsonb_build_object('references', coalesce(v_fk_table || '(' || v_fk_col || ')', 'nessuna FK'))));
 
-    create temp table if not exists _align on commit drop as
+    -- `create temp table if not exists ... as` NON esegue la query quando la
+    -- tabella esiste già: un secondo giro nella stessa sessione lavorerebbe
+    -- sulle righe del primo. Si creano vuote e si riempiono con un INSERT, che
+    -- viene eseguito sempre.
+    create temp table if not exists _align (id uuid, client_user_id uuid, professional_id uuid, status text) on commit drop;
+    create temp table if not exists _align_ko (id uuid, client_user_id uuid, professional_id uuid, status text) on commit drop;
+    truncate _align;
+    truncate _align_ko;
+
+    insert into _align (id, client_user_id, professional_id, status)
     with cand as (
       select l.id, l.client_user_id, l.professional_id, l.status, l.created_at,
              row_number() over (partition by l.client_user_id, l.professional_id
                                 order by (l.status = 'active') desc, (l.status = 'pending') desc, l.created_at desc) as rn
       from public.client_professional_links l
       where l.client_user_id is not null
+        and l.status <> 'revoked'
         and not exists (select 1 from public.client_professional_links x
                         where x.professional_id = l.professional_id and x.client_id = l.client_user_id)
     )
     select id, client_user_id, professional_id, status from cand where rn = 1 and id in
       (select id from public.client_professional_links where client_id is null);
     -- righe che violerebbero la FK: fuori dall'allineamento, solo report
-    create temp table if not exists _align_ko (id uuid, client_user_id uuid, professional_id uuid, status text) on commit drop;
-    truncate _align_ko;
     if v_fk_table is not null then
       execute format('insert into _align_ko select a.* from _align a where not exists (select 1 from %s t where t.%I = a.client_user_id)',
                      v_fk_table, v_fk_col);
@@ -274,7 +317,15 @@ begin
     end if;
     select count(*), coalesce(jsonb_agg(jsonb_build_object('link_id', id, 'client_user_id', client_user_id, 'professional_id', professional_id, 'status', status)), '[]'::jsonb)
       into v_n, v_det from _align_ko;
-    perform public.collegamenti_riparazione_logb(v_run, v_mode, 'A2_report_client_id_non_allineabile', v_n, v_det);
+    perform public.collegamenti_riparazione_logb(v_run, 'anteprima', 'A2_report_client_id_non_allineabile', v_n, v_det);
+    -- Righe revocate con client_id NULL: escluse di proposito (vedi sopra), ma
+    -- non invisibili. Sono quelle che facevano fallire A con la violazione
+    -- della FK, quindi è esattamente ciò che si vuole poter contare.
+    select count(*), coalesce(jsonb_agg(jsonb_build_object('link_id', l.id, 'client_user_id', l.client_user_id, 'professional_id', l.professional_id,
+             'utente_esiste', exists (select 1 from auth.users u where u.id = l.client_user_id))), '[]'::jsonb)
+      into v_n, v_det from public.client_professional_links l
+     where l.client_id is null and l.client_user_id is not null and l.status = 'revoked';
+    perform public.collegamenti_riparazione_logb(v_run, 'anteprima', 'A2_report_revocati_esclusi', v_n, v_det);
     select count(*), coalesce(jsonb_agg(jsonb_build_object('link_id', id, 'client_user_id', client_user_id, 'professional_id', professional_id, 'status', status)), '[]'::jsonb)
       into v_n, v_det from _align;
     if v_apply and v_n > 0 then
@@ -287,7 +338,7 @@ begin
     select count(*), coalesce(jsonb_agg(jsonb_build_object('link_id', l.id, 'client_id', l.client_id, 'client_user_id', l.client_user_id, 'professional_id', l.professional_id, 'status', l.status)), '[]'::jsonb)
       into v_n, v_det from public.client_professional_links l
      where l.client_id is not null and l.client_id is distinct from l.client_user_id;
-    perform public.collegamenti_riparazione_logb(v_run, v_mode, 'A2_report_client_id_legacy_diverso', v_n, v_det);
+    perform public.collegamenti_riparazione_logb(v_run, 'anteprima', 'A2_report_client_id_legacy_diverso', v_n, v_det);
   exception when others then
     perform public.collegamenti_riparazione_logb(v_run, v_mode, 'A2_client_id_allineato', 0, '[]'::jsonb, sqlerrm);
   end;
@@ -414,7 +465,7 @@ begin
     perform public.collegamenti_riparazione_logb(v_run, v_mode, 'C_schede_duplicate_unite', v_n, v_det || jsonb_build_object('unite', v_ok, 'errori', v_err));
     select count(*), coalesce(jsonb_agg(jsonb_build_object('professionista_id', professionista_id, 'email', email_norm, 'ids', ids)), '[]'::jsonb)
       into v_n, v_det from _dup where not same_person;
-    perform public.collegamenti_riparazione_logb(v_run, v_mode, 'C_schede_duplicate_da_decidere_a_mano', v_n, v_det);
+    perform public.collegamenti_riparazione_logb(v_run, 'anteprima', 'C_schede_duplicate_da_decidere_a_mano', v_n, v_det);
   exception when others then
     perform public.collegamenti_riparazione_logb(v_run, v_mode, 'C_schede_duplicate_unite', 0, '[]'::jsonb, sqlerrm);
   end;
@@ -445,7 +496,7 @@ begin
      where c.client_user_id is null and c.merged_into_client_id is null and nullif(trim(c.email), '') is not null
        and exists (select 1 from public.profiles ps
                    where ps.id = c.professionista_id and lower(trim(ps.email)) = lower(trim(c.email)));
-    perform public.collegamenti_riparazione_logb(v_run, v_mode, 'D_report_scheda_di_se_stesso', v_n, v_det);
+    perform public.collegamenti_riparazione_logb(v_run, 'anteprima', 'D_report_scheda_di_se_stesso', v_n, v_det);
     select count(*), coalesce(jsonb_agg(jsonb_build_object('email', email_norm, 'schede', schede)), '[]'::jsonb)
       into v_n, v_det from _bridge where n_profili = 1;
     v_ok := 0; v_err := 0;
@@ -461,7 +512,7 @@ begin
     perform public.collegamenti_riparazione_logb(v_run, v_mode, 'D_ponte_costruito', v_n, v_det || jsonb_build_object('agganciate', v_ok, 'errori', v_err));
     select count(*), coalesce(jsonb_agg(jsonb_build_object('email', email_norm, 'n_profili', n_profili)), '[]'::jsonb)
       into v_n, v_det from _bridge where n_profili > 1;
-    perform public.collegamenti_riparazione_logb(v_run, v_mode, 'D_ponte_ambiguo_piu_profili', v_n, v_det);
+    perform public.collegamenti_riparazione_logb(v_run, 'anteprima', 'D_ponte_ambiguo_piu_profili', v_n, v_det);
   exception when others then
     perform public.collegamenti_riparazione_logb(v_run, v_mode, 'D_ponte_costruito', 0, '[]'::jsonb, sqlerrm);
   end;
@@ -554,7 +605,7 @@ begin
       and not exists (select 1 from public.client_professional_links l where l.client_user_id = s.professionista_id and l.status = 'active')
     group by s.professionista_id, p.nome, p.cognome, p.email;
     select count(*), coalesce(jsonb_agg(to_jsonb(x) order by x.sessioni desc), '[]'::jsonb) into v_n, v_det from _orphan x;
-    perform public.collegamenti_riparazione_logb(v_run, v_mode, 'G_sessioni_remote_invisibili_report', coalesce((select sum(sessioni) from _orphan), 0)::int, v_det);
+    perform public.collegamenti_riparazione_logb(v_run, 'anteprima', 'G_sessioni_remote_invisibili_report', coalesce((select sum(sessioni) from _orphan), 0)::int, v_det);
     -- coppie confermate a mano
     select count(*), coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) into v_n, v_det from public.collegamenti_riparazione_link_ok x;
     v_ok := 0; v_err := 0;
@@ -569,7 +620,7 @@ begin
     end if;
     perform public.collegamenti_riparazione_logb(v_run, v_mode, 'G_link_confermati_a_mano', v_n, v_det || jsonb_build_object('collegati', v_ok, 'errori', v_err));
   exception when others then
-    perform public.collegamenti_riparazione_logb(v_run, v_mode, 'G_sessioni_remote_invisibili_report', 0, '[]'::jsonb, sqlerrm);
+    perform public.collegamenti_riparazione_logb(v_run, 'anteprima', 'G_sessioni_remote_invisibili_report', 0, '[]'::jsonb, sqlerrm);
   end;
 
   -- ── H. measurement_analytics.client_id riallineato alla sessione ───────────
@@ -611,14 +662,9 @@ begin
 end
 $MAIN$;
 
--- Dettaglio del blocco C dell'ultima esecuzione (il SQL Editor mostra solo
--- l'ultimo SELECT: eseguire questa query a parte, nella stessa sessione).
--- select esito, email, professionista,
---        tiene_id, tiene_nome, tiene_sessioni, tiene_creata, tiene_ponte,
---        archivia_id, archivia_nome, archivia_sessioni, archivia_creata, archivia_ponte, motivo
---   from public.collegamenti_riparazione_c_dettaglio
---  where run_id = (select run_id from public.collegamenti_riparazione_log order by id desc limit 1)
---  order by esito, professionista, email, archivia_id;
+-- Dettaglio per coppia del blocco C: è una query a parte, pronta da lanciare,
+-- in `sito-022_dettaglio_c.sql`. Non sta qui perché il SQL Editor mostra solo
+-- l'ULTIMO select di uno script, e l'ultimo deve restare il riepilogo.
 
 -- Riepilogo dell'esecuzione appena fatta.
 select block, mode, n, error,
