@@ -3,6 +3,106 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-01 — nomi delle misurazioni remote, esiti di "crea accesso", 022
+
+### Il cliente di una misurazione remota ha un nome
+Caso reale: nella home di `anto60.nava@gmail.com` due misurazioni di oggi
+(sessioni `1790833464267` e `1790833825144`) mostravano `—` nella colonna
+Cliente.
+
+- **Causa.** Una misurazione fatta dal cliente sulla sua app ha
+  `client_id` NULL e il solo `user_id`: il professionista la vede per la
+  policy RLS della 019, che confronta `user_id`, mai `client_id`. Tutte le
+  viste che indicizzano le schede su `clients.id` su quelle righe non
+  trovavano niente. Schede, ponte `client_user_id` e link `active` erano già
+  sani: il difetto era solo nella query.
+- **`src/lib/client-bridge.ts`**: il ponte si risolve una volta per richiesta
+  (riusa `buildBridge`, che esisteva e non era usato da nessuno) e risponde a
+  due domande separate — `conClientIdDalPonte` riempie `client_id` dove è
+  NULL, `identificaCliente` dà il nome con tre ripieghi: scheda → profilo
+  (col badge "senza scheda") → "Non assegnata".
+- **Viste corrette**: Analytics (il caso più grave: `buildSegments` scartava
+  con `continue` ogni riga auto-misurata, quindi i segmenti contavano in
+  silenzio solo le misurazioni scritte dal professionista), home
+  "Misurazioni di oggi" (nome e link, che puntava a `/clienti/null/…`),
+  contatore della card, Organizzazione (su una riga remota il nome del
+  cliente finiva nella colonna del professionista), pannello admin delle
+  sessioni (al posto dell'etichetta "misurazione remota" c'è il nome).
+- Non toccate perché già corrette: alert, "da contattare", lista clienti con
+  ultima misurazione, monitoraggi recenti, campanella notifiche.
+
+### `create-client-access`: esito esplicito, e nessun professionista collegato
+Caso reale: `lauragiacinti75@gmail.com` ha un account `professional`. Un altro
+professionista l'ha inserita come cliente e ha premuto "Crea account cliente":
+nessuna email, nessun errore.
+
+- **Cosa succedeva davvero**, peggio dell'esito muto: `inviteUserByEmail`
+  tornava `email_exists`, la function risolveva l'uid e chiamava
+  `link_client_to_professional`, che sul ruolo non-`client` si limita a un
+  warning → il suo account veniva collegato come cliente, con i suoi dati
+  esposti, e la risposta era `ok:true`.
+- **Contratto**, identico nell'app e nel sito: `result` vale sempre uno di
+  `invited`, `link_pending`, `already_linked_other`, `is_professional`,
+  `error`. Più `already_linked_self` (già collegato a chi chiama), **fuori
+  contratto e da confermare**: nessuno dei cinque lo dice senza mentire.
+  L'account esistente si cerca PRIMA di invitare, unico modo di distinguere un
+  professionista da un cliente.
+- **`pending` e non `active`**: con un invito il consenso è il click sul link,
+  con un account che esiste già non c'è nessun giro di posta, quindi chi
+  conosce un indirizzo si tirerebbe in dashboard lo storico HRV di quella
+  persona. Le policy della 019 sono tutte su `status = 'active'`: un pending
+  non fa passare un solo dato. La conferma la dà il cliente dall'app, il
+  superadmin è la via di riserva.
+- **`sito-031`**, RPC `request_client_link`: chiama
+  `link_client_to_professional` e riporta il link a `pending` nella stessa
+  transazione, così la regola "una sola strada di scrittura" resta e non
+  esiste un istante in cui il link è `active` e visibile. Un link già `active`
+  non viene mai abbassato. Se la 031 non è applicata la function risponde
+  `error` e **non** ripiega su un link `active`.
+- **Email al cliente** ("X vuole seguire le tue misurazioni", IT/EN/DE)
+  riusando solo `inviaEmail` di `_shared/notify-core.ts`: nessuna dipendenza
+  nuova, e non passa dal layout con la disiscrizione delle preferenze, perché
+  una richiesta di consenso non è una notifica da cui disiscriversi.
+- Ogni esito va in `professional_access_log` come `action='create_access'` con
+  `result` in `details`: il check constraint della 027 ammette quattro azioni
+  e non serve toccarlo.
+- **Sito**: la sezione "Accesso all'app" mostrava solo un testo quando
+  l'account non c'era. Ora ha il pulsante e gli stessi sei messaggi in
+  IT/EN/DE. L'albero delle decisioni è in `src/lib/client-link-request.ts`,
+  porting da tenere in pari con la Edge Function (Deno non importa da `src/`).
+
+### 022: chiusura dei difetti residui
+- **Le date, verificate.** Il commit che corregge A2 è del 13/09 18:55. In
+  produzione il log ha tre soli run, l'ultimo del 13/09 04:51, ed è quello con
+  la violazione della FK: dodici ore prima della correzione. Del run di fine
+  settembre non c'è traccia perché il log vive nella stessa transazione, e un
+  ROLLBACK non lascia niente. Conferma indipendente: la tabella
+  `collegamenti_riparazione_c_dettaglio`, creata da quel commit, in produzione
+  **non esiste**. La versione corretta non è mai stata eseguita là.
+- **`VERSIONE_FILE`**, prima riga del log: dopo ogni run si legge dal report
+  quale versione lo ha prodotto, senza doverlo dedurre.
+- **A2 non elegge più righe revocate.** L'indice univoco esistente
+  `(client_id, professional_id)` non è parziale: per ogni coppia una sola riga
+  può portare `client_id`, e darlo a una revocata lo toglierebbe al link vivo.
+  In produzione le revocate sono anche le uniche che violavano la FK
+  (`client_id` → `auth.users`): 5 righe, di 2 utenti che non esistono né in
+  `auth.users` né in `profiles`. Finiscono nel nuovo report
+  `A2_report_revocati_esclusi`.
+- **Temp table ricreate a ogni run**: `create temp table if not exists … as`
+  non esegue la query quando la tabella esiste già, quindi un secondo giro
+  nella stessa sessione lavorava sulle righe del primo.
+- **I sotto-blocchi di solo report dicono sempre `anteprima`**, prima
+  ereditavano `applicazione` dal blocco pur non scrivendo niente.
+- **`sito-022_dettaglio_c.sql`**: query attiva, pronta da lanciare dopo
+  l'anteprima, con la scheda che TIENE e quella che ARCHIVIA per ogni coppia.
+- **I due report chiesti**: `D_report_scheda_di_se_stesso` (71 al 13/09, oggi
+  86) sono le schede che un professionista ha creato per sé stesso, per
+  misurarsi: solo report, nessun ramo `if v_apply`.
+  `I_report_analytics_senza_sessione` (610 al 13/09, **oggi 0**) sono analytics
+  orfane: il blocco I forza `v_apply := false` e `'I'` è perfino rifiutato dal
+  validatore dei blocchi; le orfane sono state archiviate nel frattempo in
+  `measurement_analytics_orfane_20260914` e `…_20260929`.
+
 ## 2026-09-30 — orari e campanella delle notifiche
 
 ### Orario delle misurazioni avanti di due ore

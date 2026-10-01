@@ -271,6 +271,16 @@ Stato verificato sul catalogo di produzione il 27/09/2026.
 | sito-028 `fix_cancellazione_utenti` | FK e registro compatibili con `deleteUser` | applicata |
 | sito-029 `measured_at_utc_dalla_sessione` | `measurement_analytics.measured_at_utc` riallineata a `sessions.started_at_utc` + trigger corretto | **da applicare** |
 | sito-030 `notifiche_lette` | `notification_reads`: data di lettura delle notifiche per singolo utente | **da applicare** |
+| sito-031 `collegamento_in_attesa` | RPC `request_client_link`: collegamento `pending` a un account app esistente, in attesa della conferma del cliente | **da applicare** |
+
+La 022 non è nella tabella: è una riparazione rieseguibile, non una migrazione
+di schema. La versione corretta (quella con `pg_constraint` e `_align_ko`)
+**non è mai stata eseguita in produzione**: la tabella
+`collegamenti_riparazione_c_dettaglio`, che quella versione crea, là non
+esiste. In produzione il log ha tre run, l'ultimo del 13/09, e
+`uq_client_professional_active` non è ancora stato creato. Il dettaglio
+coppia-per-coppia del blocco C si legge con `sito-022_dettaglio_c.sql`, da
+lanciare subito dopo l'anteprima.
 
 Le migrazioni dell'app (`hrv_app/supabase/migrations/`) e il loro stato sono
 nel contesto dell'app, `docs/STRESS_INDEX_CONTEXT_v4.md` §12.
