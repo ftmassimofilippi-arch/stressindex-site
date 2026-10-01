@@ -1484,6 +1484,7 @@
       "measurementsToday": "Heute",
       "noAlertsBody": "Alles unter Kontrolle.",
       "noAlertsTitle": "Heute keine Warnungen",
+      "noCard": "ohne Karte",
       "noContactBody": "Alle Ihre Klienten messen regelmäßig.",
       "noContactTitle": "Kein Klient nachzufassen",
       "noMeasurementsToday": "Heute keine Messungen erfasst",
@@ -1496,6 +1497,7 @@
       "todaysMeasurements": "Messungen von heute",
       "totalHint": "gesamt",
       "trend": "Trend",
+      "unassignedMeasurement": "Nicht zugeordnet",
       "vsLastMonth": "vs. Vormonat",
       "weekHint": "diese Woche"
     },

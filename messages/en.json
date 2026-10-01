@@ -1484,6 +1484,7 @@
       "measurementsToday": "Today",
       "noAlertsBody": "Everything is under control.",
       "noAlertsTitle": "No alerts today",
+      "noCard": "no card",
       "noContactBody": "All your clients are measuring regularly.",
       "noContactTitle": "No client to follow up",
       "noMeasurementsToday": "No measurements recorded today",
@@ -1496,6 +1497,7 @@
       "todaysMeasurements": "Today's measurements",
       "totalHint": "total",
       "trend": "Trend",
+      "unassignedMeasurement": "Unassigned",
       "vsLastMonth": "vs last month",
       "weekHint": "this week"
     },

@@ -56,6 +56,8 @@
     "noAlertsBody": "Everything is under control.",
     "todaysMeasurements": "Today's measurements",
     "noMeasurementsToday": "No measurements recorded today",
+    "unassignedMeasurement": "Unassigned",
+    "noCard": "no card",
     "colTime": "Time",
     "recentMonitoring": "Recent monitoring",
     "noMonitoring": "No monitoring recorded",

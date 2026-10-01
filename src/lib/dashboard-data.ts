@@ -1,5 +1,6 @@
 import type { PostgrestError } from '@supabase/supabase-js'
 import { createClient } from './supabase-server'
+import { conClientIdDalPonte, ponteClienti } from './client-bridge'
 import { selectWithMissingColumnFallback } from './safe-select'
 import {
   conIstanteSessione,
@@ -369,6 +370,20 @@ async function conIstantiDiSessione<T extends { session_id?: string | null }>(
   )
 }
 
+/**
+ * Riempie `client_id` sulle righe auto-misurate dal cliente, che arrivano con
+ * `client_id` NULL e il solo `user_id`. Senza questo passaggio ogni vista che
+ * indicizza le schede su `clients.id` perde quelle righe: la home mostrava "—",
+ * Analytics le scartava del tutto. Il ponte è dell'utente loggato, quindi non
+ * allarga di una riga ciò che la RLS ha già concesso.
+ */
+async function conClienteRisolto(rows: MeasurementAnalytics[]): Promise<MeasurementAnalytics[]> {
+  if (!rows.some((r) => !r.client_id)) return rows
+  const user = await getCurrentUser()
+  if (!user) return rows
+  return conClientIdDalPonte(rows, await ponteClienti(user.id))
+}
+
 export async function todaysMeasurements(): Promise<MeasurementAnalytics[]> {
   const supabase = await createClient()
   // "Oggi" è la giornata ITALIANA, non quella del server (che su Vercel è UTC):
@@ -383,7 +398,7 @@ export async function todaysMeasurements(): Promise<MeasurementAnalytics[]> {
     .select('*')
     .gte('measured_at_utc', daIso)
     .order('measured_at_utc', { ascending: false })
-  const rows = await conIstantiDiSessione(supabase, (data ?? []) as MeasurementAnalytics[])
+  const rows = await conClienteRisolto(await conIstantiDiSessione(supabase, (data ?? []) as MeasurementAnalytics[]))
   return rows
     .filter((m) => measuredDayKey(m) === oggi)
     .sort((a, b) => (measuredInstant(b)?.getTime() ?? 0) - (measuredInstant(a)?.getTime() ?? 0))
@@ -942,22 +957,62 @@ export async function getOrgOverview(): Promise<OrgOverview | null> {
     if (full && !profMap.get(p.id)) profMap.set(p.id, full)
   }
 
+  // Righe auto-misurate: `user_id` è il CLIENTE, non il professionista. Senza
+  // questo passaggio la tabella metteva il nome del cliente nella colonna del
+  // professionista e lasciava la colonna Cliente sul generico. La scheda dà in
+  // un colpo entrambe le risposte: chi è, e di quale studio è.
+  const remoteUserIds = Array.from(new Set(recent.filter((r) => !r.client_id).map((r) => r.user_id)))
+  const schedaByUser = new Map<string, { clientId: string; nome: string; professionistaId: string }>()
+  if (remoteUserIds.length) {
+    const { data: schede, error: schedeErr } = await supabase
+      .from('clients')
+      .select('id, nome, cognome, client_user_id, professionista_id')
+      .in('client_user_id', remoteUserIds)
+      .in('professionista_id', activeUserIds.length ? activeUserIds : ['00000000-0000-0000-0000-000000000000'])
+    if (schedeErr) {
+      console.error('[getOrgOverview] schede delle misurazioni remote non leggibili', schedeErr.message)
+    }
+    for (const s of (schede ?? []) as Array<{
+      id: string
+      nome: string | null
+      cognome: string | null
+      client_user_id: string
+      professionista_id: string
+    }>) {
+      schedaByUser.set(s.client_user_id, {
+        clientId: s.id,
+        nome: `${s.nome ?? ''} ${s.cognome ?? ''}`.trim() || names.client,
+        professionistaId: s.professionista_id,
+      })
+    }
+  }
+
   return {
     total_professionals: activeUserIds.length,
     total_clients: clientsCount ?? 0,
     total_measurements: measurementsCount ?? 0,
     measurements_this_week: weeklyCount ?? 0,
-    recent: recent.map((r) => ({
+    recent: recent.map((r) => {
+      const scheda = r.client_id ? null : schedaByUser.get(r.user_id)
+      // Sul remoto il professionista è quello della scheda; se la scheda manca
+      // è una misurazione che nessuno dello studio può rivendicare, e si dice.
+      const professionalId = scheda?.professionistaId ?? r.user_id
+      return {
       session_id: r.session_id,
-      client_id: r.client_id,
-      client_name: clientMap.get(r.client_id) ?? names.client,
-      professional_id: r.user_id,
-      professional_name: profMap.get(r.user_id) || names.professional,
+      client_id: scheda?.clientId ?? r.client_id,
+      client_name: scheda?.nome ?? (r.client_id ? clientMap.get(r.client_id) ?? names.client : profMap.get(r.user_id) || names.client),
+      professional_id: professionalId,
+      professional_name: scheda
+        ? profMap.get(professionalId) || names.professional
+        : r.client_id
+          ? profMap.get(r.user_id) || names.professional
+          : names.professional,
       measured_at: r.measured_at,
       measured_at_utc: r.measured_at_utc ?? null,
       started_at_utc: r.started_at_utc ?? null,
       score_stress: r.score_stress,
-    })),
+      }
+    }),
   }
 }
 
@@ -1152,6 +1207,9 @@ export async function listAllMeasurements(opts?: { from?: string; to?: string })
   if (opts?.from) q = q.gte('measured_at_utc', new Date(new Date(opts.from).getTime() - 3 * 3_600_000).toISOString())
   if (opts?.to) q = q.lte('measured_at_utc', new Date(new Date(opts.to).getTime() + 3 * 3_600_000).toISOString())
   const { data } = await q
-  const rows = await conIstantiDiSessione(supabase, (data ?? []) as MeasurementAnalytics[])
+  // Senza il ponte, `buildSegments` scartava con `continue` ogni misurazione
+  // auto-misurata: i segmenti di Analytics contavano solo le righe scritte dal
+  // professionista, silenziosamente.
+  const rows = await conClienteRisolto(await conIstantiDiSessione(supabase, (data ?? []) as MeasurementAnalytics[]))
   return rows.sort((a, b) => (measuredInstant(a)?.getTime() ?? 0) - (measuredInstant(b)?.getTime() ?? 0))
 }

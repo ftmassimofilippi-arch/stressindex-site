@@ -24,6 +24,7 @@ import {
   listRecentNotes,
   todaysMeasurements,
 } from '@/lib/dashboard-data'
+import { identificaCliente, ponteClienti } from '@/lib/client-bridge'
 import { alertMessage, alertTypeLabel, mergeAlerts } from '@/lib/alert-rules'
 import { listAlertEvents } from '@/lib/alert-rules-server'
 import { noteCategoryLabel } from '@/lib/types'
@@ -82,6 +83,15 @@ export default async function DashboardHome() {
     const c = clientMap.get(id)
     return c ? `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || tc('client') : tc('client')
   }
+  // Nome della scheda già caricata con la RLS, senza ripetere la query.
+  const nomeScheda = (id: string) => {
+    const c = clientMap.get(id)
+    if (!c) return null
+    return `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || tc('client')
+  }
+  // Il ponte serve solo per le misurazioni auto-misurate che `todaysMeasurements`
+  // non ha potuto agganciare a una scheda (nessuna scheda, o sessione anonima).
+  const ponte = user ? await ponteClienti(user.id) : { clientIdByUser: new Map(), profiloByUser: new Map() }
 
   return (
     <DashboardLayout professional={professional}>
@@ -157,12 +167,27 @@ export default async function DashboardHome() {
                   </thead>
                   <tbody>
                     {measurements.slice(0, 10).map((m) => {
-                      const c = clientMap.get(m.client_id)
-                      const href = `/area-professionisti/clienti/${m.client_id}/misurazione/${m.session_id}`
+                      const chi = identificaCliente(m, ponte, nomeScheda)
+                      // Senza scheda non esiste una pagina misurazione: si manda
+                      // dove l'attribuzione si può sistemare, non su un id nullo.
+                      const href = chi.clientId
+                        ? `/area-professionisti/clienti/${chi.clientId}/misurazione/${m.session_id}`
+                        : '/area-professionisti/clienti'
                       return (
                         <tr key={m.id} className="border-t border-surface-border hover:bg-surface transition-colors">
                           <LinkCell href={href} primary padding="px-6 py-3" className="font-medium text-anthracite">
-                            {c ? `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() : '—'}
+                            {chi.kind === 'non_assegnata' ? (
+                              <span className="text-anthracite-lighter italic">{t('unassignedMeasurement')}</span>
+                            ) : (
+                              <>
+                                {chi.nome}
+                                {chi.kind === 'profilo' && (
+                                  <span className="ml-2 text-[11px] font-normal text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 whitespace-nowrap">
+                                    {t('noCard')}
+                                  </span>
+                                )}
+                              </>
+                            )}
                           </LinkCell>
                           <LinkCell href={href} className="text-anthracite-lighter">{formatMeasuredTime(m, locale)}</LinkCell>
                           <LinkCell href={href} className="w-40"><ScoreBar value={m.score_stress} inverted /></LinkCell>

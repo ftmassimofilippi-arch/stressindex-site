@@ -109,7 +109,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       test_type: s.test_type,
       duration_seconds: s.duration_seconds,
       client_id: s.client_id,
-      client_name: s.remote ? t('remoteMeasurement') : (s.client_id && clientName.get(s.client_id)) || t('client'),
+      // Su una sessione remota `professionista_id` è il CLIENTE che si è
+      // misurato: il suo profilo è già fra quelli letti qui sopra, quindi il
+      // nome c'è e non serve più l'etichetta "misurazione remota" al suo posto.
+      client_name:
+        (s.client_id && clientName.get(s.client_id)) ||
+        (s.remote ? profName.get(s.professionista_id) : null) ||
+        t('client'),
       professional_id: s.remote ? (s.linked_professionals?.[0] ?? null) : s.professionista_id,
       professional_name: s.remote
         ? s.linked_professionals?.length

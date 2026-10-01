@@ -56,6 +56,8 @@
     "noAlertsBody": "Alles unter Kontrolle.",
     "todaysMeasurements": "Messungen von heute",
     "noMeasurementsToday": "Heute keine Messungen erfasst",
+    "unassignedMeasurement": "Nicht zugeordnet",
+    "noCard": "ohne Karte",
     "colTime": "Uhrzeit",
     "recentMonitoring": "Aktuelle Monitorings",
     "noMonitoring": "Kein Monitoring erfasst",
