@@ -3,6 +3,48 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-02 — `/api` servito anche sull'apice: l'header `Authorization` non muore più in un redirect
+
+### «Sessione scaduta» che nessun logout poteva risolvere
+Segnalazione di un professionista: nella scheda cliente dell'**app**, la card
+"Accesso all'app" diceva *«Sessione scaduta: esci e rientra, poi riprova»* — e
+lo diceva anche dopo essere uscito e rientrato. Nello stesso secondo, sulla
+stessa scheda, la card Percorso mostrava dati freschi e tutte le chiamate a
+Supabase rispondevano 200.
+
+```
+10:14:10  POST /rest/v1/rpc/client_rolling_state                 200   (Supabase)
+10:14:10  POST /rest/v1/rpc/get_linked_client_sessions_by_client_id  200   (Supabase)
+10:14:10  GET  /api/clienti/1785573923090/accesso                401   (sito)
+```
+
+- **Causa.** Il redirect era a livello di **dominio Vercel**
+  (`stressindex.io` → `www.stressindex.io`), e un redirect di dominio non sa
+  escludere un percorso: rispondeva 307 anche a `/api`. L'app Flutter chiama
+  `https://stressindex.io/api/clienti/<id>/accesso` (apice, senza `www`) con
+  `Authorization: Bearer <access token>`, e **`package:http` di Dart non
+  riporta l'header `Authorization` su un redirect verso un host diverso**
+  (verificato con due server locali: l'origine lo riceve, la destinazione lo
+  vede `null`). Su `www` la richiesta arrivava quindi senza header:
+  `requireProfessional` non trovava né Bearer né cookie, `getUser()` tornava
+  `null` **senza nemmeno interpellare Supabase** — nei log di Supabase, in
+  quell'istante, non esiste alcuna `GET /auth/v1/user` — e la route rispondeva
+  `401 {"error":"unauthorized"}`. L'app traduce quel codice in «Sessione
+  scaduta», che è l'unica cosa che non era: il token era valido e PostgREST lo
+  accettava nove volte nello stesso secondo.
+- **Da quando.** La card è nell'app dal 27/09 (2.9.0+52): dall'app non ha mai
+  funzionato, dal sito sempre, perché lì il cookie c'è. Nessuna relazione con
+  le migrazioni del 02/10 — `sito-032` e `sito-033` sono state applicate due e
+  tre ore *dopo* la segnalazione.
+- **Fix.** Il redirect scende dal dominio al codice (`next.config.js`,
+  `redirects()` con `has: host = stressindex.io`) e salta `/api`: le pagine
+  restano canoniche su `www` (cookie di sessione, SEO), `/api` sull'apice viene
+  servito e basta. Il redirect del dominio Vercel sull'apice è stato rimosso:
+  **non va ripristinato**, o il difetto torna identico e silenzioso.
+- Lato app, nella 2.10.0: `siteBaseUrl` passa a `https://www.stressindex.io`,
+  i redirect non vengono più seguiti su quella chiamata, e «sessione scaduta»
+  non viene più scritto quando il problema non è il login.
+
 ## 2026-10-02 — le misurazioni remote nella vista "come un altro professionista"
 
 ### La scheda vuota che al proprietario era piena
