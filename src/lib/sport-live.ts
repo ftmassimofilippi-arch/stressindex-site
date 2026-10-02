@@ -7,24 +7,33 @@ import { DFA_ZONES, type DfaZoneKey } from './sport-format'
 
 // ── Riga della tabella sport_live_data (snake_case, come arriva da Supabase) ──
 
+// ⚠️ I NOMI SONO QUELLI DELLA TABELLA, NON NOMI NOSTRI. Questa interfaccia
+// descriveva colonne che non esistono (`hr`, `zone`, `rmssd`, `trimp`, `tags`,
+// `created_at`): il `select` si fermava alla prima e la pagina Team Live
+// rispondeva sempre con l'elenco vuoto, loggando solo
+// «column sport_live_data.hr does not exist». Le righe arrivano anche via
+// Realtime, che consegna la riga grezza del database: rinominarle in un alias
+// del `select` avrebbe sistemato una via e lasciato rotta l'altra. La
+// definizione autoritativa è `supabase/migrations/sport_live_data.sql` nel repo
+// dell'app, che è anche l'unico scrittore (`SportLiveService`).
 export interface SportLiveRow {
   id: string
   professional_id: string
   athlete_id: string
+  athlete_name: string | null
   session_id: string | null
   sport: string | null
   is_connected: boolean | null
+  timestamp_ms: number | null
   elapsed_s: number | null
-  hr: number | null
+  hr_current: number | null
   hr_max: number | null
-  zone: number | null
+  dfa_zone: number | null
   dfa_alpha1: number | null
-  rmssd: number | null
-  trimp: number | null
+  rmssd_rolling: number | null
+  trimp_current: number | null
   artifact_rate: number | null
-  tags: unknown
   updated_at: string
-  created_at?: string | null
 }
 
 // Anagrafica atleta (per arricchire le righe live coi dati del cliente).
@@ -35,7 +44,9 @@ export interface AthleteMeta {
 
 // Colonne selezionate sia lato server sia lato browser (poll fallback/reconcile).
 export const SPORT_LIVE_COLUMNS =
-  'id, professional_id, athlete_id, session_id, sport, is_connected, elapsed_s, hr, hr_max, zone, dfa_alpha1, rmssd, trimp, artifact_rate, tags, updated_at, created_at'
+  'id, professional_id, athlete_id, athlete_name, session_id, sport, is_connected, ' +
+  'timestamp_ms, elapsed_s, hr_current, hr_max, dfa_zone, dfa_alpha1, rmssd_rolling, ' +
+  'trimp_current, artifact_rate, updated_at'
 
 // ── Soglie temporali (in ms) ─────────────────────────────────────────────────
 
@@ -153,24 +164,19 @@ export function artifactPct(rate: number | null | undefined): number | null {
 }
 
 // Parsing difensivo dei tag (array di stringhe o di oggetti {label}).
-export function parseLiveTags(raw: unknown): string[] {
-  if (!Array.isArray(raw)) return []
-  const out: string[] = []
-  for (const item of raw) {
-    if (typeof item === 'string' && item.trim()) out.push(item.trim())
-    else if (item && typeof item === 'object') {
-      const o = item as Record<string, unknown>
-      const label = (o.label ?? o.name ?? o.tag ?? o.text) as unknown
-      if (typeof label === 'string' && label.trim()) out.push(label.trim())
-    }
-  }
-  return out
-}
-
 // Nome completo dell'atleta a partire da una riga + mappa anagrafica;
-// `fallback` è il testo tradotto da mostrare se l'anagrafica manca.
+// `fallback` è il testo tradotto da mostrare se non lo sappiamo.
+//
+// L'anagrafica vince, perché è il dato aggiornato; poi `athlete_name`, che la
+// riga porta con sé e che prima veniva ignorato. Serve per l'atleta che arriva
+// via Realtime e non è (ancora) fra i clients letti all'apertura: con il solo
+// fallback la card mostrava un trattino al posto di una persona.
 export function athleteName(row: SportLiveRow, meta: Record<string, AthleteMeta>, fallback: string): string {
-  return meta[row.athlete_id]?.name ?? fallback
+  const dallAnagrafica = meta[row.athlete_id]?.name?.trim()
+  if (dallAnagrafica) return dallAnagrafica
+  const dallaRiga = row.athlete_name?.trim()
+  if (dallaRiga) return dallaRiga
+  return fallback
 }
 
 // HR max anagrafico dell'atleta (per le zone HR); fallback all'hr_max sessione.

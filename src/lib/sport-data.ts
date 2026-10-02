@@ -607,7 +607,7 @@ export async function getSportLiveSnapshot(professionalId: string | null): Promi
     .or(`is_connected.eq.true,updated_at.gte.${since}`)
     .order('updated_at', { ascending: false })
   if (error) console.error('[getSportLiveSnapshot] error', { professionalId, error: error.message })
-  const rows = (error ? [] : (data ?? [])) as SportLiveRow[]
+  const rows = (error ? [] : (data ?? [])) as unknown as SportLiveRow[]
 
   // Anagrafica clients del professionista (per nome + hr_max anagrafico).
   const { data: clientRows } = await supabase

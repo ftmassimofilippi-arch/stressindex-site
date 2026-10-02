@@ -3,6 +3,34 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-02 — Team Live leggeva colonne che non esistono
+
+La pagina `/area-professionisti/sport/team-live` mostrava sempre l'elenco
+vuoto. Nei log runtime, a ogni apertura:
+
+```
+[getSportLiveSnapshot] error { error: 'column sport_live_data.hr does not exist' }
+```
+
+- **Causa.** `SportLiveRow` e `SPORT_LIVE_COLUMNS` in `src/lib/sport-live.ts`
+  descrivevano colonne inventate: `hr`, `zone`, `rmssd`, `trimp`, `tags`,
+  `created_at`. La tabella (definita in `supabase/migrations/sport_live_data.sql`
+  nel repo dell'app, che ne è anche l'unico scrittore) ha
+  `hr_current`, `dfa_zone`, `rmssd_rolling`, `trimp_current`, più
+  `athlete_name` e `timestamp_ms`; `tags` e `created_at` non ci sono e non ci
+  sono mai stati. PostgREST si fermava alla prima colonna sconosciuta, quindi il
+  log ne nominava una sola e le altre cinque restavano invisibili.
+- **Fix.** I nomi del tipo diventano quelli della tabella, non alias nel
+  `select`: le righe arrivano anche via Realtime, che consegna la riga grezza
+  del database, quindi un alias avrebbe sistemato una via e lasciato rotta
+  l'altra. Aggiornati i consumatori in `TeamLiveBoard.tsx`.
+- Il blocco "Tag sessione" del drawer era guardato da `tags.length > 0` e non ha
+  mai mostrato niente: rimosso insieme a `parseLiveTags`. La chiave
+  `teamLive.drawer.tags` resta nei messaggi.
+- `athleteName` ora ricade su `athlete_name` della riga quando l'atleta non è
+  (ancora) fra i clients letti all'apertura: prima la card mostrava un trattino
+  al posto di una persona.
+
 ## 2026-10-02 — `/api` servito anche sull'apice: l'header `Authorization` non muore più in un redirect
 
 ### «Sessione scaduta» che nessun logout poteva risolvere

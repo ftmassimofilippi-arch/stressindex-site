@@ -30,7 +30,6 @@ import {
   isInSession,
   isVisible,
   liveZone,
-  parseLiveTags,
   SPORT_LIVE_COLUMNS,
   type AthleteMeta,
   type ConnStatus,
@@ -77,7 +76,7 @@ export function TeamLiveBoard({
     const h: HistMap = {}
     for (const r of initialRows) {
       const t = Date.parse(r.updated_at) || 0
-      h[r.athlete_id] = [{ t, hr: r.hr, alpha1: r.dfa_alpha1, rmssd: r.rmssd }]
+      h[r.athlete_id] = [{ t, hr: r.hr_current, alpha1: r.dfa_alpha1, rmssd: r.rmssd_rolling }]
     }
     return h
   })
@@ -105,7 +104,7 @@ export function TeamLiveBoard({
       const arr = prev[row.athlete_id] ?? []
       const t = Date.parse(row.updated_at) || Date.now()
       if (arr.length && arr[arr.length - 1].t === t) return prev // dedup poll+realtime
-      const next = [...arr, { t, hr: row.hr, alpha1: row.dfa_alpha1, rmssd: row.rmssd }].slice(-HISTORY_CAP)
+      const next = [...arr, { t, hr: row.hr_current, alpha1: row.dfa_alpha1, rmssd: row.rmssd_rolling }].slice(-HISTORY_CAP)
       return { ...prev, [row.athlete_id]: next }
     })
     if (markFlash) {
@@ -175,7 +174,7 @@ export function TeamLiveBoard({
         .or(`is_connected.eq.true,updated_at.gte.${since}`)
         .order('updated_at', { ascending: false })
       if (cancelled || error || !data) return
-      const fetched = data as SportLiveRow[]
+      const fetched = data as unknown as SportLiveRow[]
       const fetchedIds = new Set(fetched.map((r) => r.id))
       // Aggiorna/inserisci le righe cambiate (flash solo se Realtime è KO).
       for (const row of fetched) {
@@ -219,12 +218,12 @@ export function TeamLiveBoard({
         case 'name':
           return athleteName(a, athletes, fallbackName).localeCompare(athleteName(b, athletes, fallbackName), locale)
         case 'hr':
-          return (b.hr ?? -1) - (a.hr ?? -1)
+          return (b.hr_current ?? -1) - (a.hr_current ?? -1)
         case 'trimp':
-          return (b.trimp ?? -1) - (a.trimp ?? -1)
+          return (b.trimp_current ?? -1) - (a.trimp_current ?? -1)
         case 'zone':
         default:
-          return (b.zone ?? -1) - (a.zone ?? -1)
+          return (b.dfa_zone ?? -1) - (a.dfa_zone ?? -1)
       }
     })
     return arr
@@ -355,8 +354,8 @@ function AthleteCard({
   const locale = useLocale()
   const status = connStatus(row, now)
   const offline = status === 'disconnected'
-  const zone = liveZone(row.zone)
-  const hrColor = hrZoneColor(row.hr, hrMax) ?? '#2F343A'
+  const zone = liveZone(row.dfa_zone)
+  const hrColor = hrZoneColor(row.hr_current, hrMax) ?? '#2F343A'
   const artifact = artifactPct(row.artifact_rate)
   const artifactHigh = artifact != null && artifact > 5
 
@@ -393,7 +392,7 @@ function AthleteCard({
         <div className="flex items-baseline gap-2">
           <Heart size={20} style={{ color: hrColor }} className={offline ? '' : 'animate-pulse'} fill={offline ? 'none' : hrColor} />
           <span className="text-4xl font-serif tabular-nums leading-none" style={{ color: hrColor }}>
-            {row.hr ?? '—'}
+            {row.hr_current ?? '—'}
           </span>
           <span className="text-sm text-anthracite-lighter">bpm</span>
         </div>
@@ -423,8 +422,8 @@ function AthleteCard({
 
       {/* Riga 4: RMSSD / TRIMP / Artifact */}
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-        <Metric label="RMSSD" value={row.rmssd == null ? '—' : num(row.rmssd, 1, locale)} />
-        <Metric label="TRIMP" value={row.trimp == null ? '—' : `${Math.round(row.trimp)}`} />
+        <Metric label="RMSSD" value={row.rmssd_rolling == null ? '—' : num(row.rmssd_rolling, 1, locale)} />
+        <Metric label="TRIMP" value={row.trimp_current == null ? '—' : `${Math.round(row.trimp_current)}`} />
         <Metric
           label={t('teamLive.card.artifact')}
           value={artifact == null ? '—' : `${num(artifact, 1, locale)}%`}
@@ -510,8 +509,7 @@ function LiveDrawer({
   const t = useTranslations('sport')
   const locale = useLocale()
   const status = connStatus(row, now)
-  const zone = liveZone(row.zone)
-  const tags = parseLiveTags(row.tags)
+  const zone = liveZone(row.dfa_zone)
   const ended = row.is_connected === false
   // Solo gli ultimi 5 minuti di storico per i mini-trend.
   const since = now - 5 * 60 * 1000
@@ -548,9 +546,9 @@ function LiveDrawer({
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
           {/* Valori attuali */}
           <div className="grid grid-cols-3 gap-3">
-            <BigStat label="HR" value={row.hr == null ? '—' : `${row.hr}`} unit="bpm" color={hrZoneColor(row.hr, hrMax) ?? '#2F343A'} />
+            <BigStat label="HR" value={row.hr_current == null ? '—' : `${row.hr_current}`} unit="bpm" color={hrZoneColor(row.hr_current, hrMax) ?? '#2F343A'} />
             <BigStat label="DFA α1" value={num(row.dfa_alpha1, 2, locale)} color={zone?.color ?? '#2F343A'} />
-            <BigStat label="RMSSD" value={row.rmssd == null ? '—' : num(row.rmssd, 1, locale)} unit="ms" />
+            <BigStat label="RMSSD" value={row.rmssd_rolling == null ? '—' : num(row.rmssd_rolling, 1, locale)} unit="ms" />
           </div>
 
           {zone && (
@@ -579,19 +577,11 @@ function LiveDrawer({
             <MiniLine data={data} dataKey="rmssd" color="#F59E0B" unit=" ms" />
           </ChartBlock>
 
-          {/* Tag sessione */}
-          {tags.length > 0 && (
-            <div>
-              <div className="text-sm font-medium text-anthracite mb-2">{t('teamLive.drawer.tags')}</div>
-              <ul className="flex flex-wrap gap-2">
-                {tags.map((t, i) => (
-                  <li key={`${t}-${i}`} className="text-sm px-3 py-1.5 rounded-full bg-teal-light text-teal-dark font-medium">
-                    {t}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {/* I tag di sessione non ci sono: `sport_live_data` non ha una
+              colonna `tags` e non l'ha mai avuta (vedi la definizione della
+              tabella). Il blocco era guardato da `tags.length > 0` e quindi non
+              ha mai mostrato niente: la chiave `teamLive.drawer.tags` resta nei
+              messaggi per il giorno in cui lo streaming porterà anche quelli. */}
 
           <p className="text-xs text-anthracite-lighter">{t('teamLive.drawer.note')}</p>
         </div>
