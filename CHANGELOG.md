@@ -54,10 +54,38 @@ entrambe le cose, a un'ora e mezza di distanza:
   `client_id is null`, e con essa le 43 coppie che funzionano);
   `measurement_analytics.client_id` resta NULL e ricostruito a runtime da
   `conClientIdDalPonte`; nessuna modifica all'app Flutter.
-- **Resta aperto**: le pagine di stampa (`src/lib/report-data.ts`) chiamano
-  ancora la RPC legata a `auth.uid()`, quindi un report periodico stampato da
-  un superadmin sulla scheda di un altro professionista non contiene le
-  misurazioni remote.
+- ~~Resta aperto: le pagine di stampa…~~ chiuso lo stesso giorno, sotto.
+
+### E anche nei report stampati (`sito-033`)
+Seguito immediato del punto sopra: `loadPeriodicReportData` chiamava ancora la
+RPC legata a `auth.uid()`, e il report periodico usciva senza le misurazioni
+remote. Due ragioni diverse per lo stesso 0:
+- con la sessione del superadmin (ramo a cookie di `resolvePrintAccess`) la RPC
+  della 019 non trova il collegamento, che non è suo;
+- nella via "solo token" il client è la **service_role**, dove `auth.uid()` è
+  NULL: lì non solo la RPC della 019 dà 0 righe, ma anche la variante della 032
+  avrebbe negato con 42501.
+
+- **`sito-033`** aggiunge un solo caso a `puo_vedere_come_professionista`: la
+  chiave `service_role`. Non concede niente di nuovo — la service_role scavalca
+  già la RLS e potrebbe leggere `sessions` a mano — e il diritto di lettura di
+  chi stampa è verificato prima, in `print-access.ts` (`verifyPrintToken` e poi
+  `assertOwnerOrSuperadmin`).
+- **`src/lib/report-data.ts`**: `remoteSessions` prende il titolare della
+  scheda e passa dalla `get_linked_client_sessions_as_professional`. Il titolare
+  è il riferimento giusto per chiunque stampi, perché il report resta intestato
+  al suo studio (`loadOwnerProfile`).
+- La stampa della **singola misurazione** non aveva il problema: un superadmin
+  legge qualsiasi riga per `superadmin_read_sessions`, quindi la query diretta
+  la trova e il ripiego remoto non serve. Il report periodico sì, perché la sua
+  query diretta filtra `client_id = scheda` e sulle remote quel campo è NULL.
+- **Verificato in produzione** sulla scheda `1789282977721`: 14 misurazioni
+  come superadmin, 14 come titolare, 14 come `service_role`, 42501 come `anon`.
+- **Resta aperto**: `loadPreviousMeasurement` cerca la misurazione precedente
+  con `.eq('client_id', clientId)`, quindi sulle sessioni remote non trova
+  niente e i delta nella stampa di una singola misurazione restano vuoti. Non
+  è un difetto della vista superadmin — vale anche per il titolare — e si
+  chiude a parte.
 
 ## 2026-10-01 — nomi delle misurazioni remote, esiti di "crea accesso", 022
 

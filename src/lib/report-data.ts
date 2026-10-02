@@ -146,11 +146,30 @@ async function selectSessions(
   )
 }
 
-/** Sessioni remote del cliente (auto-misurate dall'app: client_id NULL), via RPC SECURITY DEFINER. */
-async function remoteSessions(supabase: SupabaseClient, clientId: string): Promise<SessionRow[]> {
-  const { data, error } = await supabase.rpc('get_linked_client_sessions_by_client_id', { p_client_id: clientId })
+/**
+ * Sessioni remote del cliente (auto-misurate dall'app: client_id NULL), via
+ * RPC SECURITY DEFINER.
+ *
+ * `professionistaId` è il TITOLARE della scheda, e si passa sempre: la RPC
+ * della 019 parte da `auth.uid()`, che qui è quello giusto solo quando stampa
+ * il proprietario. Un superadmin che stampa la scheda di un altro
+ * professionista non ha alcun collegamento con quel cliente, e nella via "solo
+ * token" il client è la service_role, dove `auth.uid()` è NULL: in entrambi i
+ * casi la RPC restituiva 0 righe e il report periodico usciva senza le
+ * misurazioni remote. La variante `_as_professional` (sito-032, estesa alla
+ * service_role dalla sito-033) prende il professionista come parametro.
+ *
+ * Il titolare è il riferimento corretto anche per chi stampa: il report resta
+ * intestato al suo studio (vedi `loadOwnerProfile`), quindi le misurazioni che
+ * contiene sono quelle che lui vede.
+ */
+async function remoteSessions(supabase: SupabaseClient, clientId: string, professionistaId: string): Promise<SessionRow[]> {
+  const { data, error } = await supabase.rpc('get_linked_client_sessions_as_professional', {
+    p_professional_id: professionistaId,
+    p_client_id: clientId,
+  })
   if (error) {
-    console.error('[report-data] remote sessions rpc error', error)
+    console.error('[report-data] remote sessions rpc error', { clientId, professionistaId, error })
     return []
   }
   return ((data ?? []) as SessionRow[]).map((s) => ({ ...s, client_id: s.client_id ?? clientId }))
@@ -174,7 +193,20 @@ export async function loadMeasurementForPrint(supabase: SupabaseClient, sessionI
   const { data: rows } = await selectSessions(supabase, (q, cols) => q.select(cols).eq('id', sessionId).limit(1) as never, 'sessions (stampa misurazione)')
   let s: SessionRow | null = rows?.[0] ?? null
   if (!ma && !s && clientId) {
-    s = (await remoteSessions(supabase, clientId)).find((r) => r.id === sessionId) ?? null
+    // Ripiego raro: chi arriva qui (titolare, superadmin, service_role) legge
+    // già la riga direttamente — il titolare per
+    // `professional_reads_linked_client_sessions`, il superadmin per
+    // `superadmin_read_sessions`, la service_role scavalcando la RLS — quindi
+    // di norma `s` è stato trovato sopra. Il titolare della scheda serve alla
+    // RPC e lo si chiede qui, dove costa una query sola e solo in questo ramo.
+    const { data: owner } = await supabase
+      .from('clients')
+      .select('professionista_id')
+      .eq('id', clientId)
+      .maybeSingle<{ professionista_id: string }>()
+    s = owner?.professionista_id
+      ? (await remoteSessions(supabase, clientId, owner.professionista_id)).find((r) => r.id === sessionId) ?? null
+      : null
   }
   if (!ma && !s) return null
   // Se ci sono entrambe le righe vince l'istante della sessione.
@@ -240,7 +272,7 @@ export async function loadPeriodicReportData(supabase: SupabaseClient, client: C
           .order('started_at_utc', { ascending: false, nullsFirst: false }) as never,
       'sessions (report periodico)',
     ),
-    remoteSessions(supabase, client.id),
+    remoteSessions(supabase, client.id, client.professionista_id),
   ])
   if (sErr) {
     console.error('[report-data] sessions query error', sErr)
