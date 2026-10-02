@@ -108,15 +108,30 @@ const SESSION_COLUMNS = [
 // le restituisce solo se esiste un link `active` in client_professional_links.
 // Error-safe: se la RPC non è esposta o fallisce, ritorna [] senza rompere
 // la scheda cliente (restano visibili le sole misurazioni dirette).
+//
+// `professionistaId` serve SOLO alla vista "come un altro professionista"
+// (superadmin, oppure owner/admin di organizzazione su un proprio membro).
+// Lì la RPC legata a `auth.uid()` restituisce 0 righe — il collegamento col
+// cliente non è di chi guarda — e la scheda appariva VUOTA mentre al
+// professionista proprietario mostrava tutto. La variante `_as_professional`
+// (sito-032) prende il professionista come parametro e autorizza con
+// `puo_vedere_come_professionista`. Nella vista propria si continua a passare
+// dalla RPC di sempre, che non cambia.
 async function fetchRemoteSessionsForClient(
   supabase: Awaited<ReturnType<typeof createClient>>,
   clientId: string,
+  professionistaId?: string,
 ): Promise<SessionRow[]> {
-  const { data, error } = await supabase.rpc('get_linked_client_sessions_by_client_id', {
-    p_client_id: clientId,
-  })
+  const { data, error } = professionistaId
+    ? await supabase.rpc('get_linked_client_sessions_as_professional', {
+        p_professional_id: professionistaId,
+        p_client_id: clientId,
+      })
+    : await supabase.rpc('get_linked_client_sessions_by_client_id', {
+        p_client_id: clientId,
+      })
   if (error) {
-    console.error('[fetchRemoteSessionsForClient] rpc error', { clientId, error })
+    console.error('[fetchRemoteSessionsForClient] rpc error', { clientId, professionistaId, error })
     return []
   }
   // La RPC ritorna righe `sessions` complete; client_id è null per definizione:
@@ -124,7 +139,7 @@ async function fetchRemoteSessionsForClient(
   return ((data ?? []) as SessionRow[]).map((s) => ({ ...s, client_id: s.client_id ?? clientId }))
 }
 
-export async function listMeasurementsForClient(clientId: string, opts?: { limit?: number; from?: string; to?: string }): Promise<MeasurementAnalytics[]> {
+export async function listMeasurementsForClient(clientId: string, opts?: { limit?: number; from?: string; to?: string; professionistaId?: string }): Promise<MeasurementAnalytics[]> {
   const supabase = await createClient()
 
   // 1. Source of truth: sessions (sempre popolato dall'app Flutter via sync_service).
@@ -150,7 +165,7 @@ export async function listMeasurementsForClient(clientId: string, opts?: { limit
         }>,
       { label: 'sessions (scheda cliente)', required: ['id'] },
     ),
-    fetchRemoteSessionsForClient(supabase, clientId),
+    fetchRemoteSessionsForClient(supabase, clientId, opts?.professionistaId),
   ])
   if (sessErr) {
     console.error('[listMeasurementsForClient] sessions query error', { clientId, error: sessErr })
@@ -177,7 +192,7 @@ export async function listMeasurementsForClient(clientId: string, opts?: { limit
   }
   if (opts?.limit) sessions = sessions.slice(0, opts.limit)
 
-  console.log('[listMeasurementsForClient] sessions found', { clientId, direct: direct?.length ?? 0, remote: remote.length, merged: sessions.length })
+  console.log('[listMeasurementsForClient] sessions found', { clientId, professionistaId: opts?.professionistaId ?? null, direct: direct?.length ?? 0, remote: remote.length, merged: sessions.length })
   if (sessions.length === 0) return []
 
   // 2. Enrichment: measurement_analytics (score proprietari calcolati dal trigger SQL).
@@ -489,13 +504,20 @@ export type ClientWithLastMeasurement = Client & {
 // round-trip per tutti i clienti collegati del pro loggato, niente N+1.
 // Error-safe: se la migration non è ancora applicata la RPC non esiste (42883)
 // e si ritorna una mappa vuota senza rompere lista clienti / dashboard.
+// `professionistaId`: come in fetchRemoteSessionsForClient, serve alla vista
+// "come un altro professionista" (sito-032).
 async function getLastRemoteSessionMap(
   supabase: Awaited<ReturnType<typeof createClient>>,
+  professionistaId?: string,
 ): Promise<Map<string, string>> {
   const map = new Map<string, string>()
-  const { data, error } = await supabase.rpc('get_linked_clients_last_remote_session')
+  const { data, error } = professionistaId
+    ? await supabase.rpc('get_linked_clients_last_remote_session_as_professional', {
+        p_professional_id: professionistaId,
+      })
+    : await supabase.rpc('get_linked_clients_last_remote_session')
   if (error) {
-    console.error('[getLastRemoteSessionMap] rpc error', error)
+    console.error('[getLastRemoteSessionMap] rpc error', { professionistaId, error })
     return map
   }
   for (const r of (data ?? []) as Array<{ client_id: string; last_remote_at: string | null }>) {
@@ -511,9 +533,14 @@ async function getLastRemoteSessionMap(
 // measurement_analytics nasconde le righe con user_id = uid del cliente.
 async function getLastRemoteAnalyticsMap(
   supabase: Awaited<ReturnType<typeof createClient>>,
+  professionistaId?: string,
 ): Promise<Map<string, MeasurementAnalytics>> {
   const map = new Map<string, MeasurementAnalytics>()
-  const { data, error } = await supabase.rpc('get_linked_clients_last_remote_analytics')
+  const { data, error } = professionistaId
+    ? await supabase.rpc('get_linked_clients_last_remote_analytics_as_professional', {
+        p_professional_id: professionistaId,
+      })
+    : await supabase.rpc('get_linked_clients_last_remote_analytics')
   if (error) {
     // RPC assente finché la 019 non è applicata: la lista resta quella di prima.
     if (error.code !== 'PGRST202' && error.code !== '42883') console.error('[getLastRemoteAnalyticsMap] rpc error', error)
@@ -546,15 +573,13 @@ export async function listClientsEnriched(opts?: { professionistaId?: string }):
   const measurementsQ = opts?.professionistaId
     ? supabase.from('measurement_analytics').select('*').eq('user_id', opts.professionistaId).order('measured_at_utc', { ascending: false })
     : supabase.from('measurement_analytics').select('*').order('measured_at_utc', { ascending: false })
-  // Sessioni remote: solo per la vista "propria" (senza professionistaId).
-  // Nella vista superadmin/org la RPC gira come utente loggato e restituirebbe
-  // i SUOI clienti collegati, non quelli del professionista visualizzato.
-  const remoteMapQ = opts?.professionistaId
-    ? Promise.resolve(new Map<string, string>())
-    : getLastRemoteSessionMap(supabase)
-  const remoteAnalyticsQ = opts?.professionistaId
-    ? Promise.resolve(new Map<string, MeasurementAnalytics>())
-    : getLastRemoteAnalyticsMap(supabase)
+  // Sessioni remote: nella vista propria la RPC parte da `auth.uid()`; nella
+  // vista superadmin/org prende il professionista visualizzato come parametro
+  // (sito-032). Prima qui si rinunciava, e nella vista superadmin la lista
+  // mostrava "—" su ultima misurazione e Stress per tutti i clienti che
+  // misurano solo dalla propria app.
+  const remoteMapQ = getLastRemoteSessionMap(supabase, opts?.professionistaId)
+  const remoteAnalyticsQ = getLastRemoteAnalyticsMap(supabase, opts?.professionistaId)
   const [clientsRes, measurementsRes, alertsRes, settingsRes, remoteMap, remoteAnalytics] = await Promise.all([
     clientsQ,
     measurementsQ,

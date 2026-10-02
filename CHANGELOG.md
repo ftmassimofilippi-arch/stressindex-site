@@ -3,6 +3,62 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-02 — le misurazioni remote nella vista "come un altro professionista"
+
+### La scheda vuota che al proprietario era piena
+Caso reale: da `info@massimofilippi.it` (superadmin) la scheda `1789282977721`
+di Andrea Ponghetti mostrava **0** misurazioni; la stessa scheda, aperta da
+Andrea, ne mostrava **14**. I log di produzione dello stesso giorno dicono
+entrambe le cose, a un'ora e mezza di distanza:
+
+```
+09:09:01 GET /area-professionisti/clienti/1789282977721   direct: 0, remote: 14
+07:26:55 GET /en/area-professionisti/clienti/1789282977721  direct: 0, remote: 0
+```
+
+- **Causa, e cosa NON era in causa.** Dati, collegamenti e policy erano sani.
+  Una misurazione fatta dal cliente sulla sua app si salva per progetto con
+  `sessions.professionista_id` = uid del CLIENTE e `client_id` NULL; il
+  professionista collegato le legge dalla RPC
+  `get_linked_client_sessions_by_client_id`, che parte da `auth.uid()`.
+  Provate tutte le 43 coppie con collegamento `active` (760 sessioni)
+  impersonando ciascun professionista, la RPC restituisce il conteggio esatto
+  **43 volte su 43**. Il difetto era solo nella vista "come un altro
+  professionista": `auth.uid()` è il superadmin, che con quel cliente non ha
+  alcun collegamento, quindi la query diretta trovava 0 righe (il `client_id` è
+  NULL) e la RPC altre 0. Nessuna policy RLS e nessun backfill necessari.
+- **`sito-032`**: `puo_vedere_come_professionista` riproduce in SQL le due
+  condizioni di `resolveViewingProfessional` (superadmin; owner/admin di
+  organizzazione su un membro attivo), più sé stesso; le tre funzioni
+  `get_linked_client_sessions_as_professional`,
+  `get_linked_clients_last_remote_session_as_professional` e
+  `get_linked_clients_last_remote_analytics_as_professional` hanno il corpo
+  della 019 col professionista come parametro. Chi non è autorizzato riceve
+  **42501, non una lista vuota**: è proprio una lista vuota che ha tenuto
+  nascosto questo difetto, perché una scheda senza misurazioni e una scheda
+  non autorizzata si assomigliano troppo.
+- **`src/lib/dashboard-data.ts`**: `fetchRemoteSessionsForClient`,
+  `getLastRemoteSessionMap` e `getLastRemoteAnalyticsMap` accettano il
+  professionista visualizzato e passano dalle nuove funzioni solo quando c'è;
+  la vista propria continua a usare le RPC di sempre, invariate.
+  `listClientsEnriched` non rinuncia più alle sessioni remote nella vista
+  superadmin/org: lì la lista clienti mostrava "—" su ultima misurazione e
+  Stress per tutti i clienti che misurano solo dalla propria app.
+- **`clienti/[id]/page.tsx`**: passa `professionistaId` quando c'è un
+  `viewing`.
+- **Verificato in produzione** dopo l'applicazione: da `info@massimofilippi.it`
+  le schede di Andrea danno 14 e 12, la propria scheda di Sara Spadoni 6;
+  Andrea su sé stesso 14; un professionista estraneo riceve 42501.
+- **Non toccati, di proposito**: nessun `UPDATE` su `sessions` (riempire
+  `sessions.client_id` romperebbe la RPC della 019, che filtra
+  `client_id is null`, e con essa le 43 coppie che funzionano);
+  `measurement_analytics.client_id` resta NULL e ricostruito a runtime da
+  `conClientIdDalPonte`; nessuna modifica all'app Flutter.
+- **Resta aperto**: le pagine di stampa (`src/lib/report-data.ts`) chiamano
+  ancora la RPC legata a `auth.uid()`, quindi un report periodico stampato da
+  un superadmin sulla scheda di un altro professionista non contiene le
+  misurazioni remote.
+
 ## 2026-10-01 — nomi delle misurazioni remote, esiti di "crea accesso", 022
 
 ### Il cliente di una misurazione remota ha un nome

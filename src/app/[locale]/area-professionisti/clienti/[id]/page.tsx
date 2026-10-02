@@ -39,7 +39,11 @@ export default async function ClientPage({
   const [client, professional, measurements, cronAlerts, notes, settings, messages, allAlerts, allMonitoring, access, alertRules, appEvents] = await Promise.all([
     getClient(params.id),
     getProfessionalProfile(),
-    listMeasurementsForClient(params.id),
+    // Nella vista "come un altro professionista" le misurazioni remote vanno
+    // chieste per conto del PROPRIETARIO della scheda: la RPC di sempre parte
+    // da auth.uid() e per un superadmin non trova nessun collegamento, quindi
+    // la scheda appariva senza misurazioni (vedi sito-032).
+    listMeasurementsForClient(params.id, viewing ? { professionistaId: viewing.user_id } : undefined),
     listAlerts({ clientId: params.id, status: ['new', 'seen'] }),
     listNotesForClient(params.id),
     getClientSettings(params.id),
