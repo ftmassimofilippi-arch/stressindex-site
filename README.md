@@ -273,6 +273,7 @@ Stato verificato sul catalogo di produzione il 27/09/2026.
 | sito-030 `notifiche_lette` | `notification_reads`: data di lettura delle notifiche per singolo utente | **da applicare** |
 | sito-031 `collegamento_in_attesa` | RPC `request_client_link`: collegamento `pending` con `requested_by`, in attesa della conferma del cliente | **da applicare, DOPO `app-035`** |
 | sito-032 `vista_superadmin_sessioni_remote` | `puo_vedere_come_professionista` + le tre `*_as_professional`: le misurazioni remote si leggono per conto del professionista proprietario | applicata (02/10) |
+| sito-033 `stampa_sessioni_remote` | `puo_vedere_come_professionista` accetta anche la `service_role`, per la via "solo token" delle pagine di stampa | applicata (02/10) |
 
 ⚠️ **Ordine fra i due repo**: `app-035_conferma_collegamento_cliente.sql`
 (repo `hrv_app`) va applicata **prima** di `sito-031`. app-035 crea la colonna
