@@ -225,17 +225,54 @@ export async function loadMeasurementForPrint(supabase: SupabaseClient, sessionI
  * `beforeIso` è un ISTANTE (da `measuredInstant`), non la colonna grezza. Il
  * confronto avviene sulle sessioni, che portano l'unica colonna corretta su
  * tutto lo storico; `measurement_analytics` serve solo per gli score.
+ *
+ * **Le due fonti valgono uguale.** Prima qui si cercava solo fra le sessioni
+ * dirette (`client_id = scheda`): per un cliente che misura dalla propria app
+ * quel campo è NULL per progetto, quindi la precedente non si trovava mai e i
+ * delta della stampa restavano vuoti — per chiunque stampasse, titolare
+ * compreso. La precedente è ora la più recente prima di `beforeIso`
+ * **indipendentemente dalla fonte**.
+ *
+ * Due dettagli che non si possono saltare:
+ *  - l'ordinamento passa da `startedMs`, non dalla colonna grezza: le dirette
+ *    arrivano ordinate per `started_at_utc` e le remote, dalla RPC, per
+ *    `started_at` (forma legacy, due ore avanti). Confrontarle così com'erano
+ *    avrebbe pescato la sessione sbagliata ogni volta che le due fonti si
+ *    alternano a meno di due ore;
+ *  - se `measurement_analytics` non ha la riga si ripiega su `sessions`, come
+ *    in tutto il resto del file: prima si restituiva `null` e una precedente
+ *    che esisteva spariva comunque.
  */
-export async function loadPreviousMeasurement(supabase: SupabaseClient, clientId: string, beforeIso: string, excludeSessionId: string): Promise<MeasurementAnalytics | null> {
-  const { data: prevSessions } = await supabase
-    .from('sessions')
-    .select('id, started_at_utc')
-    .eq('client_id', clientId)
-    .lt('started_at_utc', beforeIso)
-    .neq('id', excludeSessionId)
-    .order('started_at_utc', { ascending: false, nullsFirst: false })
-    .limit(1)
-  const prev = (prevSessions as Array<{ id: string; started_at_utc: string | null }> | null)?.[0]
+export async function loadPreviousMeasurement(
+  supabase: SupabaseClient,
+  clientId: string,
+  professionistaId: string,
+  beforeIso: string,
+  excludeSessionId: string,
+): Promise<MeasurementAnalytics | null> {
+  const beforeMs = new Date(beforeIso).getTime()
+
+  const [{ data: direct }, remote] = await Promise.all([
+    selectSessions(
+      supabase,
+      (q, cols) =>
+        q
+          .select(cols)
+          .eq('client_id', clientId)
+          .neq('id', excludeSessionId)
+          .order('started_at_utc', { ascending: false, nullsFirst: false }) as never,
+      'sessions (precedente, dirette)',
+    ),
+    remoteSessions(supabase, clientId, professionistaId),
+  ])
+
+  const seen = new Set(((direct ?? []) as SessionRow[]).map((s) => s.id))
+  const prev = [
+    ...((direct ?? []) as SessionRow[]),
+    ...remote.filter((s) => !seen.has(s.id) && s.id !== excludeSessionId),
+  ]
+    .filter((s) => Number.isFinite(startedMs(s)) && startedMs(s) < beforeMs)
+    .sort((a, b) => startedMs(b) - startedMs(a))[0]
   if (!prev) return null
 
   const { data } = await supabase
@@ -244,7 +281,7 @@ export async function loadPreviousMeasurement(supabase: SupabaseClient, clientId
     .eq('session_id', prev.id)
     .limit(1)
   const row = (data as MeasurementAnalytics[] | null)?.[0]
-  return row ? conIstanteSessione(row, prev) : null
+  return row ? conIstanteSessione(row, prev) : sessionToMeasurement(prev)
 }
 
 export type PeriodicReportData = {

@@ -70,6 +70,10 @@ export default async function PrintMeasurementPage({
       loadPreviousMeasurement(
         supabase,
         client.id,
+        // Titolare della scheda: serve a cercare la precedente anche fra le
+        // misurazioni che il cliente ha fatto dalla propria app, dove
+        // `client_id` è NULL e la sola query diretta non trovava niente.
+        client.professionista_id,
         (measuredInstant(measurement) ?? new Date(measurement.created_at)).toISOString(),
         measurement.session_id,
       ),

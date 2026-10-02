@@ -81,11 +81,36 @@ remote. Due ragioni diverse per lo stesso 0:
   query diretta filtra `client_id = scheda` e sulle remote quel campo è NULL.
 - **Verificato in produzione** sulla scheda `1789282977721`: 14 misurazioni
   come superadmin, 14 come titolare, 14 come `service_role`, 42501 come `anon`.
-- **Resta aperto**: `loadPreviousMeasurement` cerca la misurazione precedente
-  con `.eq('client_id', clientId)`, quindi sulle sessioni remote non trova
-  niente e i delta nella stampa di una singola misurazione restano vuoti. Non
-  è un difetto della vista superadmin — vale anche per il titolare — e si
-  chiude a parte.
+- ~~Resta aperto: `loadPreviousMeasurement`…~~ chiuso lo stesso giorno, sotto.
+
+### La misurazione precedente non guarda più la fonte
+`loadPreviousMeasurement` cercava la precedente solo fra le sessioni dirette
+(`.eq('client_id', clientId)`): per un cliente che misura dalla propria app quel
+campo è NULL per progetto, quindi **non trovava mai niente e i delta della
+stampa restavano vuoti** — per chiunque stampasse, titolare compreso. Ora la
+precedente è la più recente prima dell'istante stampato, qualunque sia la fonte.
+
+Due dettagli che non si potevano saltare:
+- **l'ordinamento passa da `startedMs`**, non dalla colonna grezza: le dirette
+  arrivano ordinate per `started_at_utc`, le remote — dalla RPC — per
+  `started_at`, che è la forma legacy (due ore avanti). Confrontarle come
+  arrivavano avrebbe pescato la sessione sbagliata ogni volta che le due fonti
+  si alternano a meno di due ore;
+- **se `measurement_analytics` manca si ripiega su `sessions`**, come in tutto
+  il resto del file: prima si restituiva `null` e una precedente che esisteva
+  spariva comunque.
+
+**Verificato** sulla scheda `1789282977721`: per la misurazione del 28/09
+(`1790573141682`, istante 05:25Z) la precedente è `1790496597669` del **27/09**
+(08:09Z) — una sessione remota, con la riga degli score — e i delta sono
+visibili: stress 31,4 → 40,9, recupero 46,3 → 38,8, equilibrio 88,8 → 33,8,
+RMSSD 43,8 → 38,8. Prima la stampa non mostrava nessuna precedente.
+
+**Cercata altrove, nel sito**: `loadPreviousMeasurement` ha un solo chiamante
+(la pagina di stampa della misurazione). Dettaglio misurazione e confronto
+usano `getMeasurementBySessionId` su sessioni scelte a mano, senza ricerca
+della precedente; i loro delta (ortostatico, misurazione lunga) stanno dentro
+una sola sessione. Il report periodico confronta due periodi interi, già uniti.
 
 ## 2026-10-01 — nomi delle misurazioni remote, esiti di "crea accesso", 022
 
