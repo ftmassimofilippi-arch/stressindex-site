@@ -903,7 +903,7 @@
       "createAccessNoEmail": "This record has no email address: add one before creating access.",
       "createResults": {
         "already_linked_other": "This account is already connected to another professional: nothing was changed.",
-        "already_linked_self": "This client is already connected to you: there was nothing to do.",
+        "already_linked_to_you": "This client is already connected to you: there was nothing to do.",
         "invited": "Invitation sent: the client gets an email to set their password, and the connection is active.",
         "is_professional": "This email belongs to a professional account: it cannot become a client. Nothing was changed.",
         "link_pending": "This email already has a Stress Index account: the connection has been created and is waiting for the client to confirm it in the app. Until they confirm, you cannot see their data.",
@@ -1700,6 +1700,7 @@
       "rate_limited": "You have reached the limit of actions on this client's access in the last 24 hours. Try again later.",
       "report_read_failed": "The measurements for the period could not be read. Please try again in a moment.",
       "report_render_failed": "The data were read but the document could not be generated. Try again; if the problem persists, let us know.",
+      "requested_by_non_scritto": "The connection was created as pending, but without requested_by = professional: the app would never show it among the requests to accept. Check that app-035 and sito-031 are applied, in that order.",
       "reset_failed": "The recovery email could not be sent.",
       "same_email": "It is already the account email.",
       "same_professional": "The client already belongs to this professional.",

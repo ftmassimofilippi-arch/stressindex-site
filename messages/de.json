@@ -903,7 +903,7 @@
       "createAccessNoEmail": "Dieser Eintrag hat keine E-Mail-Adresse: bitte zuerst eine hinzufügen.",
       "createResults": {
         "already_linked_other": "Dieses Konto ist bereits mit einem anderen Fachanwender verbunden: es wurde nichts geändert.",
-        "already_linked_self": "Dieser Klient ist bereits mit Ihnen verbunden: es gab nichts zu tun.",
+        "already_linked_to_you": "Dieser Klient ist bereits mit Ihnen verbunden: es gab nichts zu tun.",
         "invited": "Einladung gesendet: der Klient erhält eine E-Mail zum Festlegen des Passworts, die Verbindung ist aktiv.",
         "is_professional": "Diese E-Mail gehört zu einem Fachanwender-Konto: sie kann kein Klient werden. Es wurde nichts geändert.",
         "link_pending": "Diese E-Mail hat bereits ein Stress-Index-Konto: die Verbindung wurde angelegt und wartet auf die Bestätigung des Klienten in der App. Bis zur Bestätigung sehen Sie keine Daten.",
@@ -1700,6 +1700,7 @@
       "rate_limited": "Sie haben das Limit an Eingriffen in den Zugang dieses Klienten in den letzten 24 Stunden erreicht. Versuchen Sie es später erneut.",
       "report_read_failed": "Die Messungen des Zeitraums konnten nicht gelesen werden. Bitte versuchen Sie es in Kürze erneut.",
       "report_render_failed": "Die Daten wurden gelesen, das Dokument konnte jedoch nicht erstellt werden. Versuchen Sie es erneut; falls das Problem bestehen bleibt, melden Sie es uns.",
+      "requested_by_non_scritto": "Die Verbindung wurde als ausstehend angelegt, aber ohne requested_by = Fachanwender: die App würde sie nie unter den zu bestätigenden Anfragen anzeigen. Prüfen, ob app-035 und sito-031 in dieser Reihenfolge angewendet sind.",
       "reset_failed": "Die Wiederherstellungs-E-Mail konnte nicht gesendet werden.",
       "same_email": "Das ist bereits die E-Mail des Kontos.",
       "same_professional": "Der Klient gehört bereits zu dieser Fachkraft.",

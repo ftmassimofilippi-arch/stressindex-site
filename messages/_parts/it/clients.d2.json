@@ -239,7 +239,7 @@
       "invited": "Invito inviato: il cliente riceve una email per impostare la password e il collegamento è attivo.",
       "link_pending": "Questa email ha già un account Stress Index: il collegamento è stato creato e resta in attesa che il cliente lo confermi dall'app. Finché non conferma non vedi i suoi dati.",
       "already_linked_other": "Questo account è già collegato a un altro professionista: non è stato cambiato niente.",
-      "already_linked_self": "Questo cliente è già collegato a te: non c'era niente da fare.",
+      "already_linked_to_you": "Questo cliente è già collegato a te: non c'era niente da fare.",
       "is_professional": "Questa email appartiene a un account professionista: non può diventare un cliente. Non è stato cambiato niente.",
       "unknown": "Esito non riconosciuto ({result}): controlla il registro prima di riprovare."
     }

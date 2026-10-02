@@ -31,7 +31,7 @@ export const dynamic = 'force-dynamic'
 //
 // `create_access` è l'unica che lavora su un account che ancora NON esiste, e
 // l'unica con un esito a più valori: `invited`, `link_pending`,
-// `already_linked_other`, `is_professional` (più `already_linked_self`). I
+// `already_linked_other`, `is_professional` (più `already_linked_to_you`). I
 // valori e l'albero delle decisioni stanno in `src/lib/client-link-request.ts`
 // e devono restare in pari con l'Edge Function create-client-access, che è la
 // stessa funzione per l'app Flutter.
@@ -119,6 +119,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         code: esito.code ?? null,
         detail: esito.detail ?? null,
         link_status: esito.linkStatus ?? null,
+        requested_by: esito.requestedBy ?? null,
         role: esito.role ?? null,
         other_professionals: esito.otherProfessionals ?? null,
         merged: esito.merged ?? [],

@@ -41,12 +41,24 @@ nessuna email, nessun errore.
   `link_client_to_professional`, che sul ruolo non-`client` si limita a un
   warning → il suo account veniva collegato come cliente, con i suoi dati
   esposti, e la risposta era `ok:true`.
-- **Contratto**, identico nell'app e nel sito: `result` vale sempre uno di
-  `invited`, `link_pending`, `already_linked_other`, `is_professional`,
-  `error`. Più `already_linked_self` (già collegato a chi chiama), **fuori
-  contratto e da confermare**: nessuno dei cinque lo dice senza mentire.
-  L'account esistente si cerca PRIMA di invitare, unico modo di distinguere un
-  professionista da un cliente.
+- **Contratto**, identico nell'app e nel sito, **sei valori**: `invited`,
+  `link_pending`, `already_linked_to_you`, `already_linked_other`,
+  `is_professional`, `error`. L'account esistente si cerca PRIMA di invitare,
+  unico modo di distinguere un professionista da un cliente.
+- **Allineamento con `app-035`** (repo `hrv_app`), che porta la colonna
+  `requested_by`, la RPC `client_respond_to_link` per l'Accetta/Rifiuta del
+  cliente e il trigger che blocca le altre modifiche dal lato cliente.
+  Nessun oggetto è creato dalle due migrazioni. **app-035 va applicata prima
+  di sito-031**: la 031 scrive `requested_by`, e il backfill di app-035
+  (`requested_by = client_user_id` dove è NULL) marcherebbe come "chiesto dal
+  cliente" un pending creato dal professionista, che all'app non comparirebbe
+  mai fra le richieste — una richiesta persa in silenzio. La 031 si rifiuta di
+  applicarsi se la colonna non c'è, e la Edge Function controlla che
+  `requested_by` sia davvero uguale al professionista, altrimenti risponde
+  `error` invece di lasciare il cliente ad aspettare.
+  `requested_by` lo scrive la RPC, non il codice applicativo: i collegamenti
+  si scrivono da una sola strada. Un `pending` chiesto dal cliente non viene
+  riscritto come se l'avesse chiesto il professionista.
 - **`pending` e non `active`**: con un invito il consenso è il click sul link,
   con un account che esiste già non c'è nessun giro di posta, quindi chi
   conosce un indirizzo si tirerebbe in dashboard lo storico HRV di quella

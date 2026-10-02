@@ -903,7 +903,7 @@
       "createAccessNoEmail": "Questa scheda non ha una email: aggiungila prima di creare l'accesso.",
       "createResults": {
         "already_linked_other": "Questo account è già collegato a un altro professionista: non è stato cambiato niente.",
-        "already_linked_self": "Questo cliente è già collegato a te: non c'era niente da fare.",
+        "already_linked_to_you": "Questo cliente è già collegato a te: non c'era niente da fare.",
         "invited": "Invito inviato: il cliente riceve una email per impostare la password e il collegamento è attivo.",
         "is_professional": "Questa email appartiene a un account professionista: non può diventare un cliente. Non è stato cambiato niente.",
         "link_pending": "Questa email ha già un account Stress Index: il collegamento è stato creato e resta in attesa che il cliente lo confermi dall'app. Finché non conferma non vedi i suoi dati.",
@@ -1700,6 +1700,7 @@
       "rate_limited": "Hai raggiunto il limite di interventi sull'accesso di questo cliente nelle ultime 24 ore. Riprova più tardi.",
       "report_read_failed": "Non è stato possibile leggere le misurazioni del periodo. Riprova tra qualche istante.",
       "report_render_failed": "I dati sono stati letti ma il documento non è stato generato. Riprova; se il problema persiste, segnalacelo.",
+      "requested_by_non_scritto": "Il collegamento è stato creato in attesa, ma senza requested_by = professionista: l'app non lo mostrerebbe fra le richieste da accettare. Verificare che app-035 e sito-031 siano applicate, in quest'ordine.",
       "reset_failed": "Invio dell'email di ripristino non riuscito.",
       "same_email": "È già l'email dell'account.",
       "same_professional": "Il cliente è già di questo professionista.",

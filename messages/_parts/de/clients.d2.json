@@ -239,7 +239,7 @@
       "invited": "Einladung gesendet: der Klient erhält eine E-Mail zum Festlegen des Passworts, die Verbindung ist aktiv.",
       "link_pending": "Diese E-Mail hat bereits ein Stress-Index-Konto: die Verbindung wurde angelegt und wartet auf die Bestätigung des Klienten in der App. Bis zur Bestätigung sehen Sie keine Daten.",
       "already_linked_other": "Dieses Konto ist bereits mit einem anderen Fachanwender verbunden: es wurde nichts geändert.",
-      "already_linked_self": "Dieser Klient ist bereits mit Ihnen verbunden: es gab nichts zu tun.",
+      "already_linked_to_you": "Dieser Klient ist bereits mit Ihnen verbunden: es gab nichts zu tun.",
       "is_professional": "Diese E-Mail gehört zu einem Fachanwender-Konto: sie kann kein Klient werden. Es wurde nichts geändert.",
       "unknown": "Unbekanntes Ergebnis ({result}): bitte vor einem neuen Versuch das Protokoll prüfen."
     }

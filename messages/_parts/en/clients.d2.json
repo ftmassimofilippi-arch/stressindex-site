@@ -239,7 +239,7 @@
       "invited": "Invitation sent: the client gets an email to set their password, and the connection is active.",
       "link_pending": "This email already has a Stress Index account: the connection has been created and is waiting for the client to confirm it in the app. Until they confirm, you cannot see their data.",
       "already_linked_other": "This account is already connected to another professional: nothing was changed.",
-      "already_linked_self": "This client is already connected to you: there was nothing to do.",
+      "already_linked_to_you": "This client is already connected to you: there was nothing to do.",
       "is_professional": "This email belongs to a professional account: it cannot become a client. Nothing was changed.",
       "unknown": "Unrecognised outcome ({result}): check the log before trying again."
     }

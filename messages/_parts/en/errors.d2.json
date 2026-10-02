@@ -13,6 +13,7 @@
     "migration_031_missing": "A pending connection requires migration sito-031, which has not been applied yet. No connection was created: an active connection without the client's confirmation is never created.",
     "create_access_failed": "Could not create the access.",
     "email_exists_retry": "An account with this email was just created: try again to see the correct outcome.",
-    "links_unreadable": "This account's connections could not be read: please try again."
+    "links_unreadable": "This account's connections could not be read: please try again.",
+    "requested_by_non_scritto": "The connection was created as pending, but without requested_by = professional: the app would never show it among the requests to accept. Check that app-035 and sito-031 are applied, in that order."
   }
 }

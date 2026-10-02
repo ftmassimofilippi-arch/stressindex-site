@@ -13,6 +13,7 @@
     "migration_031_missing": "Eine ausstehende Verbindung erfordert die Migration sito-031, die noch nicht angewendet wurde. Es wurde keine Verbindung angelegt: eine aktive Verbindung ohne Bestätigung des Klienten wird nicht erstellt.",
     "create_access_failed": "Der Zugang konnte nicht angelegt werden.",
     "email_exists_retry": "Ein Konto mit dieser E-Mail wurde gerade erstellt: bitte erneut versuchen, um das richtige Ergebnis zu sehen.",
-    "links_unreadable": "Die Verbindungen dieses Kontos konnten nicht gelesen werden: bitte erneut versuchen."
+    "links_unreadable": "Die Verbindungen dieses Kontos konnten nicht gelesen werden: bitte erneut versuchen.",
+    "requested_by_non_scritto": "Die Verbindung wurde als ausstehend angelegt, aber ohne requested_by = Fachanwender: die App würde sie nie unter den zu bestätigenden Anfragen anzeigen. Prüfen, ob app-035 und sito-031 in dieser Reihenfolge angewendet sind."
   }
 }

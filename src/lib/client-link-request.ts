@@ -10,20 +10,17 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 // criteri: se cambia uno dei due, cambia l'altro. L'Edge Function è la via
 // dell'app Flutter, questo modulo è la via del sito.
 //
-// CONTRATTO — `result` vale sempre uno di:
+// CONTRATTO — sei valori, `result` vale sempre uno di:
 //
-//   invited               email nuova: invito inviato, collegamento attivo
-//   link_pending          account cliente esistente: collegamento creato, in
-//                         attesa che il cliente confermi dall'app
-//   already_linked_other  cliente già collegato a un altro professionista:
-//                         nessun cambiamento
-//   is_professional       email di un account professionista: nessun
-//                         cambiamento, nessun link nemmeno pending
-//   error                 errore imprevisto, con messaggio leggibile
-//
-//   already_linked_self   (fuori contratto, da confermare) già collegato a chi
-//                         chiama: non c'è niente da fare, e dirlo
-//                         `already_linked_other` sarebbe falso.
+//   invited                email nuova: invito inviato, collegamento attivo
+//   link_pending           account cliente esistente: collegamento creato, in
+//                          attesa che il cliente confermi dall'app
+//   already_linked_to_you  già collegato a chi chiama: niente da fare
+//   already_linked_other   cliente già collegato a un altro professionista:
+//                          nessun cambiamento
+//   is_professional        email di un account professionista: nessun
+//                          cambiamento, nessun link nemmeno pending
+//   error                  errore imprevisto, con messaggio leggibile
 //
 // Perché pending e non active: con un account che esiste già non c'è nessun
 // giro di posta che provi il consenso dell'intestatario. Le policy della 019
@@ -34,7 +31,7 @@ export type LinkRequestResult =
   | 'invited'
   | 'link_pending'
   | 'already_linked_other'
-  | 'already_linked_self'
+  | 'already_linked_to_you'
   | 'is_professional'
   | 'error'
 
@@ -47,6 +44,9 @@ export type LinkRequestOutcome = {
   clientUserId?: string | null
   clientId?: string | null
   linkStatus?: string | null
+  /** Chi ha chiesto il collegamento: l'app mostra Accetta/Rifiuta al cliente
+   *  quando vale `professional_id` (colonna di app-035). */
+  requestedBy?: string | null
   role?: string | null
   otherProfessionals?: string[]
   inviteSent?: boolean
@@ -118,7 +118,7 @@ export async function requestClientAccess(
     const vivi = (linkRows ?? []) as Array<{ professional_id: string; status: string }>
     const mio = vivi.find((l) => l.professional_id === opts.professionalId)
     if (mio) {
-      return { result: 'already_linked_self', clientUserId: esistente.id, linkStatus: mio.status }
+      return { result: 'already_linked_to_you', clientUserId: esistente.id, linkStatus: mio.status }
     }
     const altrui = vivi.filter((l) => l.professional_id !== opts.professionalId && l.status === 'active')
     if (altrui.length > 0) {
@@ -130,6 +130,11 @@ export async function requestClientAccess(
     }
 
     // ── 3. Cliente libero: collegamento IN ATTESA, mai active ────────────────
+    //
+    // `requested_by = professional_id` lo scrive la RPC, non questo codice: i
+    // collegamenti si scrivono da UNA sola strada, e un UPDATE diretto qui
+    // aprirebbe la seconda. È il valore a cui l'app aggancia Accetta/Rifiuta
+    // (client_respond_to_link, app-035).
     const { data: rpc, error: rpcErr } = await admin.rpc('request_client_link', {
       p_client_user_id: esistente.id,
       p_professional_id: opts.professionalId,
@@ -142,7 +147,7 @@ export async function requestClientAccess(
       return { result: 'error', code: 'migration_031_missing', clientUserId: esistente.id }
     }
     const res = (rpc ?? null) as
-      | { ok?: boolean; error?: string; client_id?: string; link_status?: string; merged?: string[] }
+      | { ok?: boolean; error?: string; client_id?: string; link_status?: string; requested_by?: string; merged?: string[] }
       | null
     if (rpcErr || !res?.ok) {
       return {
@@ -152,11 +157,24 @@ export async function requestClientAccess(
         clientUserId: esistente.id,
       }
     }
+    // Con una 031 vecchia (senza `requested_by`) il link resterebbe pending ma
+    // all'app non comparirebbe MAI fra le richieste da accettare: una
+    // richiesta persa in silenzio. Meglio dirlo che far aspettare il cliente.
+    if (res.requested_by !== opts.professionalId) {
+      return {
+        result: 'error',
+        code: 'requested_by_non_scritto',
+        detail: `requested_by = ${res.requested_by ?? 'null'}, atteso ${opts.professionalId}`,
+        clientUserId: esistente.id,
+        clientId: res.client_id ?? opts.clientId,
+      }
+    }
     return {
       result: 'link_pending',
       clientUserId: esistente.id,
       clientId: res.client_id ?? opts.clientId,
       linkStatus: res.link_status ?? 'pending',
+      requestedBy: res.requested_by,
       merged: res.merged ?? [],
     }
   }

@@ -13,6 +13,7 @@
     "migration_031_missing": "Il collegamento in attesa richiede la migration sito-031, non ancora applicata. Non è stato creato nessun collegamento: un collegamento attivo senza la conferma del cliente non si crea.",
     "create_access_failed": "Creazione dell'accesso non riuscita.",
     "email_exists_retry": "Un account con questa email è stato creato proprio ora: riprova per vedere l'esito corretto.",
-    "links_unreadable": "I collegamenti di questo account non sono leggibili: riprova."
+    "links_unreadable": "I collegamenti di questo account non sono leggibili: riprova.",
+    "requested_by_non_scritto": "Il collegamento è stato creato in attesa, ma senza requested_by = professionista: l'app non lo mostrerebbe fra le richieste da accettare. Verificare che app-035 e sito-031 siano applicate, in quest'ordine."
   }
 }

@@ -6,21 +6,19 @@
 // peggiore (l'email era di un'altra PROFESSIONISTA) collegava il suo account
 // come cliente, perché la 019 sul ruolo non-client si limita a un warning.
 //
-// CONTRATTO, identico nell'app e nel sito. `result` vale sempre uno di:
+// CONTRATTO, identico nell'app e nel sito. Sei valori, `result` vale sempre
+// uno di:
 //
-//   invited               email nuova: invito inviato, link attivo
-//   link_pending          account cliente esistente: collegamento creato, IN
-//                         ATTESA che il cliente confermi dall'app
-//   already_linked_other  cliente già collegato a un altro professionista:
-//                         nessun cambiamento
-//   is_professional       email di un account professionista: nessun
-//                         cambiamento, NESSUN link, nemmeno pending
-//   error                 errore imprevisto, con messaggio leggibile
-//
-//   already_linked_self   (fuori contratto, da confermare) il cliente è GIÀ
-//                         collegato a CHI sta chiamando: nulla da fare. Non
-//                         rientra in nessuno dei cinque senza mentire, e
-//                         `already_linked_other` direbbe il falso.
+//   invited                email nuova: invito inviato, link attivo
+//   link_pending           account cliente esistente: collegamento creato, IN
+//                          ATTESA che il cliente confermi dall'app
+//   already_linked_to_you  il cliente è GIÀ collegato a CHI sta chiamando:
+//                          nulla da fare
+//   already_linked_other   cliente già collegato a un altro professionista:
+//                          nessun cambiamento
+//   is_professional        email di un account professionista: nessun
+//                          cambiamento, NESSUN link, nemmeno pending
+//   error                  errore imprevisto, con messaggio leggibile
 //
 // PERCHÉ pending E NON active
 // Con un invito nuovo il consenso è la persona che clicca il link nell'email.
@@ -53,7 +51,7 @@ type Result =
   | 'invited'
   | 'link_pending'
   | 'already_linked_other'
-  | 'already_linked_self'
+  | 'already_linked_to_you'
   | 'is_professional'
   | 'error'
 
@@ -308,11 +306,11 @@ Deno.serve(async (req: Request) => {
     if (mio) {
       const log = await registra(admin, {
         professionalId, clientId: scheda, clientUserId: esistente.id,
-        result: 'already_linked_self',
+        result: 'already_linked_to_you',
         details: { email, link_status: mio.status },
       })
       return json({
-        ok: true, result: 'already_linked_self' satisfies Result,
+        ok: true, result: 'already_linked_to_you' satisfies Result,
         email, userId: esistente.id, linkStatus: mio.status,
         message: mio.status === 'active'
           ? 'Questo cliente è già collegato a te: nessun cambiamento.'
@@ -336,6 +334,12 @@ Deno.serve(async (req: Request) => {
     }
 
     // 3c. Cliente libero: collegamento IN ATTESA, mai active.
+    //
+    // `requested_by = professional_id` lo scrive la RPC, non questo codice: la
+    // tabella dei collegamenti si scrive da UNA sola strada
+    // (link_client_to_professional, incapsulata da request_client_link), e
+    // farlo qui con un UPDATE diretto aprirebbe la seconda. È il valore a cui
+    // l'app aggancia Accetta/Rifiuta (client_respond_to_link, app-035).
     const { data: rpc, error: rpcErr } = await admin.rpc('request_client_link', {
       p_client_user_id: esistente.id,
       p_professional_id: professionalId,
@@ -350,7 +354,7 @@ Deno.serve(async (req: Request) => {
         message: 'Il collegamento in attesa richiede la migration sito-031, non ancora applicata. Nessun cambiamento: un collegamento attivo senza conferma del cliente non viene creato.',
       }, 500)
     }
-    const res = (rpc ?? null) as { ok?: boolean; error?: string; client_id?: string; link_status?: string; merged?: string[] } | null
+    const res = (rpc ?? null) as { ok?: boolean; error?: string; client_id?: string; link_status?: string; requested_by?: string; merged?: string[] } | null
     if (rpcErr || !res?.ok) {
       const message = rpcErr?.message ?? res?.error ?? 'collegamento non riuscito'
       const log = await registra(admin, {
@@ -358,6 +362,24 @@ Deno.serve(async (req: Request) => {
         result: 'error', details: { email, rpc_error: message },
       })
       return json({ ok: false, result: 'error' satisfies Result, code: 'link_failed', message, rpc: res, logged: log.logged }, 500)
+    }
+
+    // Controllo esplicito, non cosmetico: con una 031 vecchia (senza
+    // `requested_by`) il link resterebbe pending ma all'app non comparirebbe
+    // MAI fra le richieste da accettare — una richiesta persa in silenzio,
+    // senza errori. Meglio dirlo subito che lasciare il cliente ad aspettare.
+    if (res.requested_by !== professionalId) {
+      const log = await registra(admin, {
+        professionalId, clientId: res.client_id ?? scheda, clientUserId: esistente.id,
+        result: 'error',
+        details: { email, requested_by: res.requested_by ?? null, atteso: professionalId, client_id: res.client_id },
+      })
+      return json({
+        ok: false, result: 'error' satisfies Result, code: 'requested_by_non_scritto',
+        message: 'Il collegamento è stato creato in attesa, ma senza requested_by = professionista: l\'app non lo mostrerebbe fra le richieste da accettare. Verificare che app-035 e sito-031 siano applicate, in quest\'ordine.',
+        requestedBy: res.requested_by ?? null, clientId: res.client_id,
+        logged: log.logged,
+      }, 500)
     }
 
     // Avviso al cliente: è lui che deve confermare, quindi deve saperlo.
@@ -377,7 +399,7 @@ Deno.serve(async (req: Request) => {
     const log = await registra(admin, {
       professionalId, clientId: res.client_id ?? scheda, clientUserId: esistente.id,
       result: 'link_pending',
-      details: { email, client_id: res.client_id, notice_sent: avviso.ok, notice_error: avviso.ok ? null : avviso.error, merged: res.merged ?? [] },
+      details: { email, client_id: res.client_id, requested_by: res.requested_by, notice_sent: avviso.ok, notice_error: avviso.ok ? null : avviso.error, merged: res.merged ?? [] },
     })
     return json({
       ok: true, result: 'link_pending' satisfies Result,

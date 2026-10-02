@@ -271,7 +271,19 @@ Stato verificato sul catalogo di produzione il 27/09/2026.
 | sito-028 `fix_cancellazione_utenti` | FK e registro compatibili con `deleteUser` | applicata |
 | sito-029 `measured_at_utc_dalla_sessione` | `measurement_analytics.measured_at_utc` riallineata a `sessions.started_at_utc` + trigger corretto | **da applicare** |
 | sito-030 `notifiche_lette` | `notification_reads`: data di lettura delle notifiche per singolo utente | **da applicare** |
-| sito-031 `collegamento_in_attesa` | RPC `request_client_link`: collegamento `pending` a un account app esistente, in attesa della conferma del cliente | **da applicare** |
+| sito-031 `collegamento_in_attesa` | RPC `request_client_link`: collegamento `pending` con `requested_by`, in attesa della conferma del cliente | **da applicare, DOPO `app-035`** |
+
+⚠️ **Ordine fra i due repo**: `app-035_conferma_collegamento_cliente.sql`
+(repo `hrv_app`) va applicata **prima** di `sito-031`. app-035 crea la colonna
+`requested_by` che la 031 scrive, e fa un backfill
+`requested_by = client_user_id` su tutte le righe dove è NULL: un link
+`pending` creato da un professionista prima di app-035 verrebbe backfillato
+come se l'avesse chiesto il cliente, e all'app non comparirebbe mai fra le
+richieste da accettare — una richiesta persa in silenzio. La 031 si rifiuta di
+applicarsi se la colonna non c'è. Nessun oggetto è creato dalle due
+migrazioni: app-035 fa `requested_by`, `idx_cpl_requested_by`,
+`client_respond_to_link`, `tg_cpl_client_cambia_solo_stato` e il suo trigger;
+la 031 solo `request_client_link`.
 
 La 022 non è nella tabella: è una riparazione rieseguibile, non una migrazione
 di schema. La versione corretta (quella con `pg_constraint` e `_align_ko`)
