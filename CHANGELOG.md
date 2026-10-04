@@ -29,8 +29,11 @@ Riferimento: `hrv_app/docs/audit/2026-10-04.md`, voci #7, #8, #13, #14, #18.
   Le due RPC delle sessioni remote, che ripiegavano su `[]` con un
   `console.error`, ora passano da `reportDataError`.
 - **`sito-034`**: EXECUTE su `link_client_to_professional_guarded` tolto a
-  PUBLIC e ad `anon`. Collaudata in locale (`scripts/sql-test/test_sito-034.sql`),
-  **da applicare a mano**. Il sito non chiama la guarded.
+  PUBLIC e ad `anon`. Collaudata in locale (`scripts/sql-test/test_sito-034.sql`)
+  e **applicata in produzione il 04/10**: una chiamata con la sola anon key, che
+  prima tornava 200 con `ok:false`, ora riceve 401 `permission denied for
+  function`. Corpo della funzione, link e schede invariati; e2e dell'app verde
+  dopo l'applicazione. Il sito non chiama la guarded.
 - **`/privacy`** in IT, EN e DE: prima era un 404 linkato dal footer e dal
   consenso della registrazione. Riprende l'informativa dell'app e aggiunge la
   rilevazione degli errori tecnici con Sentry (dati trattati, finalità, base

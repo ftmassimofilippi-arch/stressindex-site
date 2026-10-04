@@ -35,8 +35,6 @@ qui solo ciò che vive in questo repo. Creato il 04/10/2026 dal tagliando
   dentro `next` si aggiorna solo con `next`.
 - **`/api/guide-chat`** pubblica: allowlist `Origin`/`Referer` falsificabile e
   rate limit in memoria per istanza (si azzera a ogni cold start).
-- **`sito-034`** (EXECUTE sulla guarded tolto ad anon): scritta e collaudata in
-  locale il 04/10, **da applicare a mano**.
 
 ## Errori
 

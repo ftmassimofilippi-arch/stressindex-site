@@ -297,7 +297,7 @@ Stato verificato sul catalogo di produzione il 04/10/2026 (tagliando
 | sito-031 `collegamento_in_attesa` | RPC `request_client_link`: collegamento `pending` con `requested_by`, in attesa della conferma del cliente | applicata, dopo `app-035` (in produzione c'è `request_client_link`; il corpo che vale oggi è quello della `app-039`) |
 | sito-032 `vista_superadmin_sessioni_remote` | `puo_vedere_come_professionista` + le tre `*_as_professional`: le misurazioni remote si leggono per conto del professionista proprietario | applicata (02/10) |
 | sito-033 `stampa_sessioni_remote` | `puo_vedere_come_professionista` accetta anche la `service_role`, per la via "solo token" delle pagine di stampa | applicata (02/10) |
-| sito-034 `guarded_non_per_anon` | EXECUTE su `link_client_to_professional_guarded` tolto a PUBLIC e ad `anon`; resta ad `authenticated` e `service_role`. Collaudo: `scripts/sql-test/test_sito-034.sql` | **da applicare** |
+| sito-034 `guarded_non_per_anon` | EXECUTE su `link_client_to_professional_guarded` tolto a PUBLIC e ad `anon`; resta ad `authenticated` e `service_role`. Collaudo: `scripts/sql-test/test_sito-034.sql` | applicata (04/10): anon riceve `42501 permission denied`, e2e dell'app verde dopo |
 
 **Ordine fra i due repo** (storico: entrambe sono applicate):
 `app-035_conferma_collegamento_cliente.sql` (repo `hrv_app`) andava applicata
