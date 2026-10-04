@@ -1,0 +1,13 @@
+{
+  "api": {
+    "non_autorizzato": "Sie sind zu dieser Löschung nicht berechtigt.",
+    "superadmin_non_cancellabile": "Ein Superadmin-Konto kann hier nicht gelöscht werden.",
+    "scheda_inesistente": "Klientenkarte nicht gefunden.",
+    "storage_copy_missing": "Eine Aufzeichnungsdatei wurde nicht kopiert: Es wurde nichts geändert. Bitte erneut versuchen.",
+    "storage_copy_failed": "Das Kopieren der Aufzeichnungsdateien ist fehlgeschlagen: Es wurde nichts geändert. Bitte erneut versuchen.",
+    "residui": "Die abschließende Prüfung hat noch verknüpfte Daten gefunden: Es wurde nichts geändert. Schreiben Sie an hello@stressindex.io.",
+    "db_failed": "Datenbankfehler beim Löschen: Es wurde nichts geändert.",
+    "server_misconfigured": "Der Löschdienst ist nicht konfiguriert. Schreiben Sie an hello@stressindex.io.",
+    "unexpected": "Unerwarteter Fehler beim Löschen."
+  }
+}

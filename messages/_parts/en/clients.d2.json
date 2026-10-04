@@ -169,9 +169,10 @@
     "dangerBody": "Deleting the client also removes all linked measurements and notes. This cannot be undone.",
     "deleteClient": "Delete client",
     "deleteConfirmTitle": "Permanently delete this client?",
-    "deleteConfirmBody": "All linked measurements, notes and messages will be deleted.",
+    "deleteConfirmBody": "If the client has a Stress Index account, in-studio measurements are handed over to them and the link is closed. If not, the card, measurements, monitorings, notes and messages are permanently deleted.",
     "deleteConfirm": "Delete permanently",
-    "deleteTyped": "DELETE"
+    "deleteTyped": "DELETE",
+    "deleteError": "Deletion failed: {message}"
   },
   "access": {
     "title": "App access",

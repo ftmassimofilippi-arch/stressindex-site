@@ -103,7 +103,6 @@ export function UserSidePanel({
   const [busy, setBusy] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<null | 'delete' | 'role' | 'setpw'>(null)
   const [newPassword, setNewPassword] = useState('')
-  const [cascade, setCascade] = useState(false)
   const [emailOpen, setEmailOpen] = useState(false)
   const [sessions, setSessions] = useState<Array<{ id: string; measured_at: string | null; client_name: string; professional_name: string }> | null>(null)
   const [monitoring, setMonitoring] = useState<AdminMonitoringRow[] | null>(null)
@@ -194,7 +193,7 @@ export function UserSidePanel({
 
   async function deleteUser() {
     setBusy('delete')
-    const { ok, json } = await api('DELETE', `/api/admin/users/${user.id}${cascade ? '?cascadeClients=true' : ''}`)
+    const { ok, json } = await api('DELETE', `/api/admin/users/${user.id}`)
     setBusy(null); setConfirm(null)
     if (ok) { showToast({ kind: 'ok', text: ts('userDeleted') }); onChanged(); onClose() }
     else showToast({ kind: 'err', text: errorText(json, tErr, ts('deleteError')) })
@@ -474,12 +473,6 @@ export function UserSidePanel({
           <section className="px-6 py-5">
             <h4 className="text-[11px] font-semibold uppercase tracking-wider text-red-500 mb-2">{ts('dangerZone')}</h4>
             <p className="text-[12px] text-anthracite-lighter mb-3">{ts('dangerHelp')}</p>
-            {user.role === 'professional' && (
-              <label className="flex items-start gap-2 text-[12px] text-anthracite mb-3">
-                <input type="checkbox" className="mt-0.5" checked={cascade} onChange={(e) => setCascade(e.target.checked)} />
-                {ts('cascade', { count: user.clients_count })}
-              </label>
-            )}
             <button type="button" onClick={() => setConfirm('delete')} className="text-[13px] px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white inline-flex items-center gap-1.5">
               <Trash2 size={13} /> {ts('deleteUser')}
             </button>
@@ -573,7 +566,7 @@ export function UserSidePanel({
         onClose={() => setConfirm(null)}
         onConfirm={deleteUser}
         title={ts('deleteTitle')}
-        description={ts('deleteDescription', { name: user.full_name, cascade: cascade ? ts('deleteCascadeNote') : '' })}
+        description={ts('deleteDescription', { name: user.full_name })}
         confirmText={tc('delete')}
         destructive
         requireTypedConfirmation={user.email ?? ts('deleteTyped')}

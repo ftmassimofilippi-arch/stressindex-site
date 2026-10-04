@@ -169,9 +169,10 @@
     "dangerBody": "L'eliminazione del cliente rimuove anche tutte le misurazioni e note collegate. L'operazione è irreversibile.",
     "deleteClient": "Elimina cliente",
     "deleteConfirmTitle": "Eliminare definitivamente il cliente?",
-    "deleteConfirmBody": "Tutte le misurazioni, note e messaggi collegati saranno eliminati.",
+    "deleteConfirmBody": "Se il cliente ha un account Stress Index, le misurazioni fatte in studio passano a lui e il collegamento viene chiuso. Se non ha un account, scheda, misurazioni, monitoraggi, note e messaggi vengono eliminati definitivamente.",
     "deleteConfirm": "Elimina definitivamente",
-    "deleteTyped": "ELIMINA"
+    "deleteTyped": "ELIMINA",
+    "deleteError": "Eliminazione non riuscita: {message}"
   },
   "access": {
     "title": "Accesso all'app",

@@ -351,7 +351,9 @@ function NotificheTab({ preferences }: { preferences: NotificationPreferences | 
 
 function AccountTab() {
   const t = useTranslations('settings.account')
+  const tErr = useTranslations('errors.api')
   const router = useRouter()
+  const [deleteErr, setDeleteErr] = useState<string | null>(null)
   const [oldPw, setOldPw] = useState('')
   const [newPw, setNewPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
@@ -387,11 +389,29 @@ function AccountTab() {
     router.push('/area-professionisti/login')
   }
 
+  // Cancellazione GDPR (app-042): la Edge Function `delete-account` fa tutto in
+  // una transazione lato database e toglie i file dai bucket dopo il commit.
+  // Se fallisce, niente e' stato toccato: si mostra l'errore e si resta loggati.
   async function deleteAccount() {
-    // Eliminazione completa account richiede service_role, va fatta via Edge Function dedicata.
-    // Per ora effettuiamo solo signOut e mostriamo guidance.
-    alert(t('deleteNotice'))
-    await logout()
+    setDeleteErr(null)
+    const supabase = createClient()
+    const { data, error } = await supabase.functions.invoke('delete-account', { body: {} })
+    if (error || !(data as { ok?: boolean } | null)?.ok) {
+      let payload: Record<string, unknown> | null = (data as Record<string, unknown> | null) ?? null
+      // supabase-js mette il corpo della risposta non-2xx in error.context
+      if (!payload && error && 'context' in error) {
+        try { payload = await (error as { context: Response }).context.json() } catch { payload = null }
+      }
+      const code = typeof payload?.code === 'string' ? payload.code : ''
+      const message = code && tErr.has(code) ? tErr(code)
+        : typeof payload?.message === 'string' && payload.message ? payload.message
+        : error?.message ?? tErr('generic')
+      setDeleteErr(t('deleteError', { message }))
+      setDeleteOpen(false)
+      return
+    }
+    await supabase.auth.signOut()
+    router.push('/area-professionisti/login')
   }
 
   return (
@@ -436,6 +456,7 @@ function AccountTab() {
       <section className="card p-6 border-2 border-red-100 bg-red-50/30">
         <h2 className="font-serif text-lg text-red-700 mb-1">{t('dangerZone')}</h2>
         <p className="text-sm text-anthracite-lighter mb-3">{t('dangerHelp')}</p>
+        {deleteErr && <div className="px-3 py-2 mb-3 rounded-xl bg-red-50 text-red-700 text-sm">{deleteErr}</div>}
         <button type="button" onClick={() => setDeleteOpen(true)} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-red-500 hover:bg-red-600 text-white">
           <Trash2 size={15} /> {t('deleteAccount')}
         </button>

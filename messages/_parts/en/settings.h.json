@@ -87,12 +87,13 @@
     "manageSubscription": "Manage subscription",
     "logout": "Sign out",
     "dangerZone": "Danger zone",
-    "dangerHelp": "Deleting the account removes all associated data.",
+    "dangerHelp": "Deleting the account is permanent. In-studio measurements of clients who have a Stress Index account are handed over to them; cards without an account and everything else are deleted.",
     "deleteAccount": "Delete account",
-    "deleteNotice": "To permanently delete your account contact us at hello@stressindex.io. For now you will only be signed out.",
     "deleteTitle": "Permanently delete the account?",
-    "deleteDescription": "This cannot be undone.",
+    "deleteDescription": "In-studio measurements of clients with an account are handed over to them. Cards without an account, with their measurements, are deleted: if you want them to stay with the person, invite them to create an account first. This cannot be undone.",
     "deleteConfirm": "Delete",
-    "deleteTyped": "DELETE"
+    "deleteTyped": "DELETE",
+    "deleteError": "Deletion failed: {message}",
+    "deleteDone": "Account deleted."
   }
 }

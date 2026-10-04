@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { apiError } from '@/lib/api-error'
 import { requireSuperadmin } from '@/lib/admin-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { createClient } from '@/lib/supabase-server'
+import * as Sentry from '@sentry/nextjs'
 import { logAdminAction } from '@/lib/admin-audit'
 import { setPlanViaSubscription } from '@/lib/admin-commerciale'
 import { getRequestLocale, getTranslator } from '@/lib/i18n-server'
@@ -71,49 +73,33 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   return NextResponse.json({ ok: true })
 }
 
-// DELETE /api/admin/users/[id] — cancella l'utente in modo pulito.
-// Query/body: ?cascadeClients=true per cancellare anche i clienti del professionista
-// (e tutti i loro dati a cascata). Senza, i clienti restano (ma orfani).
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+// DELETE /api/admin/users/[id] — cancellazione GDPR di un utente (app-042).
+// Passa dalla Edge Function `delete-account` con la sessione del superadmin:
+// una transazione lato database (trasferimenti secondo la regola "le
+// misurazioni seguono la persona misurata", cancellazione, pseudonimizzazione,
+// verifica dei residui) e poi i file nei bucket. Niente passi a mano qui: se
+// fallisce, niente e' stato toccato e il motivo arriva come `code`.
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireSuperadmin()
   if (guard.error) return guard.error
   const userId = params.id
 
-  // Non permettere l'auto-cancellazione del superadmin loggato.
   if (userId === guard.user.id) {
     return apiError('cannot_delete_self', 400)
   }
 
-  const cascadeClients =
-    req.nextUrl.searchParams.get('cascadeClients') === 'true'
-  const admin = createAdminClient()
-
-  // Ruolo dell'utente (per decidere la cascata).
-  const { data: profile } = await admin.from('profiles').select('role').eq('id', userId).maybeSingle()
-  const role = (profile as { role?: string } | null)?.role ?? null
-
-  // Per un professionista: opzionalmente cancella i suoi clienti (cascata su
-  // sessions/measurement_analytics/notes/settings/alerts/messages via FK).
-  if (role === 'professional' && cascadeClients) {
-    const { data: clientRows } = await admin.from('clients').select('id').eq('professionista_id', userId)
-    const clientIds = (clientRows ?? []).map((c) => (c as { id: string }).id)
-    if (clientIds.length > 0) {
-      await admin.from('client_professional_links').delete().in('client_id', clientIds)
-      await admin.from('clients').delete().in('id', clientIds)
+  const supabase = await createClient()
+  const { data, error } = await supabase.functions.invoke('delete-account', { body: { user_id: userId } })
+  if (error || !(data as { ok?: boolean } | null)?.ok) {
+    let payload: Record<string, unknown> | null = (data as Record<string, unknown> | null) ?? null
+    if (!payload && error && 'context' in error) {
+      try { payload = await (error as { context: Response }).context.json() } catch { payload = null }
     }
+    const code = typeof payload?.code === 'string' ? payload.code : 'db_failed'
+    const message = typeof payload?.message === 'string' ? payload.message : error?.message ?? ''
+    Sentry.captureMessage(`delete-account via pannello fallita: ${code}`, { level: 'error', extra: { userId } })
+    return apiError(code, 500, { message })
   }
 
-  // Rimuovi i collegamenti in cui l'utente è il professionista o il cliente.
-  await admin.from('client_professional_links').delete().eq('professional_id', userId)
-  await admin.from('client_professional_links').delete().eq('client_user_id', userId)
-
-  // Rimuovi i profili (in caso non ci sia ON DELETE CASCADE da auth.users).
-  await admin.from('professional_profiles').delete().eq('id', userId)
-  await admin.from('profiles').delete().eq('id', userId)
-
-  // Infine cancella l'utente auth: rimuove ciò che ha FK ON DELETE CASCADE.
-  const { error } = await admin.auth.admin.deleteUser(userId)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, esito: (data as { esito?: unknown }).esito ?? null })
 }

@@ -87,12 +87,13 @@
     "manageSubscription": "Gestisci abbonamento",
     "logout": "Esci dall'account",
     "dangerZone": "Zona pericolosa",
-    "dangerHelp": "L'eliminazione dell'account rimuove tutti i dati associati.",
+    "dangerHelp": "L'eliminazione dell'account è definitiva. Le misurazioni fatte in studio sui clienti che hanno un account Stress Index passano a loro; le schede senza account e tutto il resto vengono cancellati.",
     "deleteAccount": "Elimina account",
-    "deleteNotice": "Per cancellare definitivamente l'account contattaci a hello@stressindex.io. Per ora effettuo solo il logout.",
     "deleteTitle": "Eliminare definitivamente l'account?",
-    "deleteDescription": "L'operazione è irreversibile.",
+    "deleteDescription": "Le misurazioni in studio sui clienti con un account passano a loro. Le schede senza account, con le loro misurazioni, vengono cancellate: se vuoi che restino alla persona, invitala a creare un account prima di procedere. L'operazione è irreversibile.",
     "deleteConfirm": "Elimina",
-    "deleteTyped": "ELIMINA"
+    "deleteTyped": "ELIMINA",
+    "deleteError": "Cancellazione non riuscita: {message}",
+    "deleteDone": "Account eliminato."
   }
 }

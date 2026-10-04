@@ -1,0 +1,13 @@
+{
+  "api": {
+    "non_autorizzato": "You are not allowed to perform this deletion.",
+    "superadmin_non_cancellabile": "A superadmin account cannot be deleted from here.",
+    "scheda_inesistente": "Client card not found.",
+    "storage_copy_missing": "A monitoring file was not copied: nothing was changed. Please retry.",
+    "storage_copy_failed": "Copying the monitoring files failed: nothing was changed. Please retry.",
+    "residui": "The final check found data still linked: nothing was changed. Write to hello@stressindex.io.",
+    "db_failed": "Database error during deletion: nothing was changed.",
+    "server_misconfigured": "The deletion service is not configured. Write to hello@stressindex.io.",
+    "unexpected": "Unexpected error during deletion."
+  }
+}

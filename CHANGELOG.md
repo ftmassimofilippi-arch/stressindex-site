@@ -3,6 +3,23 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## Non pubblicato — cancellazione GDPR via `delete-account` (2026-10-04)
+
+Dipende dalla `app-042` e dalla Edge Function `delete-account` v2 del repo
+dell'app, non ancora applicate: da pubblicare insieme a quelle.
+
+- **Impostazioni → Account → Elimina account**: chiama la Edge Function (prima
+  mostrava un avviso e faceva solo il logout). Errore tradotto per codice
+  (`errors.api.*`), si resta loggati se fallisce.
+- **Scheda cliente → Elimina**: chiama la Edge Function con `{ scheda }` al posto
+  del `delete` diretto su `clients`: ponte → le misurazioni in studio passano al
+  cliente e il link va a `revoked`; senza account → tutto cancellato, file
+  compresi. Testo del dialogo aggiornato nelle tre lingue.
+- **`DELETE /api/admin/users/[id]`**: passa dalla Edge Function con la sessione
+  del superadmin; via l'opzione `cascadeClients` (prometteva schede "orfane"
+  che la FK cancellava comunque) e la casella nel pannello.
+- Nuove chiavi `errors.api` per i codici della cancellazione (`errors.k.json`).
+
 ## 2026-10-04 — Sicurezza e affidabilità (tagliando del 04/10)
 
 Riferimento: `hrv_app/docs/audit/2026-10-04.md`, voci #7, #8, #13, #14, #18.

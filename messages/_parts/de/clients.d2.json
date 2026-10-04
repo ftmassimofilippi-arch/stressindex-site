@@ -169,9 +169,10 @@
     "dangerBody": "Das Löschen des Klienten entfernt auch alle verknüpften Messungen und Notizen. Der Vorgang kann nicht rückgängig gemacht werden.",
     "deleteClient": "Klient löschen",
     "deleteConfirmTitle": "Klient endgültig löschen?",
-    "deleteConfirmBody": "Alle verknüpften Messungen, Notizen und Nachrichten werden gelöscht.",
+    "deleteConfirmBody": "Hat der Klient ein Stress-Index-Konto, gehen die Messungen im Studio an ihn über und die Verknüpfung wird geschlossen. Andernfalls werden Karte, Messungen, Aufzeichnungen, Notizen und Nachrichten endgültig gelöscht.",
     "deleteConfirm": "Endgültig löschen",
-    "deleteTyped": "LÖSCHEN"
+    "deleteTyped": "LÖSCHEN",
+    "deleteError": "Löschen fehlgeschlagen: {message}"
   },
   "access": {
     "title": "App-Zugang",

@@ -58,6 +58,8 @@ export function ClientSettingsTab({ client, initialSettings, alertRules = [], pr
   const [saving, setSaving] = useState(false)
   const [savedMsg, setSavedMsg] = useState<string | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteErr, setDeleteErr] = useState<string | null>(null)
+  const tErr = useTranslations('errors.api')
 
   function addTag() {
     const tag = tagInput.trim()
@@ -92,9 +94,27 @@ export function ClientSettingsTab({ client, initialSettings, alertRules = [], pr
     }
   }
 
+  // Cancellazione della scheda (app-042): la Edge Function `delete-account`
+  // chiama `gdpr_cancella_scheda` in transazione (ponte: le misurazioni in
+  // studio passano al cliente e il link va a revoked; senza account: tutto
+  // cancellato) e poi toglie i file dai bucket. Un errore non lascia niente a meta'.
   async function deleteClient() {
+    setDeleteErr(null)
     const supabase = createClient()
-    await supabase.from('clients').delete().eq('id', client.id)
+    const { data, error } = await supabase.functions.invoke('delete-account', { body: { scheda: client.id } })
+    if (error || !(data as { ok?: boolean } | null)?.ok) {
+      let payload: Record<string, unknown> | null = (data as Record<string, unknown> | null) ?? null
+      if (!payload && error && 'context' in error) {
+        try { payload = await (error as { context: Response }).context.json() } catch { payload = null }
+      }
+      const code = typeof payload?.code === 'string' ? payload.code : ''
+      const message = code && tErr.has(code) ? tErr(code)
+        : typeof payload?.message === 'string' && payload.message ? payload.message
+        : error?.message ?? tErr('generic')
+      setDeleteErr(t('deleteError', { message }))
+      setDeleteOpen(false)
+      return
+    }
     router.push('/area-professionisti/clienti')
   }
 
@@ -230,6 +250,7 @@ export function ClientSettingsTab({ client, initialSettings, alertRules = [], pr
       <section className="card p-6 border-2 border-red-100 bg-red-50/30">
         <h3 className="font-serif text-lg text-red-700 mb-1">{t('dangerTitle')}</h3>
         <p className="text-sm text-anthracite-lighter mb-4">{t('dangerBody')}</p>
+        {deleteErr && <div className="px-3 py-2 mb-3 rounded-xl bg-red-50 text-red-700 text-sm">{deleteErr}</div>}
         <button type="button" onClick={() => setDeleteOpen(true)} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-red-500 hover:bg-red-600 text-white transition-colors">
           <Trash2 size={15} /> {t('deleteClient')}
         </button>

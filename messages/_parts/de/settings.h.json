@@ -87,12 +87,13 @@
     "manageSubscription": "Abonnement verwalten",
     "logout": "Abmelden",
     "dangerZone": "Gefahrenzone",
-    "dangerHelp": "Das Löschen des Kontos entfernt alle zugehörigen Daten.",
+    "dangerHelp": "Das Löschen des Kontos ist endgültig. Messungen im Studio an Klienten mit einem Stress-Index-Konto gehen an diese über; Karten ohne Konto und alles Übrige werden gelöscht.",
     "deleteAccount": "Konto löschen",
-    "deleteNotice": "Um Ihr Konto endgültig zu löschen, schreiben Sie uns an hello@stressindex.io. Vorerst werden Sie nur abgemeldet.",
     "deleteTitle": "Konto endgültig löschen?",
-    "deleteDescription": "Der Vorgang ist unwiderruflich.",
+    "deleteDescription": "Messungen im Studio an Klienten mit Konto gehen an diese über. Karten ohne Konto werden mit ihren Messungen gelöscht: Sollen sie bei der Person bleiben, laden Sie sie vorher ein, ein Konto zu erstellen. Der Vorgang ist unwiderruflich.",
     "deleteConfirm": "Löschen",
-    "deleteTyped": "LÖSCHEN"
+    "deleteTyped": "LÖSCHEN",
+    "deleteError": "Löschen fehlgeschlagen: {message}",
+    "deleteDone": "Konto gelöscht."
   }
 }

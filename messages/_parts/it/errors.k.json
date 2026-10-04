@@ -1,0 +1,13 @@
+{
+  "api": {
+    "non_autorizzato": "Non sei autorizzato a questa cancellazione.",
+    "superadmin_non_cancellabile": "Un account superadmin non si può cancellare da qui.",
+    "scheda_inesistente": "Scheda cliente non trovata.",
+    "storage_copy_missing": "Un file dei monitoraggi non è stato copiato: nessun dato è stato toccato. Riprova.",
+    "storage_copy_failed": "Copia dei file dei monitoraggi non riuscita: nessun dato è stato toccato. Riprova.",
+    "residui": "La verifica finale ha trovato dati ancora collegati: nessun dato è stato toccato. Scrivi a hello@stressindex.io.",
+    "db_failed": "Errore del database durante la cancellazione: nessun dato è stato toccato.",
+    "server_misconfigured": "Servizio di cancellazione non configurato. Scrivi a hello@stressindex.io.",
+    "unexpected": "Errore imprevisto durante la cancellazione."
+  }
+}

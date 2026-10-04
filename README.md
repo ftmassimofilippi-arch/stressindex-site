@@ -225,6 +225,15 @@ derivata dalla service role), `CHROME_PATH` (facoltativa in locale).
 Deploy: `supabase functions deploy <nome> --project-ref ivwmjwukpeldbqkxgvvf
 --no-verify-jwt` (le due di notifica). Dettagli in `docs/NOTIFICHE.md`.
 
+Il sito usa anche `delete-account`, che vive nel repo dell'app
+(`hrv_app/supabase/functions/delete-account`): cancellazione GDPR dell'account
+(Impostazioni → Account), di una scheda cliente (scheda → Impostazioni →
+Elimina) e di un utente dal pannello superadmin (`DELETE /api/admin/users/[id]`).
+Richiede la `app-042` applicata e la function v2 deployata con il secret
+`SENTRY_DSN`; fino ad allora le tre azioni rispondono con un errore e non
+cancellano niente (prima: logout con un avviso, `delete` diretto su `clients`,
+passi a mano nella route).
+
 ## Data e ora delle misurazioni
 
 Regola unica in `src/lib/measured-time.ts` (modulo senza dipendenze, coperto da
