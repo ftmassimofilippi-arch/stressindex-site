@@ -1,7 +1,9 @@
 import type { PostgrestError } from '@supabase/supabase-js'
+import * as Sentry from '@sentry/nextjs'
 import { createClient } from './supabase-server'
 import { conClientIdDalPonte, ponteClienti } from './client-bridge'
 import { selectWithMissingColumnFallback } from './safe-select'
+import { dataLoadError, reportDataError } from './data-error'
 import {
   conIstanteSessione,
   giornoItaFa,
@@ -33,6 +35,8 @@ import type {
 export async function getCurrentUser() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  // Sentry: solo l'uuid, mai l'email.
+  if (user) Sentry.setUser({ id: user.id })
   return user
 }
 
@@ -131,7 +135,7 @@ async function fetchRemoteSessionsForClient(
         p_client_id: clientId,
       })
   if (error) {
-    console.error('[fetchRemoteSessionsForClient] rpc error', { clientId, professionistaId, error })
+    reportDataError('fetchRemoteSessionsForClient', error)
     return []
   }
   // La RPC ritorna righe `sessions` complete; client_id è null per definizione:
@@ -329,24 +333,43 @@ function sessionToMeasurementAnalytics(s: SessionRow): MeasurementAnalytics {
 // Carica la singola misurazione. Preferisce measurement_analytics (con score),
 // altrimenti sintetizza da sessions.hrv_data come fallback. In entrambi i casi
 // fa join con sessions per notes_professionista / indicazioni.
-export async function getMeasurementBySessionId(sessionId: string, clientId?: string): Promise<MeasurementWithSession | null> {
+//
+// `professionistaId` come in `listMeasurementsForClient`: va passato nella vista
+// "come un altro professionista" (`?professionista=`, già validato da
+// `resolveViewingProfessional`). Senza, il ripiego remoto chiedeva le sessioni
+// per conto di chi guarda: un owner/admin di organizzazione non ha nessun
+// collegamento con il cliente del suo membro, la RPC tornava 0 righe e la
+// misurazione che in lista si vedeva, aperta, dava "non trovata".
+export async function getMeasurementBySessionId(
+  sessionId: string,
+  clientId?: string,
+  opts?: { professionistaId?: string },
+): Promise<MeasurementWithSession | null> {
   const supabase = await createClient()
-  const { data: ma } = await supabase
+  const { data: ma, error: maErr } = await supabase
     .from('measurement_analytics')
     .select('*')
     .eq('session_id', sessionId)
     .maybeSingle()
-  let { data: s } = await supabase
+  const sessione = await supabase
     .from('sessions')
     .select('*')
     .eq('id', sessionId)
     .maybeSingle()
+  let s = sessione.data
+  // Un errore qui non è "misurazione non trovata": se si prosegue con una sola
+  // delle due righe l'errore resta tracciato, se mancano entrambe si dice.
+  if (maErr) reportDataError('getMeasurementBySessionId.analytics', maErr)
+  if (sessione.error) reportDataError('getMeasurementBySessionId.sessions', sessione.error)
   // Fallback sessioni remote: la RLS nasconde al professionista le sessioni
   // auto-misurate dal cliente (client_id null). Se la lettura diretta non trova
   // nulla e conosciamo il cliente, recuperiamo la riga via RPC SECURITY DEFINER.
   if (!ma && !s && clientId) {
-    const remote = await fetchRemoteSessionsForClient(supabase, clientId)
+    const remote = await fetchRemoteSessionsForClient(supabase, clientId, opts?.professionistaId)
     s = remote.find((r) => r.id === sessionId) ?? null
+  }
+  if (!ma && !s && (maErr || sessione.error)) {
+    throw dataLoadError('getMeasurementBySessionId', maErr ?? sessione.error)
   }
   if (!ma && !s) return null
   const base = ma
@@ -649,7 +672,7 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
 
   // Resiliente alle colonne mancanti: già successo con lf_nu_ls/hf_nu_ls, che
   // facevano fallire tutto il grafico di andamento invece di una sola metrica.
-  const { data } = await selectWithMissingColumnFallback<Row>(
+  const { data, error } = await selectWithMissingColumnFallback<Row>(
     ['session_id', 'measured_at', 'measured_at_utc', ...TREND_COLUMNS],
     (cols) =>
       supabase
@@ -662,6 +685,8 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
       }>,
     { label: 'measurement_analytics (trend)', required: ['measured_at'] },
   )
+  // Un grafico vuoto direbbe "nessuna misurazione": non è la stessa cosa.
+  if (error) throw dataLoadError('aggregatedDailyAverages', error)
   const righe = await conIstantiDiSessione(supabase, (data ?? []) as unknown as Row[])
   const buckets = new Map<string, Map<TrendColumn, number[]>>()
   for (const row of righe) {
@@ -1052,6 +1077,7 @@ export async function getCurrentProfileFlags(): Promise<{ userId: string | null;
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { userId: null, isSuperadmin: false }
+  Sentry.setUser({ id: user.id })
   const { data, error } = await supabase
     .from('profiles')
     .select('is_superadmin')

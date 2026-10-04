@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { createClient } from './supabase-server'
@@ -83,6 +84,7 @@ export async function requireProfessional(req?: Request | null): Promise<Profess
   if (!user) {
     return { error: NextResponse.json({ error: 'unauthorized' }, { status: 401 }), user: null, isSuperadmin: false }
   }
+  Sentry.setUser({ id: user.id })
   const { data, error } = await supabase
     .from('profiles')
     .select('role, is_superadmin')

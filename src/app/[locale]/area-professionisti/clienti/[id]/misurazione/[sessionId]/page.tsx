@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { DownloadMeasurementPdfButton } from '@/components/dashboard/DownloadMeasurementPdfButton'
 import { GaugeScore } from '@/components/dashboard/GaugeScore'
-import { getClient, getMeasurementBySessionId, getProfessionalProfile } from '@/lib/dashboard-data'
+import { getClient, getMeasurementBySessionId, getProfessionalProfile, resolveViewingProfessional } from '@/lib/dashboard-data'
 import { fullName, formatMeasuredAt, num, toNum } from '@/lib/format'
 import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
 import { normalizeTestType, isLongMeasurement, formatDurationHuman } from '@/lib/measurement-type'
@@ -34,8 +34,11 @@ export default async function SessionDetailPage({
   const t = await getTranslations('measurement.detail')
   const tScores = await getTranslations('scores.names')
 
+  // Vista "come un altro professionista": il ripiego sulle misurazioni remote
+  // va chiesto per conto del proprietario della scheda, come nella scheda cliente.
+  const { viewing } = await resolveViewingProfessional(searchParams?.professionista)
   const [measurement, client, professional] = await Promise.all([
-    getMeasurementBySessionId(params.sessionId, params.id),
+    getMeasurementBySessionId(params.sessionId, params.id, { professionistaId: viewing?.user_id }),
     getClient(params.id),
     getProfessionalProfile(),
   ])

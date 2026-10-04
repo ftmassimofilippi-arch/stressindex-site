@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import type { PostgrestError } from '@supabase/supabase-js'
 import { getTranslations } from 'next-intl/server'
 import { getMyAccountAccess, hasModule } from './account-access'
 import { createClient } from './supabase-server'
@@ -6,6 +7,7 @@ import { resolveViewingProfessional, type ViewingProfessional } from './dashboar
 import { SPORT_LIVE_COLUMNS, type AthleteMeta, type SportLiveRow } from './sport-live'
 import { giornoItaFa, inizioGiornoItaFa, measuredDayKey, measuredInstant, type ConIstante } from './format'
 import { selectWithMissingColumnFallback } from './safe-select'
+import { dataLoadError } from './data-error'
 import { parseHrZones, parseThresholdTest, type AthleteThresholds, type ThresholdTestRecord } from './threshold-types'
 
 // ============================================================================
@@ -385,11 +387,12 @@ const THRESHOLD_SESSION_COLUMNS = ['id', 'threshold_test'] as const
  *  (o la colonna non esiste ancora). */
 export async function getThresholdTest(sessionId: string): Promise<ThresholdTestRecord | null> {
   const supabase = await createClient()
-  const { data } = await selectWithMissingColumnFallback<{ id: string; threshold_test?: unknown }>(
+  const { data, error } = await selectWithMissingColumnFallback<{ id: string; threshold_test?: unknown }>(
     THRESHOLD_SESSION_COLUMNS,
-    (cols) => supabase.from('sport_sessions').select(cols).eq('id', sessionId) as unknown as PromiseLike<{ data: Array<{ id: string; threshold_test?: unknown }> | null; error: null }>,
+    (cols) => supabase.from('sport_sessions').select(cols).eq('id', sessionId) as unknown as PromiseLike<{ data: Array<{ id: string; threshold_test?: unknown }> | null; error: PostgrestError | null }>,
     { label: 'sport_sessions.threshold_test', required: ['id'] },
   )
+  if (error) throw dataLoadError('getThresholdTest', error)
   const row = data?.[0]
   return row ? parseThresholdTest(row.threshold_test) : null
 }
@@ -403,7 +406,7 @@ export interface ThresholdTestSummary {
 export async function listThresholdTests(athleteId: string, limit = 50): Promise<ThresholdTestSummary[]> {
   const supabase = await createClient()
   const cols = [...SESSION_COLUMNS.split(',').map((c) => c.trim()), 'threshold_test'] as const
-  const { data } = await selectWithMissingColumnFallback<SportSessionRow & { threshold_test?: unknown }>(
+  const { data, error } = await selectWithMissingColumnFallback<SportSessionRow & { threshold_test?: unknown }>(
     cols,
     (c) =>
       supabase
@@ -412,9 +415,10 @@ export async function listThresholdTests(athleteId: string, limit = 50): Promise
         .eq('athlete_id', athleteId)
         .eq('test_type', 'threshold_test')
         .order('start_time_utc', { ascending: false, nullsFirst: false })
-        .limit(limit) as unknown as PromiseLike<{ data: Array<SportSessionRow & { threshold_test?: unknown }> | null; error: null }>,
+        .limit(limit) as unknown as PromiseLike<{ data: Array<SportSessionRow & { threshold_test?: unknown }> | null; error: PostgrestError | null }>,
     { label: 'sport_sessions threshold tests', required: ['id'] },
   )
+  if (error) throw dataLoadError('listThresholdTests', error)
   const out: ThresholdTestSummary[] = []
   for (const r of data ?? []) {
     const record = parseThresholdTest(r.threshold_test)
@@ -442,11 +446,12 @@ const ATHLETE_THRESHOLD_COLUMNS = [
  *  colonne non esistono ancora). */
 export async function getAthleteThresholds(athleteId: string): Promise<AthleteThresholds | null> {
   const supabase = await createClient()
-  const { data } = await selectWithMissingColumnFallback<Record<string, unknown>>(
+  const { data, error } = await selectWithMissingColumnFallback<Record<string, unknown>>(
     ATHLETE_THRESHOLD_COLUMNS,
-    (cols) => supabase.from('clients').select(cols).eq('id', athleteId) as unknown as PromiseLike<{ data: Record<string, unknown>[] | null; error: null }>,
+    (cols) => supabase.from('clients').select(cols).eq('id', athleteId) as unknown as PromiseLike<{ data: Record<string, unknown>[] | null; error: PostgrestError | null }>,
     { label: 'clients thresholds', required: ['id'] },
   )
+  if (error) throw dataLoadError('getAthleteThresholds', error)
   const r = data?.[0]
   if (!r) return null
   const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : typeof v === 'string' && v.trim() && Number.isFinite(Number(v)) ? Number(v) : null)

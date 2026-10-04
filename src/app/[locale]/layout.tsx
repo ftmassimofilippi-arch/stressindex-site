@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { routing, type Locale } from '@/i18n/routing'
 import { SITE_URL, alternatesFor, OG_IMAGE } from '@/lib/seo'
 import { ogLocale } from '@/i18n/routing'
+import { SentryUser } from '@/components/SentryUser'
 import '@/styles/globals.css'
 
 const dmSans = DM_Sans({
@@ -106,6 +107,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={`${dmSans.variable} ${dmSerif.variable} ${dmMono.variable}`}>
       <body className="font-sans antialiased">
+        <SentryUser />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}

@@ -1,0 +1,6 @@
+{
+  "dataLoad": {
+    "title": "We couldn't load this data",
+    "body": "The data is there, but reading it failed. The error has been logged: reload the page in a moment. If it keeps happening, write to support@stressindex.io."
+  }
+}

@@ -1,5 +1,6 @@
 import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js'
 import { selectWithMissingColumnFallback } from '@/lib/safe-select'
+import { dataLoadError, reportDataError } from '@/lib/data-error'
 import { conIstanteSessione, intervalloGiorniIta, measuredInstant, toStr } from '@/lib/format'
 import type { Client, MeasurementAnalytics, ProfessionalProfile } from '@/lib/types'
 
@@ -169,7 +170,7 @@ async function remoteSessions(supabase: SupabaseClient, clientId: string, profes
     p_client_id: clientId,
   })
   if (error) {
-    console.error('[report-data] remote sessions rpc error', { clientId, professionistaId, error })
+    reportDataError('report-data.remoteSessions', error)
     return []
   }
   return ((data ?? []) as SessionRow[]).map((s) => ({ ...s, client_id: s.client_id ?? clientId }))
@@ -189,8 +190,12 @@ export async function loadOwnerProfile(supabase: SupabaseClient, ownerId: string
 
 /** Misurazione per sessionId: measurement_analytics se c'è, altrimenti la riga di sessions (anche remota). */
 export async function loadMeasurementForPrint(supabase: SupabaseClient, sessionId: string, clientId?: string | null): Promise<MeasurementWithNotes | null> {
-  const { data: ma } = await supabase.from('measurement_analytics').select('*').eq('session_id', sessionId).maybeSingle<MeasurementAnalytics>()
-  const { data: rows } = await selectSessions(supabase, (q, cols) => q.select(cols).eq('id', sessionId).limit(1) as never, 'sessions (stampa misurazione)')
+  const { data: ma, error: maErr } = await supabase.from('measurement_analytics').select('*').eq('session_id', sessionId).maybeSingle<MeasurementAnalytics>()
+  const { data: rows, error: sErr } = await selectSessions(supabase, (q, cols) => q.select(cols).eq('id', sessionId).limit(1) as never, 'sessions (stampa misurazione)')
+  // Una stampa non si consegna con un buco: senza la riga di `sessions`
+  // mancherebbero note e indicazioni, senza quella di analytics gli score.
+  if (maErr) throw dataLoadError('loadMeasurementForPrint.analytics', maErr)
+  if (sErr) throw dataLoadError('loadMeasurementForPrint.sessions', sErr)
   let s: SessionRow | null = rows?.[0] ?? null
   if (!ma && !s && clientId) {
     // Ripiego raro: chi arriva qui (titolare, superadmin, service_role) legge
@@ -252,7 +257,7 @@ export async function loadPreviousMeasurement(
 ): Promise<MeasurementAnalytics | null> {
   const beforeMs = new Date(beforeIso).getTime()
 
-  const [{ data: direct }, remote] = await Promise.all([
+  const [{ data: direct, error: directErr }, remote] = await Promise.all([
     selectSessions(
       supabase,
       (q, cols) =>
@@ -265,6 +270,9 @@ export async function loadPreviousMeasurement(
     ),
     remoteSessions(supabase, clientId, professionistaId),
   ])
+  // Senza la precedente i delta della stampa sparirebbero come se non ci fosse
+  // mai stata un'altra misurazione.
+  if (directErr) throw dataLoadError('loadPreviousMeasurement', directErr)
 
   const seen = new Set(((direct ?? []) as SessionRow[]).map((s) => s.id))
   const prev = [

@@ -34,6 +34,26 @@ npm run build && npm run lint && npm test
 | `SUPABASE_SERVICE_ROLE_KEY` | solo server: `/api/admin/*`, `/api/clienti*`, ponte monitoraggi; mai `NEXT_PUBLIC_` |
 | `ANTHROPIC_API_KEY` | solo server: `/api/guide-chat` |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | `src/lib/mailer.ts` (avvisi al cliente) e Edge Function delle notifiche |
+| `NEXT_PUBLIC_SENTRY_DSN` | Sentry, browser e server. Solo su Vercel, ambiente **Production**: senza, l'SDK resta spento (locale, anteprime) |
+| `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | facoltative, solo build su Vercel: caricano le source map (stack del browser leggibili) |
+
+### Errori (Sentry)
+
+`@sentry/nextjs` su browser, server Node e middleware: `src/instrumentation.ts`,
+`src/instrumentation-client.ts`, `src/sentry.{server,edge}.config.ts`, opzioni
+comuni in `src/lib/sentry-options.ts`.
+
+- **Release = commit** (`VERCEL_GIT_COMMIT_SHA`), **environment = `VERCEL_ENV`**
+  (`production` in produzione), fissati alla build da `next.config.js`.
+- **Utente = solo uuid.** `sendDefaultPii: false`; `beforeSend` toglie tutto
+  dell'utente tranne `id`, la query string dagli URL (porta il token delle
+  stampe) e le email dai testi. Mai nomi, email, valori di misurazione.
+- Solo errori: niente tracce di prestazione, niente replay.
+- **Nessun errore muto** (`src/lib/data-error.ts`): una lettura che fallisce
+  chiama `reportDataError` (il ripiego resta) o lancia `dataLoadError` (la
+  pagina mostra `DataLoadNotice` al posto della sezione, la stampa si ferma).
+  Mai una lista vuota al posto di un errore. Cosa resta da fare è in
+  `docs/debiti-tecnici.md`.
 
 Secret delle Edge Function (`supabase secrets set`): `NOTIFY_SECRET`,
 `SITE_URL`, le `SMTP_*`; `SUPABASE_URL`, `SUPABASE_ANON_KEY` e
@@ -65,6 +85,7 @@ Convenzioni in `docs/i18n-convenzioni.md`, glossario dall'app in
 
 ### Pubbliche
 `/` home, `/funzionalita`, `/sport` (landing Piano Pro), `/supporto`,
+`/privacy` (informativa di app e sito, testi in `privacy.a.json`),
 `/guide` (guide + assistente Claude via `/api/guide-chat`), `/registrazione`
 (+ `/conferma`, trial 60 giorni), `/imposta-password` (atterraggio dei link
 Supabase, fuori dal middleware), `robots`, `sitemap`, immagine OpenGraph.
@@ -220,7 +241,8 @@ lingua. In sintesi:
   / `intervalloGiorniIta`, mai con la mezzanotte UTC.
 - Quando una query unisce `sessions` e `measurement_analytics` si passa da
   `conIstanteSessione()`: `started_at_utc` è corretta su tutte le righe,
-  `measured_at_utc` no finché non viene applicata la 029.
+  `measured_at_utc` è stata riallineata dalla `sito-029` (applicata), ma la
+  regola resta: l'istante si legge dalla sessione.
 - `monitoring_sessions` e `night_metrics` sono fuori da questa regola: la prima
   ha `start_time` già in UTC vero (si mostra con `wallDate` di
   `monitoring-format.ts`), la seconda usa `date` e `time without time zone`.
@@ -235,7 +257,8 @@ del sito") continua a valere. L'app usa `app-NNN_`; i suoi file più vecchi hann
 un nome descrittivo senza numero e restano così. La regola completa è in
 `CLAUDE.md`, sezione "Migrazioni: nomi fra i due repo".
 
-Stato verificato sul catalogo di produzione il 27/09/2026.
+Stato verificato sul catalogo di produzione il 04/10/2026 (tagliando
+`hrv_app/docs/audit/2026-10-04.md` §3.1 e controllo diretto degli oggetti).
 
 | File | Scopo | Stato |
 |---|---|---|
@@ -261,7 +284,7 @@ Stato verificato sul catalogo di produzione il 27/09/2026.
 | sito-019 `collegamenti_flusso_unico` | `link_client_to_professional` | applicata (13/09) |
 | sito-020 `collegamenti_salute` | vista salute, cron settimanale | applicata |
 | sito-021 `collegamenti_backup` | backup `_20260913` | applicata |
-| sito-022 `collegamenti_riparazione` | riparazione blocchi A–I | applicata; **indice `uq_client_professional_active` mancante** |
+| sito-022 `collegamenti_riparazione` | riparazione blocchi A–I | applicata; l'indice `uq_client_professional_active` l'ha creato la `app-041` (04/10) |
 | sito-023 `collegamenti_esclusioni` | "non unire" verificati | applicata (27/09) |
 | sito-024 `commerciale_account` | stato, abbonamenti, moduli, `has_module_access` | applicata (27/09) |
 | sito-024b `stato_attivo_e_sonno` | tutti attivi, `sleep` in pro e prova | applicata |
@@ -269,14 +292,16 @@ Stato verificato sul catalogo di produzione il 27/09/2026.
 | sito-026 `notifiche_cron` | cron notifiche (segreto sostituito a mano) | applicata |
 | sito-027 `accesso_cliente` | registro accessi, `must_change_password` | applicata |
 | sito-028 `fix_cancellazione_utenti` | FK e registro compatibili con `deleteUser` | applicata |
-| sito-029 `measured_at_utc_dalla_sessione` | `measurement_analytics.measured_at_utc` riallineata a `sessions.started_at_utc` + trigger corretto | **da applicare** |
-| sito-030 `notifiche_lette` | `notification_reads`: data di lettura delle notifiche per singolo utente | **da applicare** |
-| sito-031 `collegamento_in_attesa` | RPC `request_client_link`: collegamento `pending` con `requested_by`, in attesa della conferma del cliente | **da applicare, DOPO `app-035`** |
+| sito-029 `measured_at_utc_dalla_sessione` | `measurement_analytics.measured_at_utc` riallineata a `sessions.started_at_utc` + trigger corretto | applicata (in produzione c'è `set_measured_at_utc()`) |
+| sito-030 `notifiche_lette` | `notification_reads`: data di lettura delle notifiche per singolo utente | applicata (in produzione c'è `notification_reads`) |
+| sito-031 `collegamento_in_attesa` | RPC `request_client_link`: collegamento `pending` con `requested_by`, in attesa della conferma del cliente | applicata, dopo `app-035` (in produzione c'è `request_client_link`; il corpo che vale oggi è quello della `app-039`) |
 | sito-032 `vista_superadmin_sessioni_remote` | `puo_vedere_come_professionista` + le tre `*_as_professional`: le misurazioni remote si leggono per conto del professionista proprietario | applicata (02/10) |
 | sito-033 `stampa_sessioni_remote` | `puo_vedere_come_professionista` accetta anche la `service_role`, per la via "solo token" delle pagine di stampa | applicata (02/10) |
+| sito-034 `guarded_non_per_anon` | EXECUTE su `link_client_to_professional_guarded` tolto a PUBLIC e ad `anon`; resta ad `authenticated` e `service_role`. Collaudo: `scripts/sql-test/test_sito-034.sql` | **da applicare** |
 
-⚠️ **Ordine fra i due repo**: `app-035_conferma_collegamento_cliente.sql`
-(repo `hrv_app`) va applicata **prima** di `sito-031`. app-035 crea la colonna
+**Ordine fra i due repo** (storico: entrambe sono applicate):
+`app-035_conferma_collegamento_cliente.sql` (repo `hrv_app`) andava applicata
+**prima** di `sito-031`. app-035 crea la colonna
 `requested_by` che la 031 scrive, e fa un backfill
 `requested_by = client_user_id` su tutte le righe dove è NULL: un link
 `pending` creato da un professionista prima di app-035 verrebbe backfillato
@@ -291,8 +316,9 @@ La 022 non è nella tabella: è una riparazione rieseguibile, non una migrazione
 di schema. La versione corretta (quella con `pg_constraint` e `_align_ko`)
 **non è mai stata eseguita in produzione**: la tabella
 `collegamenti_riparazione_c_dettaglio`, che quella versione crea, là non
-esiste. In produzione il log ha tre run, l'ultimo del 13/09, e
-`uq_client_professional_active` non è ancora stato creato. Il dettaglio
+esiste. In produzione il log ha tre run, l'ultimo del 13/09;
+`uq_client_professional_active` è stato creato il 04/10 dalla `app-041`, dopo
+la revoca dei link doppi. Il dettaglio
 coppia-per-coppia del blocco C si legge con `sito-022_dettaglio_c.sql`, da
 lanciare subito dopo l'anteprima.
 
@@ -303,7 +329,8 @@ nel contesto dell'app, `docs/STRESS_INDEX_CONTEXT_v4.md` §12.
 `CLAUDE.md` (regole per le sessioni), `CHANGELOG.md`, `docs/COMMERCIALE.md`
 (024 e lavoro da fare nell'app), `docs/NOTIFICHE.md`,
 `docs/COLLEGAMENTI_AUDIT.md`, `docs/MONITORAGGIO_SITO_ANALISI.md`,
-`docs/reset-password.md`.
+`docs/reset-password.md`, `docs/debiti-tecnici.md` (cosa resta aperto, da
+rileggere a ogni tagliando).
 
 ## Palette
 

@@ -3,6 +3,7 @@ import { apiError } from '@/lib/api-error'
 import { getRequestLocale, getTranslator } from '@/lib/i18n-server'
 import { loadAuthorizedClient } from '@/lib/measurement-access'
 import { loadMeasurementForPrint } from '@/lib/report-data'
+import { caricaOErrore } from '@/lib/data-error'
 import { measuredInstant } from '@/lib/format'
 import { dateStamp, pdfFromPrintPage, proxyLegacy } from '@/lib/pdf-route'
 import { pdfLegacyEnabled, sanitizeFilename } from '@/lib/pdf-render'
@@ -37,7 +38,10 @@ export async function GET(req: Request, { params }: { params: { sessionId: strin
   // Permessi: la RLS su clients decide (proprietario, team, superadmin in sola lettura).
   const access = await loadAuthorizedClient(supabase, clientId)
   if ('denied' in access) return apiError(access.denied.error, access.denied.status)
-  const measurement = await loadMeasurementForPrint(supabase, params.sessionId, clientId)
+  // Errore di lettura ≠ misurazione inesistente (l'errore è già su Sentry).
+  const loaded = await caricaOErrore(loadMeasurementForPrint(supabase, params.sessionId, clientId))
+  if (!loaded.ok) return apiError('measurement_read_failed', 500)
+  const measurement = loaded.data
   if (!measurement) return apiError('measurement_not_found', 404)
 
   const t = await getTranslator(locale, 'print')

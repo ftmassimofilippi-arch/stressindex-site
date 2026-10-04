@@ -2,12 +2,14 @@
 
 import { useEffect } from 'react'
 import { useTranslations } from 'next-intl'
+import * as Sentry from '@sentry/nextjs'
 
 export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const t = useTranslations('errors.unexpected')
 
   useEffect(() => {
     console.error(error)
+    Sentry.captureException(error)
   }, [error])
 
   return (

@@ -1,0 +1,6 @@
+{
+  "dataLoad": {
+    "title": "Diese Daten konnten nicht geladen werden",
+    "body": "Die Daten sind vorhanden, aber das Lesen ist fehlgeschlagen. Der Fehler wurde protokolliert: Laden Sie die Seite in Kürze neu. Wenn das Problem bestehen bleibt, schreiben Sie an support@stressindex.io."
+  }
+}

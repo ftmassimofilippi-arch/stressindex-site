@@ -3,6 +3,41 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-04 — Sicurezza e affidabilità (tagliando del 04/10)
+
+Riferimento: `hrv_app/docs/audit/2026-10-04.md`, voci #7, #8, #13, #14, #18.
+
+- **`next` 14.2.35, advisory critical.** La linea 14.x non ha patch (14.2.35 è
+  l'ultima). `next/image` non è usato da nessuna pagina: `images.unoptimized`
+  in `next.config.js` spegne `/_next/image`, che è l'endpoint della RCE
+  `GHSA-2xp9-vwfh-vxw4`. L'aggiornamento a 15 è una sessione a parte; cosa
+  rompe è in `docs/debiti-tecnici.md`.
+- **Sentry** (`@sentry/nextjs`) su browser, server e middleware. Release =
+  commit, environment = `VERCEL_ENV`, utente = solo uuid; `beforeSend` toglie
+  email, query string e ogni dato dell'utente diverso dall'id. La DSN è la
+  variabile `NEXT_PUBLIC_SENTRY_DSN` su Vercel: senza, l'SDK resta spento.
+- **`getMeasurementBySessionId`** riceve il professionista per cui si sta
+  guardando e lo passa al ripiego sulle sessioni remote. Prima un owner/admin
+  di organizzazione che apriva (o confrontava) la misurazione remota di un
+  membro otteneva "non trovata": la RPC legata a `auth.uid()` non vede il
+  collegamento del membro.
+- **Nessun errore muto** (`src/lib/data-error.ts`). I sette punti che
+  scartavano `error` ora lo mandano a Sentry e lo dicono: grafico di andamento
+  della home, soglie e test soglie di atleta e sessione sport mostrano
+  `DataLoadNotice` invece di un riquadro vuoto; la stampa della misurazione si
+  ferma (`measurement_read_failed`) invece di uscire senza note o senza delta.
+  Le due RPC delle sessioni remote, che ripiegavano su `[]` con un
+  `console.error`, ora passano da `reportDataError`.
+- **`sito-034`**: EXECUTE su `link_client_to_professional_guarded` tolto a
+  PUBLIC e ad `anon`. Collaudata in locale (`scripts/sql-test/test_sito-034.sql`),
+  **da applicare a mano**. Il sito non chiama la guarded.
+- **`/privacy`** in IT, EN e DE: prima era un 404 linkato dal footer e dal
+  consenso della registrazione. Riprende l'informativa dell'app e aggiunge la
+  rilevazione degli errori tecnici con Sentry (dati trattati, finalità, base
+  giuridica, sede UE).
+- README: `sito-029`, `sito-030`, `sito-031` risultano applicate; stato
+  riverificato sul catalogo il 04/10. Nuovo `docs/debiti-tecnici.md`.
+
 ## 2026-10-02 — Team Live leggeva colonne che non esistono
 
 La pagina `/area-professionisti/sport/team-live` mostrava sempre l'elenco

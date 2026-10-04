@@ -1,0 +1,35 @@
+{
+  "title": "Informativa Privacy",
+  "subtitle": "Regolamento UE 2016/679 (GDPR)",
+  "updated": "Ultimo aggiornamento: 4 ottobre 2026",
+  "sections": [
+    {
+      "title": "Titolare del trattamento",
+      "body": "Il Titolare del trattamento dei dati dei clienti è il professionista che utilizza Stress Index per seguire i propri clienti.\n\nPer informazioni sul Titolare specifico, fai riferimento ai dati di contatto del professionista che ti ha dato accesso all'applicazione.\n\nLa piattaforma tecnologica (app e sito) è fornita da The Performance Lab S.r.l. Per questioni relative al trattamento effettuato dalla piattaforma:\nEmail: support@stressindex.io"
+    },
+    {
+      "title": "Dati personali raccolti",
+      "body": "L'app e il sito raccolgono le seguenti categorie di dati:\n\n1. DATI DI ACCOUNT\n• Nome e cognome\n• Indirizzo email\n• Data e ora di creazione dell'account\n\n2. DATI DI MISURAZIONE HRV\n• Intervalli RR (ms) registrati\n• Indici HRV calcolati (RMSSD, SDNN, DFA α1, ecc.)\n• Data, ora e durata delle sessioni\n\n3. DATI DEI CLIENTI\n• Nome, cognome, data di nascita, sesso\n• Informazioni sullo stile di vita (facoltative)\n• Note inserite dal professionista\n\n4. DATI TECNICI SUGLI ERRORI\n• Vedi la sezione \"Rilevazione degli errori tecnici\"\n\nI dati HRV possono costituire dati relativi alla salute ai sensi dell'art. 9 GDPR. Il professionista è responsabile dell'acquisizione del consenso dei propri clienti."
+    },
+    {
+      "title": "Finalità e base giuridica",
+      "body": "• EROGAZIONE DEL SERVIZIO (art. 6(1)(b) GDPR)\nGestione delle sessioni HRV, calcolo degli indici, archiviazione dello storico.\n\n• DATI DI BENESSERE (art. 9(2)(a) GDPR)\nTrattamento dei dati relativi al benessere previo consenso esplicito dell'interessato.\n\n• COMUNICAZIONI COMMERCIALI (art. 6(1)(a) GDPR)\nSolo previo consenso esplicito e revocabile in qualsiasi momento dalle impostazioni.\n\n• SICUREZZA E AFFIDABILITÀ (art. 6(1)(f) GDPR)\nLog di accesso per prevenzione frodi e sicurezza dell'account; rilevazione degli errori tecnici per correggere i malfunzionamenti dell'app e del sito."
+    },
+    {
+      "title": "Rilevazione degli errori tecnici",
+      "body": "Per accorgerci dei malfunzionamenti e correggerli, l'app e il sito inviano una segnalazione automatica quando si verifica un errore tecnico. Il servizio è fornito da Sentry (Functional Software, Inc.), che agisce come responsabile del trattamento per nostro conto.\n\nDATI TRATTATI:\n• Errori tecnici: tipo di errore, punto del programma in cui è avvenuto, data e ora\n• Identificativo utente anonimo: un codice casuale assegnato all'account, senza nome né email\n• Versione dell'app o del sito\n• Dispositivo: modello, sistema operativo, tipo di browser\n\nDATI NON INVIATI:\n• Nome, cognome e indirizzo email\n• Misurazioni, intervalli RR, indici e punteggi\n• Note e contenuti inseriti dal professionista o dal cliente\n\nFINALITÀ: individuare e correggere gli errori, garantire il funzionamento e la sicurezza del servizio. Questi dati non sono usati per profilazione né per pubblicità.\n\nBASE GIURIDICA: legittimo interesse a mantenere il servizio affidabile e sicuro (art. 6(1)(f) GDPR).\n\nSEDE DEI DATI: Unione Europea (regione UE di Sentry, Francoforte, Germania).\n\nCONSERVAZIONE: le segnalazioni sono cancellate automaticamente entro 90 giorni."
+    },
+    {
+      "title": "Conservazione dei dati",
+      "body": "I dati sono conservati su infrastruttura Supabase (AWS, datacenter di Francoforte EU-Central-1, Germania).\n\nPERIODO DI CONSERVAZIONE:\n• Dati account: fino alla cancellazione dell'account\n• Dati HRV e clienti: fino alla cancellazione da parte del professionista o alla chiusura dell'account\n• Log di accesso: 90 giorni\n• Segnalazioni di errori tecnici: 90 giorni\n• Backup cifrati: 30 giorni\n\nSICUREZZA:\n• Cifratura in transito: TLS 1.3\n• Cifratura a riposo: AES-256\n• Row-Level Security (RLS): ogni professionista accede solo ai propri dati\n• Nessun trasferimento di dati fuori dall'Unione Europea"
+    },
+    {
+      "title": "I tuoi diritti (GDPR)",
+      "body": "Ai sensi degli articoli 15-22 del GDPR, hai diritto a:\n\n• ACCESSO (art. 15): ottenere copia dei tuoi dati personali\n• RETTIFICA (art. 16): correggere dati inesatti o incompleti\n• CANCELLAZIONE (art. 17): richiedere la cancellazione (\"diritto all'oblio\")\n• LIMITAZIONE (art. 18): limitare il trattamento\n• PORTABILITÀ (art. 20): ricevere i dati in formato strutturato e leggibile da una macchina\n• OPPOSIZIONE (art. 21): opporti al trattamento, compresa la rilevazione degli errori tecnici\n• REVOCA DEL CONSENSO: in qualsiasi momento, senza pregiudicare la liceità del trattamento precedente\n\nPer esercitare i tuoi diritti: support@stressindex.io\nHai il diritto di proporre reclamo al Garante per la protezione dei dati personali (www.garanteprivacy.it)."
+    },
+    {
+      "title": "Contatti",
+      "body": "Email: support@stressindex.io\nSito web: stressindex.io\n\nPer esercitare i tuoi diritti o per qualsiasi domanda sul trattamento dei tuoi dati personali, scrivi all'indirizzo email qui sopra. Rispondiamo entro 30 giorni dalla ricezione."
+    }
+  ]
+}

@@ -17,6 +17,8 @@ import {
   resolveSportContext,
 } from '@/lib/sport-data'
 import { ThresholdAthleteSection } from './ThresholdAthleteSection'
+import { caricaOErrore } from '@/lib/data-error'
+import { DataLoadNotice } from '@/components/dashboard/DataLoadNotice'
 import { formatMeasuredDate, measuredInstant, num } from '@/lib/format'
 import { competitiveLevelLabel, formatDuration } from '@/lib/sport-format'
 import { LnRmssdChart, PmcChart } from '../../SportCharts'
@@ -50,8 +52,8 @@ export default async function SportAthletePage({
   const [sessions, load, thresholds, thresholdTests] = await Promise.all([
     listSportSessions(professionalId, { athleteId: params.id, period: 90 }),
     getTrainingLoad(params.id, 120),
-    getAthleteThresholds(params.id),
-    listThresholdTests(params.id),
+    caricaOErrore(getAthleteThresholds(params.id)),
+    caricaOErrore(listThresholdTests(params.id)),
   ])
 
   const baseQuery = viewing ? `?professionista=${viewing.user_id}` : ''
@@ -165,7 +167,11 @@ export default async function SportAthletePage({
       </section>
 
       {/* SEZIONE 3b — Test soglie */}
-      <ThresholdAthleteSection thresholds={thresholds} tests={thresholdTests} baseQuery={baseQuery} />
+      {thresholds.ok && thresholdTests.ok ? (
+        <ThresholdAthleteSection thresholds={thresholds.data} tests={thresholdTests.data} baseQuery={baseQuery} />
+      ) : (
+        <DataLoadNotice className="mb-6" />
+      )}
 
       {/* SEZIONE 4 — Storico sessioni */}
       <section className="card overflow-hidden">

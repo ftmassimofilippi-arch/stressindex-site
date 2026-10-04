@@ -1719,6 +1719,10 @@
       "utente_inesistente": "User does not exist.",
       "validation_failed": "Check the highlighted fields."
     },
+    "dataLoad": {
+      "body": "The data is there, but reading it failed. The error has been logged: reload the page in a moment. If it keeps happening, write to support@stressindex.io.",
+      "title": "We couldn't load this data"
+    },
     "notFound": {
       "body": "The page you are looking for does not exist or has been moved.",
       "cta": "Back to home",
@@ -3471,6 +3475,11 @@
       "title": "Organization"
     },
     "organizationDescription": "Professional HRV software for physiotherapists and wellness professionals",
+    "privacy": {
+      "description": "How Stress Index processes personal data: controller, data collected, purposes, providers, storage in the European Union and your rights.",
+      "shortDescription": "How Stress Index processes personal data: data collected, purposes, EU storage and your rights.",
+      "title": "Privacy Notice | Stress Index"
+    },
     "proArea": {
       "description": "Stress Index professional dashboard, restricted area",
       "template": "%s | Stress Index Professional Area",
@@ -4321,6 +4330,41 @@
       "worstDay": "Day to watch",
       "worstDayHint": "highest stress"
     }
+  },
+  "privacy": {
+    "sections": [
+      {
+        "title": "Data Controller",
+        "body": "The Data Controller for client data is the practitioner who uses Stress Index to follow their own clients.\n\nFor details about your specific Controller, refer to the contact details of the practitioner who gave you access to the app.\n\nThe technology platform (app and website) is provided by The Performance Lab S.r.l. For questions about the processing carried out by the platform:\nEmail: support@stressindex.io"
+      },
+      {
+        "title": "Personal data collected",
+        "body": "The app and the website collect the following categories of data:\n\n1. ACCOUNT DATA\n• First and last name\n• Email address\n• Account creation date and time\n\n2. HRV MEASUREMENT DATA\n• Recorded RR intervals (ms)\n• Computed HRV indices (RMSSD, SDNN, DFA α1, etc.)\n• Date, time and duration of the sessions\n\n3. CLIENT DATA\n• First name, last name, date of birth, sex\n• Lifestyle information (optional)\n• Notes entered by the practitioner\n\n4. TECHNICAL ERROR DATA\n• See the section \"Technical error monitoring\"\n\nHRV data may amount to data concerning health under Art. 9 GDPR. The practitioner is responsible for obtaining their clients' consent."
+      },
+      {
+        "title": "Purposes and legal basis",
+        "body": "• SERVICE DELIVERY (Art. 6(1)(b) GDPR)\nManaging HRV sessions, computing indices, storing the history.\n\n• WELLNESS DATA (Art. 9(2)(a) GDPR)\nProcessing of wellbeing-related data subject to the person's explicit consent.\n\n• MARKETING COMMUNICATIONS (Art. 6(1)(a) GDPR)\nOnly with explicit consent, which you can withdraw at any time from the settings.\n\n• SECURITY AND RELIABILITY (Art. 6(1)(f) GDPR)\nAccess logs for fraud prevention and account security; technical error monitoring to fix malfunctions of the app and the website."
+      },
+      {
+        "title": "Technical error monitoring",
+        "body": "To notice malfunctions and fix them, the app and the website send an automatic report when a technical error occurs. The service is provided by Sentry (Functional Software, Inc.), acting as a data processor on our behalf.\n\nDATA PROCESSED:\n• Technical errors: type of error, the point in the program where it happened, date and time\n• Anonymous user identifier: a random code assigned to the account, with no name or email\n• Version of the app or website\n• Device: model, operating system, browser type\n\nDATA NOT SENT:\n• First name, last name and email address\n• Measurements, RR intervals, indices and scores\n• Notes and content entered by the practitioner or the client\n\nPURPOSE: finding and fixing errors, keeping the service working and secure. This data is not used for profiling or advertising.\n\nLEGAL BASIS: legitimate interest in keeping the service reliable and secure (Art. 6(1)(f) GDPR).\n\nDATA LOCATION: European Union (Sentry's EU region, Frankfurt, Germany).\n\nRETENTION: reports are deleted automatically within 90 days."
+      },
+      {
+        "title": "Data retention",
+        "body": "Data is stored on Supabase infrastructure (AWS, Frankfurt EU-Central-1 datacentre, Germany).\n\nRETENTION PERIOD:\n• Account data: until the account is deleted\n• HRV and client data: until the practitioner deletes it or closes the account\n• Access logs: 90 days\n• Technical error reports: 90 days\n• Encrypted backups: 30 days\n\nSECURITY:\n• Encryption in transit: TLS 1.3\n• Encryption at rest: AES-256\n• Row-Level Security (RLS): each practitioner can reach only their own data\n• No data is transferred outside the European Union"
+      },
+      {
+        "title": "Your rights (GDPR)",
+        "body": "Under Articles 15-22 GDPR you have the right to:\n\n• ACCESS (Art. 15): obtain a copy of your personal data\n• RECTIFICATION (Art. 16): correct inaccurate or incomplete data\n• ERASURE (Art. 17): ask for deletion (the \"right to be forgotten\")\n• RESTRICTION (Art. 18): restrict the processing\n• PORTABILITY (Art. 20): receive your data in a structured, machine-readable format\n• OBJECTION (Art. 21): object to the processing, including technical error monitoring\n• WITHDRAW CONSENT: at any time, without affecting the lawfulness of earlier processing\n\nTo exercise your rights: support@stressindex.io\nYou also have the right to lodge a complaint with your national data protection authority."
+      },
+      {
+        "title": "Contacts",
+        "body": "Email: support@stressindex.io\nWebsite: stressindex.io\n\nTo exercise your rights, or for any question about how your personal data is processed, write to the email address above. We reply within 30 days of receiving your message."
+      }
+    ],
+    "subtitle": "EU Regulation 2016/679 (GDPR)",
+    "title": "Privacy Notice",
+    "updated": "Last updated: 4 October 2026"
   },
   "registration": {
     "confirm": {

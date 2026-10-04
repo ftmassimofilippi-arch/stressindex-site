@@ -7,6 +7,8 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { getProfessionalProfile } from '@/lib/dashboard-data'
 import { getDfaWindows, getSportSession, getSportAccess, getThresholdTest } from '@/lib/sport-data'
 import { THRESHOLD_TEST_TYPE } from '@/lib/threshold-types'
+import { caricaOErrore } from '@/lib/data-error'
+import { DataLoadNotice } from '@/components/dashboard/DataLoadNotice'
 import { ThresholdTestView } from './ThresholdTestView'
 import { formatMeasuredAt, num } from '@/lib/format'
 import { energyEmoji, energyLabel, formatClock, formatDuration, rpeColor, sorenessZoneLabel } from '@/lib/sport-format'
@@ -40,7 +42,7 @@ export default async function SportSessionPage({
 
   const [windows, threshold] = await Promise.all([
     getDfaWindows(session.id),
-    session.test_type === THRESHOLD_TEST_TYPE ? getThresholdTest(session.id) : Promise.resolve(null),
+    caricaOErrore(session.test_type === THRESHOLD_TEST_TYPE ? getThresholdTest(session.id) : Promise.resolve(null)),
   ])
   const baseQuery = searchParams?.professionista ? `?professionista=${searchParams.professionista}` : ''
   const q = session.questionnaire
@@ -95,8 +97,10 @@ export default async function SportSessionPage({
       {/* SEZIONE 1b — Test incrementale con stima delle soglie */}
       {session.test_type === THRESHOLD_TEST_TYPE && (
         <div className="mb-6">
-          {threshold ? (
-            <ThresholdTestView record={threshold} windows={windows} />
+          {!threshold.ok ? (
+            <DataLoadNotice />
+          ) : threshold.data ? (
+            <ThresholdTestView record={threshold.data} windows={windows} />
           ) : (
             <div className="card p-6 text-sm text-anthracite-lighter">{t('session.thresholdMissing')}</div>
           )}

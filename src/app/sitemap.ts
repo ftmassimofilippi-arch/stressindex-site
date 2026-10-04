@@ -10,6 +10,7 @@ const PAGES: { path: string; changeFrequency: 'weekly' | 'monthly'; priority: nu
   { path: '/sport', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/guide', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/supporto', changeFrequency: 'monthly', priority: 0.5 },
+  { path: '/privacy', changeFrequency: 'monthly', priority: 0.3 },
   { path: '/registrazione', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/area-professionisti/login', changeFrequency: 'monthly', priority: 0.3 },
 ]

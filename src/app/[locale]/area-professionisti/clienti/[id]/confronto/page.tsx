@@ -4,7 +4,7 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { ArrowLeft } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
-import { getClient, getMeasurementBySessionId, getProfessionalProfile } from '@/lib/dashboard-data'
+import { getClient, getMeasurementBySessionId, getProfessionalProfile, resolveViewingProfessional } from '@/lib/dashboard-data'
 import { fullName, formatMeasuredAt } from '@/lib/format'
 import { PoincareScatter } from '../misurazione/[sessionId]/HrvCharts'
 import { ComparisonTable } from './ComparisonTable'
@@ -33,11 +33,14 @@ export default async function ComparisonPage({
 
   const t = await getTranslations('clients.compare')
   const locale = await getLocale()
+  // Vista "come un altro professionista": vedi getMeasurementBySessionId.
+  const { viewing } = await resolveViewingProfessional(searchParams?.professionista)
+  const remoteOpts = { professionistaId: viewing?.user_id }
   const [client, professional, ma, mb] = await Promise.all([
     getClient(params.id),
     getProfessionalProfile(),
-    getMeasurementBySessionId(a, params.id),
-    getMeasurementBySessionId(b, params.id),
+    getMeasurementBySessionId(a, params.id, remoteOpts),
+    getMeasurementBySessionId(b, params.id, remoteOpts),
   ])
   if (!client || !ma || !mb) notFound()
 

@@ -30,6 +30,8 @@ import { listAlertEvents } from '@/lib/alert-rules-server'
 import { noteCategoryLabel } from '@/lib/types'
 import { formatGreeting, formatMeasuredTime, num, todayLong, daysSince } from '@/lib/format'
 import { getLocale, getTranslations } from 'next-intl/server'
+import { caricaOErrore } from '@/lib/data-error'
+import { DataLoadNotice } from '@/components/dashboard/DataLoadNotice'
 
 type Params = { params: { locale: string } }
 
@@ -67,7 +69,7 @@ export default async function DashboardHome() {
     listAlertEvents({ unreadOnly: true, days: 14, limit: 10 }),
     todaysMeasurements(),
     clientsToContact(),
-    aggregatedDailyAverages(365),
+    caricaOErrore(aggregatedDailyAverages(365)),
     listClients(),
     listRecentNotes(3),
     listPendingInvitesForCurrentUser(),
@@ -261,14 +263,18 @@ export default async function DashboardHome() {
               <TrendingUp size={16} className="text-teal flex-shrink-0" />
               <h3 className="font-serif text-base text-anthracite">{t('aggregateTrend')}</h3>
             </div>
-            <AdvancedTrendChart
-              data={trend}
-              defaultSelected={['score_stress', 'score_recupero']}
-              defaultPreset="30"
-              height={220}
-              storageKey="sx-home-trend"
-              showBrush={false}
-            />
+            {trend.ok ? (
+              <AdvancedTrendChart
+                data={trend.data}
+                defaultSelected={['score_stress', 'score_recupero']}
+                defaultPreset="30"
+                height={220}
+                storageKey="sx-home-trend"
+                showBrush={false}
+              />
+            ) : (
+              <DataLoadNotice />
+            )}
           </section>
 
           <section className="card overflow-hidden">
