@@ -8,12 +8,12 @@ qui solo ciò che vive in questo repo. Creato il 04/10/2026 dal tagliando
 
 ## Sicurezza
 
-- **Cancellazione GDPR in attesa della `app-042`.** Le tre strade del sito
-  (account, scheda, pannello) chiamano la Edge Function `delete-account` v2,
-  che in produzione non è ancora deployata e la cui funzione SQL non esiste:
-  finché non si applica la migrazione, le tre azioni falliscono con un errore
-  visibile e non cancellano niente. Si sblocca con l'informativa nuova
-  (`hrv_app/docs/audit/2026-10-04-cancellazione-account.md`).
+- **Cancellazione GDPR: trasferimenti spenti.** Dal 04/10/2026 le tre strade
+  del sito (account, scheda, pannello) passano dalla Edge Function
+  `delete-account` v2 e dalla `app-042`, con `gdpr_trasferimenti_attivi =
+  false`: nessuna misurazione cambia intestatario finché non ci sono
+  l'informativa nuova e la build dell'app che raccoglie il consenso al
+  trasferimento (`hrv_app/docs/audit/2026-10-04-cancellazione-account.md`).
 
 
 - **`next` 14.2.35: advisory critical e high senza patch nella linea 14.x.**

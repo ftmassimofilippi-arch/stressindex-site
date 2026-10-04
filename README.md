@@ -229,10 +229,11 @@ Il sito usa anche `delete-account`, che vive nel repo dell'app
 (`hrv_app/supabase/functions/delete-account`): cancellazione GDPR dell'account
 (Impostazioni → Account), di una scheda cliente (scheda → Impostazioni →
 Elimina) e di un utente dal pannello superadmin (`DELETE /api/admin/users/[id]`).
-Richiede la `app-042` applicata e la function v2 deployata con il secret
-`SENTRY_DSN`; fino ad allora le tre azioni rispondono con un errore e non
-cancellano niente (prima: logout con un avviso, `delete` diretto su `clients`,
-passi a mano nella route).
+La `app-042` e la function v2 (secret `SENTRY_DSN`) sono in produzione dal
+04/10/2026, con `app_config.gdpr_trasferimenti_attivi = false`: la
+cancellazione è atomica e completa ma non trasferisce misurazioni, come dice
+l'informativa in vigore. Prima: logout con un avviso, `delete` diretto su
+`clients`, passi a mano nella route.
 
 ## Data e ora delle misurazioni
 

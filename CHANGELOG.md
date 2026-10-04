@@ -3,10 +3,12 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
-## Non pubblicato — cancellazione GDPR via `delete-account` (2026-10-04)
+## 2026-10-04 sera — cancellazione GDPR via `delete-account`
 
-Dipende dalla `app-042` e dalla Edge Function `delete-account` v2 del repo
-dell'app, non ancora applicate: da pubblicare insieme a quelle.
+In produzione dalle 20:25 UTC (`0c713d2`, Vercel `dpl_G8fGN2Un…`), dopo la
+`app-042` e la Edge Function `delete-account` v2 del repo dell'app, con
+l'interruttore dei trasferimenti spento. Provata con un professionista usa e
+getta: residui zero.
 
 - **Impostazioni → Account → Elimina account**: chiama la Edge Function (prima
   mostrava un avviso e faceva solo il logout). Errore tradotto per codice
