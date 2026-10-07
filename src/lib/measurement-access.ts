@@ -1,4 +1,6 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { createClient } from './supabase-server'
+import { assertOwnerOrSuperadmin } from './print-access'
 import type { Client } from './types'
 
 // =============================================================================
@@ -12,11 +14,14 @@ import type { Client } from './types'
 // un'organizzazione) apriva il dettaglio misurazione di un cliente altrui in
 // sola lettura, ma il pulsante "Scarica PDF" rispondeva 403 "Accesso negato".
 //
-// REGOLA CORRETTA, in due passi distinti:
-//   1. CHI PUÒ VEDERE IL CLIENTE  → lo decide la RLS di `clients`. Se la SELECT
-//      con la sessione dell'utente restituisce la riga, il lettore è
-//      autorizzato: la stessa policy copre proprietario, team e superadmin.
-//      Nessun controllo applicativo aggiuntivo, altrimenti si torna al bug.
+// REGOLA, in due passi distinti:
+//   1. CHI PUÒ VEDERE IL CLIENTE  → la RLS di `clients` deve restituire la
+//      riga, E l'utente deve esserne il titolare. La sola RLS non basta più
+//      (07/10/2026): `superadmin_read_clients` concede a un superadmin le
+//      schede di tutti, e il PDF di un cliente altrui usciva con un id
+//      nell'URL. Il superadmin torna a passare solo con il consenso del
+//      cliente (superadmin-scope.ts), e allora questo controllo lo lascia
+//      passare: il 403 del vecchio confronto secco non torna.
 //   2. LA SESSIONE È DI QUEL CLIENTE? → confronto esplicito su client_id, con
 //      il ponte per le sessioni remote (client_id NULL). Questo passo NON è
 //      ridondante: senza, un id di sessione di un altro cliente dello stesso
@@ -54,6 +59,11 @@ export async function loadAuthorizedClient(
     return { denied: { status: 500, error: 'client_read_failed' } }
   }
   if (!client) {
+    return { denied: { status: 404, error: 'client_not_found' } }
+  }
+  // Stessa risposta di "non esiste": a chi non è il titolare non si dice altro.
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || !(await assertOwnerOrSuperadmin(supabase as unknown as SupabaseClient, user.id, client.professionista_id))) {
     return { denied: { status: 404, error: 'client_not_found' } }
   }
   return { client }

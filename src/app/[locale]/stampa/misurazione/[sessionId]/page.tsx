@@ -53,7 +53,7 @@ export default async function PrintMeasurementPage({
   } else {
     const access = await resolvePrintAccess(searchParams?.token, { kind: 'measurement', id: params.sessionId })
     if (!access.ok) notFound()
-    const { supabase, userId, viaToken } = access
+    const { supabase, userId } = access
 
     const loaded = await loadMeasurementForPrint(supabase, params.sessionId, searchParams?.clientId)
     if (!loaded) notFound()
@@ -62,7 +62,8 @@ export default async function PrintMeasurementPage({
     const loadedClient = clientId ? await loadClient(supabase, clientId) : null
     if (!loadedClient) notFound()
     client = loadedClient
-    if (viaToken && !(await assertOwnerOrSuperadmin(supabase, userId, client.professionista_id))) notFound()
+    // Anche con la sessione: la RLS da sola concede a un superadmin ogni scheda.
+    if (!(await assertOwnerOrSuperadmin(supabase, userId, client.professionista_id))) notFound()
     ;[professional, previous] = await Promise.all([
       loadOwnerProfile(supabase, client.professionista_id),
       // Estremo del confronto: l'ISTANTE della misurazione, non la colonna

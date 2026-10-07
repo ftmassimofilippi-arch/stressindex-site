@@ -59,7 +59,8 @@ export default async function PrintPeriodicReportPage({
     const loadedClient = await loadClient(supabase, clientId)
     if (!loadedClient) notFound()
     client = loadedClient
-    if (viaToken && !(await assertOwnerOrSuperadmin(supabase, userId, client.professionista_id))) notFound()
+    // Anche con la sessione: la RLS da sola concede a un superadmin ogni scheda.
+    if (!(await assertOwnerOrSuperadmin(supabase, userId, client.professionista_id))) notFound()
 
     const [data, prevData] = await Promise.all([
       loadPeriodicReportData(supabase, client, from, to),
