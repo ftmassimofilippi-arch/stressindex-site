@@ -5,7 +5,7 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { ArrowLeft, Download, Tag as TagIcon } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { getProfessionalProfile } from '@/lib/dashboard-data'
-import { getDfaWindows, getSportSession, getSportAccess, getThresholdTest } from '@/lib/sport-data'
+import { getDfaWindows, getSportSession, getThresholdTest, resolveSportContext } from '@/lib/sport-data'
 import { THRESHOLD_TEST_TYPE } from '@/lib/threshold-types'
 import { caricaOErrore } from '@/lib/data-error'
 import { DataLoadNotice } from '@/components/dashboard/DataLoadNotice'
@@ -28,7 +28,7 @@ export default async function SportSessionPage({
   params: { id: string; locale: string }
   searchParams?: { professionista?: string }
 }) {
-  const access = await getSportAccess()
+  const { professionalId, access } = await resolveSportContext(searchParams?.professionista)
   if (!access.isPro) redirect({ href: '/area-professionisti/sport', locale: params.locale })
 
   const t = await getTranslations('sport')
@@ -36,7 +36,7 @@ export default async function SportSessionPage({
 
   const [professional, session] = await Promise.all([
     getProfessionalProfile(),
-    getSportSession(params.id),
+    getSportSession(params.id, professionalId),
   ])
   if (!session) notFound()
 

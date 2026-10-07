@@ -45,7 +45,7 @@ export default async function SportAthletePage({
 
   const [professional, athlete] = await Promise.all([
     getProfessionalProfile(),
-    getSportAthleteProfile(params.id),
+    getSportAthleteProfile(params.id, professionalId),
   ])
   if (!athlete) notFound()
 

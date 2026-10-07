@@ -339,12 +339,17 @@ export async function getSportSessionsCount(
   return count ?? 0
 }
 
-export async function getSportSession(sessionId: string): Promise<SportSessionWithAthlete | null> {
+// Una sessione, solo se è del professionista indicato (quello loggato o quello
+// della vista autorizzata, da `resolveSportContext`): la RLS da sola concede a
+// un superadmin le sessioni sport di tutti.
+export async function getSportSession(sessionId: string, professionalId: string | null): Promise<SportSessionWithAthlete | null> {
+  if (!professionalId) return null
   const supabase = await createClient()
   const { data } = await supabase
     .from('sport_sessions')
     .select(SESSION_COLUMNS)
     .eq('id', sessionId)
+    .eq('professional_id', professionalId)
     .maybeSingle()
   if (!data) return null
   const session = mapSession(data as SportSessionRow)
@@ -366,12 +371,16 @@ export async function getDfaWindows(sessionId: string): Promise<DfaWindow[]> {
   return (data ?? []) as DfaWindow[]
 }
 
-export async function getSportAthleteProfile(athleteId: string): Promise<SportAthleteProfile | null> {
+// Profilo dell'atleta, solo se la scheda è del professionista indicato: è il
+// cancello della pagina atleta, le letture successive passano di qui.
+export async function getSportAthleteProfile(athleteId: string, professionalId: string | null): Promise<SportAthleteProfile | null> {
+  if (!professionalId) return null
   const supabase = await createClient()
   const { data } = await supabase
     .from('clients')
     .select('id, nome, cognome, sport, competitive_level, current_goal, hr_max, ftp_estimated')
     .eq('id', athleteId)
+    .eq('professionista_id', professionalId)
     .maybeSingle()
   return (data as SportAthleteProfile) ?? null
 }
