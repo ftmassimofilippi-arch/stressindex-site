@@ -4,6 +4,7 @@ import { createClient } from './supabase-server'
 import { conClientIdDalPonte, ponteClienti } from './client-bridge'
 import { nelPerimetro } from './perimetro'
 import { perBlocchiDiUtenti, perimetroProfessionista } from './perimetro-server'
+import { SUPERADMIN_VEDE_DATI_CLIENTI } from './superadmin-scope'
 import { selectWithMissingColumnFallback } from './safe-select'
 import { dataLoadError, reportDataError } from './data-error'
 import {
@@ -1185,9 +1186,13 @@ export interface ViewingProfessional {
 }
 
 // Risolve, in modo autorizzato, il professionista di cui si stanno visualizzando
-// i dati tramite ?professionista=UUID. Supporta due percorsi:
-//  - superadmin → può vedere QUALSIASI professionista (sola lettura)
-//  - org owner/admin → solo i membri attivi del proprio team (comportamento esistente)
+// i dati tramite ?professionista=UUID. Due percorsi:
+//  - superadmin → qualsiasi professionista, in sola lettura, MA solo con il
+//    consenso del cliente verso il Super Admin (superadmin-scope.ts). Oggi il
+//    consenso non esiste e il percorso è spento: il superadmin ricade sul
+//    secondo, come ogni altro account, e dei dati altrui gli restano i conteggi
+//    aggregati del pannello admin;
+//  - org owner/admin → solo i membri attivi del proprio team.
 // Ritorna null se non autorizzato o se professionistaId è assente.
 export async function resolveViewingProfessional(professionistaId?: string | null): Promise<{
   viewing: ViewingProfessional | null
@@ -1197,7 +1202,7 @@ export async function resolveViewingProfessional(professionistaId?: string | nul
   const { userId, isSuperadmin } = await getCurrentProfileFlags()
   if (!professionistaId || !userId) return { viewing: null, currentUserId: userId, isSuperadmin }
 
-  if (isSuperadmin) {
+  if (isSuperadmin && SUPERADMIN_VEDE_DATI_CLIENTI) {
     const full_name = await getProfessionalDisplayName(professionistaId)
     return { viewing: { user_id: professionistaId, full_name, access: 'superadmin' }, currentUserId: userId, isSuperadmin }
   }

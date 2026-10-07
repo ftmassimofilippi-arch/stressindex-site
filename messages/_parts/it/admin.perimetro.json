@@ -1,0 +1,15 @@
+{
+  "platform": {
+    "title": "Attività della piattaforma",
+    "intro": "Solo conteggi aggregati. I dati dei clienti degli altri professionisti non sono consultabili da qui: il cliente dà il consenso al proprio professionista, non al Super Admin.",
+    "professionals": "Professionisti",
+    "cards": "Schede cliente",
+    "activeLinks": "Collegamenti attivi",
+    "measurements": "Misurazioni totali",
+    "today": "Misurazioni oggi",
+    "todayInStudio": "di cui dai professionisti",
+    "todayRemote": "di cui da remoto",
+    "activeToday": "Professionisti attivi oggi",
+    "unavailable": "Conteggi non disponibili in questo momento."
+  }
+}

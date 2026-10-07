@@ -1,0 +1,15 @@
+{
+  "platform": {
+    "title": "Plattformaktivität",
+    "intro": "Nur aggregierte Zahlen. Die Daten der Klienten anderer Fachkräfte sind von hier aus nicht einsehbar: Klienten erteilen ihre Einwilligung der eigenen Fachkraft, nicht dem Super Admin.",
+    "professionals": "Fachkräfte",
+    "cards": "Klientenprofile",
+    "activeLinks": "Aktive Verknüpfungen",
+    "measurements": "Messungen gesamt",
+    "today": "Messungen heute",
+    "todayInStudio": "davon durch Fachkräfte",
+    "todayRemote": "davon remote",
+    "activeToday": "Heute aktive Fachkräfte",
+    "unavailable": "Die Zahlen sind derzeit nicht verfügbar."
+  }
+}

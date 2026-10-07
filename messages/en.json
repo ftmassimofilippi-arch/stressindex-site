@@ -325,6 +325,19 @@
       "pro": "Pro",
       "prova": "Trial"
     },
+    "platform": {
+      "activeLinks": "Active links",
+      "activeToday": "Professionals active today",
+      "cards": "Client records",
+      "intro": "Aggregate counts only. Data of other professionals' clients cannot be viewed from here: clients give consent to their own professional, not to the Super Admin.",
+      "measurements": "Total measurements",
+      "professionals": "Professionals",
+      "title": "Platform activity",
+      "today": "Measurements today",
+      "todayInStudio": "of which by professionals",
+      "todayRemote": "of which remote",
+      "unavailable": "Counts are not available right now."
+    },
     "refresh": "Refresh",
     "role": {
       "client": "Client",

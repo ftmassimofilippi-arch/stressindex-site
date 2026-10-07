@@ -1,0 +1,15 @@
+{
+  "platform": {
+    "title": "Platform activity",
+    "intro": "Aggregate counts only. Data of other professionals' clients cannot be viewed from here: clients give consent to their own professional, not to the Super Admin.",
+    "professionals": "Professionals",
+    "cards": "Client records",
+    "activeLinks": "Active links",
+    "measurements": "Total measurements",
+    "today": "Measurements today",
+    "todayInStudio": "of which by professionals",
+    "todayRemote": "of which remote",
+    "activeToday": "Professionals active today",
+    "unavailable": "Counts are not available right now."
+  }
+}

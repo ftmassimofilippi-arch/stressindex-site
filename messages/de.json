@@ -325,6 +325,19 @@
       "pro": "Pro",
       "prova": "Testphase"
     },
+    "platform": {
+      "activeLinks": "Aktive Verknüpfungen",
+      "activeToday": "Heute aktive Fachkräfte",
+      "cards": "Klientenprofile",
+      "intro": "Nur aggregierte Zahlen. Die Daten der Klienten anderer Fachkräfte sind von hier aus nicht einsehbar: Klienten erteilen ihre Einwilligung der eigenen Fachkraft, nicht dem Super Admin.",
+      "measurements": "Messungen gesamt",
+      "professionals": "Fachkräfte",
+      "title": "Plattformaktivität",
+      "today": "Messungen heute",
+      "todayInStudio": "davon durch Fachkräfte",
+      "todayRemote": "davon remote",
+      "unavailable": "Die Zahlen sind derzeit nicht verfügbar."
+    },
     "refresh": "Aktualisieren",
     "role": {
       "client": "Klient",

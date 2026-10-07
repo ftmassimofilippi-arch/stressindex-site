@@ -325,6 +325,19 @@
       "pro": "Pro",
       "prova": "Prova"
     },
+    "platform": {
+      "activeLinks": "Collegamenti attivi",
+      "activeToday": "Professionisti attivi oggi",
+      "cards": "Schede cliente",
+      "intro": "Solo conteggi aggregati. I dati dei clienti degli altri professionisti non sono consultabili da qui: il cliente dà il consenso al proprio professionista, non al Super Admin.",
+      "measurements": "Misurazioni totali",
+      "professionals": "Professionisti",
+      "title": "Attività della piattaforma",
+      "today": "Misurazioni oggi",
+      "todayInStudio": "di cui dai professionisti",
+      "todayRemote": "di cui da remoto",
+      "unavailable": "Conteggi non disponibili in questo momento."
+    },
     "refresh": "Aggiorna",
     "role": {
       "client": "Cliente",
