@@ -702,34 +702,45 @@ const TREND_COLUMNS = [
 export type TrendColumn = typeof TREND_COLUMNS[number]
 export type DailyAveragePoint = { date: string } & { [K in TrendColumn]: number | null }
 
+/**
+ * Medie giornaliere delle misurazioni nel perimetro del professionista loggato
+ * (le sue sessioni e quelle dei clienti collegati): non di tutto il database.
+ */
 export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAveragePoint[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+  const perimetro = await perimetroProfessionista(user.id)
   // Il primo giorno del grafico è una giornata ITALIANA, non un "meno N giorni"
   // sull'orologio del server (UTC su Vercel). Il margine di tre ore recupera le
   // righe il cui `measured_at_utc` è ancora sfasato: il giorno di appartenenza
   // lo decide comunque `measuredDayKey` sotto.
   const daIso = new Date(new Date(inizioGiornoItaFa(daysBack - 1)).getTime() - 3 * 3_600_000).toISOString()
 
-  type Row = { session_id: string | null; measured_at: string; measured_at_utc: string | null } & { [K in TrendColumn]: number | null }
+  type Row = { session_id: string | null; user_id: string | null; measured_at: string; measured_at_utc: string | null } & { [K in TrendColumn]: number | null }
 
   // Resiliente alle colonne mancanti: già successo con lf_nu_ls/hf_nu_ls, che
   // facevano fallire tutto il grafico di andamento invece di una sola metrica.
   const { data, error } = await selectWithMissingColumnFallback<Row>(
-    ['session_id', 'measured_at', 'measured_at_utc', ...TREND_COLUMNS],
+    ['session_id', 'user_id', 'measured_at', 'measured_at_utc', ...TREND_COLUMNS],
     (cols) =>
-      supabase
-        .from('measurement_analytics')
-        .select(cols)
-        .gte('measured_at_utc', daIso)
-        .order('measured_at_utc', { ascending: true }) as unknown as PromiseLike<{
-        data: Row[] | null
-        error: PostgrestError | null
-      }>,
-    { label: 'measurement_analytics (trend)', required: ['measured_at'] },
+      perBlocchiDiUtenti<Row, PostgrestError>(perimetro, (utenti) =>
+        supabase
+          .from('measurement_analytics')
+          .select(cols)
+          .in('user_id', utenti)
+          .gte('measured_at_utc', daIso)
+          .order('measured_at_utc', { ascending: true }) as unknown as PromiseLike<{
+          data: Row[] | null
+          error: PostgrestError | null
+        }>,
+      ),
+    { label: 'measurement_analytics (trend)', required: ['measured_at', 'user_id'] },
   )
   // Un grafico vuoto direbbe "nessuna misurazione": non è la stessa cosa.
   if (error) throw dataLoadError('aggregatedDailyAverages', error)
-  const righe = await conIstantiDiSessione(supabase, (data ?? []) as unknown as Row[])
+  const mie = ((data ?? []) as unknown as Row[]).filter((r) => nelPerimetro(r, perimetro))
+  const righe = await conIstantiDiSessione(supabase, mie)
   const buckets = new Map<string, Map<TrendColumn, number[]>>()
   for (const row of righe) {
     const day = measuredDayKey(row) ?? ''
