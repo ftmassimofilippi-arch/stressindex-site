@@ -617,12 +617,21 @@ function effectiveLastMeasurementAt(direct: string | null | undefined, remote: s
 
 export async function listClientsEnriched(opts?: { professionistaId?: string }): Promise<ClientWithLastMeasurement[]> {
   const supabase = await createClient()
-  const clientsQ = opts?.professionistaId
-    ? supabase.from('clients').select('*').eq('professionista_id', opts.professionistaId).order('cognome', { ascending: true })
-    : supabase.from('clients').select('*').order('cognome', { ascending: true })
-  const measurementsQ = opts?.professionistaId
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+  // Il titolare delle schede è sempre esplicito: il professionista indicato
+  // (vista "come un altro professionista", già autorizzata dal chiamante) o
+  // quello loggato. Senza filtro, a un superadmin la RLS dava le schede e le
+  // misurazioni di tutti.
+  const titolare = opts?.professionistaId ?? user.id
+  const clientsQ = supabase.from('clients').select('*').eq('professionista_id', titolare).order('cognome', { ascending: true })
+  const measurementsQ: PromiseLike<{ data: MeasurementAnalytics[] | null; error: PostgrestError | null }> = opts?.professionistaId
     ? supabase.from('measurement_analytics').select('*').eq('user_id', opts.professionistaId).order('measured_at_utc', { ascending: false })
-    : supabase.from('measurement_analytics').select('*').order('measured_at_utc', { ascending: false })
+    : perimetroProfessionista(user.id).then((perimetro) =>
+        perBlocchiDiUtenti<MeasurementAnalytics, PostgrestError>(perimetro, (utenti) =>
+          supabase.from('measurement_analytics').select('*').in('user_id', utenti).order('measured_at_utc', { ascending: false }),
+        ),
+      )
   // Sessioni remote: nella vista propria la RPC parte da `auth.uid()`; nella
   // vista superadmin/org prende il professionista visualizzato come parametro
   // (sito-032). Prima qui si rinunciava, e nella vista superadmin la lista
@@ -633,11 +642,12 @@ export async function listClientsEnriched(opts?: { professionistaId?: string }):
   const [clientsRes, measurementsRes, alertsRes, settingsRes, remoteMap, remoteAnalytics] = await Promise.all([
     clientsQ,
     measurementsQ,
-    supabase.from('alerts').select('client_id,status').in('status', ['new', 'seen']),
+    supabase.from('alerts').select('client_id,status').eq('professional_id', titolare).in('status', ['new', 'seen']),
     supabase.from('client_settings').select('*'),
     remoteMapQ,
     remoteAnalyticsQ,
   ])
+  if (measurementsRes.error) reportDataError('listClientsEnriched.analytics', measurementsRes.error)
   const clients = (clientsRes.data ?? []) as Client[]
   // L'istante autoritativo arriva dalla sessione, poi si riordina qui: l'ordine
   // di Postgres su `measured_at_utc` non basta a scegliere l'ultima misurazione.
