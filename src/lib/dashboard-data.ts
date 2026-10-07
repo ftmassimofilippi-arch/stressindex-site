@@ -79,12 +79,22 @@ export async function listClients(): Promise<Client[]> {
   return data ?? []
 }
 
-export async function getClient(id: string): Promise<Client | null> {
+/**
+ * Una scheda, solo se è del titolare: il professionista loggato, oppure quello
+ * della vista "come un altro professionista" già autorizzata dal chiamante
+ * (`resolveViewingProfessional`). Senza questo filtro un superadmin apriva per
+ * URL la scheda di qualunque cliente, perché `superadmin_read_clients` la
+ * concede.
+ */
+export async function getClient(id: string, opts?: { professionistaId?: string }): Promise<Client | null> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
   const { data } = await supabase
     .from('clients')
     .select('*')
     .eq('id', id)
+    .eq('professionista_id', opts?.professionistaId ?? user.id)
     .maybeSingle()
   return data
 }
@@ -382,6 +392,16 @@ export async function getMeasurementBySessionId(
     throw dataLoadError('getMeasurementBySessionId', maErr ?? sessione.error)
   }
   if (!ma && !s) return null
+  // Vista propria: la misurazione deve essere del professionista o di un suo
+  // cliente collegato. La RLS non basta: a un superadmin concede ogni sessione,
+  // e un id altrui nell'URL finiva sotto il nome di un proprio cliente. Nella
+  // vista "come un altro professionista" decide chi l'ha autorizzata.
+  if (!opts?.professionistaId) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+    const autore = (ma as MeasurementAnalytics | null)?.user_id ?? (s as SessionRow | null)?.professionista_id ?? null
+    if (!nelPerimetro({ user_id: autore }, await perimetroProfessionista(user.id))) return null
+  }
   const base = ma
     ? (ma as MeasurementAnalytics)
     : sessionToMeasurementAnalytics(s as SessionRow)

@@ -39,7 +39,7 @@ export default async function SessionDetailPage({
   const { viewing } = await resolveViewingProfessional(searchParams?.professionista)
   const [measurement, client, professional] = await Promise.all([
     getMeasurementBySessionId(params.sessionId, params.id, { professionistaId: viewing?.user_id }),
-    getClient(params.id),
+    getClient(params.id, { professionistaId: viewing?.user_id }),
     getProfessionalProfile(),
   ])
 

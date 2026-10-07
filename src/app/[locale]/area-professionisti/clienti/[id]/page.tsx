@@ -37,7 +37,7 @@ export default async function ClientPage({
 
   const professionalId = viewing?.user_id ?? currentUserId
   const [client, professional, measurements, cronAlerts, notes, settings, messages, allAlerts, allMonitoring, access, alertRules, appEvents] = await Promise.all([
-    getClient(params.id),
+    getClient(params.id, { professionistaId: viewing?.user_id }),
     getProfessionalProfile(),
     // Nella vista "come un altro professionista" le misurazioni remote vanno
     // chieste per conto del PROPRIETARIO della scheda: la RPC di sempre parte

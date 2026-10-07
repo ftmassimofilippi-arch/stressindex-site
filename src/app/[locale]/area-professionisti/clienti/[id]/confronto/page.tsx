@@ -37,7 +37,7 @@ export default async function ComparisonPage({
   const { viewing } = await resolveViewingProfessional(searchParams?.professionista)
   const remoteOpts = { professionistaId: viewing?.user_id }
   const [client, professional, ma, mb] = await Promise.all([
-    getClient(params.id),
+    getClient(params.id, remoteOpts),
     getProfessionalProfile(),
     getMeasurementBySessionId(a, params.id, remoteOpts),
     getMeasurementBySessionId(b, params.id, remoteOpts),
