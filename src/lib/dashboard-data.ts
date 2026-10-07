@@ -2,6 +2,8 @@ import type { PostgrestError } from '@supabase/supabase-js'
 import * as Sentry from '@sentry/nextjs'
 import { createClient } from './supabase-server'
 import { conClientIdDalPonte, ponteClienti } from './client-bridge'
+import { nelPerimetro } from './perimetro'
+import { perBlocchiDiUtenti, perimetroProfessionista } from './perimetro-server'
 import { selectWithMissingColumnFallback } from './safe-select'
 import { dataLoadError, reportDataError } from './data-error'
 import {
@@ -28,7 +30,11 @@ import type {
 } from './types'
 
 // Wrapper di accesso dati lato server con sessione utente Supabase.
-// Tutte le query sono filtrate via RLS dal claim auth.uid().
+// La RLS decide che cosa l'utente PUÒ leggere, non che cosa una pagina deve
+// mostrare: per un superadmin le policy `superadmin_read_*` aprono `clients`,
+// `sessions`, `measurement_analytics` e `client_notes` di tutti. Le liste
+// dell'area professionisti portano quindi il filtro esplicito sul
+// professionista (vedi perimetro.ts), senza eccezioni di ruolo.
 // Score proprietari e parametri HRV sono letti da `measurement_analytics`
 // (vedi schema reale: legacy app Flutter).
 
@@ -60,11 +66,15 @@ export async function getProfessionalProfile(): Promise<ProfessionalProfile | nu
   return data
 }
 
+/** Schede del professionista loggato: le sue, non tutte quelle che la RLS concede. */
 export async function listClients(): Promise<Client[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
   const { data } = await supabase
     .from('clients')
     .select('*')
+    .eq('professionista_id', user.id)
     .order('cognome', { ascending: true })
   return data ?? []
 }
@@ -422,8 +432,16 @@ async function conClienteRisolto(rows: MeasurementAnalytics[]): Promise<Measurem
   return conClientIdDalPonte(rows, await ponteClienti(user.id))
 }
 
+/**
+ * Misurazioni di oggi nel perimetro del professionista loggato: le sue
+ * sessioni e le automisurazioni dei clienti collegati con link `active`. Il
+ * filtro è nella query e viene ripetuto sulle righe: nessun ruolo lo allarga.
+ */
 export async function todaysMeasurements(): Promise<MeasurementAnalytics[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+  const perimetro = await perimetroProfessionista(user.id)
   // "Oggi" è la giornata ITALIANA, non quella del server (che su Vercel è UTC):
   // con la mezzanotte UTC una misurazione fatta dopo le 22:00 italiane finiva
   // nel giorno dopo. Il margine di tre ore recupera le righe il cui
@@ -431,12 +449,17 @@ export async function todaysMeasurements(): Promise<MeasurementAnalytics[]> {
   // sull'istante normalizzato.
   const oggi = oggiIta()
   const daIso = new Date(new Date(inizioGiornoIta(oggi)).getTime() - 3 * 3_600_000).toISOString()
-  const { data } = await supabase
-    .from('measurement_analytics')
-    .select('*')
-    .gte('measured_at_utc', daIso)
-    .order('measured_at_utc', { ascending: false })
-  const rows = await conClienteRisolto(await conIstantiDiSessione(supabase, (data ?? []) as MeasurementAnalytics[]))
+  const { data, error } = await perBlocchiDiUtenti<MeasurementAnalytics, PostgrestError>(perimetro, (utenti) =>
+    supabase
+      .from('measurement_analytics')
+      .select('*')
+      .in('user_id', utenti)
+      .gte('measured_at_utc', daIso)
+      .order('measured_at_utc', { ascending: false }),
+  )
+  if (error) reportDataError('todaysMeasurements', error)
+  const mie = (data as MeasurementAnalytics[]).filter((m) => nelPerimetro(m, perimetro))
+  const rows = await conClienteRisolto(await conIstantiDiSessione(supabase, mie))
   return rows
     .filter((m) => measuredDayKey(m) === oggi)
     .sort((a, b) => (measuredInstant(b)?.getTime() ?? 0) - (measuredInstant(a)?.getTime() ?? 0))
@@ -462,9 +485,13 @@ export async function listAlerts(opts?: { status?: Alert['status'][]; limit?: nu
 
 export async function listRecentNotes(limit = 3): Promise<ClientNote[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+  // `superadmin_read_notes` apre le note di tutti: qui servono le proprie.
   const { data } = await supabase
     .from('client_notes')
     .select('*')
+    .eq('professionista_id', user.id)
     .order('data_creazione', { ascending: false })
     .limit(limit)
   return (data ?? []) as ClientNote[]
@@ -726,8 +753,10 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
 
 export async function clientsToContact(): Promise<Array<{ client: Client; settings: ClientSettings | null; daysSinceLast: number }>> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
   const [{ data: clients }, { data: settings }, remoteMap] = await Promise.all([
-    supabase.from('clients').select('*'),
+    supabase.from('clients').select('*').eq('professionista_id', user.id),
     supabase.from('client_settings').select('*'),
     getLastRemoteSessionMap(supabase),
   ])
