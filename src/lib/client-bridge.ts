@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { buildBridge } from './remote-sessions'
 import { createAdminClient, hasServiceRole } from './supabase-admin'
+import { misurataDalCliente } from './perimetro'
 import type { MeasurementAnalytics } from './types'
 
 // =============================================================================
@@ -22,8 +23,10 @@ import type { MeasurementAnalytics } from './types'
 //      riempie `client_id` dove è NULL. Serve a tutto ciò che raggruppa per
 //      scheda (Analytics, i link alla scheda, i contatori).
 //   2. «che nome scrivo in tabella?» → `identificaCliente`, con la scala dei
-//      tre ripieghi: scheda → profilo → non assegnata. Il "—" non è una
-//      risposta: nasconde al professionista una misurazione che possiede.
+//      ripieghi: scheda → profilo → cliente collegato senza nome. Il "—" non è
+//      una risposta: nasconde al professionista una misurazione che possiede.
+//      "Non assegnata" vale SOLO per le sessioni fatte dal professionista
+//      senza scegliere un cliente: un'automisurazione ha sempre un autore.
 //
 // Il ponte vero e proprio è `buildBridge` (remote-sessions.ts), che usa la
 // service_role e va quindi chiamato solo con un `professionistaId` già
@@ -31,13 +34,20 @@ import type { MeasurementAnalytics } from './types'
 // senza rumore: i nomi che si possono risolvere dalle schede restano, gli
 // altri diventano "non assegnata" invece di far cadere la pagina.
 
-/** Identità di chi ha fatto la misurazione, con l'origine della risposta. */
+/**
+ * Identità di chi ha fatto la misurazione, con l'origine della risposta.
+ * `remota`: l'ha misurata il cliente dalla propria app, non il professionista.
+ */
 export type IdentitaCliente =
-  | { kind: 'scheda'; clientId: string; nome: string }
-  /** Account app collegato ma senza scheda CRM: il nome viene da `profiles`. */
-  | { kind: 'profilo'; clientId: null; userId: string; nome: string }
-  /** Sessione anonima del professionista stesso: nessuno a cui attribuirla. */
-  | { kind: 'non_assegnata'; clientId: null; userId: string | null }
+  | { kind: 'scheda'; clientId: string; nome: string; remota: boolean }
+  /**
+   * Account app collegato ma senza scheda CRM: il nome viene da `profiles`.
+   * `nome` è null quando nemmeno il profilo lo dà (o manca la service_role):
+   * resta un cliente collegato, non una misurazione "non assegnata".
+   */
+  | { kind: 'profilo'; clientId: null; userId: string; nome: string | null; remota: true }
+  /** Sessione del professionista stesso, fatta senza scegliere un cliente. */
+  | { kind: 'non_assegnata'; clientId: null; userId: string | null; remota: false }
 
 type ProfiloCliente = { nome: string | null; cognome: string | null; email: string | null }
 
@@ -123,31 +133,36 @@ export function conClientIdDalPonte<T extends { client_id: string | null; user_i
 }
 
 /**
- * La scala dei tre ripieghi. `nomeScheda` legge le schede già caricate dalla
- * pagina con la RLS attiva, così non si ripete una query che il chiamante ha
- * già fatto.
+ * La scala dei ripieghi. `nomeScheda` legge le schede già caricate dalla
+ * pagina, così non si ripete una query che il chiamante ha già fatto.
+ * `professionistaId` è il professionista di cui si mostra la lista: distingue
+ * le sue sessioni dalle automisurazioni dei clienti. Le righe devono essere già
+ * nel suo perimetro (perimetro.ts): qui si decide il nome, non l'accesso.
  */
 export function identificaCliente(
   row: Pick<MeasurementAnalytics, 'client_id'> & { user_id?: string | null },
   ponte: PonteClienti,
   nomeScheda: (clientId: string) => string | null,
+  professionistaId: string | null,
 ): IdentitaCliente {
   const userId = row.user_id ?? null
+  const remota = misurataDalCliente(row, professionistaId ?? '')
 
   // 1. Scheda CRM: diretta, oppure raggiunta dal ponte.
   const clientId = row.client_id ?? (userId ? ponte.clientIdByUser.get(userId) ?? null : null)
   if (clientId) {
     const nome = nomeScheda(clientId)
-    if (nome) return { kind: 'scheda', clientId, nome }
+    if (nome) return { kind: 'scheda', clientId, nome, remota }
   }
 
-  // 2. Account collegato senza scheda: nome e cognome dal profilo.
-  if (userId) {
+  // 2. Automisurazione di un account collegato senza scheda: nome e cognome dal
+  //    profilo, e se manca anche quello resta comunque "di un cliente".
+  if (userId && remota) {
     const p = ponte.profiloByUser.get(userId)
     const nome = nomeCompleto(p ?? null) || (p?.email ?? '')
-    if (nome) return { kind: 'profilo', clientId: null, userId, nome }
+    return { kind: 'profilo', clientId: null, userId, nome: nome || null, remota: true }
   }
 
-  // 3. Nessuno a cui attribuirla: vecchia sessione anonima del professionista.
-  return { kind: 'non_assegnata', clientId: null, userId }
+  // 3. Sessione del professionista senza cliente: l'unica "non assegnata".
+  return { kind: 'non_assegnata', clientId: null, userId, remota: false }
 }

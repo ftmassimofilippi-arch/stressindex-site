@@ -91,8 +91,8 @@ export default async function DashboardHome() {
     if (!c) return null
     return `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || tc('client')
   }
-  // Il ponte serve solo per le misurazioni auto-misurate che `todaysMeasurements`
-  // non ha potuto agganciare a una scheda (nessuna scheda, o sessione anonima).
+  // Il ponte dà il nome alle automisurazioni dei clienti collegati che
+  // `todaysMeasurements` non ha potuto agganciare a una scheda.
   const ponte = user ? await ponteClienti(user.id) : { clientIdByUser: new Map(), profiloByUser: new Map() }
 
   return (
@@ -169,7 +169,7 @@ export default async function DashboardHome() {
                   </thead>
                   <tbody>
                     {measurements.slice(0, 10).map((m) => {
-                      const chi = identificaCliente(m, ponte, nomeScheda)
+                      const chi = identificaCliente(m, ponte, nomeScheda, user?.id ?? null)
                       // Senza scheda non esiste una pagina misurazione: si manda
                       // dove l'attribuzione si può sistemare, non su un id nullo.
                       const href = chi.clientId
@@ -182,7 +182,12 @@ export default async function DashboardHome() {
                               <span className="text-anthracite-lighter italic">{t('unassignedMeasurement')}</span>
                             ) : (
                               <>
-                                {chi.nome}
+                                {chi.nome ?? tc('client')}
+                                {chi.remota && (
+                                  <span className="ml-2 text-[11px] font-normal text-teal-dark bg-teal-light rounded px-1.5 py-0.5 whitespace-nowrap">
+                                    {t('remoteBadge')}
+                                  </span>
+                                )}
                                 {chi.kind === 'profilo' && (
                                   <span className="ml-2 text-[11px] font-normal text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 whitespace-nowrap">
                                     {t('noCard')}
