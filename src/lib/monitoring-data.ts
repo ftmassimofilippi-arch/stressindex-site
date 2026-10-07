@@ -5,6 +5,8 @@ import { createClient } from './supabase-server'
 import { createAdminClient, hasServiceRole } from './supabase-admin'
 import { selectWithMissingColumnFallback } from './safe-select'
 import { buildBridge } from './remote-sessions'
+import { perimetroDaLink, type LinkPerimetro } from './perimetro'
+import { perimetroProfessionista } from './perimetro-server'
 import { toNum, toStr } from './format'
 import { stateOf, sleepStateOf } from './monitoring-format'
 import type {
@@ -301,10 +303,19 @@ async function loadWithUserSession(
   const cols = opts.withWindows ? DETAIL_COLUMNS : LIST_COLUMNS
   const own = currentUserId === professionistaId
 
-  // 1. Lettura diretta sotto RLS (proprie, di riferimento, collegate, superadmin).
+  // 1. Lettura diretta sotto RLS, con il perimetro esplicito: righe con il
+  //    professionista come riferimento ∪ righe degli account collegati. Senza
+  //    filtro `monitoring_sessions_superadmin_read` dava a un superadmin i
+  //    monitoraggi di tutti.
+  const collegati = own ? await accountCollegati(professionistaId) : []
   const direct = await resilientSelect('monitoring_sessions (RLS)', cols, (c) => {
     let q = supabase.from('monitoring_sessions').select(c).order('start_time', { ascending: false })
     if (!own) q = q.eq('professionista_id', professionistaId)
+    else {
+      const orParts = [`professionista_id.eq.${professionistaId}`, `user_id.eq.${professionistaId}`]
+      if (collegati.length > 0) orParts.push(`user_id.in.(${collegati.join(',')})`)
+      q = q.or(orParts.join(','))
+    }
     if (opts.clientIds?.length) q = q.in('client_id', opts.clientIds)
     if (opts.limit) q = q.limit(opts.limit)
     return q as unknown as PromiseLike<{ data: RawRow[] | null; error: PostgrestError | null }>
@@ -337,6 +348,31 @@ async function loadWithUserSession(
   return sortDesc(sessions)
 }
 
+/**
+ * Account app collegati al professionista con link `active`. Con la
+ * service_role si leggono per qualunque professionista già autorizzato dal
+ * chiamante; senza, la RLS concede solo i propri link.
+ */
+async function accountCollegati(professionistaId: string): Promise<string[]> {
+  if (!hasServiceRole()) return (await perimetroProfessionista(professionistaId)).clientiCollegati
+  const { data, error } = await createAdminClient()
+    .from('client_professional_links')
+    .select('professional_id, status, client_user_id, client_id')
+    .eq('professional_id', professionistaId)
+    .eq('status', 'active')
+  if (error) {
+    console.error('[monitoring-data] lettura collegamenti fallita', error.message)
+    return []
+  }
+  return perimetroDaLink(professionistaId, (data ?? []) as LinkPerimetro[]).clientiCollegati
+}
+
+/** La riga è del professionista (riferimento o autore) o di un suo account collegato? */
+async function nelPerimetroMonitoraggio(s: MonitoringSession, professionistaId: string): Promise<boolean> {
+  if (s.professionista_id === professionistaId || s.user_id === professionistaId) return true
+  return (await accountCollegati(professionistaId)).includes(s.user_id)
+}
+
 async function load(professionistaId: string, opts: LoadOpts): Promise<MonitoringSession[]> {
   if (hasServiceRole()) return loadWithServiceRole(professionistaId, opts)
   console.warn('[monitoring-data] SUPABASE_SERVICE_ROLE_KEY assente: i monitoraggi dei clienti collegati senza ponte RLS non sono leggibili')
@@ -365,12 +401,13 @@ export function countByClient(sessions: MonitoringSession[]): Map<string, number
 }
 
 /**
- * Una sessione completa (con `windows`). Autorizzazione in due passi, come
- * per il PDF delle misurazioni brevi:
- *   1. lettura con la sessione utente: se la RLS restituisce la riga il
- *      lettore è autorizzato (proprietario, riferimento, link attivo, superadmin);
+ * Una sessione completa (con `windows`). Autorizzazione in due passi:
+ *   1. lettura con la sessione utente (RLS), accettata solo se la riga è nel
+ *      perimetro del professionista indicato: la RLS da sola concede a un
+ *      superadmin ogni monitoraggio;
  *   2. altrimenti, con la service_role, la riga è accettata solo se appartiene
  *      al professionista indicato o a un suo account collegato.
+ * Senza un professionista non c'è perimetro: nessuna riga.
  */
 export async function getMonitoringSession(sessionId: string, professionistaId: string | null): Promise<MonitoringSession | null> {
   const supabase = await createClient()
@@ -380,7 +417,9 @@ export async function getMonitoringSession(sessionId: string, professionistaId: 
       error: PostgrestError | null
     }>,
   )
+  if (!professionistaId) return null
   let session: MonitoringSession | null = direct[0] ? parseMonitoringRow(direct[0]) : null
+  if (session && !(await nelPerimetroMonitoraggio(session, professionistaId))) session = null
 
   if (!session && professionistaId && hasServiceRole()) {
     const rows = await loadWithServiceRole(professionistaId, { withWindows: true })
