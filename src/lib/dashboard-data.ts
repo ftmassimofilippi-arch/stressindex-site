@@ -1300,22 +1300,32 @@ export async function listAllProfessionalsStats(): Promise<ProfessionalStats[]> 
     .sort((a, b) => a.full_name.localeCompare(b.full_name))
 }
 
-// Carica TUTTE le misurazioni dello studio (per pagina analytics)
+// Carica tutte le misurazioni dello studio del professionista loggato (pagina
+// Analytics): le sue sessioni e quelle dei clienti collegati, non ciò che la
+// RLS concede a un superadmin.
 export async function listAllMeasurements(opts?: { from?: string; to?: string }): Promise<MeasurementAnalytics[]> {
   const supabase = await createClient()
-  let q = supabase
-    .from('measurement_analytics')
-    .select('*')
-    .order('measured_at_utc', { ascending: true })
-  // Margine di tre ore sugli estremi: le righe con `measured_at_utc` ancora
-  // sfasato rientrano nella finestra, e il filtro fine avviene a valle
-  // sull'istante normalizzato (pagina Analytics).
-  if (opts?.from) q = q.gte('measured_at_utc', new Date(new Date(opts.from).getTime() - 3 * 3_600_000).toISOString())
-  if (opts?.to) q = q.lte('measured_at_utc', new Date(new Date(opts.to).getTime() + 3 * 3_600_000).toISOString())
-  const { data } = await q
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+  const perimetro = await perimetroProfessionista(user.id)
+  const { data, error } = await perBlocchiDiUtenti<MeasurementAnalytics, PostgrestError>(perimetro, (utenti) => {
+    let q = supabase
+      .from('measurement_analytics')
+      .select('*')
+      .in('user_id', utenti)
+      .order('measured_at_utc', { ascending: true })
+    // Margine di tre ore sugli estremi: le righe con `measured_at_utc` ancora
+    // sfasato rientrano nella finestra, e il filtro fine avviene a valle
+    // sull'istante normalizzato (pagina Analytics).
+    if (opts?.from) q = q.gte('measured_at_utc', new Date(new Date(opts.from).getTime() - 3 * 3_600_000).toISOString())
+    if (opts?.to) q = q.lte('measured_at_utc', new Date(new Date(opts.to).getTime() + 3 * 3_600_000).toISOString())
+    return q
+  })
+  if (error) reportDataError('listAllMeasurements', error)
+  const mie = (data as MeasurementAnalytics[]).filter((m) => nelPerimetro(m, perimetro))
   // Senza il ponte, `buildSegments` scartava con `continue` ogni misurazione
   // auto-misurata: i segmenti di Analytics contavano solo le righe scritte dal
   // professionista, silenziosamente.
-  const rows = await conClienteRisolto(await conIstantiDiSessione(supabase, (data ?? []) as MeasurementAnalytics[]))
+  const rows = await conClienteRisolto(await conIstantiDiSessione(supabase, mie))
   return rows.sort((a, b) => (measuredInstant(a)?.getTime() ?? 0) - (measuredInstant(b)?.getTime() ?? 0))
 }
