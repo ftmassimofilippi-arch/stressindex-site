@@ -93,6 +93,28 @@ sessioni remote. Restano:
   l'istante dalla sessione (`conIstanteSessione`), quindi non si vede; da capire
   da dove arrivano.
 
+## Perimetro e superadmin (07/10/2026)
+
+- **Le policy `superadmin_read_*` restano nel database.** Il perimetro del
+  07/10 è un filtro del sito: con le API di Supabase (o dall'app) un superadmin
+  legge ancora `clients`, `sessions`, `measurement_analytics`, `client_notes`,
+  `monitoring_sessions` e le tabelle sport di tutti. Chiuderle è una
+  migrazione (`sito-035`), da decidere insieme al consenso del cliente verso il
+  Super Admin: il pannello admin non ne ha bisogno (usa la `service_role`).
+- **Il pannello admin elenca ancora clienti di altri professionisti**: tab
+  Utenti, Clienti, Collegamenti, Monitoraggi, Salute collegamenti e le route
+  `/api/admin/*` che le servono. Sono gli strumenti di assistenza (unione
+  doppioni, link manuali, riparazioni): spegnerli è una decisione di prodotto,
+  non presa il 07/10.
+- **Link "Apri" dei monitoraggi nel pannello admin** (tab Monitoraggi e
+  pannello utente): puntano a `/monitoraggio/[id]?professionista=`, che per il
+  superadmin ora risponde 404 sui monitoraggi altrui. Da togliere o riaprire
+  secondo la decisione sopra.
+- **`SuperadminAccessLog`** e i rami `isSuperadminView` delle pagine restano nel
+  codice ma non scattano più: da togliere se la vista non torna.
+- **`scripts/test-pdf-permessi.mjs`** aggiornato alla regola nuova ma non
+  eseguito (crea utenti in produzione).
+
 ## Contenuti
 
 - **`/privacy`** creata il 04/10 riprendendo i testi dell'informativa

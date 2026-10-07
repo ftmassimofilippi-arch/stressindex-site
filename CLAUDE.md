@@ -28,6 +28,12 @@ Istruzioni per le sessioni Claude Code in questo repo. Aggiornate al
   (`alert-rules.ts`, `before-after.ts`, `chart-scales.ts`,
   `threshold-types.ts`) devono restare identici al Dart; se cambia uno,
   cambia l'altro.
+- **Perimetro esplicito**: nell'area professionisti ogni lista filtra sul
+  professionista loggato e sui suoi clienti con link `active`
+  (`src/lib/perimetro.ts`, `perimetro-server.ts`). La RLS dice che cosa si può
+  leggere, non che cosa una pagina mostra: le policy `superadmin_read_*`
+  aprono tutto. Nessuna eccezione per il superadmin finché
+  `SUPERADMIN_VEDE_DATI_CLIENTI` (`src/lib/superadmin-scope.ts`) è `false`.
 - **`clients.id` è TEXT**; `client_professional_links.client_id` è l'uid.
   Colonne assenti in produzione si leggono con
   `selectWithMissingColumnFallback`.

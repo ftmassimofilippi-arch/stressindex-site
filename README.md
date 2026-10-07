@@ -108,10 +108,21 @@ account `bloccato` → logout, `sospeso` → ogni pagina riscritta su `/sospeso`
 | `/impostazioni` | profilo, notifiche (`?tab=notifiche`), account |
 | `/sospeso` | pagina account sospeso |
 
-Le pagine clienti, monitoraggio e sport accettano `?professionista=` per la
-**modalità supporto** del superadmin.
+**Perimetro.** Ogni pagina mostra solo il lavoro del professionista loggato:
+le sue sessioni e le automisurazioni dei clienti collegati con link `active`
+(`src/lib/perimetro.ts`). Il filtro è esplicito nelle query, non affidato alla
+RLS, e il ruolo superadmin non lo allarga.
+
+Le pagine clienti, monitoraggio e sport accettano `?professionista=` per
+l'owner/admin di un'organizzazione sui propri membri. La **modalità supporto**
+del superadmin sullo stesso parametro è spenta dal 07/10/2026
+(`src/lib/superadmin-scope.ts`), in attesa del consenso del cliente verso il
+Super Admin.
 
 ### Super Admin (`/area-professionisti/professionisti`, solo `profiles.is_superadmin`)
+In testa **Attività della piattaforma**: conteggi aggregati (misurazioni di
+oggi, professionisti attivi, schede, collegamenti), senza righe
+(`src/lib/admin-counts.ts`).
 Tab **Panoramica** (attivi, in prova, in scadenza, sospesi), **Utenti**
 (stato account, abbonamenti, moduli per piano ed eccezioni, ruolo, password,
 correzione email con anteprima e audit, cancellazione), **Clienti** (unione
@@ -179,7 +190,7 @@ Poincaré, ritmogramma, PSD, trend, tabelle) in modalità `print`:
 | `GET /api/pdf/report-periodico?clientId=&from=&to=&locale=` | `/stampa/report-periodico` | tab Report |
 | `GET /api/pdf/monitoraggio/[id]?variant=&locale=` | `/stampa/monitoraggio/[id]` | azioni del monitoraggio, email |
 
-La route verifica i permessi (RLS, superadmin in sola lettura), apre la
+La route verifica i permessi (RLS e titolare della scheda), apre la
 pagina con `puppeteer-core` (Chrome locale in sviluppo, `@sparticuz/chromium`
 su Vercel, `maxDuration` 60) inoltrando i cookie di sessione e un **token
 firmato** a 60 secondi (`src/lib/print-token.ts`), attende
@@ -202,7 +213,8 @@ sulla pagina misurazione, `?fixture=report` sul report periodico;
 (ignorati da git), `node scripts/pdf-esempi.mjs` fa lo stesso con dati reali
 del proprio account. `node scripts/test-pdf-permessi.mjs --base <url>
 --superadmin <email>` crea due professionisti di prova e verifica permessi,
-token (scaduti, riusati, contraffatti) e sola lettura del superadmin, poi
+token (scaduti, riusati, contraffatti) e che il superadmin non legga i
+clienti altrui, poi
 cancella tutto. Variabili: `PDF_TOKEN_SECRET` (facoltativa, altrimenti
 derivata dalla service role), `CHROME_PATH` (facoltativa in locale).
 

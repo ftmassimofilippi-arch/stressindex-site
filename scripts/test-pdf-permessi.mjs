@@ -7,7 +7,8 @@
 //   - A riceva un errore sui clienti di B, e viceversa;
 //   - la pagina di stampa accetti un token valido una sola volta e rifiuti
 //     token scaduti, riusati, contraffatti o di un altro utente;
-//   - la sola lettura di un cliente altrui funzioni solo per il superadmin.
+//   - nessuno scarichi il PDF di un cliente altrui, superadmin compreso
+//     (dal 07/10/2026: src/lib/superadmin-scope.ts).
 // Alla fine cancella tutto quello che ha creato (salvo --keep).
 //
 // Uso (sito in esecuzione, es. `PORT=3778 npm run dev`):
@@ -174,17 +175,18 @@ try {
   r = await get(`/stampa/misurazione/${dataA.sessionId}?clientId=${dataA.clientId}&token=${tokenA2}`, cookieB)
   check('Token di A usato con la sessione di B rifiutato', r.status === 404, `status ${r.status}`)
 
-  // 4. Sola lettura ?professionista=: solo il superadmin
+  // 4. ?professionista= non apre i PDF di un altro: nemmeno al superadmin,
+  //    finché non esiste il consenso del cliente verso il Super Admin.
   r = await get(`/api/pdf/misurazione/${dataB.sessionId}?clientId=${dataB.clientId}&professionista=${B.id}&locale=it`, cookieA)
   check('A con ?professionista=B non ottiene il PDF di B', r.status >= 400 && r.status < 500, `status ${r.status}`)
   if (args.superadmin) {
     const cookieS = await sessionCookie(args.superadmin)
     r = await get(`/api/pdf/misurazione/${dataB.sessionId}?clientId=${dataB.clientId}&professionista=${B.id}&locale=it`, cookieS)
-    check('Il superadmin in sola lettura scarica il PDF di un cliente di B', r.status === 200 && r.type.includes('pdf'), `status ${r.status}`)
+    check('Il superadmin non ottiene il PDF di un cliente di B', r.status >= 400 && r.status < 500, `status ${r.status}`)
     r = await get(`/api/pdf/report-periodico?clientId=${dataA.clientId}&from=${from}&to=${today}&professionista=${A.id}`, cookieS)
-    check('Il superadmin in sola lettura scarica il report di un cliente di A', r.status === 200 && r.type.includes('pdf'), `status ${r.status}`)
+    check('Il superadmin non ottiene il report di un cliente di A', r.status >= 400 && r.status < 500, `status ${r.status}`)
   } else {
-    console.log('(superadmin non indicato: passa --superadmin <email> per il test di sola lettura)')
+    console.log('(superadmin non indicato: passa --superadmin <email> per verificare che non legga i clienti altrui)')
   }
 } catch (err) {
   fail++

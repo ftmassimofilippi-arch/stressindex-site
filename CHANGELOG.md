@@ -3,6 +3,40 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-07 — perimetro del professionista (ramo `fix/perimetro-home`)
+
+Non in produzione: sul ramo, in attesa di verifica sulla preview. Riferimento:
+`hrv_app/docs/DIAGNOSI_ASSEGNAZIONE.md`.
+
+Le pagine dell'area professionisti si affidavano alla sola RLS. Per un
+superadmin le policy `superadmin_read_*` aprono `clients`, `sessions`,
+`measurement_analytics`, `client_notes`, `monitoring_sessions` e le tabelle
+sport di tutti: la home mostrava le misurazioni di ogni utente (43 il 07/10,
+di cui 5 nel perimetro dell'account).
+
+- **Perimetro** (`src/lib/perimetro.ts`, `perimetro-server.ts`, con test): le
+  sessioni del professionista loggato più quelle degli account collegati con
+  link `active`. Filtro nella query e ripetuto sulle righe; se i link non si
+  leggono il perimetro si restringe, non si allarga.
+- **Home**: misurazioni di oggi, contatori, schede, da contattare, ultime note,
+  trend aggregato e alert nel perimetro.
+- **Etichette**: "Non assegnata" solo per le sessioni del professionista senza
+  cliente; le automisurazioni mostrano il nome del cliente e il badge "Da
+  remoto" (`dashboard.home.remoteBadge`, tre lingue).
+- **Lista clienti, Analytics, Monitoraggio, Sport, ricerca globale, scheda
+  cliente, misurazione, confronto**: stesso filtro; le pagine aperte per id
+  rispondono 404 se la scheda o la sessione non è del titolare.
+- **Report periodici e PDF**: stampa solo il titolare della scheda, anche con
+  la sessione (prima il controllo valeva solo nella via a token).
+- **Superadmin** (`src/lib/superadmin-scope.ts`): `?professionista=` non apre
+  più al superadmin i dati di un altro professionista; resta il percorso
+  owner/admin di organizzazione. Nel pannello admin la sezione "Attività della
+  piattaforma" dà solo conteggi aggregati.
+- `scripts/test-pdf-permessi.mjs` aggiornato alla nuova regola (non eseguito).
+
+Resta aperto, in `docs/debiti-tecnici.md`: le policy `superadmin_read_*` nel
+database e le tab del pannello admin che elencano clienti.
+
 ## 2026-10-04 sera — cancellazione GDPR via `delete-account`
 
 In produzione dalle 20:25 UTC (`0c713d2`, Vercel `dpl_G8fGN2Un…`), dopo la
