@@ -15,9 +15,10 @@ function label(h: Hit, fallback: string): string {
   return full || h.email || fallback
 }
 
-// Ricerca globale nella TopBar: digita per cercare clienti (e, per il superadmin,
-// professionisti). I risultati sono filtrati dalle RLS lato Supabase, quindi un
-// professionista normale vede solo i propri clienti. Click → naviga alla scheda.
+// Ricerca globale nella TopBar: digita per cercare i PROPRI clienti (e, per il
+// superadmin, i professionisti). Le schede sono filtrate in modo esplicito sul
+// professionista loggato: la RLS da sola concede a un superadmin quelle di
+// tutti. Click → scheda del cliente; un professionista porta al pannello admin.
 export function GlobalSearch({ className = '' }: { className?: string }) {
   const t = useTranslations('dashboard.search')
   const tc = useTranslations('common')
@@ -49,11 +50,19 @@ export function GlobalSearch({ className = '' }: { className?: string }) {
     setLoading(true)
     const handle = setTimeout(async () => {
       const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const uid = session?.user.id
+      if (!uid) {
+        setHits([])
+        setLoading(false)
+        return
+      }
       const like = `%${q}%`
       const [clientsRes, profsRes] = await Promise.all([
         supabase
           .from('clients')
           .select('id, nome, cognome, email')
+          .eq('professionista_id', uid)
           .or(`nome.ilike.${like},cognome.ilike.${like},email.ilike.${like}`)
           .limit(8),
         supabase
@@ -85,7 +94,7 @@ export function GlobalSearch({ className = '' }: { className?: string }) {
   }, [query])
 
   function hrefFor(h: Hit) {
-    return h.kind === 'client' ? `/area-professionisti/clienti/${h.id}` : `/area-professionisti/clienti?professionista=${h.id}`
+    return h.kind === 'client' ? `/area-professionisti/clienti/${h.id}` : '/area-professionisti/professionisti'
   }
 
   function close() {
