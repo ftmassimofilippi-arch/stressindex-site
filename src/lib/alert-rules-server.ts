@@ -9,13 +9,16 @@ import { createClient as createServerClient } from './supabase-server'
 import type { Alert } from './types'
 import type { AlertRule } from './alert-rules'
 
-/** Tutte le regole del professionista loggato (generali + override). La RLS
- *  filtra su professionista_id. Error-safe: tabella assente → []. */
+/** Tutte le regole del professionista loggato (generali + override), con il
+ *  filtro esplicito oltre alla RLS. Error-safe: tabella assente → []. */
 export async function listAlertRules(): Promise<AlertRule[]> {
   const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
   const { data, error } = await supabase
     .from('alert_rules')
     .select('id, professionista_id, client_id, alert_type, enabled, threshold_value, created_at')
+    .eq('professionista_id', user.id)
     .order('created_at', { ascending: true })
   if (error) {
     console.error('[listAlertRules] error', error.message)
@@ -58,13 +61,17 @@ function eventToAlert(e: AlertEventRow): Alert {
   }
 }
 
-/** Eventi alert scritti dall'app (valutati sulle regole con la precedenza per
- *  cliente). Error-safe: tabella assente → []. */
+/** Eventi alert del professionista loggato, scritti dall'app (valutati sulle
+ *  regole con la precedenza per cliente). Il filtro sul professionista è
+ *  esplicito, oltre alla RLS. Error-safe: tabella assente → []. */
 export async function listAlertEvents(opts?: { clientId?: string; unreadOnly?: boolean; limit?: number; days?: number }): Promise<Alert[]> {
   const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
   let q = supabase
     .from('alert_events')
     .select('id, professionista_id, client_id, alert_type, severity, title, message, session_id, read, created_at')
+    .eq('professionista_id', user.id)
     .order('created_at', { ascending: false })
   if (opts?.clientId) q = q.eq('client_id', opts.clientId)
   if (opts?.unreadOnly) q = q.eq('read', false)

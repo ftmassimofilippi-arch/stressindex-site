@@ -471,9 +471,14 @@ export async function todaysMeasurements(): Promise<MeasurementAnalytics[]> {
 
 export async function listAlerts(opts?: { status?: Alert['status'][]; limit?: number; clientId?: string }): Promise<Alert[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+  // Oggi la RLS di `alerts` concede solo i propri (`alerts_own_data`): il filtro
+  // esplicito tiene il perimetro anche se un domani arriva una policy più larga.
   let q = supabase
     .from('alerts')
     .select('*')
+    .eq('professional_id', user.id)
     .order('severity', { ascending: false })
     .order('created_at', { ascending: false })
   if (opts?.status?.length) q = q.in('status', opts.status)
