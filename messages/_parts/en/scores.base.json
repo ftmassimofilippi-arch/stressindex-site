@@ -14,7 +14,7 @@
       "balance": "Balance",
       "medium": "Medium",
       "high": "High",
-      "fatigue": "Fatigue"
+      "fatigue": "Exhaustion"
     },
     "recovery": {
       "insufficient": "Insufficient",

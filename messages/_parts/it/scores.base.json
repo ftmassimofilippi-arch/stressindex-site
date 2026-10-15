@@ -14,7 +14,7 @@
       "balance": "Equilibrio",
       "medium": "Medio",
       "high": "Alto",
-      "fatigue": "Affaticamento"
+      "fatigue": "Esaurimento"
     },
     "recovery": {
       "insufficient": "Insufficiente",

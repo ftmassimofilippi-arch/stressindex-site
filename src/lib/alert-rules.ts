@@ -73,63 +73,10 @@ export function alertTypeLabel(type: string, t: Tr): string {
 
 // ── Messaggi degli alert nella lingua del professionista ─────────────────────
 //
-// L'app scrive `alert_events.message` già formattato, nella lingua dell'app
-// ("{nome} ha un RMSSD di 32 ms, in calo del 25% rispetto alla baseline (43
-// ms)."). Il sito non può tradurre quel testo, ma per le regole predefinite
-// conosce il modello (setAlertMsg* negli ARB dell'app) e quindi la posizione
-// dei numeri: li estrae e ricompone la frase dai messaggi del sito, con
-// interpolazione. Se i numeri non tornano si mostra il testo dell'app.
-
-/** Numeri che ogni modello di messaggio dell'app contiene, nell'ordine in cui
- *  compaiono, e chiave del messaggio del sito (namespace `alerts.messages`). */
-const APP_MESSAGE_TEMPLATES: Record<string, { key: string; params: string[]; strip?: RegExp }> = {
-  rmssd_drop_20: { key: 'rmssdDrop', params: ['rmssd', 'drop', 'baseline'] },
-  rmssd_drop_40: { key: 'rmssdDrop', params: ['rmssd', 'drop', 'baseline'] },
-  stress_high_chronic: { key: 'stressChronic', params: ['threshold'] },
-  stress_critical: { key: 'stressCritical', params: ['value'] },
-  recovery_low: { key: 'recoveryLow', params: ['value'] },
-  sdnn_low: { key: 'sdnnLow', params: ['value'] },
-  // "DFA Alpha1" contiene una cifra: va tolta prima di leggere i numeri.
-  dfa_alpha1_abnormal: { key: 'dfaAbnormal', params: ['value', 'threshold'], strip: /alpha\s?1|α1/gi },
-  hr_rest_high: { key: 'hrRestHigh', params: ['value', 'threshold'] },
-  inflammation_drop: { key: 'adaptationDrop', params: ['value'] },
-  acwr_warning: { key: 'acwr', params: ['acwr'] },
-  acwr_danger: { key: 'acwr', params: ['acwr'] },
-  acwr_danger_hrv: { key: 'acwrHrv', params: ['acwr'] },
-  undertraining: { key: 'acwr', params: ['acwr'] },
-  tsb_peak: { key: 'tsb', params: ['tsb'] },
-}
-
-function numbersIn(text: string): number[] {
-  return (text.match(/-?\d+(?:[.,]\d+)?/g) ?? [])
-    .map((s) => Number(s.replace(',', '.')))
-    .filter((n) => Number.isFinite(n))
-}
-
-/**
- * Riga descrittiva di un alert, tradotta: per gli eventi dell'app ricompone la
- * frase della regola con i valori misurati; per gli alert del cron mostra il
- * valore scatenante. Vuoto se non c'è nulla da dire oltre al titolo.
- * `t` è il traduttore del namespace `alerts`; `fmt` formatta i numeri nella
- * lingua della pagina (es. `(v) => num(v, 1, locale)`).
- */
-export function alertMessage(alert: Pick<Alert, 'type' | 'message' | 'triggering_value' | 'source'>, t: Tr, fmt: (v: number) => string): string {
-  if (alert.source === 'app') {
-    const raw = alert.message ?? ''
-    const tpl = APP_MESSAGE_TEMPLATES[alert.type]
-    if (tpl && raw) {
-      const nums = numbersIn(tpl.strip ? raw.replace(tpl.strip, '') : raw)
-      if (nums.length >= tpl.params.length) {
-        const values: Record<string, string> = {}
-        tpl.params.forEach((p, i) => { values[p] = fmt(nums[i]) })
-        return t(`messages.${tpl.key}`, values)
-      }
-    }
-    return raw
-  }
-  if (alert.triggering_value != null) return t('messages.value', { value: fmt(alert.triggering_value) })
-  return alert.message ?? ''
-}
+// La composizione vive in `alert-message.ts` (modulo senza import di valore,
+// coperto da `alert-message.test.ts`); qui si riesporta perché i chiamanti
+// importano tutto ciò che riguarda gli alert da questo file.
+export { alertMessage, alertValueDecimals, type AlertMessageOptions } from './alert-message'
 
 // ── Precedenza (porting 1:1 di AlertService.resolveForClient) ────────────────
 

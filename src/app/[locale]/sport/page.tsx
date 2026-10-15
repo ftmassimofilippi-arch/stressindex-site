@@ -5,6 +5,7 @@ import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { pageMetadata } from '@/lib/seo'
 import { formatEur, num } from '@/lib/format'
+import { PRICING } from '@/config/pricing'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 
@@ -19,11 +20,11 @@ export async function generateMetadata({ params }: { params: { locale: string } 
   })
 }
 
-// Prezzi in EUR al mese (Pro) e al mese (Base); i concorrenti sono indicativi.
-const PRICE_PRO = 69
-const PRICE_BASE = 49.9
-const PRICE_KUBIOS_YEAR = 750
-const PRICE_HRV4_MONTH = 10
+// Prezzi dal listino unico (EUR al mese); i concorrenti sono indicativi.
+const PRICE_PRO = PRICING.pro
+const PRICE_BASE = PRICING.base
+const PRICE_KUBIOS_YEAR = PRICING.competitors.kubiosYear
+const PRICE_HRV4_MONTH = PRICING.competitors.hrv4TrainingMonth
 
 // Parte visiva delle 4 zone DFA Alpha1 della landing: titoli e testi in sportLanding.dfa.zones (stesso ordine).
 const ZONE_VISUALS = [
@@ -420,21 +421,32 @@ function SportContent() {
         </div>
       </section>
 
-      {/* IN ARRIVO */}
+      {/* COSA C'È OGGI / COSA ARRIVA */}
       <section className="py-16 md:py-24 px-6 border-b border-gray-100">
         <div className="max-w-5xl mx-auto">
           <SectionHeader
             eyebrow={t('roadmap.eyebrow')}
-            emoji="🔮"
+            emoji="🧭"
             title={<Title lead={t('roadmap.titleLead')} em={t('roadmap.titleEm')} />}
             description={t('roadmap.description')}
           />
 
-          <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {(t.raw('roadmap.items') as string[]).map((r) => (
+          <h3 className="mt-10 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">{t('roadmap.haveTitle')}</h3>
+          <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {(t.raw('roadmap.have') as string[]).map((r) => (
               <div key={r} className="rounded-xl border border-gray-200 bg-white px-5 py-4 flex items-start gap-3">
-                <span className="text-teal font-semibold mt-0.5 flex-shrink-0" aria-hidden="true">›</span>
+                <span className="text-teal font-semibold mt-0.5 flex-shrink-0" aria-hidden="true">✓</span>
                 <span className="text-[15px] text-anthracite leading-snug">{r}</span>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="mt-10 text-[13px] font-medium text-anthracite-lighter uppercase tracking-wider">{t('roadmap.nextTitle')}</h3>
+          <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {(t.raw('roadmap.next') as string[]).map((r) => (
+              <div key={r} className="rounded-xl border border-dashed border-gray-300 bg-surface px-5 py-4 flex items-start gap-3">
+                <span className="text-anthracite-lighter font-semibold mt-0.5 flex-shrink-0" aria-hidden="true">›</span>
+                <span className="text-[15px] text-anthracite-light leading-snug">{r}</span>
               </div>
             ))}
           </div>

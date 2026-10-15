@@ -7,11 +7,11 @@
     "eyebrow": "HRV software for wellness professionals",
     "titleLead": "Your client is stressed.",
     "titleEm": "Now you can prove it.",
-    "body": "Stress Index measures the autonomic nervous system in 10 minutes and hands you 4 indices ready to use in the session. No more eyeballing. No more explaining without data.",
+    "body": "Stress Index measures the autonomic nervous system in 10 minutes and hands you 5 scores ready to use in the session. No more eyeballing. No more explaining without data.",
     "ctaHow": "See how it works"
   },
   "trust": {
-    "params": "24 HRV parameters",
+    "params": "25+ HRV parameters",
     "platforms": "Android and iOS",
     "eu": "EU servers · GDPR",
     "pdf": "Professional PDF report",
@@ -39,9 +39,9 @@
   },
   "solution": {
     "eyebrow": "The answer",
-    "titleLead": "4 numbers.",
+    "titleLead": "5 numbers.",
     "titleEm": "Everything you need.",
-    "body": "Stress Index processes 24 HRV parameters and turns them into 4 indices on a 0-100 scale. You read them in a second. Your client understands them without a lecture.",
+    "body": "Stress Index processes 25+ HRV parameters and turns them into 5 scores on a 0-100 scale. You read them in a second. Your client understands them without a lecture.",
     "features": [
       {
         "title": "Stress Index",
@@ -81,7 +81,7 @@
       },
       {
         "title": "Share the report",
-        "body": "A professional PDF with the 4 indices, the HRV charts and the autonomic nervous system analysis. Send it to the client with one tap. Print it. File it in the CRM."
+        "body": "A professional PDF with the 5 scores, the HRV charts and the autonomic nervous system analysis. Send it to the client with one tap. Print it. File it in the CRM."
       }
     ]
   },
@@ -104,7 +104,7 @@
       },
       {
         "title": "Serious science, plain language",
-        "body": "24 HRV parameters grounded in the international literature, demographic normalization by age and sex. The scientific rigor you expect, without the complexity you do not need."
+        "body": "25+ HRV parameters grounded in the international literature, demographic normalization by age and sex. The scientific rigor you expect, without the complexity you do not need."
       }
     ]
   },
@@ -128,12 +128,12 @@
     "titleLead": "One subscription.",
     "titleEm": "Everything included, forever.",
     "body": "No per-client fees, no extra charge for reports, no surprises. You pay one flat monthly price and use everything without limits.",
-    "badge": "Founding Members offer · First 200 subscribers",
-    "planName": "Stress Index Pro",
+    "badge": "Founding Members offer · First {seats} subscribers",
+    "planName": "Basic plan",
     "planFor": "For physiotherapists, osteopaths, sports physicians and wellness coaches",
     "perMonth": "/month",
-    "standardNote": "Standard price <s>{standard}/month</s> · Founding Members {price}/month for the first 200",
-    "lockNote": "Among the first 200 subscribers? Your price of <b>{price}/month</b> is locked in forever.",
+    "standardNote": "Standard price <s>{standard}/month</s> · Founding Members {price}/month for the first {seats}",
+    "lockNote": "Among the first {seats} subscribers? Your price of <b>{price}/month</b> is locked in forever.",
     "features": [
       "Unlimited clients and measurements",
       "Unlimited professional PDF reports",
@@ -144,7 +144,7 @@
       "Priority email support"
     ],
     "cta": "Start your 60 free days",
-    "note": "Credit card required · No charge for 60 days · Then {price}/month · Cancel anytime"
+    "note": "No credit card required · 60 days free · Then {price}/month · Cancel anytime"
   },
   "faq": {
     "eyebrow": "Frequently asked questions",
@@ -173,7 +173,7 @@
       },
       {
         "q": "How long does the Founding Members price last?",
-        "a": "Forever. The first 200 professionals to sign up lock in {price}/month for life, even after the standard price rises to {standard}/month."
+        "a": "Forever. The first {seats} professionals to sign up lock in {price}/month for life, even after the standard price rises to {standard}/month."
       }
     ]
   },
@@ -182,7 +182,7 @@
     "titleLead": "The next client who walks in,",
     "titleEm": "measure them for real.",
     "body": "60 days free. No commitment. Stop whenever you want.",
-    "note": "Credit card required · Then {price}/month · Cancel at any time"
+    "note": "No credit card required · Then {price}/month · Cancel at any time"
   },
   "footer": {
     "tagline": "Professional HRV software for physiotherapists, osteopaths, sports physicians and wellness coaches. Measure autonomic nervous system stress in 10 minutes.",

@@ -1,0 +1,20 @@
+{
+  "terms": {
+    "title": "Terms of Service | Stress Index",
+    "description": "Terms of use for Stress Index: the service, accounts, free trial and subscription, obligations, wellness nature of the service, liability, termination and jurisdiction.",
+    "shortDescription": "Terms of use for Stress Index: service, accounts, free trial and subscription, liability and termination."
+  },
+  "cookie": {
+    "title": "Cookie Policy | Stress Index",
+    "description": "Which cookies the Stress Index website uses: only technical session and language cookies, browser preferences, error detection, no profiling or advertising cookies.",
+    "shortDescription": "Which cookies the Stress Index website uses: technical cookies only, no profiling or advertising."
+  },
+  "contacts": {
+    "title": "Contact | Stress Index",
+    "description": "How to contact Stress Index support.",
+    "shortDescription": "How to contact Stress Index support."
+  },
+  "notFound": {
+    "title": "Page not found | Stress Index"
+  }
+}

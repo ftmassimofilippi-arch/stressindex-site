@@ -46,7 +46,10 @@
     "adaptationDrop": "Anpassungs-Score bei {value}",
     "acwr": "ACWR {acwr}",
     "acwrHrv": "ACWR {acwr} mit HRV unter der Baseline",
-    "tsb": "TSB {tsb}"
+    "tsb": "TSB {tsb}",
+    "neverMeasured": "Keine Messung erfasst",
+    "missedSince": "Letzte Messung am {date} (über {days} Tage)",
+    "missedOn": "Letzte Messung am {date}"
   },
   "rules": {
     "title": "Warnschwellen",

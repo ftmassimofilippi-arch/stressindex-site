@@ -7,11 +7,11 @@
     "eyebrow": "Software HRV per professionisti del benessere",
     "titleLead": "Il tuo cliente è stressato.",
     "titleEm": "Adesso puoi dimostrarlo.",
-    "body": "Stress Index misura il sistema nervoso autonomo in 10 minuti e ti consegna 4 indici pronti da usare in seduta. Basta valutazioni a occhio. Basta spiegare senza dati.",
+    "body": "Stress Index misura il sistema nervoso autonomo in 10 minuti e ti consegna 5 score pronti da usare in seduta. Basta valutazioni a occhio. Basta spiegare senza dati.",
     "ctaHow": "Guarda come funziona"
   },
   "trust": {
-    "params": "24 parametri HRV",
+    "params": "25+ parametri HRV",
     "platforms": "Android e iOS",
     "eu": "Server EU · GDPR",
     "pdf": "Report PDF professionale",
@@ -39,9 +39,9 @@
   },
   "solution": {
     "eyebrow": "La risposta",
-    "titleLead": "4 numeri.",
+    "titleLead": "5 numeri.",
     "titleEm": "Tutto quello che ti serve.",
-    "body": "Stress Index elabora 24 parametri HRV e li traduce in 4 indici su scala 0-100. Tu li leggi in un secondo. Il cliente li capisce senza spiegazioni.",
+    "body": "Stress Index elabora 25+ parametri HRV e li traduce in 5 score su scala 0-100. Tu li leggi in un secondo. Il cliente li capisce senza spiegazioni.",
     "features": [
       {
         "title": "Indice di Stress",
@@ -81,7 +81,7 @@
       },
       {
         "title": "Condividi il report",
-        "body": "PDF professionale con i 4 indici, i grafici HRV e l’analisi del sistema nervoso autonomo. Lo invii al cliente con un tap. Lo stampi. Lo archivi nel CRM."
+        "body": "PDF professionale con i 5 score, i grafici HRV e l’analisi del sistema nervoso autonomo. Lo invii al cliente con un tap. Lo stampi. Lo archivi nel CRM."
       }
     ]
   },
@@ -104,7 +104,7 @@
       },
       {
         "title": "Scienza seria, linguaggio semplice",
-        "body": "24 parametri HRV su letteratura internazionale, normalizzazione demografica per età e sesso. Il rigore scientifico che ti aspetti, senza la complessità che non ti serve."
+        "body": "25+ parametri HRV su letteratura internazionale, normalizzazione demografica per età e sesso. Il rigore scientifico che ti aspetti, senza la complessità che non ti serve."
       }
     ]
   },
@@ -128,12 +128,12 @@
     "titleLead": "Un abbonamento.",
     "titleEm": "Tutto incluso, per sempre.",
     "body": "Niente costi per cliente, niente report extra, niente sorprese. Paghi una cifra fissa ogni mese e usi tutto senza limiti.",
-    "badge": "Offerta Founding Members · Primi 200 iscritti",
-    "planName": "Stress Index Pro",
+    "badge": "Offerta Founding Members · Primi {seats} iscritti",
+    "planName": "Piano Base",
     "planFor": "Per fisioterapisti, osteopati, medici sportivi e coach del benessere",
     "perMonth": "/mese",
-    "standardNote": "Prezzo standard <s>{standard}/mese</s> · Founding Members {price}/mese per i primi 200",
-    "lockNote": "Sei tra i primi 200 iscritti? Il prezzo di <b>{price}/mese</b> è bloccato per sempre.",
+    "standardNote": "Prezzo standard <s>{standard}/mese</s> · Founding Members {price}/mese per i primi {seats}",
+    "lockNote": "Sei tra i primi {seats} iscritti? Il prezzo di <b>{price}/mese</b> è bloccato per sempre.",
     "features": [
       "Clienti e misurazioni illimitati",
       "Report PDF professionali illimitati",
@@ -144,7 +144,7 @@
       "Supporto prioritario via email"
     ],
     "cta": "Inizia 60 giorni gratis",
-    "note": "Carta di credito richiesta · Nessun addebito per 60 giorni · Poi {price}/mese · Disdici quando vuoi"
+    "note": "Nessuna carta richiesta · 60 giorni gratis · Poi {price}/mese · Disdici quando vuoi"
   },
   "faq": {
     "eyebrow": "Domande frequenti",
@@ -173,7 +173,7 @@
       },
       {
         "q": "Il prezzo Founding Members dura quanto?",
-        "a": "Per sempre. I primi 200 professionisti che si iscrivono bloccano {price}/mese a vita, anche quando il prezzo standard salirà a {standard}/mese."
+        "a": "Per sempre. I primi {seats} professionisti che si iscrivono bloccano {price}/mese a vita, anche quando il prezzo standard salirà a {standard}/mese."
       }
     ]
   },
@@ -182,7 +182,7 @@
     "titleLead": "Il prossimo cliente che entra,",
     "titleEm": "misuralo davvero.",
     "body": "60 giorni gratis. Nessun vincolo. Smetti quando vuoi.",
-    "note": "Carta di credito richiesta · Poi {price}/mese · Disdici in qualsiasi momento"
+    "note": "Nessuna carta richiesta · Poi {price}/mese · Disdici in qualsiasi momento"
   },
   "footer": {
     "tagline": "Software HRV professionale per fisioterapisti, osteopati, medici sportivi e coach del benessere. Misura lo stress del sistema nervoso autonomo in 10 minuti.",

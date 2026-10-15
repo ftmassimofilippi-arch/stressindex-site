@@ -13,6 +13,7 @@ import {
   measuredInstant,
   type ConIstante,
 } from './measured-time.ts'
+import { capitalizeFirst, displayName } from './text-case.ts'
 
 // Ora sull'orologio italiano, come la mostra `formatMeasuredTime` di format.ts
 // (che aggiunge solo la lingua e non è importabile qui per via degli alias).
@@ -96,4 +97,32 @@ test('una riga senza timestamp non produce un istante', () => {
   assert.equal(measuredInstant(null), null)
   assert.equal(measuredInstant({}), null)
   assert.equal(measuredDayKey(undefined), null)
+})
+
+// ── Normalizzazioni di testo (src/lib/text-case.ts) ─────────────────────────
+// `fullName` e `todayLong` di format.ts passano da qui; format.ts stesso non è
+// importabile nei test per via degli alias `@/`.
+
+test('todayLong: solo la prima lettera maiuscola, mese minuscolo in italiano', () => {
+  const it = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(2026, 9, 14))
+  assert.equal(capitalizeFirst(it), 'Mercoledì 14 ottobre 2026')
+  assert.equal(capitalizeFirst('Wednesday, October 14, 2026'), 'Wednesday, October 14, 2026')
+  assert.equal(capitalizeFirst(''), '')
+})
+
+test('displayName: le parole tutte maiuscole passano in Title Case', () => {
+  assert.equal(displayName('NICOLÒ DONATINI'), 'Nicolò Donatini')
+  assert.equal(displayName("D'ANGELO"), "D'Angelo")
+  assert.equal(displayName("DELL’ORTO"), "Dell’Orto")
+  assert.equal(displayName('MARIA-LUISA ROSSI'), 'Maria-Luisa Rossi')
+})
+
+test('displayName: parole già miste, sigle corte e particelle restano intatte', () => {
+  assert.equal(displayName('Doretta Sabbatini'), 'Doretta Sabbatini')
+  assert.equal(displayName('Ronald McDonald'), 'Ronald McDonald')
+  assert.equal(displayName('DJ Francesco'), 'DJ Francesco')
+  assert.equal(displayName('Luca de ROSSI'), 'Luca de Rossi')
+  assert.equal(displayName('J.R. SMITH'), 'J.R. Smith')
+  assert.equal(displayName(''), '')
+  assert.equal(displayName(null), '')
 })

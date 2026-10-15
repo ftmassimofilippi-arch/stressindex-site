@@ -40,10 +40,7 @@
     "noAlerts": "Nessun alert attivo",
     "lastThree": "Ultime 3 misurazioni",
     "noMeasurements": "Nessuna misurazione",
-    "open": "Apri →",
-    "aiTitle": "Insights AI",
-    "comingSoon": "In arrivo",
-    "aiBody": "A breve potrai ricevere insight sintetici sull'andamento del cliente, generati con Claude e revisionati dal nostro team."
+    "open": "Apri →"
   },
   "measurements": {
     "allDurations": "Tutte le durate",
@@ -94,7 +91,7 @@
     "median": "Med.",
     "min": "Min",
     "max": "Max",
-    "std": "σ",
+    "std": "DS",
     "trendTitle": "Trend storico",
     "trendHint": "Seleziona metriche e periodo",
     "trendSubtitle": "Indipendente dai periodi A/B qui sopra: usa i preset rapidi o un intervallo personalizzato",

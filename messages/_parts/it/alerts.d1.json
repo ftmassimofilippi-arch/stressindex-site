@@ -46,7 +46,10 @@
     "adaptationDrop": "Score Adattamento a {value}",
     "acwr": "ACWR {acwr}",
     "acwrHrv": "ACWR {acwr} con HRV sotto la baseline",
-    "tsb": "TSB {tsb}"
+    "tsb": "TSB {tsb}",
+    "neverMeasured": "Nessuna misurazione registrata",
+    "missedSince": "Ultima misurazione il {date} (oltre {days} giorni)",
+    "missedOn": "Ultima misurazione il {date}"
   },
   "rules": {
     "title": "Soglie avvisi",

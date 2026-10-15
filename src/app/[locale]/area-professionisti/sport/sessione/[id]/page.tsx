@@ -4,6 +4,7 @@ import { redirect } from '@/i18n/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { ArrowLeft, Download, Tag as TagIcon } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { Alpha1 } from '@/components/dashboard/Alpha1'
 import { getProfessionalProfile } from '@/lib/dashboard-data'
 import { getDfaWindows, getSportSession, getThresholdTest, resolveSportContext } from '@/lib/sport-data'
 import { THRESHOLD_TEST_TYPE } from '@/lib/threshold-types'
@@ -47,13 +48,14 @@ export default async function SportSessionPage({
   const baseQuery = searchParams?.professionista ? `?professionista=${searchParams.professionista}` : ''
   const q = session.questionnaire
 
-  const kpis: Array<{ label: string; value: string }> = [
-    { label: t('session.kpiHrAvg'), value: session.hr_avg == null ? '—' : `${session.hr_avg} bpm` },
-    { label: t('session.kpiHrMax'), value: session.hr_max == null ? '—' : `${session.hr_max} bpm` },
-    { label: t('session.kpiRmssd'), value: session.rmssd_avg == null ? '—' : `${num(session.rmssd_avg, 1, locale)} ms` },
-    { label: t('session.kpiDfa'), value: num(session.dfa_alpha1_avg, 2, locale) },
-    { label: t('session.kpiTrimp'), value: session.trimp == null ? '—' : `${Math.round(session.trimp)}` },
-    { label: t('session.kpiRpe'), value: q?.rpe == null ? '—' : `${q.rpe}/10` },
+  const kpis: Array<{ id: string; label: React.ReactNode; value: string }> = [
+    { id: 'hrAvg', label: t('session.kpiHrAvg'), value: session.hr_avg == null ? '—' : `${session.hr_avg} bpm` },
+    { id: 'hrMax', label: t('session.kpiHrMax'), value: session.hr_max == null ? '—' : `${session.hr_max} bpm` },
+    { id: 'rmssd', label: t('session.kpiRmssd'), value: session.rmssd_avg == null ? '—' : `${num(session.rmssd_avg, 1, locale)} ms` },
+    // "DFA α1" dentro un'intestazione `uppercase`: il simbolo lo rende Alpha1.
+    { id: 'dfa', label: t.rich('session.kpiDfa', { dfa: () => <Alpha1 /> }), value: num(session.dfa_alpha1_avg, 2, locale) },
+    { id: 'trimp', label: t('session.kpiTrimp'), value: session.trimp == null ? '—' : `${Math.round(session.trimp)}` },
+    { id: 'rpe', label: t('session.kpiRpe'), value: q?.rpe == null ? '—' : `${q.rpe}/10` },
   ]
 
   return (
@@ -87,7 +89,7 @@ export default async function SportSessionPage({
       {/* SEZIONE 1 — KPI */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         {kpis.map((k) => (
-          <div key={k.label} className="card p-4 min-w-0">
+          <div key={k.id} className="card p-4 min-w-0">
             <div className="text-[11px] font-medium text-anthracite-lighter uppercase tracking-wide">{k.label}</div>
             <div className="mt-1.5 text-xl font-serif text-anthracite">{k.value}</div>
           </div>

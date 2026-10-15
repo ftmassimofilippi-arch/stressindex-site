@@ -1,0 +1,84 @@
+{
+  "terms": {
+    "title": "Nutzungsbedingungen",
+    "subtitle": "Bedingungen für die Nutzung der Website stressindex.io, der Stress Index App und des Bereichs für Fachkräfte, bereitgestellt von {company}.",
+    "updated": "Letzte Aktualisierung: 15. Oktober 2026",
+    "sections": {
+      "s01Subject": {
+        "title": "1. Gegenstand des Dienstes",
+        "body": "Stress Index ist ein Softwaredienst von {company} (nachfolgend \"der Anbieter\") und besteht aus:\n\n• der mobilen App Stress Index, mit der die Fachkraft oder ihr Klient Messungen der Herzfrequenzvariabilität (HRV) mit einem kompatiblen Brustgurt aufzeichnet;\n• der Website stressindex.io und ihrem geschützten Bereich (\"Bereich für Fachkräfte\"), in dem die Fachkraft Messungen, Verläufe, Berichte und die Werkzeuge der aktiven Module einsieht;\n• ergänzenden Diensten (E-Mail-Benachrichtigungen, PDF-Berichte, Exporte).\n\nDer Dienst richtet sich an Fachkräfte aus Wellness und Sport (Physiotherapeuten, Osteopathen, Trainer, Coaches), die ihn im Rahmen ihrer beruflichen Tätigkeit nutzen. Er ist nicht für Verbraucher bestimmt.\n\nDiese Bedingungen regeln den Zugang zum Dienst und seine Nutzung. Mit der Erstellung eines Kontos oder der Nutzung des Dienstes bestätigen Sie, sie zusammen mit der Datenschutzerklärung und der Cookie-Richtlinie gelesen und akzeptiert zu haben."
+      },
+      "s02Account": {
+        "title": "2. Konto und Voraussetzungen",
+        "body": "Für den Bereich für Fachkräfte ist ein persönliches Konto erforderlich, das auf der Registrierungsseite mit Vorname, Nachname, E-Mail und Beruf angelegt wird. Sie sichern zu, dass die angegebenen Daten richtig sind, und halten sie aktuell.\n\nDas Konto ist persönlich und nicht übertragbar. Bewahren Sie Ihre Zugangsdaten sorgfältig auf: Sie sind für jede mit Ihrem Konto ausgeführte Aktivität verantwortlich und informieren den Anbieter bei unbefugter Nutzung unverzüglich unter {email}.\n\nEndklienten erhalten Zugang zur App über eine Einladung der Fachkraft. Die Fachkraft bleibt alleinige Ansprechpartnerin im Verhältnis zu ihren Klienten.\n\nDer Dienst setzt ein aktuelles Gerät und einen aktuellen Browser, eine Internetverbindung und für Messungen einen in den Anleitungen genannten kompatiblen Brustgurt voraus. Verbindungs- und Hardwarekosten trägt der Nutzer."
+      },
+      "s03Trial": {
+        "title": "3. Kostenlose Testphase und Abonnement",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nJedes neue Konto einer Fachkraft beginnt mit einer kostenlosen Testphase von 60 Tagen, in der der Dienst vollständig nutzbar ist. Nach Ablauf der Testphase wird der Dienst mit dem gewählten Abonnement fortgesetzt, zum Preis und mit dem Abrechnungszeitraum, die zum Zeitpunkt des Abschlusses auf der Website angegeben sind; Preise verstehen sich in Euro, zuzüglich Umsatzsteuer, sofern nicht anders angegeben.\n\nDas Abonnement verlängert sich am Ende jedes Zeitraums automatisch, sofern es nicht gekündigt wird. Die Kündigung ist jederzeit möglich und wirkt zum Ende des laufenden Zeitraums; für bereits begonnene Zeiträume erfolgt keine Erstattung.\n\nDer Anbieter kann die Preisliste mit einer schriftlichen Ankündigungsfrist von mindestens 30 Tagen ändern; Änderungen gelten ab der nächsten Verlängerung. Zusatzmodule (zum Beispiel Sport oder Monitoring) können eigene Konditionen haben, die bei der Aktivierung angezeigt werden.\n\nBei Zahlungsverzug kann der Anbieter den Zugang zum Bereich für Fachkräfte bis zum Ausgleich sperren und bewahrt die Daten für den im Abschnitt \"Sperrung und Kündigung\" genannten Zeitraum auf."
+      },
+      "s04Obligations": {
+        "title": "4. Pflichten des Nutzers und der Endklienten",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nSie verpflichten sich:\n\n• den Dienst im Einklang mit dem Gesetz, diesen Bedingungen und den Regeln Ihres Berufs zu nutzen;\n• vor der Einladung eines Klienten dessen informierte Einwilligung in die Verarbeitung seiner Daten einzuholen, wie in der Datenschutzerklärung vorgesehen (die Fachkraft ist Verantwortliche für die Daten ihrer Klienten);\n• keine rechtswidrigen, beleidigenden oder Rechte Dritter verletzenden Inhalte hochzuladen;\n• nicht zu versuchen, Sicherheitsmaßnahmen zu umgehen, auf fremde Konten oder Daten zuzugreifen, die Software zu dekompilieren oder zu kopieren oder den Dienst zum Aufbau eines Konkurrenzprodukts zu nutzen;\n• keine automatisierten Systeme (Scraping, Bots) einzusetzen, um Daten aus Website oder App zu extrahieren, abgesehen von den vorgesehenen Exportfunktionen;\n• den Dienst nicht weiterzuverkaufen oder unterzulizenzieren.\n\nSie sind für die von Ihnen eingegebenen Inhalte (Notizen, Klientendaten, Einstellungen) und für die Verwendung der vom Dienst bereitgestellten Informationen verantwortlich."
+      },
+      "s05Disclaimer": {
+        "title": "5. Art des Dienstes: Wellness, nicht Medizin",
+        "body": "Stress Index ist ein unterstützendes Werkzeug für Fachkräfte aus Wellness und Sport. Es misst und stellt Kennzahlen der Herzfrequenzvariabilität dar und übersetzt sie in Scores und Verläufe, die helfen, Anpassung, Erholung und Belastung einer Person einzuordnen.\n\nStress Index ist kein Medizinprodukt, stellt keine Diagnose, verordnet keine Behandlung und ersetzt nicht den Rat eines Arztes. Scores, Schwellenwerte und Hinweise sind statistische Wellness-Indikationen und stellen keine medizinische Beurteilung dar. Jede Entscheidung über die Gesundheit ist mit einem Arzt zu treffen; bei Beschwerden oder Unwohlsein wenden Sie sich an die Gesundheitsdienste.\n\nDie Fachkraft nutzt den Dienst in eigener Verantwortung und im Rahmen ihrer Kompetenz und verpflichtet sich, ihn Klienten nicht als Werkzeug zur Diagnose oder Behandlung darzustellen."
+      },
+      "s06Ip": {
+        "title": "6. Geistiges Eigentum",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nSoftware, Berechnungsalgorithmen, Oberflächen, Texte, Grafiken, die Marken \"Stress Index\" und der Domainname sind Eigentum des Anbieters oder seiner Lizenzgeber und durch Urheber- und gewerbliches Schutzrecht geschützt.\n\nMit dem Abonnement erhalten Sie eine persönliche, nicht ausschließliche, nicht übertragbare und widerrufliche Lizenz, den Dienst für Ihre berufliche Tätigkeit für die Dauer des Abonnements zu nutzen. Weitere Rechte werden nicht eingeräumt.\n\nDie von Ihnen eingegebenen Daten und die Messungen Ihrer Klienten bleiben Eigentum von Ihnen und Ihren Klienten. Sie räumen dem Anbieter das Recht ein, sie im für die Erbringung des Dienstes erforderlichen Umfang zu verarbeiten, wie in der Datenschutzerklärung beschrieben. Der Anbieter darf aggregierte, anonyme und nicht auf Personen rückführbare Daten zur Verbesserung des Dienstes verwenden."
+      },
+      "s07Liability": {
+        "title": "7. Haftungsbeschränkung",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nDer Anbieter bemüht sich mit beruflicher Sorgfalt, den Dienst verfügbar und aktuell zu halten, garantiert jedoch nicht, dass er fehlerfrei oder ohne Unterbrechung erreichbar ist. Wartungsarbeiten werden nach Möglichkeit vorab angekündigt.\n\nSoweit gesetzlich zulässig, haftet der Anbieter nicht für mittelbare Schäden, entgangenen Gewinn, Datenverlust aus Gründen, die der Anbieter nicht zu vertreten hat, oder für Entscheidungen, die der Nutzer oder seine Klienten auf Grundlage der vom Dienst bereitgestellten Informationen treffen. In jedem Fall übersteigt die Gesamthaftung des Anbieters gegenüber dem Nutzer nicht den Betrag, den der Nutzer in den 12 Monaten vor dem Ereignis für den Dienst gezahlt hat.\n\nDer Dienst hängt von Drittanbietern (Hosting, Authentifizierung, E-Mail-Versand, App-Stores) und von Hardware Dritter (Brustgurte, Smartphones) ab: Für Störungen, die diesen zuzurechnen sind, haftet der Anbieter nicht.\n\nNichts in diesen Bedingungen beschränkt die Haftung für Vorsatz oder grobe Fahrlässigkeit oder eine sonstige gesetzlich nicht ausschließbare Haftung."
+      },
+      "s08Suspension": {
+        "title": "8. Sperrung und Kündigung",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nSie können jederzeit kündigen, indem Sie das Abonnement beenden oder die Löschung des Kontos unter {email} beantragen. Die Kündigung wirkt zum Ende des laufenden Abonnementzeitraums.\n\nDer Anbieter kann das Konto unter Benachrichtigung des Nutzers sperren oder schließen bei schwerwiegendem oder wiederholtem Verstoß gegen diese Bedingungen, bei Zahlungsverzug, bei einer Nutzung, die die Sicherheit des Dienstes gefährdet, oder auf behördliche Anordnung.\n\nNach Schließung des Kontos bleiben die Daten 30 Tage lang exportierbar; danach werden sie gemäß der Datenschutzerklärung gelöscht oder anonymisiert, vorbehaltlich gesetzlicher Aufbewahrungspflichten. Es liegt in der Verantwortung der Fachkraft, die Daten ihrer Klienten vor der Schließung zu exportieren und die Klienten zu informieren.\n\nDer Anbieter kann den Dienst oder einzelne Funktionen mit einer Frist von mindestens 90 Tagen einstellen und erstattet den nicht genutzten Teil des Abonnements."
+      },
+      "s09Law": {
+        "title": "9. Anwendbares Recht und Gerichtsstand",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nDiese Bedingungen unterliegen italienischem Recht. Für alle Streitigkeiten über ihre Auslegung oder Erfüllung ist ausschließlich das Gericht am Sitz des Anbieters zuständig, unbeschadet des zwingenden Gerichtsstands, den das Gesetz für Nutzer vorsieht, die als Verbraucher handeln.\n\nDer Anbieter kann diese Bedingungen aktualisieren. Wesentliche Änderungen werden per E-Mail oder im geschützten Bereich mindestens 30 Tage im Voraus mitgeteilt; die Nutzung des Dienstes nach dem Wirksamkeitsdatum gilt als Zustimmung. Wer die Änderungen nicht akzeptieren möchte, kann vor diesem Datum kostenlos kündigen.\n\nSollte eine Klausel unwirksam sein, bleiben die übrigen wirksam."
+      },
+      "s10Contacts": {
+        "title": "10. Kontakt",
+        "body": "Bei Fragen zu diesen Bedingungen, zum Abonnement oder zum Konto:\n\n{company}\nE-Mail: {email}\n\nDie vollständigen Angaben zum Anbieter (Sitz und Umsatzsteuer-Identifikationsnummer) stehen am Ende jeder Seite der Website."
+      }
+    }
+  },
+  "cookie": {
+    "title": "Cookie-Richtlinie",
+    "subtitle": "Welche Cookies und welche im Browser gespeicherten Daten die von {company} betriebene Website stressindex.io verwendet.",
+    "updated": "Letzte Aktualisierung: 15. Oktober 2026",
+    "sections": {
+      "s01What": {
+        "title": "Was Cookies sind",
+        "body": "Cookies sind kleine Textdateien, die eine Website im Browser des Besuchers speichert, um ihn beim nächsten Besuch wiederzuerkennen oder sich eine Auswahl zu merken. Neben Cookies kann eine Website Informationen auch in anderen Speicherbereichen des Browsers ablegen (localStorage); diese bleiben auf dem Gerät und werden nicht an den Server gesendet.\n\nDiese Seite beschreibt, was die Website stressindex.io und ihr Bereich für Fachkräfte tun. Die mobile App Stress Index verwendet keine Cookies; die Verarbeitung ihrer Daten ist in der Datenschutzerklärung beschrieben."
+      },
+      "s02Technical": {
+        "title": "Von der Website verwendete technische Cookies",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nDie Website verwendet ausschließlich technische Cookies, die für das Funktionieren der Seiten oder zum Speichern einer ausdrücklichen Auswahl des Besuchers erforderlich sind. Für diese Cookies ist keine Einwilligung erforderlich.\n\n• SITZUNG IM BEREICH FÜR FACHKRÄFTE: Cookies mit dem Präfix \"sb-\", die von Supabase (dem Authentifizierungsdienst) gesetzt werden, wenn sich die Fachkraft im geschützten Bereich anmeldet. Sie enthalten das Sitzungstoken, halten Sie angemeldet und werden beim Abmelden entfernt. Besuchern, die nur die öffentlichen Seiten aufrufen, werden sie nicht gesetzt.\n\n• SPRACHE: das Cookie \"NEXT_LOCALE\", das gesetzt wird, wenn Sie im Sprachwähler eine Sprache auswählen (IT / EN / DE). Es merkt sich die bevorzugte Sprache für 12 Monate.\n\nWeitere Cookies setzt die Website nicht."
+      },
+      "s03Storage": {
+        "title": "Im Browser gespeicherte Einstellungen",
+        "body": "Im Bereich für Fachkräfte werden einige Anzeigeeinstellungen der Diagramme (Zeitraum, angezeigte Kennzahlen, ausgeblendete Reihen) im localStorage des Browsers gespeichert, damit Sie sie beim nächsten Besuch wiederfinden.\n\nDiese Informationen bleiben auf Ihrem Gerät, enthalten keine personenbezogenen Daten oder Messungen und werden nicht an den Server übertragen. Sie werden gelöscht, wenn Sie die Websitedaten in den Browsereinstellungen entfernen."
+      },
+      "s04Sentry": {
+        "title": "Erkennung technischer Fehler",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nUm Störungen zu bemerken, sendet die Website bei einem technischen Fehler automatisch eine Meldung an Sentry. Dieser Dienst setzt keine Cookies und verfolgt das Surfverhalten nicht: Er erfasst die Fehlerart, die Stelle im Programm, an der der Fehler auftrat, die Version der Website und den Browsertyp, zusammen mit einer anonymen Kontokennung. Name, E-Mail, Messungen und Notizen werden nicht gesendet.\n\nDie Einzelheiten (verarbeitete Daten, Speicherung in der Europäischen Union, Aufbewahrung 90 Tage) stehen im Abschnitt \"Erkennung technischer Fehler\" der Datenschutzerklärung."
+      },
+      "s05NoProfiling": {
+        "title": "Keine Profiling- oder Werbe-Cookies",
+        "body": "Die Website verwendet keine Profiling-Cookies, Werbe-Cookies, Tracking-Pixel oder Analysewerkzeuge, die den Besucher identifizieren. Es gibt keine Cookies von Drittanbietern für soziale Netzwerke oder Werbekampagnen.\n\nDeshalb zeigt die Website kein Einwilligungsbanner: Keines der verwendeten Cookies erfordert eine Einwilligung. Sollten künftig einwilligungspflichtige Werkzeuge eingeführt werden, wird diese Seite aktualisiert und die Einwilligung vor deren Aktivierung eingeholt."
+      },
+      "s06Manage": {
+        "title": "Cookies im Browser verwalten",
+        "body": "Sie können Cookies jederzeit in den Einstellungen Ihres Browsers einsehen, blockieren oder löschen (meist unter \"Datenschutz und Sicherheit\" oder \"Websitedaten\"). Anleitungen finden Sie in der Hilfe von Chrome, Safari, Firefox und Edge.\n\nBeachten Sie, dass die Anmeldung im Bereich für Fachkräfte nicht funktioniert, wenn Sie technische Cookies blockieren: Ohne das Sitzungs-Cookie können Sie nicht angemeldet bleiben. Wenn Sie das Cookie \"NEXT_LOCALE\" löschen, schlägt die Website die Sprache wieder anhand Ihrer Browsereinstellungen vor."
+      },
+      "s07Updates": {
+        "title": "Aktualisierungen dieser Seite",
+        "body": "Diese Cookie-Richtlinie kann aktualisiert werden, wenn sich die von der Website verwendeten Cookies oder Werkzeuge ändern. Das Datum oben gibt die letzte Überarbeitung an. Bei Fragen schreiben Sie an {email}."
+      }
+    }
+  }
+}

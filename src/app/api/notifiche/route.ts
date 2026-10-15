@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { getCurrentUser, listClients } from '@/lib/dashboard-data'
 import { loadNotifications, markNotificationsRead, type NotificationSource } from '@/lib/notifications'
-import { alertMessage, alertTypeLabel } from '@/lib/alert-rules'
+import { alertMessage, alertTypeLabel, alertValueDecimals } from '@/lib/alert-rules'
 import { getRequestLocale, getTranslator } from '@/lib/i18n-server'
-import { num } from '@/lib/format'
+import { formatDate, fullName, num } from '@/lib/format'
 import { apiError } from '@/lib/api-error'
 
 export const runtime = 'nodejs'
@@ -23,14 +23,16 @@ export async function GET(req: NextRequest) {
   if (!user) return apiError('unauthorized', 401)
 
   const locale = await getRequestLocale(req)
-  const [{ items, unread, readsAvailable }, clients, tAlerts] = await Promise.all([
+  const [{ items, unread, readsAvailable }, clients, tAlerts, tScores] = await Promise.all([
     loadNotifications(),
     listClients(),
     getTranslator(locale, 'alerts'),
+    getTranslator(locale, 'scores'),
   ])
 
-  const nameById = new Map(clients.map((c) => [c.id, `${c.nome ?? ''} ${c.cognome ?? ''}`.trim()]))
-  const fmtNum = (v: number) => num(v, Number.isInteger(v) ? 0 : 1, locale)
+  const nameById = new Map(clients.map((c) => [c.id, fullName(c)]))
+  const fmtNum = (v: number) => num(v, alertValueDecimals(v), locale)
+  const alertOpts = { tScores, fmtDate: (d: Date) => formatDate(d, undefined, locale) }
 
   return NextResponse.json({
     unread,
@@ -41,7 +43,7 @@ export async function GET(req: NextRequest) {
       clientId: n.client_id,
       clientName: nameById.get(n.client_id) || null,
       title: alertTypeLabel(n.type, tAlerts),
-      detail: alertMessage(n, tAlerts, fmtNum),
+      detail: alertMessage(n, tAlerts, fmtNum, alertOpts),
       severity: n.severity,
       unread: n.unread,
       readAt: n.readAt,

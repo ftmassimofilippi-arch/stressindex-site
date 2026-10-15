@@ -1,0 +1,84 @@
+{
+  "terms": {
+    "title": "Termini di Servizio",
+    "subtitle": "Condizioni d'uso del sito stressindex.io, dell'app Stress Index e dell'area riservata ai professionisti, forniti da {company}.",
+    "updated": "Ultimo aggiornamento: 15 ottobre 2026",
+    "sections": {
+      "s01Subject": {
+        "title": "1. Oggetto del servizio",
+        "body": "Stress Index è un servizio software fornito da {company} (di seguito \"il Fornitore\") e composto da:\n\n• l'app mobile Stress Index, con cui il professionista o il suo cliente registra misurazioni della variabilità della frequenza cardiaca (HRV) tramite una fascia cardio compatibile;\n• il sito stressindex.io e la sua area riservata (\"Area Professionisti\"), in cui il professionista consulta le misurazioni, l'andamento nel tempo, i report e gli strumenti di lavoro dei moduli attivi;\n• i servizi accessori (notifiche email, report PDF, esportazioni).\n\nIl servizio è rivolto a professionisti del benessere e dello sport (fisioterapisti, osteopati, preparatori, coach) che lo usano nell'ambito della propria attività professionale. Non è destinato ai consumatori.\n\nI presenti Termini regolano l'accesso e l'uso del servizio. Creando un account o usando il servizio l'utente dichiara di averli letti e accettati, insieme all'Informativa Privacy e alla Cookie Policy."
+      },
+      "s02Account": {
+        "title": "2. Account e requisiti",
+        "body": "Per usare l'Area Professionisti serve un account personale, creato dalla pagina di registrazione con nome, cognome, email e professione. L'utente garantisce che i dati forniti sono veritieri e li tiene aggiornati.\n\nL'account è personale e non cedibile. Le credenziali vanno custodite con cura: l'utente è responsabile di ogni attività svolta con il proprio account e avvisa subito il Fornitore all'indirizzo {email} in caso di uso non autorizzato.\n\nI clienti finali accedono all'app con un invito del professionista. Il professionista resta l'unico referente del rapporto con i propri clienti.\n\nIl servizio richiede un dispositivo e un browser aggiornati, una connessione a Internet e, per le misurazioni, una fascia cardio compatibile indicata nelle Guide. I costi di connessione e di hardware sono a carico dell'utente."
+      },
+      "s03Trial": {
+        "title": "3. Prova gratuita e abbonamento",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nOgni nuovo account del professionista inizia con un periodo di prova gratuito di 60 giorni, durante il quale il servizio è utilizzabile per intero. Al termine della prova il servizio prosegue con l'abbonamento scelto, al prezzo e con la periodicità indicati sul sito al momento della sottoscrizione; i prezzi sono espressi in euro, IVA esclusa salvo diversa indicazione.\n\nL'abbonamento si rinnova automaticamente alla scadenza di ogni periodo, salvo disdetta. La disdetta può essere comunicata in qualsiasi momento ed ha effetto dalla fine del periodo in corso; non sono previsti rimborsi per periodi già iniziati.\n\nIl Fornitore può modificare il listino con un preavviso scritto di almeno 30 giorni; le modifiche si applicano dal rinnovo successivo. I moduli aggiuntivi (per esempio Sport o Monitoraggio) possono avere condizioni economiche proprie, indicate al momento dell'attivazione.\n\nIn caso di mancato pagamento il Fornitore può sospendere l'accesso all'Area Professionisti fino alla regolarizzazione, conservando i dati per il periodo indicato nella sezione \"Sospensione e recesso\"."
+      },
+      "s04Obligations": {
+        "title": "4. Obblighi dell'utente e dei clienti finali",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nL'utente si impegna a:\n\n• usare il servizio nel rispetto della legge, dei presenti Termini e delle regole della propria professione;\n• raccogliere, prima di invitare un cliente, il consenso informato al trattamento dei suoi dati, come richiesto dall'Informativa Privacy (il professionista è titolare del trattamento dei dati dei propri clienti);\n• non caricare contenuti illeciti, offensivi o che violino diritti di terzi;\n• non tentare di aggirare le misure di sicurezza, di accedere ad account o dati altrui, di decompilare o copiare il software, né di usare il servizio per costruire un prodotto concorrente;\n• non usare sistemi automatici (scraping, bot) per estrarre dati dal sito o dall'app, salvo le funzioni di esportazione previste;\n• non rivendere né sublicenziare il servizio.\n\nL'utente è responsabile dei contenuti che inserisce (note, dati dei clienti, impostazioni) e dell'uso che fa delle informazioni fornite dal servizio."
+      },
+      "s05Disclaimer": {
+        "title": "5. Natura del servizio: benessere, non medicina",
+        "body": "Stress Index è uno strumento di supporto per professionisti del benessere e dello sport. Misura e rappresenta indicatori della variabilità della frequenza cardiaca e li traduce in punteggi e andamenti utili a leggere lo stato di adattamento, recupero e carico di una persona.\n\nStress Index non è un dispositivo medico, non formula diagnosi, non prescrive cure e non sostituisce il parere di un medico. I punteggi, le soglie e gli avvisi sono indicazioni statistiche sul benessere e non costituiscono una valutazione medica. Ogni decisione sulla salute va presa con un medico; in caso di sintomi o di malessere ci si rivolge ai servizi sanitari.\n\nIl professionista usa il servizio sotto la propria responsabilità e nei limiti delle proprie competenze, e si impegna a non presentarlo ai clienti come strumento di diagnosi o di cura."
+      },
+      "s06Ip": {
+        "title": "6. Proprietà intellettuale",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nIl software, gli algoritmi di calcolo, le interfacce, i testi, le grafiche, i marchi \"Stress Index\" e il nome a dominio sono di proprietà del Fornitore o dei suoi licenzianti e sono protetti dalle leggi sul diritto d'autore e sulla proprietà industriale.\n\nCon l'abbonamento l'utente riceve una licenza personale, non esclusiva, non trasferibile e revocabile a usare il servizio per la propria attività professionale, per la durata dell'abbonamento. Nessun altro diritto è concesso.\n\nI dati inseriti dall'utente e le misurazioni dei suoi clienti restano di titolarità dell'utente e dei suoi clienti. L'utente concede al Fornitore il diritto di trattarli nella misura necessaria a erogare il servizio, come descritto nell'Informativa Privacy. Il Fornitore può usare dati aggregati e anonimi, non riconducibili a persone, per migliorare il servizio."
+      },
+      "s07Liability": {
+        "title": "7. Limitazione di responsabilità",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nIl Fornitore si impegna a mantenere il servizio disponibile e aggiornato con la diligenza professionale, ma non garantisce che sia privo di errori o accessibile senza interruzioni. Interventi di manutenzione sono, quando possibile, comunicati in anticipo.\n\nNei limiti consentiti dalla legge, il Fornitore non risponde di danni indiretti, perdita di profitto, perdita di dati dovuta a cause non imputabili al Fornitore, né di decisioni prese dall'utente o dai suoi clienti sulla base delle informazioni fornite dal servizio. In ogni caso la responsabilità complessiva del Fornitore verso l'utente non supera quanto l'utente ha pagato per il servizio nei 12 mesi precedenti l'evento.\n\nIl servizio dipende da fornitori terzi (hosting, autenticazione, invio email, app store) e da hardware di terzi (fasce cardio, smartphone): il Fornitore non risponde di malfunzionamenti imputabili a questi soggetti.\n\nNulla in questi Termini limita la responsabilità per dolo o colpa grave o altre responsabilità non escludibili per legge."
+      },
+      "s08Suspension": {
+        "title": "8. Sospensione e recesso",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nL'utente può recedere in qualsiasi momento disdicendo l'abbonamento o chiedendo la cancellazione dell'account a {email}. Il recesso ha effetto dalla fine del periodo di abbonamento in corso.\n\nIl Fornitore può sospendere o chiudere l'account, con comunicazione all'utente, in caso di violazione grave o ripetuta dei presenti Termini, di mancato pagamento, di uso che metta a rischio la sicurezza del servizio o di richiesta dell'autorità.\n\nAlla chiusura dell'account i dati restano esportabili per 30 giorni; trascorso questo periodo vengono cancellati o resi anonimi secondo quanto indicato nell'Informativa Privacy, salvo obblighi di legge di conservazione. È responsabilità del professionista esportare i dati dei propri clienti prima della chiusura e informarli.\n\nIl Fornitore può interrompere il servizio o singole funzioni con un preavviso di almeno 90 giorni, rimborsando la quota di abbonamento non goduta."
+      },
+      "s09Law": {
+        "title": "9. Legge applicabile e foro competente",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nI presenti Termini sono regolati dalla legge italiana. Per ogni controversia relativa alla loro interpretazione o esecuzione è competente in via esclusiva il Foro della sede legale del Fornitore, salvo il foro inderogabile previsto dalla legge per gli utenti che agiscono come consumatori.\n\nIl Fornitore può aggiornare questi Termini. Le modifiche sostanziali vengono comunicate via email o nell'area riservata con almeno 30 giorni di anticipo; l'uso del servizio dopo la data di efficacia vale come accettazione. L'utente che non intende accettarle può recedere senza costi prima di quella data.\n\nSe una clausola risultasse invalida, le restanti conservano efficacia."
+      },
+      "s10Contacts": {
+        "title": "10. Contatti",
+        "body": "Per domande sui presenti Termini, sull'abbonamento o sull'account:\n\n{company}\nEmail: {email}\n\nI riferimenti completi del Fornitore (sede legale e partita IVA) sono riportati in fondo a ogni pagina del sito."
+      }
+    }
+  },
+  "cookie": {
+    "title": "Cookie Policy",
+    "subtitle": "Quali cookie e quali dati salvati nel browser usa il sito stressindex.io, gestito da {company}.",
+    "updated": "Ultimo aggiornamento: 15 ottobre 2026",
+    "sections": {
+      "s01What": {
+        "title": "Che cosa sono i cookie",
+        "body": "I cookie sono piccoli file di testo che un sito salva nel browser del visitatore per riconoscerlo alla visita successiva o per ricordare una scelta. Accanto ai cookie, un sito può salvare informazioni anche in altre aree di memoria del browser (localStorage), che restano sul dispositivo e non vengono inviate al server.\n\nQuesta pagina descrive che cosa fa il sito stressindex.io e la sua Area Professionisti. L'app mobile Stress Index non usa cookie; il trattamento dei suoi dati è descritto nell'Informativa Privacy."
+      },
+      "s02Technical": {
+        "title": "Cookie tecnici usati dal sito",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nIl sito usa soltanto cookie tecnici, necessari al funzionamento delle pagine o alla memorizzazione di una scelta esplicita del visitatore. Per questi cookie non è richiesto il consenso.\n\n• SESSIONE DELL'AREA PROFESSIONISTI: cookie con prefisso \"sb-\" impostati da Supabase (il servizio di autenticazione) quando il professionista accede all'area riservata. Contengono il token di sessione, servono a restare collegati e si cancellano con l'uscita dall'account. Non vengono impostati a chi visita solo le pagine pubbliche.\n\n• LINGUA: cookie \"NEXT_LOCALE\", impostato quando scegli una lingua dal selettore (IT / EN / DE). Ricorda la lingua preferita per 12 mesi.\n\nNessun altro cookie viene impostato dal sito."
+      },
+      "s03Storage": {
+        "title": "Preferenze salvate nel browser",
+        "body": "Nell'Area Professionisti alcune preferenze di visualizzazione dei grafici (intervallo di tempo, metriche mostrate, serie nascoste) vengono salvate nel localStorage del browser, in modo da ritrovarle alla visita successiva.\n\nQueste informazioni restano sul tuo dispositivo, non contengono dati personali né misurazioni e non vengono trasmesse al server. Si cancellano eliminando i dati del sito dalle impostazioni del browser."
+      },
+      "s04Sentry": {
+        "title": "Rilevazione degli errori tecnici",
+        "body": "[DA COMPLETARE CON IL LEGALE]\n\nPer accorgerci dei malfunzionamenti, il sito invia una segnalazione automatica a Sentry quando si verifica un errore tecnico. Questo servizio non imposta cookie e non traccia la navigazione: raccoglie il tipo di errore, il punto del programma in cui è avvenuto, la versione del sito e il tipo di browser, con un identificativo anonimo dell'account. Nome, email, misurazioni e note non vengono inviati.\n\nI dettagli (dati trattati, sede nell'Unione Europea, conservazione per 90 giorni) sono nella sezione \"Rilevazione degli errori tecnici\" dell'Informativa Privacy."
+      },
+      "s05NoProfiling": {
+        "title": "Nessun cookie di profilazione o pubblicitario",
+        "body": "Il sito non usa cookie di profilazione, cookie pubblicitari, pixel di tracciamento né strumenti di analisi del traffico che identifichino il visitatore. Non ci sono cookie di terze parti per social network o campagne pubblicitarie.\n\nPer questo motivo il sito non mostra un banner di richiesta del consenso: nessuno dei cookie usati lo richiede. Se in futuro verranno introdotti strumenti che richiedono il consenso, questa pagina sarà aggiornata e il consenso verrà chiesto prima della loro attivazione."
+      },
+      "s06Manage": {
+        "title": "Come gestire i cookie dal browser",
+        "body": "Puoi vedere, bloccare o cancellare i cookie in qualsiasi momento dalle impostazioni del tuo browser (di solito nella sezione \"Privacy e sicurezza\" o \"Dati dei siti\"). Le istruzioni sono disponibili nella guida di Chrome, Safari, Firefox ed Edge.\n\nTieni presente che bloccando i cookie tecnici l'accesso all'Area Professionisti non funziona: senza il cookie di sessione non è possibile restare collegati. Cancellando il cookie \"NEXT_LOCALE\" il sito tornerà a proporre la lingua in base alle impostazioni del browser."
+      },
+      "s07Updates": {
+        "title": "Aggiornamenti di questa pagina",
+        "body": "Questa Cookie Policy può essere aggiornata quando cambiano i cookie o gli strumenti usati dal sito. La data in alto indica l'ultima revisione. Per domande scrivi a {email}."
+      }
+    }
+  }
+}

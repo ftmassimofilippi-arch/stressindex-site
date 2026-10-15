@@ -47,7 +47,6 @@
     "trimp": "TRIMP",
     "hrAvg": "Mean HR",
     "hrMax": "Max HR",
-    "dfa": "DFA α1",
     "rpe": "RPE"
   },
   "sessions": {
@@ -269,7 +268,7 @@
     "kpiHrAvg": "Mean HR",
     "kpiHrMax": "Max HR",
     "kpiRmssd": "Mean RMSSD",
-    "kpiDfa": "Mean DFA α1",
+    "kpiDfa": "Mean <dfa></dfa>",
     "kpiTrimp": "TRIMP",
     "kpiRpe": "RPE",
     "thresholdMissing": "Threshold test data not available for this session.",

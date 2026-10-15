@@ -40,10 +40,7 @@
     "noAlerts": "No active alerts",
     "lastThree": "Last 3 measurements",
     "noMeasurements": "No measurements",
-    "open": "Open →",
-    "aiTitle": "AI Insights",
-    "comingSoon": "Coming soon",
-    "aiBody": "Soon you will receive concise insights on the client's trend, generated with Claude and reviewed by our team."
+    "open": "Open →"
   },
   "measurements": {
     "allDurations": "All durations",
@@ -94,7 +91,7 @@
     "median": "Med.",
     "min": "Min",
     "max": "Max",
-    "std": "σ",
+    "std": "SD",
     "trendTitle": "Historical trend",
     "trendHint": "Pick metrics and period",
     "trendSubtitle": "Independent of periods A/B above: use the quick presets or a custom range",

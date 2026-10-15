@@ -102,19 +102,25 @@
     }
   },
   "roadmap": {
-    "eyebrow": "Roadmap · Phase 2-3",
-    "titleLead": "Demnächst.",
-    "titleEm": "Für alle, die jetzt dabei sind.",
-    "description": "Das Sport-Modul ist erst der Anfang. Das kommt in den nächsten Monaten:",
-    "items": [
-      "Alerts zum Verletzungsrisiko (ACWR + HRV)",
-      "Performance Management Chart (CTL, ATL, TSB)",
-      "Team-Dashboard für mehrere Sportler",
-      "Automatische Erkennung der Schwellen VT1/VT2",
+    "eyebrow": "Das Sport-Modul heute",
+    "titleLead": "Was es heute gibt.",
+    "titleEm": "Und was kommt.",
+    "description": "Das Sport-Modul ist bereits im Einsatz. Das finden Sie heute in der App und im Web-Dashboard, und an diesen zwei Dingen arbeiten wir gerade.",
+    "haveTitle": "Heute verfügbar",
+    "have": [
+      "DFA Alpha1 in Echtzeit mit den 4 Zonen",
+      "TRIMP, ACWR und CTL/ATL/TSB mit automatischen Alerts",
+      "Schwellentest VT1/VT2",
+      "Team Live für mehrere Sportler",
+      "Fragebogen nach dem Training",
+      "Sport-PDF-Bericht"
+    ],
+    "nextTitle": "In Arbeit",
+    "next": [
       "KI-Interpretation der Trends",
       "Täglicher Wellness-Fragebogen"
     ],
-    "callout": "Fachkräfte, die jetzt aktivieren, erhalten vorab Zugang zu allen neuen Funktionen."
+    "callout": "Neue Funktionen kommen mit den App-Updates, ohne Zusatzkosten für Pro-Tarif-Kunden."
   },
   "cta": {
     "eyebrow": "Pro-Tarif aktivieren",

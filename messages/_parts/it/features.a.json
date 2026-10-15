@@ -52,7 +52,7 @@
     "eyebrow": "Tipi di test",
     "titleLead": "Un test per ogni esigenza.",
     "titleEm": "Dal protocollo standard alla seduta lunga.",
-    "description": "Quattro modalità di misurazione pensate per coprire il 100% delle situazioni in studio e sul campo.",
+    "description": "Tre tipi di test più la sessione lunga, pensati per coprire il 100% delle situazioni in studio e sul campo.",
     "items": [
       {
         "title": "Misurazione Standard",
@@ -97,7 +97,7 @@
     "items": [
       "Anagrafica estesa (sesso, età, fumatore, atleta)",
       "Storico misurazioni con trend",
-      "Confronto fino a 29 parametri tra sessioni",
+      "Confronto di tutti i parametri tra due sessioni",
       "Note libere per cliente",
       "Tag misurazioni per categorizzare"
     ]

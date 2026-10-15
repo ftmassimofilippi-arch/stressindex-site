@@ -102,19 +102,25 @@
     }
   },
   "roadmap": {
-    "eyebrow": "Roadmap · Phase 2-3",
-    "titleLead": "Coming next.",
-    "titleEm": "For those who are in now.",
-    "description": "The Sport Module is just the beginning. Here is what arrives in the coming months:",
-    "items": [
-      "Injury risk alerts (ACWR + HRV)",
-      "Performance Management Chart (CTL, ATL, TSB)",
-      "Multi-athlete Team Dashboard",
-      "Automatic VT1/VT2 threshold detection",
+    "eyebrow": "The Sport Module today",
+    "titleLead": "What is here today.",
+    "titleEm": "And what is coming.",
+    "description": "The Sport Module is already in use. Here is what you get today in the app and the web dashboard, and the two things we are working on.",
+    "haveTitle": "Available today",
+    "have": [
+      "Real-time DFA Alpha1 with the 4 zones",
+      "TRIMP, ACWR and CTL/ATL/TSB with automatic alerts",
+      "VT1/VT2 threshold test",
+      "Multi-athlete Team Live",
+      "Post-workout questionnaire",
+      "Sport PDF report"
+    ],
+    "nextTitle": "In the works",
+    "next": [
       "AI interpretation of trends",
       "Daily wellness questionnaire"
     ],
-    "callout": "Professionals who activate now get early access to every new feature."
+    "callout": "New features ship with app updates, at no extra cost for Pro plan subscribers."
   },
   "cta": {
     "eyebrow": "Activate the Pro plan",

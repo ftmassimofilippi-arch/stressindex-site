@@ -1,6 +1,7 @@
 'use client'
 
 import { Link } from '@/i18n/navigation'
+import { Alpha1 } from '@/components/dashboard/Alpha1'
 import { useLocale, useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Timer, Heart, X, Activity, ArrowUpRight, Wifi, WifiOff } from 'lucide-react'
@@ -547,7 +548,7 @@ function LiveDrawer({
           {/* Valori attuali */}
           <div className="grid grid-cols-3 gap-3">
             <BigStat label="HR" value={row.hr_current == null ? '—' : `${row.hr_current}`} unit="bpm" color={hrZoneColor(row.hr_current, hrMax) ?? '#2F343A'} />
-            <BigStat label="DFA α1" value={num(row.dfa_alpha1, 2, locale)} color={zone?.color ?? '#2F343A'} />
+            <BigStat label={<Alpha1 />} value={num(row.dfa_alpha1, 2, locale)} color={zone?.color ?? '#2F343A'} />
             <BigStat label="RMSSD" value={row.rmssd_rolling == null ? '—' : num(row.rmssd_rolling, 1, locale)} unit="ms" />
           </div>
 
@@ -601,7 +602,7 @@ function LiveDrawer({
   )
 }
 
-function BigStat({ label, value, unit, color }: { label: string; value: string; unit?: string; color?: string }) {
+function BigStat({ label, value, unit, color }: { label: React.ReactNode; value: string; unit?: string; color?: string }) {
   return (
     <div className="card p-3 text-center">
       <div className="text-[10px] uppercase tracking-wide text-anthracite-lighter">{label}</div>

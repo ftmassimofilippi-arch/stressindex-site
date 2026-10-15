@@ -52,7 +52,7 @@
     "eyebrow": "Testarten",
     "titleLead": "Ein Test für jeden Bedarf.",
     "titleEm": "Vom Standardprotokoll bis zur langen Sitzung.",
-    "description": "Vier Messmodi, die 100 % der Situationen in der Praxis und im Feld abdecken.",
+    "description": "Drei Testarten plus die lange Sitzung, die 100 % der Situationen in der Praxis und im Feld abdecken.",
     "items": [
       {
         "title": "Standardmessung",
@@ -97,7 +97,7 @@
     "items": [
       "Erweiterte Stammdaten (Geschlecht, Alter, Raucher, Sportler)",
       "Messhistorie mit Trends",
-      "Vergleich von bis zu 29 Parametern zwischen Sitzungen",
+      "Vergleich aller Parameter zwischen zwei Sitzungen",
       "Freie Notizen pro Klient",
       "Mess-Tags zum Kategorisieren"
     ]

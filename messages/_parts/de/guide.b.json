@@ -298,11 +298,11 @@
               "desc": "Wie stark das Nervensystem unter Druck steht. Ist er dauerhaft hoch, deutet das auf über die Zeit angesammelten Stress hin, nicht nur auf den Moment der Messung.",
               "color": "red",
               "ranges": [
-                { "range": "0–30", "label": "Niedrig" },
-                { "range": "30–50", "label": "Ausgeglichen" },
-                { "range": "50–70", "label": "Mittel" },
-                { "range": "70–85", "label": "Hoch" },
-                { "range": "85–100", "label": "Erschöpfung" }
+                { "range": "0-30", "label": "Niedrig" },
+                { "range": "30-50", "label": "Ausgeglichen" },
+                { "range": "50-70", "label": "Mittel" },
+                { "range": "70-85", "label": "Hoch" },
+                { "range": "85-100", "label": "Erschöpfung" }
               ]
             },
             {
@@ -311,11 +311,11 @@
               "desc": "Erholungsfähigkeit des parasympathischen Systems.",
               "color": "teal",
               "ranges": [
-                { "range": "0–25", "label": "Unzureichend" },
-                { "range": "25–45", "label": "Schwach" },
-                { "range": "45–65", "label": "Mäßig" },
-                { "range": "65–85", "label": "Gut" },
-                { "range": "85–100", "label": "Optimal" }
+                { "range": "0-25", "label": "Unzureichend" },
+                { "range": "25-45", "label": "Schwach" },
+                { "range": "45-65", "label": "Mäßig" },
+                { "range": "65-85", "label": "Gut" },
+                { "range": "85-100", "label": "Optimal" }
               ]
             },
             {

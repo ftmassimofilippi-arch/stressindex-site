@@ -1,7 +1,19 @@
+import type { Metadata } from 'next'
 import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+
+// Next 14.2 legge `generateMetadata` anche da not-found.tsx (è l'ultimo
+// elemento della catena dei metadata quando si renderizza il 404, vedi
+// `errorMetadataItem` in next/dist/lib/metadata/resolve-metadata.js): così la
+// pagina non eredita il titolo e `index: true` della home. Il layout radice ha
+// `template: '%s'`, quindi il suffisso "| Stress Index" sta nel messaggio.
+export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
+  const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
+  return { title: t('notFound.title'), robots: { index: false, follow: false } }
+}
 
 export default function NotFound() {
   const t = useTranslations('errors.notFound')

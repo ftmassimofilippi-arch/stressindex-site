@@ -47,7 +47,6 @@
     "trimp": "TRIMP",
     "hrAvg": "HR media",
     "hrMax": "HR max",
-    "dfa": "DFA α1",
     "rpe": "RPE"
   },
   "sessions": {
@@ -269,7 +268,7 @@
     "kpiHrAvg": "HR media",
     "kpiHrMax": "HR max",
     "kpiRmssd": "RMSSD media",
-    "kpiDfa": "DFA α1 medio",
+    "kpiDfa": "<dfa></dfa> medio",
     "kpiTrimp": "TRIMP",
     "kpiRpe": "RPE",
     "thresholdMissing": "Dati del test soglie non disponibili per questa sessione.",

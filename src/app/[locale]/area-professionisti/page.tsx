@@ -25,10 +25,10 @@ import {
   todaysMeasurements,
 } from '@/lib/dashboard-data'
 import { identificaCliente, ponteClienti } from '@/lib/client-bridge'
-import { alertMessage, alertTypeLabel, mergeAlerts } from '@/lib/alert-rules'
+import { alertMessage, alertTypeLabel, alertValueDecimals, mergeAlerts } from '@/lib/alert-rules'
 import { listAlertEvents } from '@/lib/alert-rules-server'
 import { noteCategoryLabel } from '@/lib/types'
-import { formatGreeting, formatMeasuredTime, num, todayLong, daysSince } from '@/lib/format'
+import { formatDate, formatGreeting, formatMeasuredTime, fullName, num, todayLong, daysSince } from '@/lib/format'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { caricaOErrore } from '@/lib/data-error'
 import { DataLoadNotice } from '@/components/dashboard/DataLoadNotice'
@@ -37,18 +37,16 @@ type Params = { params: { locale: string } }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
-  return { title: t('dashboardHome.title'), robots: { index: false, follow: false } }
+  // Il `title.template` di area-professionisti/layout.tsx vale per i segmenti
+  // figli, non per la pagina index dello stesso segmento (Next applica il
+  // template dell'ultimo layout solo sotto di esso): qui si applica a mano.
+  return {
+    title: { absolute: t('proArea.template').replace('%s', t('dashboardHome.title')) },
+    robots: { index: false, follow: false },
+  }
 }
 
 export const dynamic = 'force-dynamic'
-
-// Numeri estratti dai messaggi dell'app: si conservano i decimali che hanno
-// (0.45 → "0,45", 32 → "32"), al massimo due.
-function decimalsOf(v: number): number {
-  const s = String(v)
-  const i = s.indexOf('.')
-  return i < 0 ? 0 : Math.min(2, s.length - i - 1)
-}
 
 export default async function DashboardHome() {
   const locale = await getLocale()
@@ -80,16 +78,19 @@ export default async function DashboardHome() {
 
   const clientMap = new Map(allClients.map((c) => [c.id, c]))
   const totalActive = allClients.length
-  const fmtNum = (v: number) => num(v, decimalsOf(v), locale)
+  // Numeri estratti dai messaggi dell'app: si conservano i decimali che hanno
+  // (0.45 → "0,45", 32 → "32"), al massimo due.
+  const fmtNum = (v: number) => num(v, alertValueDecimals(v), locale)
+  const alertOpts = { tScores, fmtDate: (d: Date) => formatDate(d, undefined, locale) }
   const clientName = (id: string) => {
     const c = clientMap.get(id)
-    return c ? `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || tc('client') : tc('client')
+    return (c && fullName(c)) || tc('client')
   }
   // Nome della scheda già caricata con la RLS, senza ripetere la query.
   const nomeScheda = (id: string) => {
     const c = clientMap.get(id)
     if (!c) return null
-    return `${c.nome ?? ''} ${c.cognome ?? ''}`.trim() || tc('client')
+    return fullName(c) || tc('client')
   }
   // Il ponte dà il nome alle automisurazioni dei clienti collegati che
   // `todaysMeasurements` non ha potuto agganciare a una scheda.
@@ -102,7 +103,7 @@ export default async function DashboardHome() {
         <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
           {formatGreeting(tGreeting)}, <em className="italic text-teal-dark">{professional?.nome ?? tc('professional')}</em>
         </h1>
-        <p className="mt-1.5 text-sm text-anthracite-lighter capitalize">{todayLong(locale)}</p>
+        <p className="mt-1.5 text-sm text-anthracite-lighter">{todayLong(locale)}</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -120,7 +121,7 @@ export default async function DashboardHome() {
             ) : (
               <ul className="divide-y divide-surface-border">
                 {alerts.map((a) => {
-                  const detail = alertMessage(a, tAlerts, fmtNum)
+                  const detail = alertMessage(a, tAlerts, fmtNum, alertOpts)
                   return (
                     <li key={a.id}>
                       <Link

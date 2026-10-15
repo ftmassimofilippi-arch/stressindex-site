@@ -52,7 +52,7 @@
     "eyebrow": "Test types",
     "titleLead": "A test for every need.",
     "titleEm": "From the standard protocol to the long session.",
-    "description": "Four measurement modes designed to cover 100% of situations in the practice and in the field.",
+    "description": "Three test types plus the long session, designed to cover 100% of situations in the practice and in the field.",
     "items": [
       {
         "title": "Standard Measurement",
@@ -97,7 +97,7 @@
     "items": [
       "Extended profile (sex, age, smoker, athlete)",
       "Measurement history with trends",
-      "Compare up to 29 parameters across sessions",
+      "Compare every parameter between two sessions",
       "Free-form notes per client",
       "Measurement tags for categorizing"
     ]

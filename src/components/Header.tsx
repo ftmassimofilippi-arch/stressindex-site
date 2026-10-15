@@ -12,9 +12,12 @@ export function Header() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
+  // Menu unico del sito pubblico (home comprese): Prezzi punta alla sezione
+  // della home con link assoluto, così funziona da qualunque pagina.
   const navLinks: { href: string; label: string; badge?: string }[] = [
     { href: '/funzionalita', label: t('nav.features') },
     { href: '/sport', label: t('nav.sport'), badge: t('new') },
+    { href: '/#prezzi', label: t('nav.pricing') },
     { href: '/guide', label: t('nav.guides') },
   ]
 
@@ -65,6 +68,7 @@ export function Header() {
           ))}
           <Link
             href="/area-professionisti/login"
+            prefetch={false}
             className="text-sm font-medium text-anthracite-light hover:text-teal transition-colors px-2 lg:px-3 py-2 rounded-md whitespace-nowrap"
           >
             {t('proArea')}
@@ -73,7 +77,7 @@ export function Header() {
             href="/registrazione"
             className="ml-2 inline-flex items-center justify-center px-4 py-2 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal-dark transition-colors whitespace-nowrap"
           >
-            {t('freeTrial')}
+            {t('trial60')}
           </Link>
           <Suspense fallback={null}>
             <LanguageSwitcher className="ml-1" />
@@ -84,9 +88,9 @@ export function Header() {
         <div className="flex items-center gap-1 md:hidden">
           <Link
             href="/registrazione"
-            className="inline-flex items-center justify-center px-3 py-2 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal-dark transition-colors whitespace-nowrap"
+            className="inline-flex items-center justify-center px-3 py-2 bg-teal text-white text-[13px] font-medium rounded-lg hover:bg-teal-dark transition-colors whitespace-nowrap"
           >
-            {t('freeTrial')}
+            {t('trial60')}
           </Link>
           <Suspense fallback={null}>
             <LanguageSwitcher className="-mx-0.5" />
@@ -131,6 +135,7 @@ export function Header() {
               <li className="pt-2 mt-2 border-t border-gray-100">
                 <Link
                   href="/area-professionisti/login"
+                  prefetch={false}
                   className="flex items-center px-3 py-3 rounded-lg text-base font-medium text-anthracite hover:bg-surface transition-colors"
                 >
                   {t('proArea')}

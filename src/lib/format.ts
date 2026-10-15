@@ -11,6 +11,7 @@ import type { Locale as DateFnsLocale } from 'date-fns'
 import type { Tr } from '@/i18n/types'
 import { defaultLocale, intlLocale, isLocale, type Locale } from '@/i18n/routing'
 import { FUSO, measuredInstant, oraDaParete, type ConIstante } from './measured-time'
+import { capitalizeFirst, displayName } from './text-case'
 
 function loc(locale?: string): Locale {
   return isLocale(locale) ? locale : defaultLocale
@@ -124,9 +125,12 @@ export function formatGreeting(t: Tr): string {
   return t('evening')
 }
 
+/** Nome e cognome per la UI. Le parole scritte tutte in maiuscolo ("NICOLÒ
+ *  DONATINI") passano in Title Case solo in visualizzazione (`displayName`):
+ *  il database resta com'è. */
 export function fullName(p?: { nome?: string | null; cognome?: string | null } | null): string {
   if (!p) return ''
-  return [p.nome, p.cognome].filter(Boolean).join(' ').trim()
+  return displayName([p.nome, p.cognome].filter(Boolean).join(' ').trim())
 }
 
 export function initials(p?: { nome?: string | null; cognome?: string | null } | null): string {
@@ -199,6 +203,9 @@ export function formatEur(value: number, locale?: string): string {
 }
 
 /** Data odierna per esteso (es. "martedì 29 settembre 2026"). */
+/** Data di oggi per esteso, con la sola iniziale maiuscola ("Mercoledì 14
+ *  ottobre 2026"): in italiano `Intl` scrive tutto minuscolo, in inglese e
+ *  tedesco è già giusto e `capitalizeFirst` non cambia nulla. */
 export function todayLong(locale?: string): string {
-  return intlDate(new Date(), locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  return capitalizeFirst(intlDate(new Date(), locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))
 }

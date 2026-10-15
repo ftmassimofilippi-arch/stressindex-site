@@ -187,7 +187,7 @@ I 5 score proprietari:
 
 Indice di Stress (0-100): quanto è sotto pressione il sistema
 nervoso. Range: 0-30 basso, 30-50 in equilibrio, 50-70 medio,
-70-85 alto, 85-100 affaticamento. Se è alto cronicamente indica
+70-85 alto, 85-100 esaurimento. Se è alto cronicamente indica
 stress accumulato nel tempo, non solo il momento della
 misurazione.
 

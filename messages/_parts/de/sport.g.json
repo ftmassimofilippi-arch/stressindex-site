@@ -47,7 +47,6 @@
     "trimp": "TRIMP",
     "hrAvg": "Mittlere HF",
     "hrMax": "Max. HF",
-    "dfa": "DFA α1",
     "rpe": "RPE"
   },
   "sessions": {
@@ -269,7 +268,7 @@
     "kpiHrAvg": "Mittlere HF",
     "kpiHrMax": "Max. HF",
     "kpiRmssd": "Mittlere RMSSD",
-    "kpiDfa": "Mittlere DFA α1",
+    "kpiDfa": "Mittlere <dfa></dfa>",
     "kpiTrimp": "TRIMP",
     "kpiRpe": "RPE",
     "thresholdMissing": "Für diese Sitzung sind keine Schwellentest-Daten verfügbar.",

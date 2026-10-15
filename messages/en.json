@@ -629,6 +629,9 @@
       "adaptationDrop": "Adaptation score at {value}",
       "dfaAbnormal": "DFA α1 {value} at rest, below the {threshold} threshold",
       "hrRestHigh": "Resting heart rate {value} bpm, above the {threshold} threshold",
+      "missedOn": "Last measurement on {date}",
+      "missedSince": "Last measurement on {date} (over {days} days)",
+      "neverMeasured": "No measurement recorded",
       "recoveryLow": "Recovery at {value} in the last 2 measurements",
       "rmssdDrop": "RMSSD {rmssd} ms, {drop}% below the baseline ({baseline} ms)",
       "sdnnLow": "SDNN {value} ms, below the reference threshold",
@@ -975,7 +978,7 @@
       "periodA": "Period A",
       "periodB": "Period B (comparison)",
       "periodsTitle": "Period comparison",
-      "std": "σ",
+      "std": "SD",
       "topHigh": "Top 5: highest stress",
       "topLow": "Top 5: lowest stress",
       "trendHint": "Pick metrics and period",
@@ -1182,9 +1185,6 @@
     },
     "overview": {
       "activeAlerts": "Active alerts",
-      "aiBody": "Soon you will receive concise insights on the client's trend, generated with Claude and reviewed by our team.",
-      "aiTitle": "AI Insights",
-      "comingSoon": "Coming soon",
       "emptyFiltered": "No measurements match this filter",
       "filterActive": "Filter: {label}",
       "filterRemove": "Remove filter",
@@ -1354,7 +1354,6 @@
     "error": "Error",
     "export": "Export",
     "filter": "Filter",
-    "freeTrial": "Free trial",
     "genericError": "Something went wrong. Please try again.",
     "language": "Language",
     "loading": "Loading...",
@@ -1366,7 +1365,6 @@
     "na": "n/a",
     "nav": {
       "contactUs": "Contact us",
-      "contacts": "Contact",
       "cookie": "Cookie Policy",
       "faq": "FAQ",
       "features": "Features",
@@ -1415,7 +1413,7 @@
     },
     "today": "today",
     "trial60": "Try it free for 60 days",
-    "trialNote": "Credit card required · No charge for 60 days · Cancel anytime",
+    "trialNote": "No credit card required · 60 days free · Cancel anytime",
     "yes": "Yes",
     "yesterday": "yesterday"
   },
@@ -1777,7 +1775,7 @@
       "items": [
         "Extended profile (sex, age, smoker, athlete)",
         "Measurement history with trends",
-        "Compare up to 29 parameters across sessions",
+        "Compare every parameter between two sessions",
         "Free-form notes per client",
         "Measurement tags for categorizing"
       ],
@@ -1948,7 +1946,7 @@
     "tests": {
       "athletesCta": "Discover the Sport Module",
       "athletesNote": "Do you work with athletes? There is a dedicated module with real-time DFA Alpha1 and live metabolic zones.",
-      "description": "Four measurement modes designed to cover 100% of situations in the practice and in the field.",
+      "description": "Three test types plus the long session, designed to cover 100% of situations in the practice and in the field.",
       "eyebrow": "Test types",
       "items": [
         {
@@ -2397,24 +2395,24 @@
                 "color": "red",
                 "ranges": [
                   {
-                    "range": "0–30",
+                    "range": "0-30",
                     "label": "Low"
                   },
                   {
-                    "range": "30–50",
+                    "range": "30-50",
                     "label": "Balance"
                   },
                   {
-                    "range": "50–70",
+                    "range": "50-70",
                     "label": "Medium"
                   },
                   {
-                    "range": "70–85",
+                    "range": "70-85",
                     "label": "High"
                   },
                   {
-                    "range": "85–100",
-                    "label": "Fatigue"
+                    "range": "85-100",
+                    "label": "Exhaustion"
                   }
                 ]
               },
@@ -2425,23 +2423,23 @@
                 "color": "teal",
                 "ranges": [
                   {
-                    "range": "0–25",
+                    "range": "0-25",
                     "label": "Insufficient"
                   },
                   {
-                    "range": "25–45",
+                    "range": "25-45",
                     "label": "Poor"
                   },
                   {
-                    "range": "45–65",
+                    "range": "45-65",
                     "label": "Moderate"
                   },
                   {
-                    "range": "65–85",
+                    "range": "65-85",
                     "label": "Good"
                   },
                   {
-                    "range": "85–100",
+                    "range": "85-100",
                     "label": "Optimal"
                   }
                 ]
@@ -3053,7 +3051,7 @@
         },
         {
           "title": "Serious science, plain language",
-          "body": "24 HRV parameters grounded in the international literature, demographic normalization by age and sex. The scientific rigor you expect, without the complexity you do not need."
+          "body": "25+ HRV parameters grounded in the international literature, demographic normalization by age and sex. The scientific rigor you expect, without the complexity you do not need."
         }
       ],
       "titleEm": "in real-world wellness.",
@@ -3099,7 +3097,7 @@
         },
         {
           "q": "How long does the Founding Members price last?",
-          "a": "Forever. The first 200 professionals to sign up lock in {price}/month for life, even after the standard price rises to {standard}/month."
+          "a": "Forever. The first {seats} professionals to sign up lock in {price}/month for life, even after the standard price rises to {standard}/month."
         }
       ],
       "titleEm": "before you start.",
@@ -3108,7 +3106,7 @@
     "finalCta": {
       "body": "60 days free. No commitment. Stop whenever you want.",
       "eyebrow": "Start today",
-      "note": "Credit card required · Then {price}/month · Cancel at any time",
+      "note": "No credit card required · Then {price}/month · Cancel at any time",
       "titleEm": "measure them for real.",
       "titleLead": "The next client who walks in,"
     },
@@ -3120,7 +3118,7 @@
       "vat": "VAT no. {vat}"
     },
     "hero": {
-      "body": "Stress Index measures the autonomic nervous system in 10 minutes and hands you 4 indices ready to use in the session. No more eyeballing. No more explaining without data.",
+      "body": "Stress Index measures the autonomic nervous system in 10 minutes and hands you 5 scores ready to use in the session. No more eyeballing. No more explaining without data.",
       "ctaHow": "See how it works",
       "eyebrow": "HRV software for wellness professionals",
       "titleEm": "Now you can prove it.",
@@ -3139,7 +3137,7 @@
         },
         {
           "title": "Share the report",
-          "body": "A professional PDF with the 4 indices, the HRV charts and the autonomic nervous system analysis. Send it to the client with one tap. Print it. File it in the CRM."
+          "body": "A professional PDF with the 5 scores, the HRV charts and the autonomic nervous system analysis. Send it to the client with one tap. Print it. File it in the CRM."
         }
       ],
       "titleEm": "Then you have the report.",
@@ -3153,7 +3151,7 @@
       "measuring": "Stress Index · Measuring"
     },
     "pricing": {
-      "badge": "Founding Members offer · First 200 subscribers",
+      "badge": "Founding Members offer · First {seats} subscribers",
       "body": "No per-client fees, no extra charge for reports, no surprises. You pay one flat monthly price and use everything without limits.",
       "cta": "Start your 60 free days",
       "eyebrow": "Pricing",
@@ -3166,12 +3164,12 @@
         "Automatic updates, forever",
         "Priority email support"
       ],
-      "lockNote": "Among the first 200 subscribers? Your price of <b>{price}/month</b> is locked in forever.",
-      "note": "Credit card required · No charge for 60 days · Then {price}/month · Cancel anytime",
+      "lockNote": "Among the first {seats} subscribers? Your price of <b>{price}/month</b> is locked in forever.",
+      "note": "No credit card required · 60 days free · Then {price}/month · Cancel anytime",
       "perMonth": "/month",
       "planFor": "For physiotherapists, osteopaths, sports physicians and wellness coaches",
-      "planName": "Stress Index Pro",
-      "standardNote": "Standard price <s>{standard}/month</s> · Founding Members {price}/month for the first 200",
+      "planName": "Basic plan",
+      "standardNote": "Standard price <s>{standard}/month</s> · Founding Members {price}/month for the first {seats}",
       "titleEm": "Everything included, forever.",
       "titleLead": "One subscription."
     },
@@ -3201,7 +3199,7 @@
         "text": "Recovery and adaptation capacity within range for the demographic group. Weekly monitoring recommended.",
         "value": "58/100"
       },
-      "body": "Stress Index processes 24 HRV parameters and turns them into 4 indices on a 0-100 scale. You read them in a second. Your client understands them without a lecture.",
+      "body": "Stress Index processes 25+ HRV parameters and turns them into 5 scores on a 0-100 scale. You read them in a second. Your client understands them without a lecture.",
       "eyebrow": "The answer",
       "features": [
         {
@@ -3222,14 +3220,98 @@
         }
       ],
       "titleEm": "Everything you need.",
-      "titleLead": "4 numbers."
+      "titleLead": "5 numbers."
     },
     "trust": {
       "eu": "EU servers · GDPR",
-      "params": "24 HRV parameters",
+      "params": "25+ HRV parameters",
       "pdf": "Professional PDF report",
       "platforms": "Android and iOS",
       "pros": "For wellness professionals"
+    }
+  },
+  "legal": {
+    "cookie": {
+      "sections": {
+        "s01What": {
+          "body": "Cookies are small text files that a website stores in the visitor's browser to recognize them on their next visit or to remember a choice. Besides cookies, a website can also store information in other browser storage areas (localStorage), which stay on the device and are not sent to the server.\n\nThis page describes what the stressindex.io website and its Professional Area do. The Stress Index mobile app does not use cookies; the processing of its data is described in the Privacy Notice.",
+          "title": "What cookies are"
+        },
+        "s02Technical": {
+          "body": "[DA COMPLETARE CON IL LEGALE]\n\nThe website only uses technical cookies, which are necessary for the pages to work or to store an explicit choice made by the visitor. No consent is required for these cookies.\n\n• PROFESSIONAL AREA SESSION: cookies with the \"sb-\" prefix set by Supabase (the authentication service) when the professional signs in to the reserved area. They contain the session token, keep you signed in and are removed when you sign out. They are not set for visitors who only browse the public pages.\n\n• LANGUAGE: the \"NEXT_LOCALE\" cookie, set when you choose a language from the switcher (IT / EN / DE). It remembers your preferred language for 12 months.\n\nNo other cookies are set by the website.",
+          "title": "Technical cookies used by the website"
+        },
+        "s03Storage": {
+          "body": "In the Professional Area some chart display preferences (time range, metrics shown, hidden series) are saved in the browser's localStorage so that you find them again on your next visit.\n\nThis information stays on your device, contains no personal data or measurements and is not sent to the server. It is removed by clearing the site data in your browser settings.",
+          "title": "Preferences stored in the browser"
+        },
+        "s04Sentry": {
+          "body": "[DA COMPLETARE CON IL LEGALE]\n\nTo notice malfunctions, the website automatically sends a report to Sentry when a technical error occurs. This service does not set cookies and does not track browsing: it collects the type of error, the point in the program where it occurred, the website version and the browser type, together with an anonymous account identifier. Name, email, measurements and notes are not sent.\n\nThe details (data processed, storage in the European Union, 90-day retention) are in the section \"Technical error detection\" of the Privacy Notice.",
+          "title": "Technical error detection"
+        },
+        "s05NoProfiling": {
+          "body": "The website does not use profiling cookies, advertising cookies, tracking pixels or traffic analytics tools that identify the visitor. There are no third-party cookies for social networks or advertising campaigns.\n\nFor this reason the website does not show a consent banner: none of the cookies used requires one. If tools requiring consent are introduced in the future, this page will be updated and consent will be requested before they are activated.",
+          "title": "No profiling or advertising cookies"
+        },
+        "s06Manage": {
+          "body": "You can view, block or delete cookies at any time from your browser settings (usually under \"Privacy and security\" or \"Site data\"). Instructions are available in the help pages of Chrome, Safari, Firefox and Edge.\n\nPlease note that if you block technical cookies, signing in to the Professional Area will not work: without the session cookie you cannot stay signed in. If you delete the \"NEXT_LOCALE\" cookie, the website will again suggest the language based on your browser settings.",
+          "title": "How to manage cookies in your browser"
+        },
+        "s07Updates": {
+          "body": "This Cookie Policy may be updated when the cookies or tools used by the website change. The date at the top shows the latest revision. For questions, write to {email}.",
+          "title": "Updates to this page"
+        }
+      },
+      "subtitle": "Which cookies and which browser-stored data the stressindex.io website, operated by {company}, uses.",
+      "title": "Cookie Policy",
+      "updated": "Last updated: 15 October 2026"
+    },
+    "terms": {
+      "sections": {
+        "s01Subject": {
+          "body": "Stress Index is a software service provided by {company} (the \"Provider\") and made up of:\n\n• the Stress Index mobile app, with which the professional or their client records heart rate variability (HRV) measurements with a compatible chest strap;\n• the stressindex.io website and its reserved area (\"Professional Area\"), where the professional reviews measurements, trends over time, reports and the tools of the active modules;\n• related services (email notifications, PDF reports, exports).\n\nThe service is intended for wellness and sports professionals (physiotherapists, osteopaths, trainers, coaches) who use it as part of their professional activity. It is not intended for consumers.\n\nThese Terms govern access to and use of the service. By creating an account or using the service you confirm that you have read and accepted them, together with the Privacy Notice and the Cookie Policy.",
+          "title": "1. The service"
+        },
+        "s02Account": {
+          "body": "Using the Professional Area requires a personal account, created on the registration page with first name, last name, email and profession. You warrant that the details you provide are accurate and keep them up to date.\n\nThe account is personal and cannot be transferred. Keep your credentials safe: you are responsible for every activity carried out with your account and must notify the Provider immediately at {email} of any unauthorized use.\n\nEnd clients access the app through an invitation from the professional. The professional remains the sole point of contact in the relationship with their clients.\n\nThe service requires an up-to-date device and browser, an Internet connection and, for measurements, a compatible chest strap as listed in the Guides. Connection and hardware costs are borne by the user.",
+          "title": "2. Account and requirements"
+        },
+        "s03Trial": {
+          "body": "[DA COMPLETARE CON IL LEGALE]\n\nEvery new professional account starts with a 60-day free trial, during which the full service is available. At the end of the trial the service continues under the chosen subscription, at the price and billing period shown on the website at the time of subscription; prices are in euros, VAT excluded unless stated otherwise.\n\nThe subscription renews automatically at the end of each period unless cancelled. You can cancel at any time; cancellation takes effect at the end of the current period, and no refunds are given for periods already started.\n\nThe Provider may change the price list with at least 30 days' written notice; changes apply from the next renewal. Additional modules (for example Sport or Monitoring) may have their own pricing, shown at activation.\n\nIf payment fails, the Provider may suspend access to the Professional Area until the balance is settled, keeping the data for the period indicated in the section \"Suspension and termination\".",
+          "title": "3. Free trial and subscription"
+        },
+        "s04Obligations": {
+          "body": "[DA COMPLETARE CON IL LEGALE]\n\nYou agree to:\n\n• use the service in compliance with the law, these Terms and the rules of your profession;\n• obtain, before inviting a client, their informed consent to the processing of their data, as required by the Privacy Notice (the professional is the data controller for their clients' data);\n• not upload content that is unlawful, offensive or infringes third-party rights;\n• not attempt to circumvent security measures, access other people's accounts or data, decompile or copy the software, or use the service to build a competing product;\n• not use automated systems (scraping, bots) to extract data from the website or the app, other than the export functions provided;\n• not resell or sublicense the service.\n\nYou are responsible for the content you enter (notes, client data, settings) and for the use you make of the information provided by the service.",
+          "title": "4. Obligations of the user and of end clients"
+        },
+        "s05Disclaimer": {
+          "body": "Stress Index is a support tool for wellness and sports professionals. It measures and displays heart rate variability indicators and turns them into scores and trends that help read a person's adaptation, recovery and load.\n\nStress Index is not a medical device, does not provide a diagnosis, does not prescribe treatment and does not replace the advice of a physician. Scores, thresholds and alerts are statistical wellness indications and do not constitute a medical assessment. Any decision about health must be taken with a physician; in case of symptoms or discomfort, contact the health services.\n\nThe professional uses the service under their own responsibility and within the limits of their competence, and agrees not to present it to clients as a diagnostic or treatment tool.",
+          "title": "5. Nature of the service: wellness, not medicine"
+        },
+        "s06Ip": {
+          "body": "[DA COMPLETARE CON IL LEGALE]\n\nThe software, calculation algorithms, interfaces, texts, graphics, the \"Stress Index\" trademarks and the domain name are owned by the Provider or its licensors and are protected by copyright and industrial property law.\n\nWith the subscription you receive a personal, non-exclusive, non-transferable and revocable licence to use the service for your professional activity for the duration of the subscription. No other right is granted.\n\nThe data you enter and your clients' measurements remain yours and your clients'. You grant the Provider the right to process them to the extent needed to deliver the service, as described in the Privacy Notice. The Provider may use aggregated, anonymous data that cannot be traced back to individuals to improve the service.",
+          "title": "6. Intellectual property"
+        },
+        "s07Liability": {
+          "body": "[DA COMPLETARE CON IL LEGALE]\n\nThe Provider undertakes to keep the service available and up to date with professional diligence, but does not guarantee that it will be error-free or accessible without interruption. Maintenance work is announced in advance whenever possible.\n\nTo the extent permitted by law, the Provider is not liable for indirect damages, loss of profit, loss of data due to causes not attributable to the Provider, or decisions taken by the user or their clients on the basis of information provided by the service. In any case, the Provider's total liability towards the user does not exceed the amount paid by the user for the service in the 12 months preceding the event.\n\nThe service depends on third-party providers (hosting, authentication, email delivery, app stores) and third-party hardware (chest straps, smartphones): the Provider is not liable for malfunctions attributable to these parties.\n\nNothing in these Terms limits liability for wilful misconduct or gross negligence, or any other liability that cannot be excluded by law.",
+          "title": "7. Limitation of liability"
+        },
+        "s08Suspension": {
+          "body": "[DA COMPLETARE CON IL LEGALE]\n\nYou may terminate at any time by cancelling the subscription or requesting deletion of the account at {email}. Termination takes effect at the end of the current subscription period.\n\nThe Provider may suspend or close the account, notifying the user, in case of serious or repeated breach of these Terms, non-payment, use that endangers the security of the service, or a request from the authorities.\n\nAfter the account is closed, data remain exportable for 30 days; after that period they are deleted or anonymized as described in the Privacy Notice, subject to legal retention obligations. It is the professional's responsibility to export their clients' data before closure and to inform them.\n\nThe Provider may discontinue the service or individual features with at least 90 days' notice, refunding the unused part of the subscription.",
+          "title": "8. Suspension and termination"
+        },
+        "s09Law": {
+          "body": "[DA COMPLETARE CON IL LEGALE]\n\nThese Terms are governed by Italian law. Any dispute concerning their interpretation or performance is subject to the exclusive jurisdiction of the court of the Provider's registered office, without prejudice to the mandatory jurisdiction provided by law for users acting as consumers.\n\nThe Provider may update these Terms. Material changes are communicated by email or in the reserved area at least 30 days in advance; using the service after the effective date counts as acceptance. If you do not wish to accept them, you may terminate free of charge before that date.\n\nIf any clause is found to be invalid, the remaining clauses remain in force.",
+          "title": "9. Governing law and jurisdiction"
+        },
+        "s10Contacts": {
+          "body": "For questions about these Terms, your subscription or your account:\n\n{company}\nEmail: {email}\n\nThe Provider's full details (registered office and VAT number) are shown at the bottom of every page of the website.",
+          "title": "10. Contact"
+        }
+      },
+      "subtitle": "Terms of use for the stressindex.io website, the Stress Index app and the professional area, provided by {company}.",
+      "title": "Terms of Service",
+      "updated": "Last updated: 15 October 2026"
     }
   },
   "measurement": {
@@ -3457,6 +3539,16 @@
     "comparison": {
       "title": "Measurement comparison"
     },
+    "contacts": {
+      "description": "How to contact Stress Index support.",
+      "shortDescription": "How to contact Stress Index support.",
+      "title": "Contact | Stress Index"
+    },
+    "cookie": {
+      "description": "Which cookies the Stress Index website uses: only technical session and language cookies, browser preferences, error detection, no profiling or advertising cookies.",
+      "shortDescription": "Which cookies the Stress Index website uses: technical cookies only, no profiling or advertising.",
+      "title": "Cookie Policy | Stress Index"
+    },
     "dashboardHome": {
       "title": "Today"
     },
@@ -3489,6 +3581,9 @@
     },
     "monitoringDetail": {
       "title": "Monitoring details"
+    },
+    "notFound": {
+      "title": "Page not found | Stress Index"
     },
     "og": {
       "badgeParams": "25+ HRV parameters",
@@ -3548,6 +3643,11 @@
     },
     "suspended": {
       "title": "Account suspended"
+    },
+    "terms": {
+      "description": "Terms of use for Stress Index: the service, accounts, free trial and subscription, obligations, wellness nature of the service, liability, termination and jurisdiction.",
+      "shortDescription": "Terms of use for Stress Index: service, accounts, free trial and subscription, liability and termination.",
+      "title": "Terms of Service | Stress Index"
     }
   },
   "monitoring": {
@@ -4432,7 +4532,7 @@
       "submitting": "Creating your account..."
     },
     "page": {
-      "calloutBody": "Full app access, unlimited client CRM, professional PDF reports and all 24 HRV parameters. No credit card required.",
+      "calloutBody": "Full app access, unlimited client CRM, professional PDF reports and all 25+ HRV parameters. No credit card required.",
       "calloutTitle": "What you get right away",
       "eyebrow": "Free 60-day trial",
       "intro": "Create your professional account and get every Stress Index feature for 60 days, no strings attached.",
@@ -4524,7 +4624,7 @@
       },
       "stress": {
         "balance": "Balance",
-        "fatigue": "Fatigue",
+        "fatigue": "Exhaustion",
         "high": "High",
         "low": "Low",
         "medium": "Medium"
@@ -4630,8 +4730,8 @@
       "error": "Error: {message}",
       "firstName": "First name",
       "lastName": "Last name",
-      "logoHelp": "It will appear in the header of generated PDFs.",
-      "logoUrl": "Logo URL (direct link for now)",
+      "logoHelp": "Public address of a PNG or JPG image: it appears in the header of generated PDFs.",
+      "logoUrl": "Logo URL",
       "phone": "Phone",
       "practice": "Practice",
       "practiceName": "Practice name",
@@ -4725,7 +4825,6 @@
       "athlete": "Athlete",
       "date": "Date",
       "dateTime": "Date and time",
-      "dfa": "DFA α1",
       "duration": "Duration",
       "hrAvg": "Mean HR",
       "hrMax": "Max HR",
@@ -4786,7 +4885,7 @@
       "downloadPdf": "Download PDF",
       "energy": "Energy",
       "hrTitle": "Heart rate",
-      "kpiDfa": "Mean DFA α1",
+      "kpiDfa": "Mean <dfa></dfa>",
       "kpiHrAvg": "Mean HR",
       "kpiHrMax": "Max HR",
       "kpiRmssd": "Mean RMSSD",
@@ -5151,19 +5250,25 @@
       "titleLead": "Subjective + objective."
     },
     "roadmap": {
-      "callout": "Professionals who activate now get early access to every new feature.",
-      "description": "The Sport Module is just the beginning. Here is what arrives in the coming months:",
-      "eyebrow": "Roadmap · Phase 2-3",
-      "items": [
-        "Injury risk alerts (ACWR + HRV)",
-        "Performance Management Chart (CTL, ATL, TSB)",
-        "Multi-athlete Team Dashboard",
-        "Automatic VT1/VT2 threshold detection",
+      "callout": "New features ship with app updates, at no extra cost for Pro plan subscribers.",
+      "description": "The Sport Module is already in use. Here is what you get today in the app and the web dashboard, and the two things we are working on.",
+      "eyebrow": "The Sport Module today",
+      "have": [
+        "Real-time DFA Alpha1 with the 4 zones",
+        "TRIMP, ACWR and CTL/ATL/TSB with automatic alerts",
+        "VT1/VT2 threshold test",
+        "Multi-athlete Team Live",
+        "Post-workout questionnaire",
+        "Sport PDF report"
+      ],
+      "haveTitle": "Available today",
+      "next": [
         "AI interpretation of trends",
         "Daily wellness questionnaire"
       ],
-      "titleEm": "For those who are in now.",
-      "titleLead": "Coming next."
+      "nextTitle": "In the works",
+      "titleEm": "And what is coming.",
+      "titleLead": "What is here today."
     }
   },
   "support": {

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from '@/i18n/navigation'
 import { LinkCell } from '@/components/dashboard/LinkCell'
+import { Alpha1 } from '@/components/dashboard/Alpha1'
 import { useLocale, useTranslations } from 'next-intl'
 import { Activity, ArrowRight, ChevronLeft, ChevronRight, Dumbbell, TrendingDown, TrendingUp, Minus, Users } from 'lucide-react'
 import { MetricCard } from '@/components/dashboard/MetricCard'
@@ -108,7 +109,7 @@ function DashboardTab({ stats, baseQuery }: { stats: SportDashboardStats; baseQu
                   <Th>{t('columns.duration')}</Th>
                   <Th>{t('columns.trimp')}</Th>
                   <Th>{t('columns.hrAvg')}</Th>
-                  <Th>{t('columns.dfa')}</Th>
+                  <Th><Alpha1 /></Th>
                   <th className="px-3 py-2.5" />
                 </tr>
               </thead>
@@ -217,7 +218,7 @@ function SessioniTab({
                   <Th>{t('columns.hrAvg')}</Th>
                   <Th>{t('columns.hrMax')}</Th>
                   <Th>{t('columns.trimp')}</Th>
-                  <Th>{t('columns.dfa')}</Th>
+                  <Th><Alpha1 /></Th>
                   <Th>{t('columns.rpe')}</Th>
                   <th className="px-3 py-2.5" />
                 </tr>

@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
-import { AlertTriangle, Sparkles, X } from 'lucide-react'
+import { AlertTriangle, X } from 'lucide-react'
 import { GaugeScore } from '@/components/dashboard/GaugeScore'
 import { AdvancedTrendChart, TREND_METRICS } from '@/components/dashboard/AdvancedTrendChart'
 import { AlertBadge } from '@/components/dashboard/AlertBadge'
@@ -10,8 +10,8 @@ import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadg
 import { LastMonitoringCard } from '@/components/monitoring/LastMonitoringCard'
 import type { MonitoringSession } from '@/lib/monitoring-types'
 import type { Alert, Client, MeasurementAnalytics } from '@/lib/types'
-import { alertTypeLabel } from '@/lib/alert-rules'
-import { formatDateTime, formatMeasuredAt, num } from '@/lib/format'
+import { alertMessage, alertTypeLabel, alertValueDecimals } from '@/lib/alert-rules'
+import { formatDate, formatDateTime, formatMeasuredAt, num } from '@/lib/format'
 import { measuredDayKey } from '@/lib/format'
 import { tagLabel } from '@/lib/before-after'
 import { measurementTypeLabel } from '@/lib/measurement-type'
@@ -37,6 +37,12 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, pro
   const locale = useLocale()
   const latest = measurements[0]
   const qs = professionistaId ? `?professionista=${professionistaId}` : ''
+  // Riga sotto il titolo di ogni alert: tradotta dai numeri, mai il testo
+  // grezzo dell'app (che arriva nella lingua del telefono del cliente).
+  const alertDetail = (a: Alert) => alertMessage(a, tAlerts, (v) => num(v, alertValueDecimals(v), locale), {
+    tScores,
+    fmtDate: (d) => formatDate(d, undefined, locale),
+  })
 
   // Trend completo: tutte le 24+ metriche disponibili; il chart filtra internamente per periodo e selezione.
   // Il filtro di "Misurazioni" sceglie quali misurazioni disegnare; lancette e
@@ -125,16 +131,19 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, pro
             <div className="px-5 py-6 text-sm text-anthracite-lighter text-center">{t('noAlerts')}</div>
           ) : (
             <ul className="divide-y divide-surface-border">
-              {alerts.map((a) => (
-                <li key={a.id} className="px-5 py-3 flex items-center gap-3">
-                  <AlertBadge severity={a.severity} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-anthracite">{alertTypeLabel(a.type, tAlerts)}</div>
-                    <div className="text-xs text-anthracite-lighter mt-0.5">{a.message ?? ''}</div>
-                  </div>
-                  <span className="text-xs text-anthracite-lighter">{formatDateTime(a.created_at, locale)}</span>
-                </li>
-              ))}
+              {alerts.map((a) => {
+                const detail = alertDetail(a)
+                return (
+                  <li key={a.id} className="px-5 py-3 flex items-center gap-3">
+                    <AlertBadge severity={a.severity} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-anthracite">{alertTypeLabel(a.type, tAlerts)}</div>
+                      {detail && <div className="text-xs text-anthracite-lighter mt-0.5">{detail}</div>}
+                    </div>
+                    <span className="text-xs text-anthracite-lighter">{formatDateTime(a.created_at, locale)}</span>
+                  </li>
+                )
+              })}
             </ul>
           )}
         </section>
@@ -169,21 +178,6 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, pro
       </div>
 
       <LastMonitoringCard session={monitoring[0] ?? null} baseQuery={qs} />
-
-      <section className="card p-6 border-dashed border-2 border-surface-border bg-surface/50">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-teal-light text-teal-dark flex items-center justify-center flex-shrink-0">
-            <Sparkles size={18} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-serif text-base text-anthracite">{t('aiTitle')}</h3>
-              <span className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-anthracite text-white">{t('comingSoon')}</span>
-            </div>
-            <p className="text-sm text-anthracite-lighter mt-1 max-w-prose">{t('aiBody')}</p>
-          </div>
-        </div>
-      </section>
     </div>
   )
 }

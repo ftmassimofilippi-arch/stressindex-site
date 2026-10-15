@@ -249,12 +249,12 @@ export function SetPasswordForm() {
         <h1 className="font-serif text-3xl text-anthracite tracking-tight">{t(`errors.${state.kind}Title`)}</h1>
         <p className="mt-3 text-anthracite-light">{state.detailText ?? t(`errors.${state.kind}Detail`)}</p>
         {state.canRetry && (
-          <Link href="/area-professionisti/recupera-password" className="btn-primary w-full mt-8 inline-block text-center">
+          <Link href="/area-professionisti/recupera-password" prefetch={false} className="btn-primary w-full mt-8 inline-block text-center">
             {t('requestNew')}
           </Link>
         )}
         <p className="mt-6 text-sm text-anthracite-lighter text-center">
-          <Link href="/area-professionisti/login" className="text-teal-dark font-medium hover:underline">
+          <Link href="/area-professionisti/login" prefetch={false} className="text-teal-dark font-medium hover:underline">
             {t('backToLogin')}
           </Link>
         </p>
@@ -271,7 +271,7 @@ export function SetPasswordForm() {
         </div>
         <h1 className="font-serif text-3xl text-anthracite tracking-tight">{t('doneTitle')}</h1>
         <p className="mt-3 text-anthracite-light">{t(`${state.mode}.done`)}</p>
-        <Link href="/area-professionisti" className="btn-primary w-full mt-8 inline-block text-center">
+        <Link href="/area-professionisti" prefetch={false} className="btn-primary w-full mt-8 inline-block text-center">
           {t('goToArea')}
         </Link>
       </div>

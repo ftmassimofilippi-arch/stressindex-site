@@ -46,7 +46,10 @@
     "adaptationDrop": "Adaptation score at {value}",
     "acwr": "ACWR {acwr}",
     "acwrHrv": "ACWR {acwr} with HRV below baseline",
-    "tsb": "TSB {tsb}"
+    "tsb": "TSB {tsb}",
+    "neverMeasured": "No measurement recorded",
+    "missedSince": "Last measurement on {date} (over {days} days)",
+    "missedOn": "Last measurement on {date}"
   },
   "rules": {
     "title": "Alert thresholds",

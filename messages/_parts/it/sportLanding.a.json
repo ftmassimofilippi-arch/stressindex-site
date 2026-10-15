@@ -102,19 +102,25 @@
     }
   },
   "roadmap": {
-    "eyebrow": "Roadmap · Fase 2-3",
-    "titleLead": "In arrivo.",
-    "titleEm": "Per chi è dentro adesso.",
-    "description": "Il Modulo Sport è solo l’inizio. Ecco cosa arriva nei prossimi mesi:",
-    "items": [
-      "Alert rischio infortuni (ACWR + HRV)",
-      "Performance Management Chart (CTL, ATL, TSB)",
-      "Team Dashboard multi-atleta",
-      "Rilevamento automatico soglie VT1/VT2",
+    "eyebrow": "Modulo Sport oggi",
+    "titleLead": "Cosa c’è oggi.",
+    "titleEm": "E cosa arriva.",
+    "description": "Il Modulo Sport è già in uso. Ecco cosa trovi oggi nell’app e nella dashboard web, e le due cose su cui stiamo lavorando.",
+    "haveTitle": "Disponibile oggi",
+    "have": [
+      "DFA Alpha1 in tempo reale con le 4 zone",
+      "TRIMP, ACWR e CTL/ATL/TSB con alert automatici",
+      "Test soglie VT1/VT2",
+      "Team Live multi-atleta",
+      "Questionario post-allenamento",
+      "Report PDF sport"
+    ],
+    "nextTitle": "In lavorazione",
+    "next": [
       "Interpretazione AI dei trend",
       "Questionario wellness giornaliero"
     ],
-    "callout": "I professionisti che si attivano ora avranno accesso anticipato a tutte le nuove funzionalità."
+    "callout": "Le novità arrivano con gli aggiornamenti dell’app, senza costi aggiuntivi per chi ha il Piano Pro."
   },
   "cta": {
     "eyebrow": "Attiva il Piano Pro",

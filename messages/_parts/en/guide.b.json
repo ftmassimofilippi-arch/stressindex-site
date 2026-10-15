@@ -298,11 +298,11 @@
               "desc": "How much pressure the nervous system is under. If it is chronically high, it indicates stress accumulated over time, not just at the moment of the measurement.",
               "color": "red",
               "ranges": [
-                { "range": "0–30", "label": "Low" },
-                { "range": "30–50", "label": "Balance" },
-                { "range": "50–70", "label": "Medium" },
-                { "range": "70–85", "label": "High" },
-                { "range": "85–100", "label": "Fatigue" }
+                { "range": "0-30", "label": "Low" },
+                { "range": "30-50", "label": "Balance" },
+                { "range": "50-70", "label": "Medium" },
+                { "range": "70-85", "label": "High" },
+                { "range": "85-100", "label": "Exhaustion" }
               ]
             },
             {
@@ -311,11 +311,11 @@
               "desc": "Recovery capacity of the parasympathetic system.",
               "color": "teal",
               "ranges": [
-                { "range": "0–25", "label": "Insufficient" },
-                { "range": "25–45", "label": "Poor" },
-                { "range": "45–65", "label": "Moderate" },
-                { "range": "65–85", "label": "Good" },
-                { "range": "85–100", "label": "Optimal" }
+                { "range": "0-25", "label": "Insufficient" },
+                { "range": "25-45", "label": "Poor" },
+                { "range": "45-65", "label": "Moderate" },
+                { "range": "65-85", "label": "Good" },
+                { "range": "85-100", "label": "Optimal" }
               ]
             },
             {

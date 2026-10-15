@@ -298,11 +298,11 @@
               "desc": "Quanto è sotto pressione il sistema nervoso. Se è alto cronicamente indica stress accumulato nel tempo, non solo il momento della misurazione.",
               "color": "red",
               "ranges": [
-                { "range": "0–30", "label": "Basso" },
-                { "range": "30–50", "label": "Equilibrio" },
-                { "range": "50–70", "label": "Medio" },
-                { "range": "70–85", "label": "Alto" },
-                { "range": "85–100", "label": "Affaticamento" }
+                { "range": "0-30", "label": "Basso" },
+                { "range": "30-50", "label": "Equilibrio" },
+                { "range": "50-70", "label": "Medio" },
+                { "range": "70-85", "label": "Alto" },
+                { "range": "85-100", "label": "Esaurimento" }
               ]
             },
             {
@@ -311,11 +311,11 @@
               "desc": "Capacità di recupero del sistema parasimpatico.",
               "color": "teal",
               "ranges": [
-                { "range": "0–25", "label": "Insufficiente" },
-                { "range": "25–45", "label": "Scarso" },
-                { "range": "45–65", "label": "Moderato" },
-                { "range": "65–85", "label": "Buono" },
-                { "range": "85–100", "label": "Ottimale" }
+                { "range": "0-25", "label": "Insufficiente" },
+                { "range": "25-45", "label": "Scarso" },
+                { "range": "45-65", "label": "Moderato" },
+                { "range": "65-85", "label": "Buono" },
+                { "range": "85-100", "label": "Ottimale" }
               ]
             },
             {

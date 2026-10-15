@@ -1,18 +1,19 @@
 import type { Metadata } from 'next'
-import { Suspense } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { pageMetadata } from '@/lib/seo'
 import { formatEur } from '@/lib/format'
-import { HomeNavbar } from './HomeNavbar'
-import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { PRICING } from '@/config/pricing'
+import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import { RecoveryLinkRedirect } from '@/components/RecoveryLinkRedirect'
 
-// Prezzi mostrati nella landing (EUR al mese).
-const PRICE_FOUNDING = 49.9
-const PRICE_STANDARD = 69.9
+// Prezzi della landing: Founding Members (bloccato) e Piano Base standard, dal listino unico.
+const PRICE_FOUNDING = PRICING.founding
+const PRICE_STANDARD = PRICING.base
+const FOUNDING_SEATS = String(PRICING.foundingSeats)
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: { params: { locale: string } 
 type FaqItem = { q: string; a: string }
 type TitledItem = { title: string; body: string }
 
-/** Legge le FAQ dai messaggi e sostituisce i segnaposto dei prezzi (t.raw non interpola). */
+/** Legge le FAQ dai messaggi e sostituisce i segnaposto di prezzi e posti Founding (t.raw non interpola). */
 function useFaqItems(): FaqItem[] {
   const t = useTranslations('home')
   const locale = useLocale()
@@ -37,30 +38,8 @@ function useFaqItems(): FaqItem[] {
   const items = t.raw('faq.items') as FaqItem[]
   return items.map((it) => ({
     q: it.q,
-    a: it.a.replaceAll('{price}', price).replaceAll('{standard}', standard),
+    a: it.a.replaceAll('{price}', price).replaceAll('{standard}', standard).replaceAll('{seats}', FOUNDING_SEATS),
   }))
-}
-
-function Logo({ light = false }: { light?: boolean }) {
-  const t = useTranslations('common')
-  return (
-    <Link href="/" className="inline-flex items-center gap-2.5 group" aria-label={t('logoAria')}>
-      <div className="w-8 h-8 rounded-lg bg-teal flex items-center justify-center">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path
-            d="M3.5 12H6.5L9 6L12 18L15 9L17.5 12H20.5"
-            stroke="white"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
-      <span className={`text-lg font-semibold tracking-tight ${light ? 'text-white' : 'text-anthracite'}`}>
-        {t('brand')}
-      </span>
-    </Link>
-  )
 }
 
 function HeroMockup() {
@@ -463,7 +442,7 @@ function Pricing() {
         <div className="mt-12 mx-auto max-w-[640px] bg-white rounded-xl border border-gray-200 p-8 md:p-10">
           <div className="flex justify-center">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-light text-teal-dark text-[13px] font-medium text-center">
-              <span aria-hidden="true">⭐</span> {t('badge')}
+              <span aria-hidden="true">⭐</span> {t('badge', { seats: FOUNDING_SEATS })}
             </span>
           </div>
 
@@ -480,14 +459,14 @@ function Pricing() {
               <span className="text-xl text-anthracite-light font-sans font-normal"> {t('perMonth')}</span>
             </div>
             <p className="mt-3 text-sm text-anthracite-lighter">
-              {t.rich('standardNote', { s: (chunks) => <s>{chunks}</s>, standard, price })}
+              {t.rich('standardNote', { s: (chunks) => <s>{chunks}</s>, standard, price, seats: FOUNDING_SEATS })}
             </p>
           </div>
 
           <div className="mt-6 rounded-lg border-l-4 border-teal bg-teal-light/50 px-4 py-3 flex items-start gap-3">
             <span aria-hidden="true" className="text-lg leading-none mt-0.5">🎯</span>
             <p className="text-[14px] text-anthracite leading-relaxed">
-              {t.rich('lockNote', { b: (chunks) => <strong>{chunks}</strong>, price })}
+              {t.rich('lockNote', { b: (chunks) => <strong>{chunks}</strong>, price, seats: FOUNDING_SEATS })}
             </p>
           </div>
 
@@ -599,71 +578,6 @@ function FinalCta() {
   )
 }
 
-function Footer() {
-  const t = useTranslations('home.footer')
-  const tc = useTranslations('common')
-  const currentYear = new Date().getFullYear()
-  const linkClass = 'text-anthracite-light hover:text-teal transition-colors'
-  return (
-    <footer className="bg-white px-6 pt-16 pb-10">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr] gap-10 md:gap-12">
-          <div>
-            <Logo />
-            <p className="mt-4 text-[14px] text-anthracite-light leading-relaxed max-w-sm">
-              {t('tagline')}
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">{t('product')}</h3>
-            <ul className="mt-4 space-y-2.5 text-[14px]">
-              <li><a className={linkClass} href="#come-funziona">{tc('nav.howItWorks')}</a></li>
-              <li><a className={linkClass} href="#benefici">{tc('nav.features')}</a></li>
-              <li><a className={linkClass} href="#prezzi">{tc('nav.pricing')}</a></li>
-              <li><Link className={linkClass} href="/registrazione">{tc('startFree')}</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">{t('support')}</h3>
-            <ul className="mt-4 space-y-2.5 text-[14px]">
-              <li><Link className={linkClass} href="/guide">{tc('nav.guidesAndSupport')}</Link></li>
-              <li><a className={linkClass} href="#faq">{tc('nav.faq')}</a></li>
-              <li><a className={linkClass} href="mailto:support@stressindex.io">{tc('nav.contactUs')}</a></li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-[12px] uppercase tracking-wider text-anthracite-lighter font-semibold">{t('legal')}</h3>
-            <ul className="mt-4 space-y-2.5 text-[14px]">
-              <li><Link className={linkClass} href="/privacy">{tc('nav.privacyPolicy')}</Link></li>
-              <li><Link className={linkClass} href="/termini">{tc('nav.termsOfService')}</Link></li>
-              <li><Link className={linkClass} href="/cookie">{tc('nav.cookie')}</Link></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col md:flex-row md:items-end md:justify-between gap-6 text-[13px] text-anthracite-lighter">
-          <div className="leading-relaxed">
-            <div className="font-medium text-anthracite-light">Minimax Srl</div>
-            <div>Via Francesco Baracca, 88 · 36100 Vicenza (VI) · Italy</div>
-            <div>{t('vat', { vat: '04496840242' })}</div>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 md:justify-end">
-            <span>© {currentYear} Minimax Srl · {tc('allRightsReserved')}</span>
-            <Link className="hover:text-teal transition-colors" href="/privacy">{tc('nav.privacyPolicy')}</Link>
-            <Link className="hover:text-teal transition-colors" href="/termini">{tc('nav.terms')}</Link>
-            <Suspense fallback={null}>
-              <LanguageSwitcher variant="text" />
-            </Suspense>
-          </div>
-        </div>
-      </div>
-    </footer>
-  )
-}
-
 /** Dati strutturati (SoftwareApplication + FAQPage) con i testi nella lingua della pagina. */
 function JsonLd() {
   const t = useTranslations('home')
@@ -709,7 +623,7 @@ export default function Home({ params }: { params: { locale: string } }) {
           tutto il resto, e comunque nessun componente della home crea un
           client Supabase, quindi il token nell'URL è ancora intatto. */}
       <RecoveryLinkRedirect />
-      <HomeNavbar />
+      <Header />
       <Hero />
       <TrustBar />
       <Problem />

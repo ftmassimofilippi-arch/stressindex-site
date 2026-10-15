@@ -40,10 +40,7 @@
     "noAlerts": "Keine aktiven Warnungen",
     "lastThree": "Letzte 3 Messungen",
     "noMeasurements": "Keine Messungen",
-    "open": "Öffnen →",
-    "aiTitle": "KI-Insights",
-    "comingSoon": "Demnächst",
-    "aiBody": "Bald erhalten Sie kompakte Insights zum Verlauf des Klienten, erstellt mit Claude und von unserem Team geprüft."
+    "open": "Öffnen →"
   },
   "measurements": {
     "allDurations": "Alle Dauern",
@@ -94,7 +91,7 @@
     "median": "Med.",
     "min": "Min",
     "max": "Max",
-    "std": "σ",
+    "std": "SD",
     "trendTitle": "Historischer Verlauf",
     "trendHint": "Kennzahlen und Zeitraum wählen",
     "trendSubtitle": "Unabhängig von den Zeiträumen A/B oben: Schnellauswahl oder eigener Zeitraum",
