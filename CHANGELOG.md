@@ -3,6 +3,15 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-15 — chiusura delle tabelle di backup leggibili da anon
+
+`sito-046`: le cinque tabelle `backup_laura_20261015_*` e
+`backup_marco_morbin_20261015_*`, create alle 08:31 e 08:44 dal SQL Editor
+(script di rimozione dati incollati a mano, utente `postgres`), erano in
+`public` senza RLS e con i grant di default: leggibili via API senza login.
+Chiuse con RLS e revoca dei grant; nuova regola in `CLAUDE.md` per ogni
+tabella di backup.
+
 ## 2026-10-15 — audit QA del 14/10: blocchi C, D e F
 
 Un solo commit per tre blocchi: le modifiche condividono `dashboard-data.ts`,

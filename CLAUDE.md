@@ -47,6 +47,20 @@ Istruzioni per le sessioni Claude Code in questo repo. Aggiornate al
   qui sotto. Lettura del DB di produzione con `supabase db query --linked`
   (solo SELECT senza via libera). Lo stato reale è nel README, sezione
   Migrazioni.
+- **Tabelle di backup e di log**: si creano con RLS attiva e senza grant ad
+  `anon` e `authenticated`, **nella stessa transazione** del `create table`:
+  ```sql
+  begin;
+  create table public.backup_xxx_AAAAMMGG as select ...;
+  alter table public.backup_xxx_AAAAMMGG enable row level security;
+  revoke all on public.backup_xxx_AAAAMMGG from anon, authenticated;
+  commit;
+  ```
+  In `public` un `create table` (anche `as select`) nasce senza RLS e con i
+  grant di default di Supabase: è leggibile da chiunque via `/rest/v1` finché
+  non lo si chiude. Successo il 15/10/2026 con sei tabelle di copie di dati
+  personali (chiuse da `sito-045` e `sito-046`). Vale anche per gli script da
+  incollare nel SQL Editor.
 - `src/lib/supabase-server.ts` usa `next/headers`: i moduli "puri" importati
   dai client component non devono importarlo (per questo esistono
   `alert-rules.ts` e `alert-rules-server.ts` separati).

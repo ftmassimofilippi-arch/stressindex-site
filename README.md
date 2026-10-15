@@ -335,6 +335,7 @@ le sito-035…043 sono state applicate e verificate una per una il 15/10/2026
 | sito-043 `organizzazioni_uniche` | `organizations.merged_into_id`; per ogni owner le organizzazioni con lo stesso nome si uniscono nella più vecchia (più "codice" di Massimo), profilo dell'owner agganciato; indice unico `(owner_id, lower(btrim(name)))` sulle vive | applicata (15/10): 2 vive, 3 unite |
 | sito-044 `ricerca_clienti` | estensione `unaccent`, `testo_ricerca()`, colonna generata `clients.ricerca` (nome, cognome, email senza accenti e minuscoli) con indice: ricerca per parole in qualsiasi ordine | applicata (15/10): "nicolo" trova Nicolò, "sabbatini doretta" trova Doretta |
 | sito-045 `rls_tabelle_di_log` | RLS attiva (nessuna policy) su `clients_last_measurement_backup_20261015`, `alerts_doppioni_20261015`, `organizations_merge_log_20261015` | applicata (15/10) |
+| sito-046 `rls_backup_15ottobre` | RLS attiva e `revoke all from anon, authenticated` sulle 5 tabelle `backup_laura_20261015_*` e `backup_marco_morbin_20261015_*`, create dal SQL Editor senza RLS | applicata (15/10): `has_table_privilege('anon', …)` false per tutte |
 
 **Ordine fra i due repo** (storico: entrambe sono applicate):
 `app-035_conferma_collegamento_cliente.sql` (repo `hrv_app`) andava applicata
