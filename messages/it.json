@@ -882,15 +882,30 @@
       "allTimeDomain": "Tutto il Time Domain",
       "apply": "Applica · {count, plural, one {# metrica} other {# metriche}}",
       "hideTemporarily": "Nascondi temporaneamente",
-      "noDataInPeriod": "Nessun dato nel periodo selezionato.",
+      "meanLabel": "media {value}",
+      "medianLabel": "mediana {value}",
+      "noDataInPeriod": "Nessuna misurazione nel periodo selezionato: dati insufficienti.",
       "noMatch": "Nessuna metrica corrisponde a \"{query}\"",
       "noMetricSelected": "Nessuna metrica selezionata: apri <em>Seleziona metriche</em> per scegliere cosa visualizzare.",
       "panelCount": "{selected} selezionate · {total} disponibili",
       "panelTitle": "Metriche del grafico",
+      "pointsCaption": "{count, plural, one {# misurazione} other {# misurazioni}} · dal {from} al {to}",
+      "pointsCaptionOne": "{count, plural, one {# misurazione} other {# misurazioni}} · {from}",
       "resetZoom": "Reimposta zoom",
       "searchPlaceholder": "Cerca metrica…",
       "selectMetrics": "Seleziona metriche",
-      "show": "Mostra"
+      "show": "Mostra",
+      "showStats": "Mostra media/mediana",
+      "statsAllTitle": "Con \"Tutto\" non esiste un periodo precedente",
+      "statsInsufficient": "Dati insufficienti",
+      "statsLast": "ultimo",
+      "statsMean": "media",
+      "statsMedian": "mediana",
+      "statsNoPrevious": "n.d.",
+      "statsNoPreviousTitle": "Nessuna misurazione nel periodo precedente di pari lunghezza",
+      "statsTitle": "Riepilogo del periodo",
+      "statsVsMean": "ultimo vs media",
+      "statsVsPrevious": "vs periodo precedente"
     }
   },
   "clients": {
@@ -1165,7 +1180,9 @@
       "emptyFiltered": "Nessuna misurazione con questi filtri",
       "emptyPeriod": "Nessuna misurazione nel periodo selezionato",
       "exportCsv": "Esporta CSV",
-      "open": "Apri →"
+      "open": "Apri →",
+      "showAll": "Mostra tutte",
+      "showingOf": "Stai vedendo {shown} di {total} misurazioni · periodo {from} – {to}"
     },
     "monitoring": {
       "allProfiles": "Tutti i profili",

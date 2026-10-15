@@ -12,13 +12,20 @@ import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { formatMeasuredAt, formatDate, num } from '@/lib/format'
 import { normalizeTestType, measurementTypeLabel, ALL_MEASUREMENT_TYPE_META, type MeasurementTypeKey } from '@/lib/measurement-type'
 import type { Client, MeasurementAnalytics } from '@/lib/types'
-import { intervalloGiorniIta, measuredInstant } from '@/lib/format'
+import { intervalloGiorniIta, measuredDayKey, measuredInstant, oggiIta } from '@/lib/format'
 import { tagCounts, tagLabel } from '@/lib/before-after'
 import { isFilterActive, matchesMeasurementFilter, type MeasurementFilter } from '@/lib/measurement-filter'
 import { FilterChipRow } from '@/components/dashboard/SessionFilterChips'
 
 const DURATION_FILTERS = ['all', '5', '10'] as const
 type DurationFilter = typeof DURATION_FILTERS[number]
+
+// Dal giorno della misurazione più vecchia a oggi (giorni italiani).
+function fullRange(measurements: MeasurementAnalytics[]): DateRange {
+  const giorni = measurements.map((m) => measuredDayKey(m)).filter((d): d is string => !!d).sort()
+  const oggi = oggiIta()
+  return { from: giorni[0] ?? oggi, to: oggi }
+}
 
 // Campo CSV: virgolette quando contiene separatori (le date formattate hanno
 // la virgola in tutte le lingue).
@@ -43,7 +50,10 @@ export function MeasurementsTab({ client, measurements, filter, onFilterChange, 
   const tTags = useTranslations('common.tags')
   const tTypes = useTranslations('measurement.types')
   const locale = useLocale()
-  const [range, setRange] = useState<DateRange>(defaultRange(90))
+  // Periodo di default: tutto lo storico finché le misurazioni sono poche
+  // (sotto 50), altrimenti gli ultimi 90 giorni. Prima partiva sempre da 90
+  // giorni e l'intestazione "Misurazioni 2" non tornava con la riga sola in tabella.
+  const [range, setRange] = useState<DateRange>(() => (measurements.length < 50 ? fullRange(measurements) : defaultRange(90)))
   const [duration, setDuration] = useState<DurationFilter>('all')
 
   // Misurazioni nel periodo e nella durata scelti: i chip contano su queste.
@@ -130,10 +140,10 @@ export function MeasurementsTab({ client, measurements, filter, onFilterChange, 
     { key: 'equilibrio', header: tScores('names.balance'), accessor: (m) => m.score_equilibrio ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_equilibrio} /> },
     { key: 'energia', header: tScores('names.energy'), accessor: (m) => m.score_energia ?? -1, sortable: true, render: (m) => <ScoreBar value={m.score_energia} /> },
     // Colonna DB score_modulazione_infiammatoria, mostrata come "Adattamento".
-    { key: 'adattamento', header: tScores('names.adaptation'), accessor: (m) => m.score_modulazione_infiammatoria ?? -1, sortable: true, render: (m) => num(m.score_modulazione_infiammatoria, 1, locale) },
+    { key: 'adattamento', header: tScores('names.adaptation'), accessor: (m) => m.score_modulazione_infiammatoria ?? -1, sortable: true, render: (m) => num(m.score_modulazione_infiammatoria, 0, locale) },
     { key: 'quality', header: t('colArtifact'), accessor: (m) => m.artifact_percentage ?? -1, sortable: true, render: (m) => m.artifact_percentage != null ? `${num(m.artifact_percentage, 1, locale)}%` : '—' },
     {
-      key: 'actions', header: '', noLink: true, render: (m) => (
+      key: 'actions', header: '', noLink: true, sticky: true, render: (m) => (
         <div className="flex items-center gap-1 justify-end">
           <DownloadMeasurementPdfButton sessionId={m.session_id} clientId={client.id} variant="icon" />
           <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${detailQs}`} className="text-teal-dark text-sm hover:underline whitespace-nowrap">{t('open')}</Link>
@@ -161,6 +171,14 @@ export function MeasurementsTab({ client, measurements, filter, onFilterChange, 
           <Download size={15} /> {t('exportCsv')}
         </button>
       </div>
+      {inPeriod.length < measurements.length && (
+        <p className="text-xs text-anthracite-lighter flex flex-wrap items-center gap-x-2" aria-live="polite">
+          <span>{t('showingOf', { shown: inPeriod.length, total: measurements.length, from: formatDate(range.from, undefined, locale), to: formatDate(range.to, undefined, locale) })}</span>
+          <button type="button" onClick={() => setRange(fullRange(measurements))} className="text-teal-dark font-medium hover:underline">
+            {t('showAll')}
+          </button>
+        </p>
+      )}
       <div className="space-y-2">
         <FilterChipRow allLabel={t('allTags')} total={inPeriod.length} options={tagOptions} selected={filter.tag} onChange={(v) => onFilterChange({ tag: v })} />
         <FilterChipRow allLabel={t('allTests')} total={inPeriod.length} options={typeOptions} selected={filter.tipo} onChange={(v) => onFilterChange({ tipo: v as MeasurementTypeKey | null })} />

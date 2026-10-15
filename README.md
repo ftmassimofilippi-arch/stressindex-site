@@ -280,7 +280,9 @@ un nome descrittivo senza numero e restano così. La regola completa è in
 `CLAUDE.md`, sezione "Migrazioni: nomi fra i due repo".
 
 Stato verificato sul catalogo di produzione il 04/10/2026 (tagliando
-`hrv_app/docs/audit/2026-10-04.md` §3.1 e controllo diretto degli oggetti).
+`hrv_app/docs/audit/2026-10-04.md` §3.1 e controllo diretto degli oggetti);
+le sito-035…043 sono state applicate e verificate una per una il 15/10/2026
+(`docs/FIX_REPORT_2026-10-14.md`).
 
 | File | Scopo | Stato |
 |---|---|---|
@@ -320,6 +322,15 @@ Stato verificato sul catalogo di produzione il 04/10/2026 (tagliando
 | sito-032 `vista_superadmin_sessioni_remote` | `puo_vedere_come_professionista` + le tre `*_as_professional`: le misurazioni remote si leggono per conto del professionista proprietario | applicata (02/10) |
 | sito-033 `stampa_sessioni_remote` | `puo_vedere_come_professionista` accetta anche la `service_role`, per la via "solo token" delle pagine di stampa | applicata (02/10) |
 | sito-034 `guarded_non_per_anon` | EXECUTE su `link_client_to_professional_guarded` tolto a PUBLIC e ad `anon`; resta ad `authenticated` e `service_role`. Collaudo: `scripts/sql-test/test_sito-034.sql` | applicata (04/10): anon riceve `42501 permission denied`, e2e dell'app verde dopo |
+| sito-035 `last_measurement_at` | `clients.last_measurement_at` = inizio dell'ultima sessione (`max(coalesce(started_at_utc, started_at))`), trigger anche su DELETE e UPDATE, funzione SECURITY DEFINER; backup in `clients_last_measurement_backup_20261015` | applicata (15/10): 0 schede disallineate su 801 |
+| sito-036 `alert_senza_doppioni` | `alerts.session_id` + indice unico per misurazione e metrica; stato `duplicate`; `generate_threshold_alerts` sull'istante vero, `on conflict do nothing`, risoluzione automatica quando la metrica rientra; `generate_missed_measurement_alerts` con un solo alert aperto per scheda | applicata (15/10): nessun gruppo nuovo, 240 alert risolti al primo giro |
+| sito-037 `alert_doppioni_esistenti` | marca `duplicate` i doppioni già esistenti (score con stesso valore, e `missed_measurement` della stessa scheda), resta il più vecchio; log in `alerts_doppioni_20261015` | applicata (15/10): 821 doppioni, 0 gruppi residui, 1633 aperti |
+| sito-038 `security_definer_permessi` | EXECUTE tolto a PUBLIC e `anon` su 68 funzioni SECURITY DEFINER; le interne, i trigger, il cron e i backfill solo `service_role`; le API di app e sito e le funzioni delle policy (compresa `hrv_puo_accedere`, usata dalle policy di storage) restano ad `authenticated`; default privileges senza EXECUTE a PUBLIC/anon | applicata (15/10): 0 funzioni eseguibili da `anon`, 48 ad `authenticated` |
+| sito-039 `rls_policy_tabelle_scoperte` | policy esplicite su 11 tabelle con RLS e zero policy (`hrv_norms*` in lettura a `authenticated`, il resto `service_role`); le `*_backup_*`/`*_orfane_*` restano senza | applicata (15/10) |
+| sito-040 `search_path_funzioni` | `SET search_path = public, pg_temp` su 49 funzioni (molte dell'app: `hrv_*`, `calc_*`, `night_*`) | applicata (15/10): 0 funzioni senza search_path |
+| sito-041 `indici` | `sessions(client_id, started_at_utc)`, `sessions(professionista_id, started_at_utc)`, `measurement_analytics(client_id, measured_at_utc)`, `organizations(owner_id)` | applicata (15/10) |
+| sito-042 `sport_live_professional_id` | trigger BEFORE su `sport_live_data`: `professional_id` nullo risolto dal titolare della scheda o dal link attivo, altrimenti riga scartata e registrata in `rls_write_skipped` (l'app riceveva 400) | applicata (15/10), provata in transazione annullata |
+| sito-043 `organizzazioni_uniche` | `organizations.merged_into_id`; per ogni owner le organizzazioni con lo stesso nome si uniscono nella più vecchia (più "codice" di Massimo), profilo dell'owner agganciato; indice unico `(owner_id, lower(btrim(name)))` sulle vive | applicata (15/10): 2 vive, 3 unite |
 
 **Ordine fra i due repo** (storico: entrambe sono applicate):
 `app-035_conferma_collegamento_cliente.sql` (repo `hrv_app`) andava applicata

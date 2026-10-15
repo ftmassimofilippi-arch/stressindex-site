@@ -15,7 +15,11 @@ export type Column<T> = {
   width?: string
   /** La cella contiene azioni proprie (bottoni): non diventa parte del link di riga. */
   noLink?: boolean
+  /** Colonna fissa sul bordo destro quando la tabella scorre in orizzontale. */
+  sticky?: boolean
 }
+
+const STICKY_CELL = 'sticky right-0 z-[1] shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.15)]'
 
 type Props<T> = {
   columns: Column<T>[]
@@ -77,7 +81,7 @@ export function DataTable<T>({ columns, rows, rowKey, onRowClick, rowHref, empty
                 <th
                   key={c.key}
                   style={{ width: c.width }}
-                  className={`text-left font-medium uppercase tracking-wide text-[11px] px-4 py-3 ${c.className ?? ''}`}
+                  className={`text-left font-medium uppercase tracking-wide text-[11px] px-4 py-3 ${c.sticky ? `${STICKY_CELL} bg-surface` : ''} ${c.className ?? ''}`}
                 >
                   {c.sortable && c.accessor ? (
                     <button
@@ -113,7 +117,7 @@ export function DataTable<T>({ columns, rows, rowKey, onRowClick, rowHref, empty
                       const primary = !primaryAssigned
                       primaryAssigned = true
                       return (
-                        <td key={c.key} className={`p-0 align-middle ${c.className ?? ''}`}>
+                        <td key={c.key} className={`p-0 align-middle ${c.sticky ? `${STICKY_CELL} bg-white` : ''} ${c.className ?? ''}`}>
                           <Link
                             href={href}
                             className="block px-4 py-3"
@@ -126,7 +130,7 @@ export function DataTable<T>({ columns, rows, rowKey, onRowClick, rowHref, empty
                       )
                     }
                     return (
-                      <td key={c.key} className={`px-4 py-3 align-middle ${c.className ?? ''}`}>
+                      <td key={c.key} className={`px-4 py-3 align-middle ${c.sticky ? `${STICKY_CELL} bg-white` : ''} ${c.className ?? ''}`}>
                         {content}
                       </td>
                     )

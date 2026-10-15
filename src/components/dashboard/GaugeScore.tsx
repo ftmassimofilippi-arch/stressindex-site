@@ -41,9 +41,12 @@ const STRESS_ARC_SEGMENTS = [
 ]
 
 // Punto sull'arco: 0 → estremo sinistro (180°), 100 → estremo destro (360°)
+// Coordinate arrotondate a tre decimali: seno e coseno di Node (server) e del
+// browser differiscono all'ultima cifra e React segnalava il `d` del path
+// come mismatch di idratazione (12 errori per pagina, 3 per ogni gauge).
 function polar(cx: number, cy: number, r: number, frac: number) {
   const a = Math.PI + frac * Math.PI
-  return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) }
+  return { x: Math.round((cx + r * Math.cos(a)) * 1000) / 1000, y: Math.round((cy + r * Math.sin(a)) * 1000) / 1000 }
 }
 
 function arcPath(cx: number, cy: number, r: number, fromFrac: number, toFrac: number) {

@@ -64,7 +64,7 @@
   "trend": {
     "resetZoom": "Zoom zurücksetzen",
     "selectMetrics": "Metriken auswählen",
-    "noDataInPeriod": "Keine Daten im gewählten Zeitraum.",
+    "noDataInPeriod": "Keine Messungen im gewählten Zeitraum: zu wenige Daten.",
     "noMetricSelected": "Keine Metrik ausgewählt: Öffnen Sie <em>Metriken auswählen</em>, um festzulegen, was angezeigt wird.",
     "show": "Anzeigen",
     "hideTemporarily": "Vorübergehend ausblenden",
@@ -74,7 +74,22 @@
     "allScores": "Alle Scores",
     "allTimeDomain": "Gesamter Zeitbereich",
     "noMatch": "Keine Metrik entspricht \"{query}\"",
-    "apply": "Übernehmen · {count, plural, one {# Metrik} other {# Metriken}}"
+    "apply": "Übernehmen · {count, plural, one {# Metrik} other {# Metriken}}",
+    "pointsCaption": "{count, plural, one {# Messung} other {# Messungen}} · {from} bis {to}",
+    "pointsCaptionOne": "{count, plural, one {# Messung} other {# Messungen}} · {from}",
+    "showStats": "Mittelwert/Median anzeigen",
+    "meanLabel": "Mittel {value}",
+    "medianLabel": "Median {value}",
+    "statsTitle": "Zusammenfassung des Zeitraums",
+    "statsLast": "zuletzt",
+    "statsMean": "Mittelwert",
+    "statsMedian": "Median",
+    "statsVsMean": "zuletzt vs. Mittelwert",
+    "statsVsPrevious": "vs. Vorzeitraum",
+    "statsInsufficient": "Zu wenige Daten",
+    "statsNoPrevious": "k. A.",
+    "statsNoPreviousTitle": "Keine Messungen im gleich langen Vorzeitraum",
+    "statsAllTitle": "Bei \"Alle\" gibt es keinen Vorzeitraum"
   },
   "scale": {
     "zoom": "Zoom",

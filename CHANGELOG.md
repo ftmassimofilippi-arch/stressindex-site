@@ -3,6 +3,53 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-15 — audit QA del 14/10: blocchi A e B, nove migrazioni in produzione
+
+Analisi in `docs/ANALISI_QA_2026-10-14.md`, report in
+`docs/FIX_REPORT_2026-10-14.md`, correzioni che spettano all'app in
+`docs/FIX_APP_DA_FARE.md`. Il ramo `fix/perimetro-home` (perimetro del 07/10 e
+filtro nell'URL del 15/10) è stato unito in `main` e pubblicato per primo: la
+produzione era ferma al 04/10.
+
+**Blocco A, legale e testi.** `/termini`, `/cookie` (sezioni con
+`[DA COMPLETARE CON IL LEGALE]`) e `/contatti` → `/supporto` nelle tre lingue;
+un solo titolare, The Performance Lab S.r.l., in `src/config/company.ts` e nel
+`LegalFooter` (via "Minimax Srl" dalla home; indirizzo e P.IVA
+`[DA COMPLETARE]`); Header e Footer unici anche in home (`HomeNavbar`
+eliminata); listino in `src/config/pricing.ts` (Base 69,90, Founding 49,90 per
+200 posti, Pro 99: `/sport` diceva 69,00 e 49,90); "Nessuna carta richiesta"
+ovunque; 5 score e 25+ parametri; via il riquadro "Insights AI"; roadmap sport
+riscritta come "cosa c'è / cosa arriva"; alert dell'app tradotti anche nella
+scheda cliente e alert del cron con il nome dell'indice
+(`src/lib/alert-message.ts`, testato); titolo della 404 e della home dell'area;
+mese minuscolo, "DS" al posto di σ, "α1" non maiuscolo (`Alpha1.tsx`),
+"Esaurimento"; `prefetch={false}` sui link pubblici all'area; nomi tutti
+maiuscoli in Title Case (`displayName`).
+
+**Blocco B, grafici.** Periodo in `src/lib/trend-period.ts` (giorno italiano,
+"7 giorni" = 7 giorni, test sui dati di Doretta: 7g 0 punti, 90g 1, Tutto 2);
+ogni cambio di periodo rimonta il grafico e azzera lo zoom; didascalia
+"N misurazioni · dal … al …"; media e mediana del periodo visibile come linee
+tratteggiate con toggle persistito (`<storageKey>:stats`) e riga riassuntiva
+(ultimo, media, mediana, ultimo vs media, media vs periodo precedente di pari
+lunghezza, segno colorato con la regola di Prima e dopo; sotto 2 punti "Dati
+insufficienti"; `src/lib/trend-stats.ts`, testato); errori di idratazione del
+dettaglio misurazione riprodotti in locale e risolti (`GaugeScore`: arco SVG
+arrotondato; `formatDate*` con fuso Europe/Rome esplicito); scheda Misurazioni
+con periodo "tutto" sotto le 50 misurazioni e avviso "Stai vedendo X di Y";
+colonna Apri fissa a destra; Adattamento intero in tabella. `tsconfig`:
+`allowImportingTsExtensions`.
+
+**Database (sito-035 … sito-043, tutte in produzione il 15/10).**
+`last_measurement_at` ricalcolato dall'inizio della sessione anche su DELETE e
+UPDATE; alert senza doppioni con `session_id`, risoluzione automatica e 821
+doppioni storici marcati `duplicate` (compresi 29 "misurazione mancata" della
+stessa scheda); permessi delle 68 funzioni SECURITY DEFINER (zero eseguibili da
+`anon`); policy esplicite sulle tabelle scoperte; `search_path` su 49 funzioni;
+quattro indici; `sport_live_data` senza `professional_id` non risponde più 400;
+organizzazioni doppie unite (3 di Massimo, 2 di un'altra professionista) con
+vincolo di unicità. Dettaglio e verifiche nel README, sezione Migrazioni.
+
 ## 2026-10-15 — filtro delle misurazioni nell'URL della scheda cliente (ramo `fix/perimetro-home`)
 
 Bug-report del 14/10, voce #1 (era la voce 1 di `docs/sito-da-sistemare.md`):

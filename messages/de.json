@@ -882,15 +882,30 @@
       "allTimeDomain": "Gesamter Zeitbereich",
       "apply": "Übernehmen · {count, plural, one {# Metrik} other {# Metriken}}",
       "hideTemporarily": "Vorübergehend ausblenden",
-      "noDataInPeriod": "Keine Daten im gewählten Zeitraum.",
+      "meanLabel": "Mittel {value}",
+      "medianLabel": "Median {value}",
+      "noDataInPeriod": "Keine Messungen im gewählten Zeitraum: zu wenige Daten.",
       "noMatch": "Keine Metrik entspricht \"{query}\"",
       "noMetricSelected": "Keine Metrik ausgewählt: Öffnen Sie <em>Metriken auswählen</em>, um festzulegen, was angezeigt wird.",
       "panelCount": "{selected} ausgewählt · {total} verfügbar",
       "panelTitle": "Metriken des Diagramms",
+      "pointsCaption": "{count, plural, one {# Messung} other {# Messungen}} · {from} bis {to}",
+      "pointsCaptionOne": "{count, plural, one {# Messung} other {# Messungen}} · {from}",
       "resetZoom": "Zoom zurücksetzen",
       "searchPlaceholder": "Metrik suchen…",
       "selectMetrics": "Metriken auswählen",
-      "show": "Anzeigen"
+      "show": "Anzeigen",
+      "showStats": "Mittelwert/Median anzeigen",
+      "statsAllTitle": "Bei \"Alle\" gibt es keinen Vorzeitraum",
+      "statsInsufficient": "Zu wenige Daten",
+      "statsLast": "zuletzt",
+      "statsMean": "Mittelwert",
+      "statsMedian": "Median",
+      "statsNoPrevious": "k. A.",
+      "statsNoPreviousTitle": "Keine Messungen im gleich langen Vorzeitraum",
+      "statsTitle": "Zusammenfassung des Zeitraums",
+      "statsVsMean": "zuletzt vs. Mittelwert",
+      "statsVsPrevious": "vs. Vorzeitraum"
     }
   },
   "clients": {
@@ -1165,7 +1180,9 @@
       "emptyFiltered": "Keine Messungen mit diesen Filtern",
       "emptyPeriod": "Keine Messungen im gewählten Zeitraum",
       "exportCsv": "CSV exportieren",
-      "open": "Öffnen →"
+      "open": "Öffnen →",
+      "showAll": "Alle anzeigen",
+      "showingOf": "{shown} von {total} Messungen · Zeitraum {from} – {to}"
     },
     "monitoring": {
       "allProfiles": "Alle Profile",

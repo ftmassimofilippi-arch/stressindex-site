@@ -882,15 +882,30 @@
       "allTimeDomain": "All time domain",
       "apply": "Apply · {count, plural, one {# metric} other {# metrics}}",
       "hideTemporarily": "Hide temporarily",
-      "noDataInPeriod": "No data in the selected period.",
+      "meanLabel": "mean {value}",
+      "medianLabel": "median {value}",
+      "noDataInPeriod": "No measurements in the selected period: not enough data.",
       "noMatch": "No metric matches \"{query}\"",
       "noMetricSelected": "No metric selected: open <em>Select metrics</em> to choose what to display.",
       "panelCount": "{selected} selected · {total} available",
       "panelTitle": "Chart metrics",
+      "pointsCaption": "{count, plural, one {# measurement} other {# measurements}} · {from} to {to}",
+      "pointsCaptionOne": "{count, plural, one {# measurement} other {# measurements}} · {from}",
       "resetZoom": "Reset zoom",
       "searchPlaceholder": "Search metric…",
       "selectMetrics": "Select metrics",
-      "show": "Show"
+      "show": "Show",
+      "showStats": "Show mean/median",
+      "statsAllTitle": "With \"All\" there is no previous period",
+      "statsInsufficient": "Not enough data",
+      "statsLast": "last",
+      "statsMean": "mean",
+      "statsMedian": "median",
+      "statsNoPrevious": "n/a",
+      "statsNoPreviousTitle": "No measurements in the previous period of equal length",
+      "statsTitle": "Period summary",
+      "statsVsMean": "last vs mean",
+      "statsVsPrevious": "vs previous period"
     }
   },
   "clients": {
@@ -1165,7 +1180,9 @@
       "emptyFiltered": "No measurements match these filters",
       "emptyPeriod": "No measurements in the selected period",
       "exportCsv": "Export CSV",
-      "open": "Open →"
+      "open": "Open →",
+      "showAll": "Show all",
+      "showingOf": "Showing {shown} of {total} measurements · period {from} – {to}"
     },
     "monitoring": {
       "allProfiles": "All profiles",

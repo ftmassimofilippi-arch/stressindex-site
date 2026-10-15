@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Calendar, ChevronDown, ChevronUp, RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react'
+import { Calendar, ChevronDown, ChevronUp, RotateCcw, Search, Sigma, SlidersHorizontal, X } from 'lucide-react'
 import { format as fmtDate, parseISO, subDays } from 'date-fns'
 import { useLocale, useTranslations } from 'next-intl'
 import { intlTag, num, toNum } from '@/lib/format'
@@ -11,11 +11,14 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
+import { PRESETS, PRESET_KEYS, estremiDeiPunti, filtraPerPeriodo, periodoDaPreset, type PresetKey } from '@/lib/trend-period.ts'
+import { periodoPrecedente, riepilogoMetrica, type RiepilogoMetrica, type Verdetto } from '@/lib/trend-stats.ts'
 
 // ============================================================================
 // METRIC REGISTRY
@@ -109,21 +112,12 @@ function formatMetricValue(value: unknown, m: MetricDef | undefined, locale: str
 // ============================================================================
 // DATE PRESETS
 // ============================================================================
-// Le chiavi ('7', '30', ...) sono anche il valore salvato in localStorage:
-// non cambiano. L'etichetta è in `charts.presets.<labelKey>`.
+// Preset, chiavi e filtro per periodo vivono in `src/lib/trend-period.ts`
+// (modulo puro, coperto dai test): le chiavi ('7', '30', ...) sono anche il
+// valore salvato in localStorage e non cambiano. L'etichetta è in
+// `charts.presets.<labelKey>`.
 
-type PresetKey = '7' | '30' | '90' | '180' | '365' | 'all' | 'custom'
-
-const PRESETS: Array<{ key: PresetKey; labelKey: string; days: number | null }> = [
-  { key: '7', labelKey: 'd7', days: 7 },
-  { key: '30', labelKey: 'd30', days: 30 },
-  { key: '90', labelKey: 'd90', days: 90 },
-  { key: '180', labelKey: 'm6', days: 180 },
-  { key: '365', labelKey: 'y1', days: 365 },
-  { key: 'all', labelKey: 'all', days: null },
-]
-
-const PRESET_KEYS: ReadonlySet<string> = new Set<string>([...PRESETS.map((p) => p.key), 'custom'])
+export type { PresetKey }
 
 // Chiave "macchina" del giorno (yyyy-MM-dd): serve per confronti e input date,
 // non è testo visibile, quindi resta senza locale.
@@ -156,6 +150,11 @@ type Props = {
   range?: { from: string; to: string }
   /** Metriche da tracciare (chiavi di TREND_METRICS), solo in stampa. */
   metrics?: string[]
+  /**
+   * Preset offerti. La home passa i dati già tagliati a 365 giorni dal server:
+   * lì "Tutto" sarebbe uguale a "1 anno" e non si mostra.
+   */
+  presets?: PresetKey[]
 }
 
 // Larghezza di default del grafico in stampa (px, area utile di un A4).
@@ -172,10 +171,12 @@ export function AdvancedTrendChart({
   width,
   range,
   metrics,
+  presets,
 }: Props) {
   const locale = useLocale()
   const t = useTranslations('charts')
   const tMetrics = useTranslations('charts.metrics')
+  const presetList = useMemo(() => (presets ? PRESETS.filter((p) => presets.includes(p.key)) : PRESETS), [presets])
 
   // Formati data per assi e tooltip nella lingua della pagina.
   const tickDate = useMemo(() => new Intl.DateTimeFormat(intlTag(locale), { day: 'numeric', month: 'short' }), [locale])
@@ -199,6 +200,10 @@ export function AdvancedTrendChart({
   const [search, setSearch] = useState('')
   const [expandedGroups, setExpandedGroups] = useState<Set<Group>>(() => new Set(['score']))
   const [brushKey, setBrushKey] = useState(0)
+  // Media e mediana sul periodo (linee tratteggiate e riga riassuntiva).
+  const [showStats, setShowStats] = useState(true)
+  // Finestra dello zoom (Brush): indici dentro `filtered`; null = tutto il periodo.
+  const [brushWindow, setBrushWindow] = useState<{ start: number; end: number } | null>(null)
 
   // hydration da localStorage (mai in stampa: contano solo le prop)
   useEffect(() => {
@@ -206,7 +211,9 @@ export function AdvancedTrendChart({
     const savedPreset = window.localStorage.getItem(`${storageKey}:range`)
     const savedMetrics = window.localStorage.getItem(`${storageKey}:metrics`)
     const savedHidden = window.localStorage.getItem(`${storageKey}:hidden`)
+    const savedStats = window.localStorage.getItem(`${storageKey}:stats`)
     if (savedPreset && PRESET_KEYS.has(savedPreset)) setActiveKey(savedPreset as PresetKey)
+    if (savedStats === '0') setShowStats(false)
     if (savedMetrics) {
       try {
         const arr = JSON.parse(savedMetrics) as string[]
@@ -238,10 +245,29 @@ export function AdvancedTrendChart({
     }
   }
 
+  // Ogni cambio di periodo (preset o date personalizzate) rimonta il grafico:
+  // in Recharts 3 `setChartData` non azzera l'indice di partenza del Brush, e
+  // uno zoom precedente restava appiccicato al periodo nuovo.
+  function resetZoom() {
+    setBrushWindow(null)
+    setBrushKey((x) => x + 1)
+  }
   function setRange(k: PresetKey) {
     setActiveKey(k)
     persistRange(k)
-    setBrushKey((x) => x + 1)
+    resetZoom()
+  }
+  function setCustomRange(from: string, to: string) {
+    setCustomFrom(from)
+    setCustomTo(to)
+    resetZoom()
+  }
+  function toggleStats() {
+    setShowStats((v) => {
+      const next = !v
+      if (typeof window !== 'undefined' && storageKey) window.localStorage.setItem(`${storageKey}:stats`, next ? '1' : '0')
+      return next
+    })
   }
 
   function toggleMetric(key: string) {
@@ -304,26 +330,26 @@ export function AdvancedTrendChart({
   const effectiveFrom = print && range ? range.from : customFrom
   const effectiveTo = print && range ? range.to : customTo
 
-  // filtra dati per periodo
-  const filtered = useMemo(() => {
-    if (!data.length) return []
-    if (effectiveKey === 'all') return data
-    let fromDate: string
-    let toDate: string
-    if (effectiveKey === 'custom') {
-      fromDate = effectiveFrom
-      toDate = effectiveTo
-    } else {
-      const p = PRESETS.find((x) => x.key === effectiveKey)
-      const days = p?.days ?? 30
-      fromDate = isoDay(subDays(new Date(), days))
-      toDate = isoDay(new Date())
-    }
-    return data.filter((p) => {
-      const d = String(p.date)
-      return d >= fromDate && d <= toDate
-    })
-  }, [data, effectiveKey, effectiveFrom, effectiveTo])
+  // Periodo (giorni italiani, estremi inclusi; null = tutto) e punti dentro.
+  const periodo = useMemo(
+    () => periodoDaPreset(effectiveKey, { from: effectiveFrom, to: effectiveTo }),
+    [effectiveKey, effectiveFrom, effectiveTo],
+  )
+  const filtered = useMemo(() => filtraPerPeriodo(data, periodo), [data, periodo])
+  // Punti del periodo precedente di pari lunghezza (per lo scostamento fra periodi).
+  const precedenti = useMemo(() => {
+    const estremi = periodo ?? estremiDeiPunti(filtered)
+    if (!periodo || !estremi) return null
+    return filtraPerPeriodo(data, periodoPrecedente(estremi.from, estremi.to))
+  }, [data, filtered, periodo])
+  // Punti davvero visibili: il periodo, ristretto dallo zoom del Brush se c'è.
+  const visibili = useMemo(() => {
+    if (!brushWindow) return filtered
+    const start = Math.max(0, Math.min(brushWindow.start, brushWindow.end))
+    const end = Math.min(filtered.length - 1, Math.max(brushWindow.start, brushWindow.end))
+    return filtered.slice(start, end + 1)
+  }, [filtered, brushWindow])
+  const estremiVisibili = useMemo(() => estremiDeiPunti(visibili), [visibili])
 
   // serie da renderizzare (selezionate ∧ non nascoste)
   const renderedKeys = useMemo(
@@ -333,6 +359,20 @@ export function AdvancedTrendChart({
     [print, metrics, defaultSelected, selected, hidden],
   )
   const renderedMetrics = useMemo(() => renderedKeys.map((k) => METRIC_MAP[k]).filter(Boolean), [renderedKeys])
+
+  // Media, mediana e scostamenti per ogni metrica disegnata, sui punti visibili.
+  // I giorni senza misurazione (valore null) non contano; sotto 2 punti è null.
+  const stats = useMemo(() => {
+    const out = new Map<string, RiepilogoMetrica>()
+    if (!showStats) return out
+    for (const m of renderedMetrics) {
+      const serie = visibili.map((p) => toNum(p[m.key]))
+      const prev = brushWindow || !precedenti ? [] : precedenti.map((p) => toNum(p[m.key]))
+      out.set(m.key, riepilogoMetrica(m.key, serie, prev))
+    }
+    return out
+  }, [showStats, renderedMetrics, visibili, precedenti, brushWindow])
+  const fmtStat = (v: number | null | undefined, m: MetricDef) => (v == null ? '—' : num(v, m.decimals ?? 1, locale))
 
   const hasLeftAxis = renderedMetrics.some((m) => m.axis === 'left')
   const hasRightAxis = renderedMetrics.some((m) => m.axis === 'right')
@@ -414,6 +454,35 @@ export function AdvancedTrendChart({
           isAnimationActive={false}
         />
       ))}
+      {/* Media (piena) e mediana (più chiara) del periodo visibile, etichetta a destra. */}
+      {renderedMetrics.map((m) => {
+        const r = stats.get(m.key)?.stats
+        if (!r) return null
+        const yAxisId = m.axis === 'left' ? (hasLeftAxis ? 'left' : 'right') : 'right'
+        return [
+          <ReferenceLine
+            key={`${m.key}-mean`}
+            yAxisId={yAxisId}
+            y={r.media}
+            stroke={m.color}
+            strokeDasharray="6 4"
+            strokeWidth={1.5}
+            ifOverflow="extendDomain"
+            label={{ value: t('trend.meanLabel', { value: fmtStat(r.media, m) }), position: 'insideTopRight', fill: m.color, fontSize: 10 }}
+          />,
+          <ReferenceLine
+            key={`${m.key}-median`}
+            yAxisId={yAxisId}
+            y={r.mediana}
+            stroke={m.color}
+            strokeOpacity={0.5}
+            strokeDasharray="2 4"
+            strokeWidth={1.5}
+            ifOverflow="extendDomain"
+            label={{ value: t('trend.medianLabel', { value: fmtStat(r.mediana, m) }), position: 'insideBottomRight', fill: m.color, fillOpacity: 0.7, fontSize: 10 }}
+          />,
+        ]
+      })}
       {!print && showBrush && filtered.length > 8 && (
         <Brush
           dataKey="date"
@@ -422,6 +491,11 @@ export function AdvancedTrendChart({
           travellerWidth={8}
           tickFormatter={fmtTick}
           className="hidden md:block"
+          onChange={(w) => {
+            const start = typeof w?.startIndex === 'number' ? w.startIndex : 0
+            const end = typeof w?.endIndex === 'number' ? w.endIndex : filtered.length - 1
+            setBrushWindow(start === 0 && end === filtered.length - 1 ? null : { start, end })
+          }}
         />
       )}
     </LineChart>
@@ -459,7 +533,7 @@ export function AdvancedTrendChart({
     <div>
       {/* TOOLBAR */}
       <div className="flex flex-wrap items-center gap-1.5 mb-4">
-        {PRESETS.map((p) => (
+        {presetList.map((p) => (
           <button key={p.key} type="button" onClick={() => setRange(p.key)} className={presetBtn(activeKey === p.key)}>
             {t(`presets.${p.labelKey}`)}
           </button>
@@ -477,7 +551,7 @@ export function AdvancedTrendChart({
               type="date"
               value={customFrom}
               max={customTo}
-              onChange={(e) => setCustomFrom(e.target.value)}
+              onChange={(e) => setCustomRange(e.target.value, customTo)}
               className="text-xs px-2 py-1 border border-surface-border rounded-lg bg-white text-anthracite"
             />
             <span className="text-xs text-anthracite-lighter">→</span>
@@ -486,7 +560,7 @@ export function AdvancedTrendChart({
               value={customTo}
               min={customFrom}
               max={isoDay(new Date())}
-              onChange={(e) => setCustomTo(e.target.value)}
+              onChange={(e) => setCustomRange(customFrom, e.target.value)}
               className="text-xs px-2 py-1 border border-surface-border rounded-lg bg-white text-anthracite"
             />
           </div>
@@ -495,11 +569,20 @@ export function AdvancedTrendChart({
         <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <button
             type="button"
-            onClick={() => setBrushKey((x) => x + 1)}
+            onClick={resetZoom}
             className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border bg-white border-surface-border text-anthracite-lighter hover:bg-surface hover:text-anthracite whitespace-nowrap transition-colors"
             title={t('trend.resetZoom')}
           >
             <RotateCcw size={12} /> {t('trend.resetZoom')}
+          </button>
+          <button
+            type="button"
+            onClick={toggleStats}
+            aria-pressed={showStats}
+            className={`flex items-center gap-1.5 ${presetBtn(showStats)}`}
+            title={t('trend.showStats')}
+          >
+            <Sigma size={12} /> {t('trend.showStats')}
           </button>
           <button
             type="button"
@@ -511,6 +594,17 @@ export function AdvancedTrendChart({
           </button>
         </div>
       </div>
+
+      {/* Didascalia: quante misurazioni e quali giorni copre davvero il grafico.
+          Così un cambio di periodo si vede anche quando i punti disegnati sono
+          gli stessi (tutte le misurazioni negli ultimi N giorni). */}
+      {estremiVisibili && (
+        <p className="text-xs text-anthracite-lighter mb-2" aria-live="polite">
+          {estremiVisibili.from === estremiVisibili.to
+            ? t('trend.pointsCaptionOne', { count: visibili.length, from: fullDate.format(parseISO(estremiVisibili.from)) })
+            : t('trend.pointsCaption', { count: visibili.length, from: fullDate.format(parseISO(estremiVisibili.from)), to: fullDate.format(parseISO(estremiVisibili.to)) })}
+        </p>
+      )}
 
       {/* CHART */}
       {filtered.length === 0 ? (
@@ -547,6 +641,44 @@ export function AdvancedTrendChart({
               )
             })}
           </div>
+
+          {/* RIEPILOGO DEL PERIODO: ultimo · media · mediana · scostamenti */}
+          {showStats && (
+            <div className="mt-4 rounded-xl border border-surface-border bg-surface/50 px-3 py-2">
+              <div className="text-[10px] uppercase tracking-wide text-anthracite-lighter mb-1">{t('trend.statsTitle')}</div>
+              <ul className="divide-y divide-surface-border">
+                {renderedMetrics.map((m) => {
+                  const r = stats.get(m.key)
+                  return (
+                    <li key={m.key} className="py-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xs">
+                      <span className="inline-flex items-center gap-1.5 font-medium text-anthracite min-w-[7rem]">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: m.color }} />
+                        {metricLabel(m, tMetrics)}
+                      </span>
+                      {!r?.stats ? (
+                        <span className="text-anthracite-lighter">{t('trend.statsInsufficient')}</span>
+                      ) : (
+                        <>
+                          <StatCell label={t('trend.statsLast')} value={fmtStat(r.stats.ultimo, m)} />
+                          <StatCell label={t('trend.statsMean')} value={fmtStat(r.stats.media, m)} />
+                          <StatCell label={t('trend.statsMedian')} value={fmtStat(r.stats.mediana, m)} />
+                          <DeltaCell label={t('trend.statsVsMean')} pct={r.ultimoVsMedia} verdetto={r.verdettoUltimo} locale={locale} />
+                          <DeltaCell
+                            label={t('trend.statsVsPrevious')}
+                            pct={brushWindow ? null : r.mediaVsPrecedente}
+                            verdetto={brushWindow ? 'unknown' : r.verdettoPeriodo}
+                            locale={locale}
+                            na={t('trend.statsNoPrevious')}
+                            naTitle={effectiveKey === 'all' ? t('trend.statsAllTitle') : t('trend.statsNoPreviousTitle')}
+                          />
+                        </>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
         </>
       )}
 
@@ -572,6 +704,48 @@ export function AdvancedTrendChart({
 // ============================================================================
 // PANNELLO METRICHE
 // ============================================================================
+
+// ── Celle della riga riassuntiva ─────────────────────────────────────────────
+
+function StatCell({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="text-anthracite-lighter whitespace-nowrap">
+      {label} <span className="font-medium text-anthracite tabular-nums">{value}</span>
+    </span>
+  )
+}
+
+const VERDETTO_CLASS: Record<Verdetto, string> = {
+  improved: 'text-emerald-700',
+  declined: 'text-rose-700',
+  stable: 'text-anthracite',
+  unknown: 'text-anthracite-lighter',
+}
+
+/** Scostamento percentuale con segno: verde se migliora, rosso se peggiora
+ *  (per l'Indice di Stress un calo è un miglioramento, vedi trend-stats). */
+function DeltaCell({ label, pct, verdetto, locale, na = '—', naTitle }: {
+  label: string
+  pct: number | null
+  verdetto: Verdetto
+  locale: string
+  na?: string
+  naTitle?: string
+}) {
+  if (pct == null) {
+    return (
+      <span className="text-anthracite-lighter whitespace-nowrap" title={naTitle}>
+        {label} <span className="font-medium">{na}</span>
+      </span>
+    )
+  }
+  const sign = pct > 0 ? '+' : ''
+  return (
+    <span className="text-anthracite-lighter whitespace-nowrap">
+      {label} <span className={`font-medium tabular-nums ${VERDETTO_CLASS[verdetto]}`}>{sign}{num(pct, 1, locale)}%</span>
+    </span>
+  )
+}
 
 function MetricsPanel({
   onClose,

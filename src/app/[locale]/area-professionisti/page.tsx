@@ -277,6 +277,7 @@ export default async function DashboardHome() {
                 height={220}
                 storageKey="sx-home-trend"
                 showBrush={false}
+                presets={['7', '30', '90', '180', '365']}
               />
             ) : (
               <DataLoadNotice />

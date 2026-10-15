@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { AlertTriangle, X } from 'lucide-react'
@@ -52,13 +53,15 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, pro
     filter.tag ? tagLabel(filter.tag, tTags) : null,
     filter.tipo ? measurementTypeLabel(filter.tipo, tTypes) : null,
   ].filter(Boolean).join(' · ')
-  const trendData = measurements.filter((m) => matchesMeasurementFilter(m, filter)).reverse().map((m) => {
+  // Memoizzato: un array nuovo a ogni render faceva rifare `setChartData` al
+  // grafico e riportava la finestra del Brush in fondo.
+  const trendData = useMemo(() => measurements.filter((m) => matchesMeasurementFilter(m, filter)).reverse().map((m) => {
     const point = { date: measuredDayKey(m) ?? '' } as { date: string } & Record<string, number | string | null>
     for (const def of TREND_METRICS) {
       point[def.key] = (m as unknown as Record<string, number | null>)[def.key] ?? null
     }
     return point
-  })
+  }), [measurements, filter])
 
   return (
     <div className="space-y-6">

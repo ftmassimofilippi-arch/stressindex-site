@@ -28,8 +28,11 @@ export function intlTag(locale?: string): string {
   return intlLocale[loc(locale)]
 }
 
-function intlDate(d: Date, locale: string | undefined, opts: Intl.DateTimeFormatOptions, tz?: string): string {
-  return new Intl.DateTimeFormat(intlTag(locale), { ...opts, ...(tz ? { timeZone: tz } : {}) }).format(d)
+// Fuso sempre esplicito (Europe/Rome di default): senza, il server di Vercel
+// (UTC) e il browser (Europe/Rome) scrivevano ore diverse per lo stesso istante
+// e React segnalava un mismatch di idratazione nei componenti client.
+function intlDate(d: Date, locale: string | undefined, opts: Intl.DateTimeFormatOptions, tz: string = FUSO): string {
+  return new Intl.DateTimeFormat(intlTag(locale), { ...opts, timeZone: tz }).format(d)
 }
 
 const OPT_DATE: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric' }

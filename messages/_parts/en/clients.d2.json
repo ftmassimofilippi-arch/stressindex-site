@@ -58,7 +58,9 @@
     "open": "Open →",
     "emptyFiltered": "No measurements match these filters",
     "emptyPeriod": "No measurements in the selected period",
-    "csvFilePrefix": "measurements"
+    "csvFilePrefix": "measurements",
+    "showingOf": "Showing {shown} of {total} measurements · period {from} – {to}",
+    "showAll": "Show all"
   },
   "beforeAfter": {
     "pairsInPeriod": "{count, plural, =0 {No pairs} one {# pair} other {# pairs}} in this period",
