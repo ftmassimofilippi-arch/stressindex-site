@@ -7,6 +7,12 @@ import { DateRangePicker, defaultRange, type DateRange } from '@/components/dash
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { fullName, num } from '@/lib/format'
 import type { ClientWithLastMeasurement, MeasurementAnalyticsSummary } from '@/lib/dashboard-data'
+
+/** Solo i campi della scheda che la pagina usa (audit QA, E2): niente
+ *  misurazione intera per ogni cliente nell'HTML. */
+export type AnalyticsClientRow = Pick<ClientWithLastMeasurement, 'id' | 'nome' | 'cognome' | 'sesso' | 'atleta' | 'fumatore' | 'activeAlerts'> & {
+  settings: { tags: string[] | null } | null
+}
 import type { Tr } from '@/i18n/types'
 import { Link } from '@/i18n/navigation'
 import { intervalloGiorniIta, measuredInstant } from '@/lib/format'
@@ -14,7 +20,7 @@ import type { MonitoringSession } from '@/lib/monitoring-types'
 import { isSleepSession } from '@/lib/monitoring-types'
 import { PROFILE_LABEL, PROFILE_ORDER, effectiveProfile } from '@/lib/monitoring-format'
 
-type Props = { clients: ClientWithLastMeasurement[]; measurements: MeasurementAnalyticsSummary[]; monitoring?: MonitoringSession[] }
+type Props = { clients: AnalyticsClientRow[]; measurements: MeasurementAnalyticsSummary[]; monitoring?: MonitoringSession[] }
 
 type SegmentDim = 'tag' | 'sesso' | 'atleta' | 'fumatore'
 
@@ -62,7 +68,7 @@ export function AnalyticsClient({ clients, measurements, monitoring = [] }: Prop
     const recs = recoveryByClient.get(c.id) ?? []
     const avg = avgOf(recs)
     return { client: c, recoveryAvg: avg, n: recs.length }
-  }).filter((x) => x.recoveryAvg != null) as Array<{ client: ClientWithLastMeasurement; recoveryAvg: number; n: number }>
+  }).filter((x) => x.recoveryAvg != null) as Array<{ client: AnalyticsClientRow; recoveryAvg: number; n: number }>
 
   const topPerformers = [...perClient].sort((a, b) => b.recoveryAvg - a.recoveryAvg).slice(0, 5)
   const toWatch = [...perClient].sort((a, b) => a.recoveryAvg - b.recoveryAvg).slice(0, 5)
@@ -239,7 +245,7 @@ export function AnalyticsClient({ clients, measurements, monitoring = [] }: Prop
 
 // `tSeg` traduce le etichette dei segmenti (`dashboard.analytics.segments`);
 // i tag liberi del cliente restano com'è stato scritto.
-function buildSegments(clients: ClientWithLastMeasurement[], measurements: MeasurementAnalyticsSummary[], dim: SegmentDim, tSeg: Tr) {
+function buildSegments(clients: AnalyticsClientRow[], measurements: MeasurementAnalyticsSummary[], dim: SegmentDim, tSeg: Tr) {
   const groups = new Map<string, { stress: number[]; recovery: number[] }>()
   const clientMap = new Map(clients.map((c) => [c.id, c]))
 

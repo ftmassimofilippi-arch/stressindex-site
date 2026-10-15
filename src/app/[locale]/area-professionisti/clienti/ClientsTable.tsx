@@ -10,7 +10,19 @@ import { CountBadge } from '@/components/dashboard/AlertBadge'
 import { age, fullName, initials, formatRelative, oggiIta } from '@/lib/format'
 import type { ClientWithLastMeasurement } from '@/lib/dashboard-data'
 
-type Props = { clients: ClientWithLastMeasurement[]; professionistaId?: string }
+/** Solo i campi che la tabella mostra: la pagina non serializza più schede e
+ *  misurazioni intere (audit QA, E1: 1,9 MB di HTML per 20 righe visibili). */
+export type ClientRow = Pick<ClientWithLastMeasurement, 'id' | 'nome' | 'cognome' | 'email' | 'data_nascita' | 'last_measurement_at' | 'activeAlerts'> & {
+  lastMeasurement: { score_stress: number | null } | null
+  settings: { tags: string[] | null } | null
+}
+
+/** Minuscolo e senza accenti, come la colonna `clients.ricerca` (sito-044). */
+function normalizza(s: string): string {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+}
+
+type Props = { clients: ClientRow[]; professionistaId?: string }
 
 // I valori sono stabili (stato del filtro); le etichette vengono da
 // clients.list.periods.<labelKey>.
@@ -60,9 +72,10 @@ export function ClientsTable({ clients, professionistaId }: Props) {
     const oggi = oggiIta()
     return clients.filter((c) => {
       if (search) {
-        const s = search.toLowerCase()
-        const hay = `${c.nome ?? ''} ${c.cognome ?? ''} ${c.email ?? ''}`.toLowerCase()
-        if (!hay.includes(s)) return false
+        // Ogni parola, in qualsiasi ordine, senza accenti: "sabbatini doretta"
+        // trova Doretta Sabbatini, "nicolo" trova Nicolò.
+        const hay = normalizza(`${c.nome ?? ''} ${c.cognome ?? ''} ${c.email ?? ''}`)
+        if (!normalizza(search).split(/\s+/).filter(Boolean).every((w) => hay.includes(w))) return false
       }
       if (tagFilter) {
         if (!(c.settings?.tags ?? []).includes(tagFilter)) return false
@@ -80,7 +93,7 @@ export function ClientsTable({ clients, professionistaId }: Props) {
     })
   }, [clients, search, tagFilter, periodFilter])
 
-  const columns: Column<ClientWithLastMeasurement>[] = [
+  const columns: Column<ClientRow>[] = [
     {
       key: 'name',
       header: t('columns.client'),

@@ -73,7 +73,46 @@ export function DataTable<T>({ columns, rows, rowKey, onRowClick, rowHref, empty
 
   return (
     <div className="w-full">
-      <div className="overflow-x-auto rounded-2xl border border-surface-border bg-white">
+      {/* Sotto i 640 px una card per riga (audit QA, F2): la prima colonna fa da
+          titolo, le altre diventano coppie etichetta/valore, così Stress e
+          Alert non finiscono fuori schermo. */}
+      <ul className="sm:hidden space-y-2">
+        {paged.map((row) => {
+          const href = rowHref?.(row)
+          const [first, ...rest] = columns
+          const cell = (c: Column<T>) => (c.render ? c.render(row) : (c.accessor ? c.accessor(row) : null))
+          const linked = rest.filter((c) => !c.noLink)
+          const actions = rest.filter((c) => c.noLink)
+          const body = (
+            <>
+              <div className="min-w-0">{first ? cell(first) : null}</div>
+              {linked.length > 0 && (
+                <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
+                  {linked.map((c) => (
+                    <div key={c.key} className="min-w-0">
+                      {c.header && <dt className="text-[10px] uppercase tracking-wide text-anthracite-lighter">{c.header}</dt>}
+                      <dd className="text-sm text-anthracite min-w-0">{cell(c)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </>
+          )
+          return (
+            <li key={rowKey(row)} className="rounded-2xl border border-surface-border bg-white">
+              {href ? (
+                <Link href={href} className="block p-4 hover:bg-surface transition-colors rounded-2xl">{body}</Link>
+              ) : (
+                <div className={`p-4 ${onRowClick ? 'cursor-pointer' : ''}`} onClick={onRowClick ? () => onRowClick(row) : undefined}>{body}</div>
+              )}
+              {actions.length > 0 && (
+                <div className="px-4 pb-3 -mt-1 flex justify-end gap-2">{actions.map((c) => <div key={c.key}>{cell(c)}</div>)}</div>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+      <div className="hidden sm:block overflow-x-auto rounded-2xl border border-surface-border bg-white">
         <table className="w-full text-sm">
           <thead className="bg-surface text-anthracite-lighter sticky top-0">
             <tr>

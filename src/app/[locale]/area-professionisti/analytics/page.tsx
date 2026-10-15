@@ -51,7 +51,7 @@ export default async function AnalyticsPage() {
       </header>
 
       {measurements.ok ? (
-        <AnalyticsClient clients={clients} measurements={measurements.data} monitoring={filterMonitoringByModules(monitoring, await getMyAccountAccess())} />
+        <AnalyticsClient clients={clients.map((c) => ({ id: c.id, nome: c.nome, cognome: c.cognome, sesso: c.sesso, atleta: c.atleta, fumatore: c.fumatore, activeAlerts: c.activeAlerts, settings: c.settings ? { tags: c.settings.tags ?? null } : null }))} measurements={measurements.data} monitoring={filterMonitoringByModules(monitoring, await getMyAccountAccess())} />
       ) : (
         <DataLoadNotice />
       )}

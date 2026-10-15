@@ -213,7 +213,33 @@ export default async function DashboardHome() {
                 {t('noMeasurementsToday')}
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              {/* Mobile: card (F2). Da 640 px in su la tabella. */}
+              <ul className="sm:hidden divide-y divide-surface-border">
+                {measurements.slice(0, 10).map((m) => {
+                  const chi = identificaCliente(m, ponte, nomeScheda, user?.id ?? null)
+                  const href = chi.clientId
+                    ? `/area-professionisti/clienti/${chi.clientId}/misurazione/${m.session_id}`
+                    : '/area-professionisti/clienti'
+                  return (
+                    <li key={m.id}>
+                      <Link href={href} className="block px-5 py-3 hover:bg-surface transition-colors">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="font-medium text-anthracite truncate">
+                            {chi.kind === 'non_assegnata' ? <span className="text-anthracite-lighter italic">{t('unassignedMeasurement')}</span> : (chi.nome ?? tc('client'))}
+                          </span>
+                          <span className="text-xs text-anthracite-lighter whitespace-nowrap">{formatMeasuredTime(m, locale)}</span>
+                        </div>
+                        <div className="mt-2 grid grid-cols-2 gap-3 text-xs">
+                          <div><div className="text-[10px] uppercase tracking-wide text-anthracite-lighter">{tScores('names.stress')}</div><ScoreBar value={m.score_stress} inverted /></div>
+                          <div><div className="text-[10px] uppercase tracking-wide text-anthracite-lighter">{tScores('names.recovery')}</div><ScoreBar value={m.score_recupero} /></div>
+                        </div>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+              <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-surface text-anthracite-lighter">
                     <tr>
@@ -265,6 +291,7 @@ export default async function DashboardHome() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </section>
 

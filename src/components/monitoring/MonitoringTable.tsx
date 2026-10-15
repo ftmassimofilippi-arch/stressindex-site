@@ -37,7 +37,38 @@ export function MonitoringTable({ sessions, showClient = true, baseQuery = '', e
     return <div className="px-6 py-8 text-center text-sm text-anthracite-lighter">{emptyText ?? t('table.empty')}</div>
   }
   return (
-    <div className="overflow-x-auto">
+    <>
+    {/* Mobile (F2): una card per monitoraggio, niente scorrimento orizzontale. */}
+    <ul className="sm:hidden divide-y divide-surface-border">
+      {sessions.map((s) => {
+        const href = hrefFor ? hrefFor(s) : monitoringHref(s, baseQuery)
+        const nums = keyNumbers(s, locale, t)
+        return (
+          <li key={s.id}>
+            <Link href={href} className="block px-5 py-3 hover:bg-surface transition-colors">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="font-medium text-anthracite truncate">{showClient ? (s.client_name ?? t('client')) : periodLabel(s.start_time, s.end_time, s.tz_offset_minutes, locale)}</span>
+                <TypeChip type={s.monitoring_type} size="sm" />
+              </div>
+              <div className="mt-1 text-xs text-anthracite-lighter">
+                {showClient && <>{periodLabel(s.start_time, s.end_time, s.tz_offset_minutes, locale)} · </>}{duration(s.duration_minutes)}
+              </div>
+              {nums.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                  {nums.map((n) => (
+                    <div key={n.label} className="whitespace-nowrap">
+                      <span className="text-[10.5px] uppercase tracking-wide text-anthracite-lighter">{n.label}</span>
+                      <span className="ml-1.5 font-semibold tabular-nums" style={{ color: n.color }}>{n.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Link>
+          </li>
+        )
+      })}
+    </ul>
+    <div className="hidden sm:block overflow-x-auto">
       <table className="w-full text-sm min-w-[720px]">
         <thead className="bg-surface text-anthracite-lighter">
           <tr>
@@ -122,6 +153,7 @@ export function MonitoringTable({ sessions, showClient = true, baseQuery = '', e
         </tbody>
       </table>
     </div>
+    </>
   )
 }
 

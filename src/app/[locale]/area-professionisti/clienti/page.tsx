@@ -110,7 +110,20 @@ export default async function ClientiPage({
           />
         </div>
       ) : (
-        <ClientsTable clients={clients} professionistaId={viewing?.user_id} />
+        <ClientsTable
+          clients={clients.map((c) => ({
+            id: c.id,
+            nome: c.nome,
+            cognome: c.cognome,
+            email: c.email,
+            data_nascita: c.data_nascita,
+            last_measurement_at: c.last_measurement_at,
+            activeAlerts: c.activeAlerts,
+            lastMeasurement: c.lastMeasurement ? { score_stress: c.lastMeasurement.score_stress ?? null } : null,
+            settings: c.settings ? { tags: c.settings.tags ?? null } : null,
+          }))}
+          professionistaId={viewing?.user_id}
+        />
       )}
     </DashboardLayout>
   )
