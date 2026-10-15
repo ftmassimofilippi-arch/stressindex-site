@@ -98,7 +98,7 @@ account `bloccato` → logout, `sospeso` → ogni pagina riscritta su `/sospeso`
 |---|---|
 | `/` "Oggi" | avvisi del cron (`alerts`) uniti agli eventi dell'app (`alert_events`) |
 | `/clienti` | elenco, "Nuovo cliente" (POST `/api/clienti`, stesso flusso dell'app) |
-| `/clienti/[id]` | scheda con tab **Panoramica, Misurazioni, Prima e dopo, Monitoraggi, Analytics, Report, Note, Messaggi, Impostazioni**; sezione "Accesso all'app" (password temporanea, reset, registro accessi) |
+| `/clienti/[id]?tab=&tag=&tipo=` | scheda con tab **Panoramica, Misurazioni, Prima e dopo, Monitoraggi, Analytics, Report, Note, Messaggi, Impostazioni**; scheda attiva e filtro delle misurazioni (etichetta, tipo) nell'URL, il filtro vale anche per il grafico Andamento; sezione "Accesso all'app" (password temporanea, reset, registro accessi) |
 | `/clienti/[id]/misurazione/[sessionId]` | dettaglio misurazione, **vista per tipo di sessione** (sotto) |
 | `/clienti/[id]/confronto?a=&b=` | confronto fra due sessioni (5 score, FC, RMSSD, SDNN, pNN50, DFA α1, Baevsky; Poincaré affiancati sulla stessa scala) |
 | `/analytics` | analytics di studio |

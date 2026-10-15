@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
-import { AlertTriangle, Sparkles } from 'lucide-react'
+import { AlertTriangle, Sparkles, X } from 'lucide-react'
 import { GaugeScore } from '@/components/dashboard/GaugeScore'
 import { AdvancedTrendChart, TREND_METRICS } from '@/components/dashboard/AdvancedTrendChart'
 import { AlertBadge } from '@/components/dashboard/AlertBadge'
@@ -13,17 +13,40 @@ import type { Alert, Client, MeasurementAnalytics } from '@/lib/types'
 import { alertTypeLabel } from '@/lib/alert-rules'
 import { formatDateTime, formatMeasuredAt, num } from '@/lib/format'
 import { measuredDayKey } from '@/lib/format'
+import { tagLabel } from '@/lib/before-after'
+import { measurementTypeLabel } from '@/lib/measurement-type'
+import { isFilterActive, matchesMeasurementFilter, type MeasurementFilter } from '@/lib/measurement-filter'
 
-export function OverviewTab({ client, measurements, monitoring = [], alerts, professionistaId }: { client: Client; measurements: MeasurementAnalytics[]; monitoring?: MonitoringSession[]; alerts: Alert[]; professionistaId?: string }) {
+export function OverviewTab({ client, measurements, monitoring = [], alerts, professionistaId, filter, onFilterChange, detailQs }: {
+  client: Client
+  measurements: MeasurementAnalytics[]
+  monitoring?: MonitoringSession[]
+  alerts: Alert[]
+  professionistaId?: string
+  /** Filtro scelto in "Misurazioni": vale solo per il grafico Andamento. */
+  filter: MeasurementFilter
+  onFilterChange: (next: Partial<MeasurementFilter>) => void
+  /** Query per i link al dettaglio (professionista, scheda, filtro). */
+  detailQs: string
+}) {
   const t = useTranslations('clients.overview')
   const tScores = useTranslations('scores')
   const tAlerts = useTranslations('alerts')
+  const tTags = useTranslations('common.tags')
+  const tTypes = useTranslations('measurement.types')
   const locale = useLocale()
   const latest = measurements[0]
   const qs = professionistaId ? `?professionista=${professionistaId}` : ''
 
   // Trend completo: tutte le 24+ metriche disponibili; il chart filtra internamente per periodo e selezione.
-  const trendData = measurements.slice().reverse().map((m) => {
+  // Il filtro di "Misurazioni" sceglie quali misurazioni disegnare; lancette e
+  // ultime misurazioni restano sull'ultima in assoluto.
+  const filterOn = isFilterActive(filter)
+  const filterLabel = [
+    filter.tag ? tagLabel(filter.tag, tTags) : null,
+    filter.tipo ? measurementTypeLabel(filter.tipo, tTypes) : null,
+  ].filter(Boolean).join(' · ')
+  const trendData = measurements.filter((m) => matchesMeasurementFilter(m, filter)).reverse().map((m) => {
     const point = { date: measuredDayKey(m) ?? '' } as { date: string } & Record<string, number | string | null>
     for (const def of TREND_METRICS) {
       point[def.key] = (m as unknown as Record<string, number | null>)[def.key] ?? null
@@ -45,7 +68,7 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, pro
               // Card score cliccabile con un click: apre l'ultima misurazione.
               <Link
                 key={scheme}
-                href={`/area-professionisti/clienti/${client.id}/misurazione/${latest.session_id}${qs}`}
+                href={`/area-professionisti/clienti/${client.id}/misurazione/${latest.session_id}${detailQs}`}
                 aria-label={`${label}: ${t('open')}`}
                 className="block rounded-2xl transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-teal/40"
               >
@@ -62,8 +85,24 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, pro
       <section className="card p-6">
         <h2 className="font-serif text-lg text-anthracite mb-1">{t('trendTitle')}</h2>
         <p className="text-sm text-anthracite-lighter mb-4">{t('trendSubtitle')}</p>
+        {filterOn && (
+          <div className="mb-4">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-light text-teal-dark text-xs font-medium pl-3 pr-1 py-1">
+              {t('filterActive', { label: filterLabel })}
+              <button
+                type="button"
+                onClick={() => onFilterChange({ tag: null, tipo: null })}
+                aria-label={t('filterRemove')}
+                title={t('filterRemove')}
+                className="rounded-full p-0.5 hover:bg-teal/20 focus:outline-none focus:ring-2 focus:ring-teal/40"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          </div>
+        )}
         {trendData.length === 0 ? (
-          <p className="text-sm text-anthracite-lighter">{t('noData')}</p>
+          <p className="text-sm text-anthracite-lighter">{filterOn ? t('emptyFiltered') : t('noData')}</p>
         ) : (
           <AdvancedTrendChart
             data={trendData}
@@ -110,7 +149,7 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, pro
             <ul className="divide-y divide-surface-border">
               {measurements.slice(0, 3).map((m) => (
                 <li key={m.id}>
-                  <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${qs}`} className="px-5 py-3 flex items-center gap-3 hover:bg-surface transition-colors">
+                  <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${detailQs}`} className="px-5 py-3 flex items-center gap-3 hover:bg-surface transition-colors">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-medium text-anthracite">{formatMeasuredAt(m, locale)}</span>

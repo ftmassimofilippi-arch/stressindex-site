@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { Download, Mail, MoreHorizontal, ArrowLeft } from 'lucide-react'
 import { Link } from '@/i18n/navigation'
@@ -21,6 +22,7 @@ import { MessageComposer } from './MessageComposer'
 import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
 import { formatDate } from '@/lib/format'
 import type { AlertRule } from '@/lib/alert-rules'
+import { parseMeasurementFilter, type MeasurementFilter } from '@/lib/measurement-filter'
 
 // Id delle tab (stabili, usati anche nel deep link ?tab=) e chiave del nome
 // in `clients.tabs.*`.
@@ -64,8 +66,42 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, n
   const t = useTranslations('clients.profile')
   const tTabs = useTranslations('clients.tabs')
   const tScores = useTranslations('scores')
-  const [tab, setTab] = useState<TabId>('panoramica')
   const TABS = readOnly ? READONLY_TABS : ALL_TABS
+  // Scheda attiva e filtro delle misurazioni vivono nell'URL (?tab, ?tag,
+  // ?tipo): restano cambiando scheda, aprendo una misurazione e tornando
+  // indietro, ricaricando. Valori non ammessi = assenti.
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  const tab: TabId = TABS.find((tb) => tb.id === tabParam)?.id ?? 'panoramica'
+  const filter = useMemo(() => parseMeasurementFilter(searchParams, measurements), [searchParams, measurements])
+
+  // history.replaceState e non router.replace: Next (>= 14.1) aggiorna
+  // useSearchParams senza rifare la pagina server, che a ogni clic
+  // rileggerebbe tutte le query della scheda. Nessuna voce nuova in cronologia.
+  function updateQuery(changes: Record<string, string | null>) {
+    const p = new URLSearchParams(searchParams.toString())
+    for (const [k, v] of Object.entries(changes)) {
+      if (v == null) p.delete(k)
+      else p.set(k, v)
+    }
+    const s = p.toString()
+    window.history.replaceState(null, '', `${window.location.pathname}${s ? `?${s}` : ''}`)
+  }
+  const setTab = (id: TabId) => updateQuery({ tab: id === 'panoramica' ? null : id })
+  const setFilter = (next: Partial<MeasurementFilter>) => {
+    const merged = { ...filter, ...next }
+    updateQuery({ tag: merged.tag, tipo: merged.tipo })
+  }
+  // Query per i link al dettaglio: professionista + scheda e filtro correnti,
+  // che il dettaglio rimette nel link di ritorno.
+  const detailQs = useMemo(() => {
+    const p = new URLSearchParams()
+    if (professionistaId) p.set('professionista', professionistaId)
+    p.set('tab', tab)
+    if (filter.tag) p.set('tag', filter.tag)
+    if (filter.tipo) p.set('tipo', filter.tipo)
+    return `?${p.toString()}`
+  }, [professionistaId, tab, filter])
   const backHref = professionistaId
     ? `/area-professionisti/clienti?professionista=${professionistaId}`
     : '/area-professionisti/clienti'
@@ -181,8 +217,8 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, n
         ))}
       </div>
 
-      {tab === 'panoramica' && <OverviewTab client={client} measurements={measurements} monitoring={monitoring} alerts={alerts} professionistaId={professionistaId} />}
-      {tab === 'misurazioni' && <MeasurementsTab client={client} measurements={measurements} professionistaId={professionistaId} />}
+      {tab === 'panoramica' && <OverviewTab client={client} measurements={measurements} monitoring={monitoring} alerts={alerts} professionistaId={professionistaId} filter={filter} onFilterChange={setFilter} detailQs={detailQs} />}
+      {tab === 'misurazioni' && <MeasurementsTab client={client} measurements={measurements} filter={filter} onFilterChange={setFilter} detailQs={detailQs} />}
       {tab === 'prima-dopo' && <BeforeAfterTab client={client} measurements={measurements} professionistaId={professionistaId} />}
       {tab === 'monitoraggi' && <MonitoringTab sessions={monitoring} professionistaId={professionistaId} />}
       {tab === 'analytics' && <AdvancedAnalyticsTab measurements={measurements} />}

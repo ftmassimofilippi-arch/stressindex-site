@@ -13,7 +13,8 @@ import { formatMeasuredAt, formatDate, num } from '@/lib/format'
 import { normalizeTestType, measurementTypeLabel, ALL_MEASUREMENT_TYPE_META, type MeasurementTypeKey } from '@/lib/measurement-type'
 import type { Client, MeasurementAnalytics } from '@/lib/types'
 import { intervalloGiorniIta, measuredInstant } from '@/lib/format'
-import { rowHasTag, tagCounts, tagLabel } from '@/lib/before-after'
+import { tagCounts, tagLabel } from '@/lib/before-after'
+import { isFilterActive, matchesMeasurementFilter, type MeasurementFilter } from '@/lib/measurement-filter'
 import { FilterChipRow } from '@/components/dashboard/SessionFilterChips'
 
 const DURATION_FILTERS = ['all', '5', '10'] as const
@@ -26,19 +27,24 @@ function csvField(v: unknown): string {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
 
-export function MeasurementsTab({ client, measurements, professionistaId }: { client: Client; measurements: MeasurementAnalytics[]; professionistaId?: string }) {
+// Filtro per etichetta e tipo: arriva da ClientProfile, che lo tiene
+// nell'URL, perché valga anche per il grafico della panoramica. Periodo e
+// durata restano di questa scheda.
+export function MeasurementsTab({ client, measurements, filter, onFilterChange, detailQs }: {
+  client: Client
+  measurements: MeasurementAnalytics[]
+  filter: MeasurementFilter
+  onFilterChange: (next: Partial<MeasurementFilter>) => void
+  /** Query per i link al dettaglio (professionista, scheda, filtro). */
+  detailQs: string
+}) {
   const t = useTranslations('clients.measurements')
   const tScores = useTranslations('scores')
   const tTags = useTranslations('common.tags')
   const tTypes = useTranslations('measurement.types')
   const locale = useLocale()
-  const qs = professionistaId ? `?professionista=${professionistaId}` : ''
   const [range, setRange] = useState<DateRange>(defaultRange(90))
   const [duration, setDuration] = useState<DurationFilter>('all')
-  const [typeFilter, setTypeFilter] = useState<MeasurementTypeKey | null>(null)
-  // Filtro per etichetta (chiave neutra, vedi normalizeTagKey): combinabile
-  // con il tipo, con i conteggi sui chip. Stessa logica dell'app.
-  const [tagFilter, setTagFilter] = useState<string | null>(null)
 
   // Misurazioni nel periodo e nella durata scelti: i chip contano su queste.
   const inPeriod = useMemo(() => {
@@ -78,13 +84,8 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
   }, [inPeriod, tTypes])
 
   const filtered = useMemo(
-    () =>
-      inPeriod.filter((m) => {
-        if (typeFilter && normalizeTestType(m.test_type) !== typeFilter) return false
-        if (tagFilter && !rowHasTag(m, tagFilter)) return false
-        return true
-      }),
-    [inPeriod, typeFilter, tagFilter],
+    () => inPeriod.filter((m) => matchesMeasurementFilter(m, filter)),
+    [inPeriod, filter],
   )
 
   function exportCsv() {
@@ -135,7 +136,7 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
       key: 'actions', header: '', noLink: true, render: (m) => (
         <div className="flex items-center gap-1 justify-end">
           <DownloadMeasurementPdfButton sessionId={m.session_id} clientId={client.id} variant="icon" />
-          <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${qs}`} className="text-teal-dark text-sm hover:underline whitespace-nowrap">{t('open')}</Link>
+          <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${detailQs}`} className="text-teal-dark text-sm hover:underline whitespace-nowrap">{t('open')}</Link>
         </div>
       )
     },
@@ -161,16 +162,16 @@ export function MeasurementsTab({ client, measurements, professionistaId }: { cl
         </button>
       </div>
       <div className="space-y-2">
-        <FilterChipRow allLabel={t('allTags')} total={inPeriod.length} options={tagOptions} selected={tagFilter} onChange={setTagFilter} />
-        <FilterChipRow allLabel={t('allTests')} total={inPeriod.length} options={typeOptions} selected={typeFilter} onChange={(v) => setTypeFilter(v as MeasurementTypeKey | null)} />
+        <FilterChipRow allLabel={t('allTags')} total={inPeriod.length} options={tagOptions} selected={filter.tag} onChange={(v) => onFilterChange({ tag: v })} />
+        <FilterChipRow allLabel={t('allTests')} total={inPeriod.length} options={typeOptions} selected={filter.tipo} onChange={(v) => onFilterChange({ tipo: v as MeasurementTypeKey | null })} />
       </div>
       <DataTable
         columns={columns}
         rows={filtered}
         rowKey={(m) => m.id}
-        rowHref={(m) => `/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${qs}`}
+        rowHref={(m) => `/area-professionisti/clienti/${client.id}/misurazione/${m.session_id}${detailQs}`}
         initialSort={{ key: 'measured_at', dir: 'desc' }}
-        emptyState={<div className="card p-10 text-center text-sm text-anthracite-lighter">{tagFilter || typeFilter ? t('emptyFiltered') : t('emptyPeriod')}</div>}
+        emptyState={<div className="card p-10 text-center text-sm text-anthracite-lighter">{isFilterActive(filter) ? t('emptyFiltered') : t('emptyPeriod')}</div>}
       />
     </div>
   )

@@ -3,6 +3,26 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-15 — filtro delle misurazioni nell'URL della scheda cliente (ramo `fix/perimetro-home`)
+
+Bug-report del 14/10, voce #1 (era la voce 1 di `docs/sito-da-sistemare.md`):
+il filtro scelto in "Misurazioni" si perdeva cambiando scheda e il grafico
+Andamento mostrava sempre tutte le misurazioni.
+
+- **URL**: scheda attiva e filtro vivono in `?tab=`, `?tag=` (chiave
+  dell'etichetta) e `?tipo=` (tipo di misurazione). Restano cambiando scheda,
+  aprendo una misurazione e tornando indietro, ricaricando. Si scrivono con
+  `history.replaceState`: niente nuova voce in cronologia e nessuna nuova
+  lettura dal server a ogni clic. Valori non ammessi valgono come assenti.
+- **Regola unica** in `src/lib/measurement-filter.ts`, usata dalla tabella e
+  dal grafico.
+- **Panoramica**: il grafico Andamento disegna solo le misurazioni filtrate,
+  con l'etichetta "Filtro: … ×" che lo toglie e un vuoto dedicato
+  (`clients.overview.filterActive`, `filterRemove`, `emptyFiltered`, tre
+  lingue). Lancette e ultime misurazioni restano sull'ultima in assoluto.
+- **Dettaglio misurazione**: il link di ritorno riporta scheda e filtro di
+  partenza; senza `tab` torna a "Misurazioni", come prima.
+
 ## 2026-10-07 — perimetro del professionista (ramo `fix/perimetro-home`)
 
 Non in produzione: sul ramo, in attesa di verifica sulla preview. Riferimento:

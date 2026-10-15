@@ -28,7 +28,7 @@ export default async function SessionDetailPage({
   searchParams,
 }: {
   params: { locale: string; id: string; sessionId: string }
-  searchParams?: { professionista?: string }
+  searchParams?: { professionista?: string; tab?: string; tag?: string; tipo?: string }
 }) {
   const locale = await getLocale()
   const t = await getTranslations('measurement.detail')
@@ -45,8 +45,14 @@ export default async function SessionDetailPage({
 
   if (!measurement || !client) notFound()
 
-  const qs = searchParams?.professionista ? `?professionista=${searchParams.professionista}` : ''
-  const backHref = `/area-professionisti/clienti/${client.id}${qs}${qs ? '&' : '?'}tab=misurazioni`
+  // Ritorno alla scheda cliente con scheda e filtro di partenza (la scheda li
+  // valida). Senza `tab` si torna a "Misurazioni", come prima.
+  const back = new URLSearchParams()
+  if (searchParams?.professionista) back.set('professionista', searchParams.professionista)
+  back.set('tab', searchParams?.tab || 'misurazioni')
+  if (searchParams?.tag) back.set('tag', searchParams.tag)
+  if (searchParams?.tipo) back.set('tipo', searchParams.tipo)
+  const backHref = `/area-professionisti/clienti/${client.id}?${back.toString()}`
 
   const duration = formatDurationHuman(measurement.duration_seconds)
   const sensorLabel = measurement.sensor_name ?? measurement.sensor_type ?? 'Polar H10'
