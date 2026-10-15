@@ -334,6 +334,7 @@ le sito-035…043 sono state applicate e verificate una per una il 15/10/2026
 | sito-042 `sport_live_professional_id` | trigger BEFORE su `sport_live_data`: `professional_id` nullo risolto dal titolare della scheda o dal link attivo, altrimenti riga scartata e registrata in `rls_write_skipped` (l'app riceveva 400) | applicata (15/10), provata in transazione annullata |
 | sito-043 `organizzazioni_uniche` | `organizations.merged_into_id`; per ogni owner le organizzazioni con lo stesso nome si uniscono nella più vecchia (più "codice" di Massimo), profilo dell'owner agganciato; indice unico `(owner_id, lower(btrim(name)))` sulle vive | applicata (15/10): 2 vive, 3 unite |
 | sito-044 `ricerca_clienti` | estensione `unaccent`, `testo_ricerca()`, colonna generata `clients.ricerca` (nome, cognome, email senza accenti e minuscoli) con indice: ricerca per parole in qualsiasi ordine | applicata (15/10): "nicolo" trova Nicolò, "sabbatini doretta" trova Doretta |
+| sito-045 `rls_tabelle_di_log` | RLS attiva (nessuna policy) su `clients_last_measurement_backup_20261015`, `alerts_doppioni_20261015`, `organizations_merge_log_20261015` | applicata (15/10) |
 
 **Ordine fra i due repo** (storico: entrambe sono applicate):
 `app-035_conferma_collegamento_cliente.sql` (repo `hrv_app`) andava applicata
