@@ -1,0 +1,59 @@
+{
+  "tabs": {
+    "duplicates": "Possibili duplicati",
+    "unassigned": "Senza scheda"
+  },
+  "overview": {
+    "trialHint": "piano Prova non scaduto",
+    "proNoExpiry": "Pro senza scadenza",
+    "proNoExpiryHint": "abbonamento Pro senza data di fine",
+    "legacySource": "{count, plural, one {# professionista non ha} other {# professionisti non hanno}} una riga in abbonamenti: lo stato mostrato è ricavato dai dati vecchi (piano del profilo e fine prova della registrazione). In Utenti sono segnati con il badge \"Dati vecchi\"."
+  },
+  "users": {
+    "proNoExpiry": "Pro senza scadenza",
+    "legacyBadge": "Dati vecchi",
+    "legacyHint": "Nessuna riga in abbonamenti: stato ricavato dal piano del profilo e dalla fine prova della registrazione"
+  },
+  "duplicates": {
+    "search": "Cerca nome, email o professionista…",
+    "count": "{count, plural, one {# gruppo} other {# gruppi}}",
+    "subtitle": "Schede non unite con stesso nome, cognome e data di nascita, oppure stessa email, anche di professionisti diversi. Nessuna unione automatica.",
+    "empty": "Nessun possibile duplicato.",
+    "reasonName": "Stesso nome e data di nascita",
+    "reasonEmail": "Stessa email",
+    "crossProfessional": "Professionisti diversi",
+    "crossProfessionalHint": "L'unione è possibile solo fra schede dello stesso professionista: sposta prima la scheda dalla tab Clienti.",
+    "merge": "Unisci",
+    "mergeHint": "Apri l'unione con anteprima",
+    "thClient": "Scheda",
+    "thBirth": "Data di nascita",
+    "thEmail": "Email",
+    "thProfessional": "Professionista",
+    "thMeasurements": "Misurazioni",
+    "thLast": "Ultima misurazione",
+    "never": "Nessuna",
+    "loadError": "Non è stato possibile leggere i possibili duplicati."
+  },
+  "unassigned": {
+    "loadError": "Non è stato possibile leggere le misurazioni senza scheda.",
+    "roleClient": "Account cliente (misurazione dalla sua app)",
+    "roleProfessional": "Account professionista (in studio, scheda non scelta)",
+    "roleUnknown": "Account senza ruolo",
+    "daysOption": "Ultimi {days} giorni",
+    "roleAll": "Tutti gli account ({count})",
+    "roleClientOption": "Account cliente ({count})",
+    "roleProfessionalOption": "Account professionista ({count})",
+    "count": "{count, plural, one {# misurazione} other {# misurazioni}}",
+    "subtitle": "Misurazioni senza scheda cliente. Dall'account di un cliente sono normali (il sito le mostra tramite il collegamento); da un professionista vuol dire che la scheda non è stata scelta. Solo elenco, nessuna azione automatica.",
+    "thDate": "Data",
+    "thAccount": "Registrata da",
+    "thType": "Tipo",
+    "thDuration": "Durata",
+    "thClientName": "Nome indicato",
+    "thCard": "Scheda deducibile",
+    "openHint": "Apri la misurazione nella scheda di {name} (sola lettura)",
+    "open": "Apri",
+    "noCard": "Nessuna scheda deducibile",
+    "empty": "Nessuna misurazione senza scheda nel periodo."
+  }
+}

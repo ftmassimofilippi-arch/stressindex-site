@@ -1,0 +1,29 @@
+{
+  "scope": {
+    "mine": "My data",
+    "all": "Whole platform",
+    "label": "View",
+    "badge": "GLOBAL VIEW",
+    "title": "All <em>clients</em>",
+    "homeTitle": "Whole platform",
+    "note": "Global view: platform-wide counts, without names or measurements of other professionals' clients (client consent is given to their own professional). Switch back to \"My data\" to see records.",
+    "counts": {
+      "professionisti": "Professionals",
+      "schede": "Client records",
+      "schedeAttive90": "Active records (90 days)",
+      "collegamenti": "Active links",
+      "misurazioni": "Measurements",
+      "misurazioni30": "Measurements (30 days)",
+      "misurazioniOggi": "Measurements today",
+      "inStudio": "in office",
+      "daRemoto": "remote",
+      "professionistiOggi": "Professionals active today",
+      "alertAttivi": "Active alerts",
+      "alertRisolti7": "Alerts resolved (7 days)",
+      "monitoraggi": "Monitorings",
+      "monitoraggi30": "Monitorings (30 days)"
+    },
+    "unavailable": "Counts unavailable: read error, reported.",
+    "switchError": "Could not switch view."
+  }
+}

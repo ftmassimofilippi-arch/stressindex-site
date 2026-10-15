@@ -14,6 +14,9 @@ import { loadClient, loadMeasurementForPrint, loadOwnerProfile, loadPreviousMeas
 import { age, formatMeasuredAt, fullName, measuredInstant, num, toNum, todayLong } from '@/lib/format'
 import { formatDurationHuman, isLongMeasurement, measurementTypeLabel, normalizeTestType } from '@/lib/measurement-type'
 import { tagLabel } from '@/lib/before-after'
+import { sensorLabel } from '@/lib/sensor-label'
+import { loadClientNorms } from '@/lib/hrv-norms-server'
+import type { ClientNorms } from '@/lib/hrv-norms'
 import { professionalLine } from '@/components/print/PrintShell'
 import { fixtureClient, fixtureMeasurement, fixturePrevious, fixtureProfessional, fixturesEnabled, isFixtureKind } from '@/lib/print-fixtures'
 import type { Client, MeasurementAnalytics, ProfessionalProfile } from '@/lib/types'
@@ -43,6 +46,9 @@ export default async function PrintMeasurementPage({
   let client: Client
   let professional: ProfessionalProfile | null
   let previous: MeasurementAnalytics | null
+  // Range per età e sesso come nella pagina web; con i dati di simulazione si
+  // resta sui range generici.
+  let norms: ClientNorms | null = null
 
   if (fixturesEnabled() && isFixtureKind(searchParams?.fixture)) {
     // Dati di simulazione (solo fuori produzione o con PDF_FIXTURES=true).
@@ -64,7 +70,7 @@ export default async function PrintMeasurementPage({
     client = loadedClient
     // Anche con la sessione: la RLS da sola concede a un superadmin ogni scheda.
     if (!(await assertOwnerOrSuperadmin(supabase, userId, client.professionista_id))) notFound()
-    ;[professional, previous] = await Promise.all([
+    ;[professional, previous, norms] = await Promise.all([
       loadOwnerProfile(supabase, client.professionista_id),
       // Estremo del confronto: l'ISTANTE della misurazione, non la colonna
       // grezza (che è due ore avanti e pescava la misurazione sbagliata).
@@ -78,6 +84,7 @@ export default async function PrintMeasurementPage({
         (measuredInstant(measurement) ?? new Date(measurement.created_at)).toISOString(),
         measurement.session_id,
       ),
+      loadClientNorms(client, supabase),
     ])
   }
 
@@ -86,6 +93,7 @@ export default async function PrintMeasurementPage({
   const tScores = await getTranslations('scores.names')
   const tTypes = await getTranslations('measurement.types')
   const tParams = await getTranslations('measurement.params')
+  const tMeasurement = await getTranslations('measurement')
   const tTags = await getTranslations('common.tags')
   const tPdf = await getTranslations('pdf.common')
 
@@ -230,7 +238,7 @@ export default async function PrintMeasurementPage({
           <PrintKv label={t('cover.testType')} value={typeLabel} />
           <PrintKv label={t('cover.dateTime')} value={formatMeasuredAt(measurement, locale)} />
           <PrintKv label={t('cover.duration')} value={formatDurationHuman(measurement.duration_seconds)} />
-          <PrintKv label={t('cover.sensor')} value={measurement.sensor_name ?? measurement.sensor_type ?? 'Polar H10'} />
+          <PrintKv label={t('cover.sensor')} value={sensorLabel(measurement.sensor_name, measurement.sensor_type, tMeasurement('sensorFallback'))} />
           <PrintKv
             label={t('cover.signalQuality')}
             value={[signalQuality, artifact != null ? t('cover.artifacts', { value: num(artifact, 1, locale) }) : null].filter(Boolean).join(' · ') || '—'}
@@ -277,7 +285,7 @@ export default async function PrintMeasurementPage({
 
       {/* 3. Sintesi parametri */}
       <PrintSection title={t('measurement.summaryTitle')} avoid>
-        <ParamsSummaryCard measurement={measurement} />
+        <ParamsSummaryCard measurement={measurement} norms={norms} />
       </PrintSection>
 
       {/* 6a. Sezioni specifiche per tipo */}
@@ -325,7 +333,7 @@ export default async function PrintMeasurementPage({
       {/* 5. Tabella parametri completa */}
       <PrintSection title={t('measurement.paramsTitle')} subtitle={t('measurement.paramsSubtitle')} className="print-break-before">
         <div className="print-card p-4">
-          <HrvParamsTable measurement={measurement} print />
+          <HrvParamsTable measurement={measurement} norms={norms} print />
         </div>
       </PrintSection>
 

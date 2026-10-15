@@ -48,7 +48,7 @@ export default async function ComparisonPage({
   const backHref = `/area-professionisti/clienti/${client.id}${qs}${qs ? '&' : '?'}tab=prima-dopo`
 
   return (
-    <DashboardLayout professional={professional}>
+    <DashboardLayout professional={professional} breadcrumbLabels={{ [client.id]: fullName(client) }}>
       <div className="mb-6">
         <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm text-anthracite-lighter hover:text-anthracite transition-colors">
           <ArrowLeft size={14} /> {t('backLabel', { name: fullName(client) })}

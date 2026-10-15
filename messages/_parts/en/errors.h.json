@@ -68,6 +68,11 @@
     "not_found": "Item not found.",
     "nothing_to_update": "Nothing to update.",
     "cannot_modify_self": "You cannot change your own role.",
-    "cannot_remove_owner": "The owner cannot be removed."
+    "cannot_remove_owner": "The owner cannot be removed.",
+    "network": "Connection failed. Check your network and try again.",
+    "organization_exists": "You already have an organization with this name.",
+    "profile_update_failed": "Your profile could not be updated. Reload the page and try again.",
+    "organization_required": "Missing organization.",
+    "organization_not_found": "Organization not found."
   }
 }

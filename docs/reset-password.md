@@ -1,5 +1,36 @@
 # Reset password e invito: come funziona e cosa configurare su Supabase
 
+> **Aggiornamento 15/10/2026 (audit QA, punto D6).** I link email ora passano
+> da **`/auth/confirm`** con `token_hash`: il token si consuma solo quando
+> l'utente preme il pulsante, non al semplice GET. Motivo: il log Auth del
+> 14/10 alle 09:01 mostra `403 Email link is invalid or has expired, One-time
+> token not found` con referer stressindex.io e IP 74.125.19.33 (Google): il
+> prescanner di Gmail apriva il link prima dell'utente e bruciava il token.
+> Esiste anche **`/auth/callback`** per i link PKCE (`?code=`): scambio lato
+> server e redirect a `/imposta-password`.
+>
+> **Da fare nel dashboard Supabase (Authentication):**
+> 1. *URL Configuration* → Site URL `https://stressindex.io`, Redirect URLs:
+>    `https://stressindex.io/**`, `https://www.stressindex.io/**`,
+>    `http://localhost:3000/**`, `stresstest://**`.
+> 2. *Email Templates* → per **Reset password**, **Invite user**, **Confirm
+>    signup**, **Magic link** sostituire `{{ .ConfirmationURL }}` con
+>    `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`
+>    (rispettivamente `invite`, `signup`, `magiclink`). I template pronti
+>    sono in `docs/email-templates/*.html`, già aggiornati.
+> 3. *Providers → Email* (o *Settings → Security*, secondo la versione del
+>    dashboard) → **"Prevent the use of leaked passwords"** (HaveIBeenPwned):
+>    attivare. Richiede il piano Pro. Il sito mostra già un messaggio dedicato
+>    (`errors.supabase.leakedPassword`) quando Supabase rifiuta una password
+>    compromessa (punto D4).
+>
+> Il flusso vecchio (`{{ .ConfirmationURL }}` → verify di Supabase →
+> `/imposta-password` con `#access_token` o `?code`) resta funzionante per le
+> email già inviate: `/imposta-password` gestisce tutti i formati e
+> `RecoveryLinkRedirect` inoltra i `token_hash` atterrati altrove a
+> `/auth/confirm`.
+
+
 ## Il problema (pagina bianca)
 
 Il link nell'email arriva correttamente ma apre una pagina bianca. Verificato

@@ -103,6 +103,7 @@ export type SupabaseAuthErrorKey =
   | 'rateLimit'
   | 'alreadyRegistered'
   | 'weakPassword'
+  | 'leakedPassword'
   | 'otpExpired'
   | 'banned'
   | 'sessionMissing'
@@ -124,6 +125,10 @@ export function supabaseAuthErrorKey(error: { code?: string | null; message?: st
     return 'rateLimit'
   if (code === 'user_already_exists' || code === 'email_exists' || message.includes('already registered') || message.includes('already exists'))
     return 'alreadyRegistered'
+  // Leaked password protection di Supabase Auth (HaveIBeenPwned): messaggio
+  // dedicato, non "troppo debole".
+  if (message.includes('leaked') || message.includes('pwned') || message.includes('compromised') || message.includes('known to be weak'))
+    return 'leakedPassword'
   if (code === 'weak_password' || message.includes('password should') || message.includes('password is too') || message.includes('weak password'))
     return 'weakPassword'
   if (code === 'otp_expired' || message.includes('otp_expired') || message.includes('token has expired') || message.includes('is invalid or has expired'))

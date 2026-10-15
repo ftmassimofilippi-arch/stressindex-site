@@ -32,7 +32,11 @@ export function RecoveryLinkRedirect() {
     )
     const hasError = !!(hash.get('error_code') || hash.get('error') || query.get('error_code') || query.get('error'))
     if (!hasToken && !hasError) return
-    window.location.replace(`${withLocale('/imposta-password', locale)}${window.location.search}${window.location.hash}`)
+    // Un token_hash non va consumato al caricamento (i prescanner delle
+    // caselle email aprono il link prima dell'utente): passa da /auth/confirm,
+    // dove si consuma solo al clic. Gli altri formati vanno a /imposta-password.
+    const destination = query.get('token_hash') || query.get('token') ? '/auth/confirm' : '/imposta-password'
+    window.location.replace(`${withLocale(destination, locale)}${window.location.search}${window.location.hash}`)
   }, [locale])
 
   return null

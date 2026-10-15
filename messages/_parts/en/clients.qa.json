@@ -1,0 +1,6 @@
+{
+  "overview": {
+    "appEvents": "Notifications from the app",
+    "appEventsHint": "Unread, last 30 days. Not counted among active alerts."
+  }
+}

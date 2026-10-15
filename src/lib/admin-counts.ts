@@ -31,6 +31,17 @@ export interface PlatformCounts {
   misurazioniOggiDaRemoto: number
   /** Professionisti con almeno una misurazione oggi. */
   professionistiAttiviOggi: number
+  /** Schede non unite con un'ultima misurazione negli ultimi 90 giorni. */
+  schedeAttive90: number
+  /** Misurazioni degli ultimi 30 giorni. */
+  misurazioni30: number
+  /** Alert del cron aperti (`new`, `seen`). */
+  alertAttivi: number
+  /** Alert risolti automaticamente negli ultimi 7 giorni. */
+  alertRisolti7: number
+  /** Monitoraggi (24h e sonno), in tutto e negli ultimi 30 giorni. */
+  monitoraggi: number
+  monitoraggi30: number
 }
 
 export async function getPlatformCounts(): Promise<PlatformCounts | null> {
@@ -38,15 +49,23 @@ export async function getPlatformCounts(): Promise<PlatformCounts | null> {
   const daIso = inizioGiornoIta(oggiIta())
   const conta = (tabella: string) => admin.from(tabella).select('*', { count: 'exact', head: true })
 
-  const [professionisti, schede, collegamenti, misurazioni, oggi] = await Promise.all([
+  const giorniFa = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString()
+  const [professionisti, schede, collegamenti, misurazioni, oggi, schede90, mis30, alertAttivi, alertRisolti, monit, monit30] = await Promise.all([
     conta('profiles').eq('role', 'professional'),
     conta('clients').is('merged_into_client_id', null),
     conta('client_professional_links').eq('status', 'active'),
     conta('sessions'),
     // Solo l'autore di ogni sessione di oggi: serve a contare, non a mostrare.
     admin.from('sessions').select('professionista_id').gte('started_at_utc', daIso).limit(5000),
+    conta('clients').is('merged_into_client_id', null).gte('last_measurement_at', giorniFa(90)),
+    conta('sessions').gte('started_at_utc', giorniFa(30)),
+    conta('alerts').in('status', ['new', 'seen']),
+    conta('alerts').eq('status', 'resolved').gte('resolved_at', giorniFa(7)),
+    conta('monitoring_sessions'),
+    conta('monitoring_sessions').gte('start_time', giorniFa(30)),
   ])
   const errore = professionisti.error ?? schede.error ?? collegamenti.error ?? misurazioni.error ?? oggi.error
+    ?? schede90.error ?? mis30.error ?? alertAttivi.error ?? alertRisolti.error ?? monit.error ?? monit30.error
   if (errore) {
     reportDataError('getPlatformCounts', errore)
     return null
@@ -76,5 +95,11 @@ export async function getPlatformCounts(): Promise<PlatformCounts | null> {
     misurazioniOggiInStudio: inStudio,
     misurazioniOggiDaRemoto: autori.length - inStudio,
     professionistiAttiviOggi: professionali.size,
+    schedeAttive90: schede90.count ?? 0,
+    misurazioni30: mis30.count ?? 0,
+    alertAttivi: alertAttivi.count ?? 0,
+    alertRisolti7: alertRisolti.count ?? 0,
+    monitoraggi: monit.count ?? 0,
+    monitoraggi30: monit30.count ?? 0,
   }
 }

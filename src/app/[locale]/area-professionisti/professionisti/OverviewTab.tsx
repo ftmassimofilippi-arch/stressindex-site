@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Loader2 } from 'lucide-react'
+import { AlertTriangle, Loader2 } from 'lucide-react'
 import type { AdminUser } from '@/lib/admin-data'
 import type { AccountStato } from '@/lib/admin-commerciale'
 import type { Toast } from './adminApi'
@@ -10,20 +10,36 @@ import { UserSidePanel } from './UserSidePanel'
 import { accountAction, ModuleIcons, PianoPill, ScadenzaCell, StatoDot, type Catalogo } from './commerciale-ui'
 
 // Home del pannello: indicatori in cima (attivi, in prova, in scadenza entro
-// 30 giorni, sospesi) e la sezione "In scadenza" con prolungamento rapido.
+// 30 giorni, sospesi, Pro senza scadenza) e la sezione "In scadenza" con
+// prolungamento rapido.
+//
+// "In prova" e "Pro senza scadenza" seguono `subscription_status`, calcolato
+// lato server da `abbonamenti` (+ `account_stato`): una prova conta solo se la
+// scadenza è oggi o futura. `legacy` conta i professionisti senza riga in
+// `abbonamenti`, per cui lo stato è un ripiego da profiles/trial_expires_at.
 
-export type OverviewCounts = { attivi: number; prova: number; scadenza30: number; sospesi: number; bloccati: number }
+export type OverviewCounts = { attivi: number; prova: number; scadenza30: number; sospesi: number; bloccati: number; proSenzaScadenza: number; legacy: number }
+
+export type UsersFilter = { scadenza30?: boolean; stato?: AccountStato; proSenzaScadenza?: boolean }
+
+export function isProSenzaScadenza(u: AdminUser): boolean {
+  return u.role === 'professional' && u.subscription_status === 'pro_active' && u.subscription_expires_at === null
+}
 
 export function overviewCounts(users: AdminUser[]): OverviewCounts {
-  const out: OverviewCounts = { attivi: 0, prova: 0, scadenza30: 0, sospesi: 0, bloccati: 0 }
+  const out: OverviewCounts = { attivi: 0, prova: 0, scadenza30: 0, sospesi: 0, bloccati: 0, proSenzaScadenza: 0, legacy: 0 }
   for (const u of users) {
+    if (u.role === 'professional') {
+      if (u.subscription_status === 'trial_active') out.prova++
+      if (isProSenzaScadenza(u)) out.proSenzaScadenza++
+      if (u.subscription_source === 'legacy') out.legacy++
+    }
     const c = u.commerciale
     if (!c) continue
     if (c.stato === 'sospeso') out.sospesi++
     if (c.stato === 'bloccato') out.bloccati++
     if (u.role !== 'professional') continue
     if (c.stato === 'attivo') out.attivi++
-    if (c.stato === 'prova') out.prova++
     if (inScadenza(u)) out.scadenza30++
   }
   return out
@@ -55,7 +71,7 @@ export function OverviewTab({
   catalogo: Catalogo | null
   onChanged: () => void
   showToast: (t: Toast) => void
-  onOpenUsers: (filter: { scadenza30?: boolean; stato?: AccountStato }) => void
+  onOpenUsers: (filter: UsersFilter) => void
 }) {
   const t = useTranslations('admin')
   const to = useTranslations('admin.overview')
@@ -87,12 +103,20 @@ export function OverviewTab({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <Kpi label={to('activeProfessionals')} value={counts.attivi} dot="bg-emerald-500" onClick={() => onOpenUsers({ stato: 'attivo' })} />
-        <Kpi label={to('trial')} value={counts.prova} dot="bg-sky-500" onClick={() => onOpenUsers({ stato: 'prova' })} />
+        <Kpi label={to('trial')} value={counts.prova} hint={to('trialHint')} dot="bg-sky-500" onClick={() => onOpenUsers({ stato: 'prova' })} />
         <Kpi label={to('expiring30')} value={counts.scadenza30} dot="bg-amber-400" onClick={() => onOpenUsers({ scadenza30: true })} />
         <Kpi label={to('suspended')} value={counts.sospesi} hint={counts.bloccati ? to('blockedHint', { count: counts.bloccati }) : undefined} dot="bg-amber-600" onClick={() => onOpenUsers({ stato: 'sospeso' })} />
+        <Kpi label={to('proNoExpiry')} value={counts.proSenzaScadenza} hint={to('proNoExpiryHint')} dot="bg-teal" onClick={() => onOpenUsers({ proSenzaScadenza: true })} />
       </div>
+
+      {counts.legacy > 0 && (
+        <div className="callout-amber text-[13px]">
+          <AlertTriangle size={15} className="text-amber-500 flex-shrink-0" />
+          <span>{to('legacySource', { count: counts.legacy })}</span>
+        </div>
+      )}
 
       <section>
         <div className="flex items-baseline justify-between gap-3 mb-2 flex-wrap">

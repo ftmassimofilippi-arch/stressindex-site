@@ -74,23 +74,36 @@ function TeamTab({
   const [editingName, setEditingName] = useState(false)
   const [name, setName] = useState(organization.name)
   const [savingName, setSavingName] = useState(false)
+  const [nameErr, setNameErr] = useState<string | null>(null)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [revokeId, setRevokeId] = useState<string | null>(null)
   const [busyMember, setBusyMember] = useState<string | null>(null)
+  const tErr = useTranslations('errors.api')
 
   const statsByUser = new Map(stats.map((s) => [s.user_id, s]))
 
   async function saveName() {
+    if (savingName) return
     setSavingName(true)
-    const res = await fetch('/api/organization', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim() }),
-    })
-    setSavingName(false)
-    if (res.ok) {
+    setNameErr(null)
+    try {
+      // `organizationId` esplicito: con più organizzazioni la route non può indovinare.
+      const res = await fetch('/api/organization', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), organizationId: organization.id }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setNameErr(apiErrorMessage(data, tErr))
+        return
+      }
       setEditingName(false)
       router.refresh()
+    } catch {
+      setNameErr(tErr('network'))
+    } finally {
+      setSavingName(false)
     }
   }
 
@@ -124,9 +137,10 @@ function TeamTab({
             <button onClick={saveName} disabled={savingName} className="btn-primary text-sm inline-flex items-center gap-1.5">
               <Save size={15} /> {t('team.save')}
             </button>
-            <button onClick={() => { setName(organization.name); setEditingName(false) }} className="btn-secondary text-sm">
+            <button onClick={() => { setName(organization.name); setEditingName(false); setNameErr(null) }} className="btn-secondary text-sm">
               {t('team.cancel')}
             </button>
+            {nameErr && <div className="w-full px-3 py-2 rounded-xl bg-red-50 text-red-700 text-sm">{nameErr}</div>}
           </div>
         ) : (
           <div className="flex items-center gap-3">

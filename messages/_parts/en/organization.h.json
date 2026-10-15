@@ -76,5 +76,13 @@
   "memberView": {
     "title": "Your colleagues",
     "count": "{count, plural, one {# active professional} other {# active professionals}}"
+  },
+  "switcher": {
+    "title": "Your organizations",
+    "intro": "{count, plural, one {You belong to # organization.} other {You belong to # organizations: choose which one to manage on this page.}}",
+    "members": "{count, plural, one {# active member} other {# active members}}",
+    "active": "Active",
+    "switch": "Make active",
+    "switching": "Switching…"
   }
 }

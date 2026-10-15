@@ -1,0 +1,29 @@
+{
+  "confirm": {
+    "recovery": {
+      "title": "Set a new password",
+      "intro": "For safety the link activates only when you press the button, so automatic scanners in your mailbox cannot consume it.",
+      "cta": "Set new password"
+    },
+    "invite": {
+      "title": "Activate your account",
+      "intro": "Press the button to activate the account and choose a password.",
+      "cta": "Activate account"
+    },
+    "signup": {
+      "title": "Confirm your email address",
+      "intro": "Press the button to confirm the address and sign in.",
+      "cta": "Confirm email"
+    },
+    "other": {
+      "title": "Sign in",
+      "intro": "Press the button to complete sign-in.",
+      "cta": "Continue"
+    },
+    "working": "Checking…",
+    "missing": "Incomplete link: the verification code is missing. Request a new link.",
+    "failed": "The link is invalid or has expired. Request a new link.",
+    "requestNew": "Request a new link",
+    "backLogin": "Back to login"
+  }
+}

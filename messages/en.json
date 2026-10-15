@@ -53,6 +53,26 @@
       "today": "Today",
       "tomorrow": "Tomorrow"
     },
+    "duplicates": {
+      "count": "{count, plural, one {# group} other {# groups}}",
+      "crossProfessional": "Different professionals",
+      "crossProfessionalHint": "Records can only be merged under the same professional: move the record first from the Clients tab.",
+      "empty": "No possible duplicates.",
+      "loadError": "Could not load possible duplicates.",
+      "merge": "Merge",
+      "mergeHint": "Open the merge with preview",
+      "never": "None",
+      "reasonEmail": "Same email",
+      "reasonName": "Same name and date of birth",
+      "search": "Search name, email or professional…",
+      "subtitle": "Unmerged records with the same first name, last name and date of birth, or the same email, including across professionals. Nothing is merged automatically.",
+      "thBirth": "Date of birth",
+      "thClient": "Record",
+      "thEmail": "Email",
+      "thLast": "Last measurement",
+      "thMeasurements": "Measurements",
+      "thProfessional": "Professional"
+    },
     "emailChange": {
       "cardsNotTouched": "{count} records with the old email under professionals without a link stay unchanged: {ids}",
       "cardsToUpdate": "Records aligned to the new email",
@@ -292,7 +312,10 @@
       "expiringEmpty": "No subscriptions expiring.",
       "expiringSubtitle": "within 30 days or expired and waiting for the nightly job · reminders at 30, 7 and 1 day",
       "expiringTitle": "Expiring",
+      "legacySource": "{count, plural, one {# professional has} other {# professionals have}} no row in subscriptions: the status shown comes from old data (profile plan and sign-up trial end). Look for the \"Old data\" badge in Users.",
       "migration024": "The commercial overview needs migration 024 (account state, subscriptions, modules).",
+      "proNoExpiry": "Pro with no expiry",
+      "proNoExpiryHint": "Pro subscription with no end date",
       "suspended": "Suspended",
       "thExpiry": "Expiry",
       "thExtend": "Extend",
@@ -300,7 +323,8 @@
       "thPlan": "Plan",
       "thProfessional": "Professional",
       "thStatus": "Status",
-      "trial": "On trial"
+      "trial": "On trial",
+      "trialHint": "Trial plan not expired"
     },
     "page": {
       "badge": "Superadmin mode",
@@ -554,12 +578,36 @@
     },
     "tabs": {
       "clients": "Clients",
+      "duplicates": "Possible duplicates",
       "expiringHint": "Subscriptions expiring within 30 days",
       "health": "Link health",
       "links": "Links",
       "monitoring": "Monitoring",
       "overview": "Overview",
+      "unassigned": "Without record",
       "users": "Users"
+    },
+    "unassigned": {
+      "count": "{count, plural, one {# measurement} other {# measurements}}",
+      "daysOption": "Last {days} days",
+      "empty": "No measurements without a record in this period.",
+      "loadError": "Could not load measurements without a record.",
+      "noCard": "No inferable record",
+      "open": "Open",
+      "openHint": "Open the measurement in {name}'s record (read only)",
+      "roleAll": "All accounts ({count})",
+      "roleClient": "Client account (measured in their app)",
+      "roleClientOption": "Client accounts ({count})",
+      "roleProfessional": "Professional account (in session, no record chosen)",
+      "roleProfessionalOption": "Professional accounts ({count})",
+      "roleUnknown": "Account without role",
+      "subtitle": "Measurements with no client record. From a client account this is expected (the site shows them through the link); from a professional it means no record was chosen. List only, no automatic action.",
+      "thAccount": "Recorded by",
+      "thCard": "Inferred record",
+      "thClientName": "Name given",
+      "thDate": "Date",
+      "thDuration": "Duration",
+      "thType": "Type"
     },
     "users": {
       "block": "Block…",
@@ -585,6 +633,8 @@
       "issueAll": "All situations",
       "issueAny": "Only needing attention",
       "issueOption": "{label} ({count})",
+      "legacyBadge": "Old data",
+      "legacyHint": "No subscription row: status derived from the profile plan and the sign-up trial end",
       "linkHint": "Link to a professional",
       "menuAccount": "Account",
       "menuModules": "Modules",
@@ -597,6 +647,7 @@
       "moduleUpdated": "Module updated",
       "openDetail": "Open details",
       "planAll": "All plans",
+      "proNoExpiry": "Pro with no expiry",
       "quickActions": "Quick actions",
       "reactivate": "Reactivate",
       "reactivateTitle": "Reactivate the account?",
@@ -623,6 +674,10 @@
     "wait": "Please wait…"
   },
   "alerts": {
+    "group": {
+      "badge": "×{count}",
+      "title": "{count} identical alerts, the latest on {date}"
+    },
     "messages": {
       "acwr": "ACWR {acwr}",
       "acwrHrv": "ACWR {acwr} with HRV below baseline",
@@ -692,6 +747,33 @@
     }
   },
   "auth": {
+    "confirm": {
+      "backLogin": "Back to login",
+      "failed": "The link is invalid or has expired. Request a new link.",
+      "invite": {
+        "cta": "Activate account",
+        "intro": "Press the button to activate the account and choose a password.",
+        "title": "Activate your account"
+      },
+      "missing": "Incomplete link: the verification code is missing. Request a new link.",
+      "other": {
+        "cta": "Continue",
+        "intro": "Press the button to complete sign-in.",
+        "title": "Sign in"
+      },
+      "recovery": {
+        "cta": "Set new password",
+        "intro": "For safety the link activates only when you press the button, so automatic scanners in your mailbox cannot consume it.",
+        "title": "Set a new password"
+      },
+      "requestNew": "Request a new link",
+      "signup": {
+        "cta": "Confirm email",
+        "intro": "Press the button to confirm the address and sign in.",
+        "title": "Confirm your email address"
+      },
+      "working": "Checking…"
+    },
     "login": {
       "blocked": "Your account has been blocked and your session has been closed. For information, write to <link>support@stressindex.io</link>.",
       "email": "Email",
@@ -1202,6 +1284,8 @@
     },
     "overview": {
       "activeAlerts": "Active alerts",
+      "appEvents": "Notifications from the app",
+      "appEventsHint": "Unread, last 30 days. Not counted among active alerts.",
       "emptyFiltered": "No measurements match this filter",
       "filterActive": "Filter: {label}",
       "filterRemove": "Remove filter",
@@ -1484,6 +1568,7 @@
       "areaProfessionisti": "Professional Area",
       "atleta": "Athlete",
       "clienti": "Clients",
+      "confronto": "Comparison",
       "impostazioni": "Settings",
       "misurazione": "Measurement",
       "monitoraggio": "Monitoring",
@@ -1516,8 +1601,10 @@
     },
     "home": {
       "activeClients": "Active clients",
+      "activeInDaysHint": "{count} active in the last {days} days",
       "aggregateTrend": "Aggregate average trend",
       "alertsResolved": "Alerts resolved",
+      "alertsResolvedUnavailable": "Count not available: the alerts could not be read",
       "colTime": "Time",
       "daysAgoShort": "{count}d ago",
       "daysShort": "{count}d",
@@ -1532,14 +1619,20 @@
       "noMeasurementsToday": "No measurements recorded today",
       "noMonitoring": "No monitoring recorded",
       "noRecentNotes": "No recent notes",
+      "notAvailable": "n/a",
       "priorityAlerts": "Priority alerts",
       "recentMonitoring": "Recent monitoring",
       "reminder": "Reminder",
       "remoteBadge": "Remote",
+      "seeAllMeasurements": "See all",
       "toContact": "To contact",
       "todaysMeasurements": "Today's measurements",
+      "totalClients": "Total clients",
       "totalHint": "total",
       "trend": "Trend",
+      "trendNoPreviousMonth": "No measurements in the previous month",
+      "trendTitle": "{current, plural, one {# measurement} other {# measurements}} in the last 30 days, {previous} in the 30 before",
+      "trendUnavailable": "Change not available: the measurements could not be read",
       "unassignedMeasurement": "Unassigned",
       "vsLastMonth": "vs last month",
       "weekHint": "this week"
@@ -1566,6 +1659,33 @@
       "superadmin": "Super Admin",
       "teamLive": "Team Live",
       "today": "Today"
+    },
+    "scope": {
+      "all": "Whole platform",
+      "badge": "GLOBAL VIEW",
+      "counts": {
+        "alertAttivi": "Active alerts",
+        "alertRisolti7": "Alerts resolved (7 days)",
+        "collegamenti": "Active links",
+        "daRemoto": "remote",
+        "inStudio": "in office",
+        "misurazioni": "Measurements",
+        "misurazioni30": "Measurements (30 days)",
+        "misurazioniOggi": "Measurements today",
+        "monitoraggi": "Monitorings",
+        "monitoraggi30": "Monitorings (30 days)",
+        "professionisti": "Professionals",
+        "professionistiOggi": "Professionals active today",
+        "schede": "Client records",
+        "schedeAttive90": "Active records (90 days)"
+      },
+      "homeTitle": "Whole platform",
+      "label": "View",
+      "mine": "My data",
+      "note": "Global view: platform-wide counts, without names or measurements of other professionals' clients (client consent is given to their own professional). Switch back to \"My data\" to see records.",
+      "switchError": "Could not switch view.",
+      "title": "All <em>clients</em>",
+      "unavailable": "Counts unavailable: read error, reported."
     },
     "search": {
       "clear": "Clear search",
@@ -1678,6 +1798,7 @@
       "invalid_json": "Invalid request.",
       "invalid_plan": "Invalid plan.",
       "invalid_role": "Invalid role.",
+      "invalid_scope": "Invalid view.",
       "invite_failed": "The invitation could not be sent.",
       "invite_required": "Missing invitation.",
       "keep_in_merge_list": "The record to keep cannot also be among those to merge.",
@@ -1714,12 +1835,16 @@
       "motivo_obbligatorio": "A reason is required.",
       "name_required": "The name is required.",
       "nessun_abbonamento": "The account has no subscription: set one before extending.",
+      "network": "Connection failed. Check your network and try again.",
       "no_account": "This client does not have an app account yet.",
       "no_client_account": "The record is not associated with any registered client account (neither by id nor by email).",
       "no_email": "The user has no email.",
       "non_autorizzato": "You are not allowed to perform this deletion.",
       "not_found": "Item not found.",
       "nothing_to_update": "Nothing to update.",
+      "organization_exists": "You already have an organization with this name.",
+      "organization_not_found": "Organization not found.",
+      "organization_required": "Missing organization.",
       "password_too_short": "Password too short (min 8).",
       "pdf_missing_params": "Required parameters are missing.",
       "pdf_render_failed": "The measurement was found but the document could not be generated. Try again; if the problem persists, let us know.",
@@ -1729,6 +1854,7 @@
       "professional_not_found": "Professional not found.",
       "professional_profile_failed": "Role updated, but creating professional_profiles failed: {detail}",
       "profile_failed": "Profile creation failed",
+      "profile_update_failed": "Your profile could not be updated. Reload the page and try again.",
       "prova_senza_scadenza": "The trial plan requires an expiry date.",
       "rate_limited": "You have reached the limit of actions on this client's access in the last 24 hours. Try again later.",
       "report_read_failed": "The measurements for the period could not be read. Please try again in a moment.",
@@ -1774,6 +1900,7 @@
       "emailNotConfirmed": "Email not confirmed yet: open the link we sent you to activate your account.",
       "generic": "Something went wrong. Please try again in a moment.",
       "invalidCredentials": "Incorrect email or password",
+      "leakedPassword": "This password appears in lists of compromised passwords: choose a different one.",
       "otpExpired": "The link has expired or has already been used. Request a new one.",
       "rateLimit": "Too many attempts. Wait a few minutes and try again.",
       "sessionMissing": "Your session is no longer valid. Please sign in again.",
@@ -3454,6 +3581,30 @@
         "time": "Time domain",
         "welch": "Frequency domain (Welch)"
       },
+      "na": {
+        "generic": "Value not computed by the app for this measurement",
+        "sdnnIndex": "SDNN Index is not computed by the app: it needs a long recording split into 5-minute segments",
+        "short": "n/a"
+      },
+      "norms": {
+        "age": {
+          "elderly": "over 60 years",
+          "midAdult": "31-45 years",
+          "senior": "46-60 years",
+          "young": "up to 30 years"
+        },
+        "fitness": {
+          "active": "active",
+          "athlete": "athlete",
+          "sedentary": "sedentary"
+        },
+        "missingBirthDate": "Generic ranges: add the date of birth in the <link>personal details</link> to get ranges for age and sex.",
+        "missingBoth": "Generic ranges: add sex and date of birth in the <link>personal details</link> to get ranges for age and sex.",
+        "missingSex": "Generic ranges: add sex in the <link>personal details</link> to get ranges for age and sex.",
+        "personal": "Ranges for {sex, select, female {women} other {men}}, {age}, activity level {fitness} ({sources}) on {metrics}. The other parameters keep the generic healthy adult ranges.",
+        "sexOther": "Generic ranges: the age and sex tables only cover women and men.",
+        "sources": "Nunan 2010, Voss 2015, Schumann & Bär 2022"
+      },
       "quality": {
         "excellent": "Excellent",
         "fair": "Fair",
@@ -3462,13 +3613,15 @@
       },
       "reference": {
         "legend": "Indicative reference ranges for a healthy adult, 5-10 minute recording: green within the range, yellow borderline, red outside, grey without a reference.",
+        "legendPersonal": "Green inside the range, yellow at the edge, red outside, grey without reference. Where shown, the range is for age and sex (25th-75th percentile of the group); for the other parameters it is indicative for a healthy adult, 5-10 minute recording.",
         "status": {
           "edge": "Borderline",
           "in": "Within range",
           "none": "No reference range",
           "out": "Out of range"
         },
-        "title": "Indicative reference range: {from}–{to} (healthy adult, 5-10 minute recording)"
+        "title": "Indicative reference range: {from}–{to} (healthy adult, 5-10 minute recording)",
+        "titlePersonal": "Range for age and sex (25th-75th percentile of the group): {from}–{to}"
       },
       "signalQuality": "Signal quality",
       "summary": {
@@ -3480,6 +3633,7 @@
         "title": "Parameters and reference ranges"
       }
     },
+    "sensorFallback": "BLE sensor",
     "types": {
       "coherence": {
         "description": "Guided breathing and cardiac coherence",
@@ -3546,6 +3700,9 @@
   "meta": {
     "analytics": {
       "title": "Analytics"
+    },
+    "authConfirm": {
+      "title": "Link confirmation"
     },
     "clientProfile": {
       "title": "Client record"
@@ -3879,6 +4036,11 @@
       "open": "Open details",
       "title": "Latest monitoring"
     },
+    "naCard": {
+      "noSummary": "Recording summary not yet computed by the app",
+      "notComputed": "Value not computed by the app for this recording",
+      "short": "n/a"
+    },
     "night": {
       "dayRefMissing": "daytime reference missing",
       "detected": "Night detected automatically from heart rate",
@@ -4191,6 +4353,14 @@
       "admin": "Administrator",
       "member": "Professional",
       "owner": "Owner"
+    },
+    "switcher": {
+      "active": "Active",
+      "intro": "{count, plural, one {You belong to # organization.} other {You belong to # organizations: choose which one to manage on this page.}}",
+      "members": "{count, plural, one {# active member} other {# active members}}",
+      "switch": "Make active",
+      "switching": "Switching…",
+      "title": "Your organizations"
     },
     "tabs": {
       "overview": "Overview",
@@ -4891,6 +5061,14 @@
       "title": "Sport module"
     },
     "heading": "<em>Sport</em> module",
+    "na": {
+      "noQuestionnaire": "Post-session questionnaire not filled in",
+      "noValidSession": "No valid sport session (at least 5 minutes)",
+      "noValidSessionWeek": "No valid sport session (at least 5 minutes) in the last 7 days",
+      "notComputed": "Value not computed by the app for this session",
+      "short": "n/a",
+      "sportNotSet": "Sport not specified for this session"
+    },
     "pagination": {
       "next": "Next",
       "page": "Page {page} of {total}",
@@ -4932,7 +5110,9 @@
       "period7": "Last 7 days",
       "period90": "Last 90 days",
       "periodAll": "All time",
-      "thresholdBadge": "Threshold test"
+      "thresholdBadge": "Threshold test",
+      "tooShortBadge": "Too short",
+      "tooShortHint": "Under {minutes} minutes: excluded from statistics and charts"
     },
     "soreness": {
       "addome": "Abdomen",

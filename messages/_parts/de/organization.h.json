@@ -76,5 +76,13 @@
   "memberView": {
     "title": "Ihre Kolleginnen und Kollegen",
     "count": "{count, plural, one {# aktive Fachkraft} other {# aktive Fachkräfte}}"
+  },
+  "switcher": {
+    "title": "Ihre Organisationen",
+    "intro": "{count, plural, one {Sie gehören # Organisation an.} other {Sie gehören # Organisationen an: wählen Sie, welche Sie auf dieser Seite verwalten.}}",
+    "members": "{count, plural, one {# aktives Mitglied} other {# aktive Mitglieder}}",
+    "active": "Aktiv",
+    "switch": "Aktivieren",
+    "switching": "Wechsel läuft…"
   }
 }

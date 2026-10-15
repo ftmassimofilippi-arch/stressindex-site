@@ -8,6 +8,7 @@
     "otpExpired": "The link has expired or has already been used. Request a new one.",
     "banned": "Account blocked. For information, write to support@stressindex.io",
     "sessionMissing": "Your session is no longer valid. Please sign in again.",
-    "generic": "Something went wrong. Please try again in a moment."
+    "generic": "Something went wrong. Please try again in a moment.",
+    "leakedPassword": "This password appears in lists of compromised passwords: choose a different one."
   }
 }

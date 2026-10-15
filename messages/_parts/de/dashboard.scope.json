@@ -1,0 +1,29 @@
+{
+  "scope": {
+    "mine": "Meine Daten",
+    "all": "Gesamte Plattform",
+    "label": "Ansicht",
+    "badge": "GLOBALE ANSICHT",
+    "title": "Alle <em>Klienten</em>",
+    "homeTitle": "Gesamte Plattform",
+    "note": "Globale Ansicht: Zahlen der gesamten Plattform, ohne Namen oder Messungen der Klienten anderer Fachkräfte (die Einwilligung gilt gegenüber der eigenen Fachkraft). Wechseln Sie zu \"Meine Daten\", um Akten zu sehen.",
+    "counts": {
+      "professionisti": "Fachkräfte",
+      "schede": "Klientenakten",
+      "schedeAttive90": "Aktive Akten (90 Tage)",
+      "collegamenti": "Aktive Verknüpfungen",
+      "misurazioni": "Messungen",
+      "misurazioni30": "Messungen (30 Tage)",
+      "misurazioniOggi": "Messungen heute",
+      "inStudio": "in der Praxis",
+      "daRemoto": "aus der Ferne",
+      "professionistiOggi": "Heute aktive Fachkräfte",
+      "alertAttivi": "Aktive Alerts",
+      "alertRisolti7": "Gelöste Alerts (7 Tage)",
+      "monitoraggi": "Monitorings",
+      "monitoraggi30": "Monitorings (30 Tage)"
+    },
+    "unavailable": "Zahlen nicht verfügbar: Lesefehler, gemeldet.",
+    "switchError": "Ansicht konnte nicht gewechselt werden."
+  }
+}

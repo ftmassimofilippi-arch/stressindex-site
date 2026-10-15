@@ -53,6 +53,26 @@
       "today": "Heute",
       "tomorrow": "Morgen"
     },
+    "duplicates": {
+      "count": "{count, plural, one {# Gruppe} other {# Gruppen}}",
+      "crossProfessional": "Verschiedene Fachkräfte",
+      "crossProfessionalHint": "Zusammenführen ist nur bei Profilen derselben Fachkraft möglich: verschieben Sie das Profil zuerst im Tab Klienten.",
+      "empty": "Keine möglichen Duplikate.",
+      "loadError": "Mögliche Duplikate konnten nicht geladen werden.",
+      "merge": "Zusammenführen",
+      "mergeHint": "Zusammenführung mit Vorschau öffnen",
+      "never": "Keine",
+      "reasonEmail": "Gleiche E-Mail",
+      "reasonName": "Gleicher Name und Geburtsdatum",
+      "search": "Name, E-Mail oder Fachkraft suchen…",
+      "subtitle": "Nicht zusammengeführte Profile mit gleichem Vornamen, Nachnamen und Geburtsdatum oder gleicher E-Mail, auch bei verschiedenen Fachkräften. Es wird nichts automatisch zusammengeführt.",
+      "thBirth": "Geburtsdatum",
+      "thClient": "Profil",
+      "thEmail": "E-Mail",
+      "thLast": "Letzte Messung",
+      "thMeasurements": "Messungen",
+      "thProfessional": "Fachkraft"
+    },
     "emailChange": {
       "cardsNotTouched": "{count} Profile mit der alten E-Mail bei Fachkräften ohne Verknüpfung bleiben unverändert: {ids}",
       "cardsToUpdate": "An die neue E-Mail angepasste Profile",
@@ -292,7 +312,10 @@
       "expiringEmpty": "Kein Abonnement läuft ab.",
       "expiringSubtitle": "innerhalb von 30 Tagen oder abgelaufen und auf den nächtlichen Job wartend · Hinweise bei 30, 7 und 1 Tag",
       "expiringTitle": "Läuft ab",
+      "legacySource": "{count, plural, one {# Fachkraft hat} other {# Fachkräfte haben}} keine Zeile in den Abonnements: der angezeigte Status stammt aus alten Daten (Tarif im Profil und Testende der Registrierung). Achten Sie in Nutzer auf das Abzeichen \"Alte Daten\".",
       "migration024": "Die kaufmännische Übersicht benötigt Migration 024 (Kontostatus, Abonnements, Module).",
+      "proNoExpiry": "Pro ohne Ablauf",
+      "proNoExpiryHint": "Pro-Abonnement ohne Enddatum",
       "suspended": "Ausgesetzt",
       "thExpiry": "Ablauf",
       "thExtend": "Verlängern",
@@ -300,7 +323,8 @@
       "thPlan": "Tarif",
       "thProfessional": "Fachkraft",
       "thStatus": "Status",
-      "trial": "In der Testphase"
+      "trial": "In der Testphase",
+      "trialHint": "Testtarif nicht abgelaufen"
     },
     "page": {
       "badge": "Superadmin-Modus",
@@ -554,12 +578,36 @@
     },
     "tabs": {
       "clients": "Klienten",
+      "duplicates": "Mögliche Duplikate",
       "expiringHint": "Abonnements, die in den nächsten 30 Tagen ablaufen",
       "health": "Verknüpfungsstatus",
       "links": "Verknüpfungen",
       "monitoring": "Monitoring",
       "overview": "Übersicht",
+      "unassigned": "Ohne Profil",
       "users": "Nutzer"
+    },
+    "unassigned": {
+      "count": "{count, plural, one {# Messung} other {# Messungen}}",
+      "daysOption": "Letzte {days} Tage",
+      "empty": "Keine Messungen ohne Profil im Zeitraum.",
+      "loadError": "Messungen ohne Profil konnten nicht geladen werden.",
+      "noCard": "Kein ableitbares Profil",
+      "open": "Öffnen",
+      "openHint": "Messung im Profil von {name} öffnen (nur lesen)",
+      "roleAll": "Alle Konten ({count})",
+      "roleClient": "Klientenkonto (Messung in der eigenen App)",
+      "roleClientOption": "Klientenkonten ({count})",
+      "roleProfessional": "Fachkraftkonto (in der Praxis, kein Profil gewählt)",
+      "roleProfessionalOption": "Fachkraftkonten ({count})",
+      "roleUnknown": "Konto ohne Rolle",
+      "subtitle": "Messungen ohne Klientenprofil. Bei einem Klientenkonto ist das normal (die Website zeigt sie über die Verknüpfung); bei einer Fachkraft wurde kein Profil gewählt. Nur Liste, keine automatische Aktion.",
+      "thAccount": "Erfasst von",
+      "thCard": "Ableitbares Profil",
+      "thClientName": "Angegebener Name",
+      "thDate": "Datum",
+      "thDuration": "Dauer",
+      "thType": "Typ"
     },
     "users": {
       "block": "Sperren…",
@@ -585,6 +633,8 @@
       "issueAll": "Alle Situationen",
       "issueAny": "Nur zu klären",
       "issueOption": "{label} ({count})",
+      "legacyBadge": "Alte Daten",
+      "legacyHint": "Keine Abonnementzeile: Status aus dem Tarif im Profil und dem Testende der Registrierung abgeleitet",
       "linkHint": "Mit einer Fachkraft verknüpfen",
       "menuAccount": "Konto",
       "menuModules": "Module",
@@ -597,6 +647,7 @@
       "moduleUpdated": "Modul aktualisiert",
       "openDetail": "Details öffnen",
       "planAll": "Alle Tarife",
+      "proNoExpiry": "Pro ohne Ablauf",
       "quickActions": "Schnellaktionen",
       "reactivate": "Reaktivieren",
       "reactivateTitle": "Konto reaktivieren?",
@@ -623,6 +674,10 @@
     "wait": "Bitte warten…"
   },
   "alerts": {
+    "group": {
+      "badge": "×{count}",
+      "title": "{count} identische Warnungen, die letzte am {date}"
+    },
     "messages": {
       "acwr": "ACWR {acwr}",
       "acwrHrv": "ACWR {acwr} mit HRV unter der Baseline",
@@ -692,6 +747,33 @@
     }
   },
   "auth": {
+    "confirm": {
+      "backLogin": "Zurück zur Anmeldung",
+      "failed": "Der Link ist ungültig oder abgelaufen. Fordern Sie einen neuen Link an.",
+      "invite": {
+        "cta": "Konto aktivieren",
+        "intro": "Drücken Sie die Schaltfläche, um das Konto zu aktivieren und ein Passwort zu wählen.",
+        "title": "Konto aktivieren"
+      },
+      "missing": "Unvollständiger Link: der Bestätigungscode fehlt. Fordern Sie einen neuen Link an.",
+      "other": {
+        "cta": "Weiter",
+        "intro": "Drücken Sie die Schaltfläche, um die Anmeldung abzuschließen.",
+        "title": "Anmelden"
+      },
+      "recovery": {
+        "cta": "Neues Passwort festlegen",
+        "intro": "Aus Sicherheitsgründen wird der Link erst aktiv, wenn Sie die Schaltfläche drücken: so können automatische Prüfungen Ihres Postfachs ihn nicht verbrauchen.",
+        "title": "Neues Passwort festlegen"
+      },
+      "requestNew": "Neuen Link anfordern",
+      "signup": {
+        "cta": "E-Mail bestätigen",
+        "intro": "Drücken Sie die Schaltfläche, um die Adresse zu bestätigen und sich anzumelden.",
+        "title": "E-Mail-Adresse bestätigen"
+      },
+      "working": "Prüfung läuft…"
+    },
     "login": {
       "blocked": "Ihr Konto wurde gesperrt und die Sitzung beendet. Für Informationen schreiben Sie an <link>support@stressindex.io</link>.",
       "email": "E-Mail",
@@ -1202,6 +1284,8 @@
     },
     "overview": {
       "activeAlerts": "Aktive Warnungen",
+      "appEvents": "Hinweise aus der App",
+      "appEventsHint": "Ungelesen, letzte 30 Tage. Zählen nicht zu den aktiven Warnungen.",
       "emptyFiltered": "Keine Messungen mit diesem Filter",
       "filterActive": "Filter: {label}",
       "filterRemove": "Filter entfernen",
@@ -1484,6 +1568,7 @@
       "areaProfessionisti": "Bereich für Fachkräfte",
       "atleta": "Sportler",
       "clienti": "Klienten",
+      "confronto": "Vergleich",
       "impostazioni": "Einstellungen",
       "misurazione": "Messung",
       "monitoraggio": "Monitoring",
@@ -1516,8 +1601,10 @@
     },
     "home": {
       "activeClients": "Aktive Klienten",
+      "activeInDaysHint": "{count} aktiv in den letzten {days} Tagen",
       "aggregateTrend": "Mittlerer Gesamtverlauf",
       "alertsResolved": "Erledigte Warnungen",
+      "alertsResolvedUnavailable": "Anzahl nicht verfügbar: die Warnungen konnten nicht gelesen werden",
       "colTime": "Uhrzeit",
       "daysAgoShort": "vor {count} T",
       "daysShort": "{count} T",
@@ -1532,14 +1619,20 @@
       "noMeasurementsToday": "Heute keine Messungen erfasst",
       "noMonitoring": "Kein Monitoring erfasst",
       "noRecentNotes": "Keine aktuellen Notizen",
+      "notAvailable": "k. A.",
       "priorityAlerts": "Wichtige Warnungen",
       "recentMonitoring": "Aktuelle Monitorings",
       "reminder": "Erinnerung",
       "remoteBadge": "Remote",
+      "seeAllMeasurements": "Alle anzeigen",
       "toContact": "Zu kontaktieren",
       "todaysMeasurements": "Messungen von heute",
+      "totalClients": "Klienten gesamt",
       "totalHint": "gesamt",
       "trend": "Trend",
+      "trendNoPreviousMonth": "Keine Messungen im Vormonat",
+      "trendTitle": "{current, plural, one {# Messung} other {# Messungen}} in den letzten 30 Tagen, {previous} in den 30 davor",
+      "trendUnavailable": "Veränderung nicht verfügbar: die Messungen konnten nicht gelesen werden",
       "unassignedMeasurement": "Nicht zugeordnet",
       "vsLastMonth": "vs. Vormonat",
       "weekHint": "diese Woche"
@@ -1566,6 +1659,33 @@
       "superadmin": "Super Admin",
       "teamLive": "Team Live",
       "today": "Heute"
+    },
+    "scope": {
+      "all": "Gesamte Plattform",
+      "badge": "GLOBALE ANSICHT",
+      "counts": {
+        "alertAttivi": "Aktive Alerts",
+        "alertRisolti7": "Gelöste Alerts (7 Tage)",
+        "collegamenti": "Aktive Verknüpfungen",
+        "daRemoto": "aus der Ferne",
+        "inStudio": "in der Praxis",
+        "misurazioni": "Messungen",
+        "misurazioni30": "Messungen (30 Tage)",
+        "misurazioniOggi": "Messungen heute",
+        "monitoraggi": "Monitorings",
+        "monitoraggi30": "Monitorings (30 Tage)",
+        "professionisti": "Fachkräfte",
+        "professionistiOggi": "Heute aktive Fachkräfte",
+        "schede": "Klientenakten",
+        "schedeAttive90": "Aktive Akten (90 Tage)"
+      },
+      "homeTitle": "Gesamte Plattform",
+      "label": "Ansicht",
+      "mine": "Meine Daten",
+      "note": "Globale Ansicht: Zahlen der gesamten Plattform, ohne Namen oder Messungen der Klienten anderer Fachkräfte (die Einwilligung gilt gegenüber der eigenen Fachkraft). Wechseln Sie zu \"Meine Daten\", um Akten zu sehen.",
+      "switchError": "Ansicht konnte nicht gewechselt werden.",
+      "title": "Alle <em>Klienten</em>",
+      "unavailable": "Zahlen nicht verfügbar: Lesefehler, gemeldet."
     },
     "search": {
       "clear": "Suche leeren",
@@ -1678,6 +1798,7 @@
       "invalid_json": "Ungültige Anfrage.",
       "invalid_plan": "Ungültiger Tarif.",
       "invalid_role": "Ungültige Rolle.",
+      "invalid_scope": "Ungültige Ansicht.",
       "invite_failed": "Die Einladung konnte nicht gesendet werden.",
       "invite_required": "Einladung fehlt.",
       "keep_in_merge_list": "Das zu behaltende Profil kann nicht auch zusammengeführt werden.",
@@ -1714,12 +1835,16 @@
       "motivo_obbligatorio": "Ein Grund ist erforderlich.",
       "name_required": "Der Name ist erforderlich.",
       "nessun_abbonamento": "Das Konto hat kein Abonnement: Legen Sie zuerst eines an.",
+      "network": "Verbindung fehlgeschlagen. Prüfen Sie Ihre Netzwerkverbindung und versuchen Sie es erneut.",
       "no_account": "Dieser Klient hat noch kein Konto für die App.",
       "no_client_account": "Das Profil ist keinem registrierten Klientenkonto zugeordnet (weder per ID noch per E-Mail).",
       "no_email": "Der Nutzer hat keine E-Mail.",
       "non_autorizzato": "Sie sind zu dieser Löschung nicht berechtigt.",
       "not_found": "Element nicht gefunden.",
       "nothing_to_update": "Nichts zu aktualisieren.",
+      "organization_exists": "Sie haben bereits eine Organisation mit diesem Namen.",
+      "organization_not_found": "Organisation nicht gefunden.",
+      "organization_required": "Organisation fehlt.",
       "password_too_short": "Passwort zu kurz (mind. 8 Zeichen).",
       "pdf_missing_params": "Erforderliche Parameter fehlen.",
       "pdf_render_failed": "Die Messung wurde gefunden, das Dokument konnte jedoch nicht erstellt werden. Versuchen Sie es erneut; falls das Problem bestehen bleibt, melden Sie es uns.",
@@ -1729,6 +1854,7 @@
       "professional_not_found": "Fachkraft nicht gefunden.",
       "professional_profile_failed": "Rolle aktualisiert, Erstellen von professional_profiles jedoch fehlgeschlagen: {detail}",
       "profile_failed": "Profil konnte nicht erstellt werden",
+      "profile_update_failed": "Ihr Profil konnte nicht aktualisiert werden. Laden Sie die Seite neu und versuchen Sie es erneut.",
       "prova_senza_scadenza": "Die Testphase benötigt ein Ablaufdatum.",
       "rate_limited": "Sie haben das Limit an Eingriffen in den Zugang dieses Klienten in den letzten 24 Stunden erreicht. Versuchen Sie es später erneut.",
       "report_read_failed": "Die Messungen des Zeitraums konnten nicht gelesen werden. Bitte versuchen Sie es in Kürze erneut.",
@@ -1774,6 +1900,7 @@
       "emailNotConfirmed": "E-Mail noch nicht bestätigt: Öffnen Sie den Link, den wir Ihnen zur Aktivierung Ihres Kontos gesendet haben.",
       "generic": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es in Kürze erneut.",
       "invalidCredentials": "E-Mail oder Passwort falsch",
+      "leakedPassword": "Dieses Passwort steht auf Listen kompromittierter Passwörter: wählen Sie ein anderes.",
       "otpExpired": "Der Link ist abgelaufen oder wurde bereits verwendet. Fordern Sie einen neuen an.",
       "rateLimit": "Zu viele Versuche. Warten Sie einige Minuten und versuchen Sie es erneut.",
       "sessionMissing": "Ihre Sitzung ist nicht mehr gültig. Bitte melden Sie sich erneut an.",
@@ -3454,6 +3581,30 @@
         "time": "Zeitbereich",
         "welch": "Frequenzbereich (Welch)"
       },
+      "na": {
+        "generic": "Wert von der App für diese Messung nicht berechnet",
+        "sdnnIndex": "Der SDNN-Index wird von der App nicht berechnet: Er erfordert eine lange Aufzeichnung, aufgeteilt in 5-Minuten-Segmente",
+        "short": "k. A."
+      },
+      "norms": {
+        "age": {
+          "elderly": "über 60 Jahre",
+          "midAdult": "31-45 Jahre",
+          "senior": "46-60 Jahre",
+          "young": "bis 30 Jahre"
+        },
+        "fitness": {
+          "active": "aktiv",
+          "athlete": "Athlet",
+          "sedentary": "inaktiv"
+        },
+        "missingBirthDate": "Allgemeine Bereiche: Ergänze das Geburtsdatum in den <link>Stammdaten</link>, um Bereiche nach Alter und Geschlecht zu erhalten.",
+        "missingBoth": "Allgemeine Bereiche: Ergänze Geschlecht und Geburtsdatum in den <link>Stammdaten</link>, um Bereiche nach Alter und Geschlecht zu erhalten.",
+        "missingSex": "Allgemeine Bereiche: Ergänze das Geschlecht in den <link>Stammdaten</link>, um Bereiche nach Alter und Geschlecht zu erhalten.",
+        "personal": "Bereiche für {sex, select, female {Frauen} other {Männer}}, {age}, Aktivitätsniveau {fitness} ({sources}) bei {metrics}. Die übrigen Parameter behalten die allgemeinen Bereiche für gesunde Erwachsene.",
+        "sexOther": "Allgemeine Bereiche: Die Tabellen nach Alter und Geschlecht gibt es nur für Frauen und Männer.",
+        "sources": "Nunan 2010, Voss 2015, Schumann & Bär 2022"
+      },
       "quality": {
         "excellent": "Ausgezeichnet",
         "fair": "Mittel",
@@ -3462,13 +3613,15 @@
       },
       "reference": {
         "legend": "Indikative Referenzbereiche für einen gesunden Erwachsenen, Aufzeichnung von 5-10 Minuten: grün innerhalb des Bereichs, gelb im Grenzbereich, rot außerhalb, grau ohne Referenz.",
+        "legendPersonal": "Grün im Bereich, gelb an der Grenze, rot außerhalb, grau ohne Referenz. Wo angegeben, gilt der Bereich nach Alter und Geschlecht (25.-75. Perzentil der Gruppe); für die übrigen Parameter ist er ein Richtwert für gesunde Erwachsene, Aufzeichnung von 5-10 Minuten.",
         "status": {
           "edge": "Im Grenzbereich",
           "in": "Im Referenzbereich",
           "none": "Kein Referenzbereich",
           "out": "Außerhalb des Bereichs"
         },
-        "title": "Indikativer Referenzbereich: {from}–{to} (gesunder Erwachsener, Aufzeichnung von 5-10 Minuten)"
+        "title": "Indikativer Referenzbereich: {from}–{to} (gesunder Erwachsener, Aufzeichnung von 5-10 Minuten)",
+        "titlePersonal": "Bereich nach Alter und Geschlecht (25.-75. Perzentil der Gruppe): {from}–{to}"
       },
       "signalQuality": "Signalqualität",
       "summary": {
@@ -3480,6 +3633,7 @@
         "title": "Parameter und Referenzbereiche"
       }
     },
+    "sensorFallback": "BLE-Sensor",
     "types": {
       "coherence": {
         "description": "Geführte Atmung und Herzkohärenz",
@@ -3546,6 +3700,9 @@
   "meta": {
     "analytics": {
       "title": "Analytics"
+    },
+    "authConfirm": {
+      "title": "Link bestätigen"
     },
     "clientProfile": {
       "title": "Klientenprofil"
@@ -3879,6 +4036,11 @@
       "open": "Details öffnen",
       "title": "Letztes Monitoring"
     },
+    "naCard": {
+      "noSummary": "Zusammenfassung der Aufzeichnung noch nicht von der App berechnet",
+      "notComputed": "Wert von der App für diese Aufzeichnung nicht berechnet",
+      "short": "k. A."
+    },
     "night": {
       "dayRefMissing": "Tagesreferenz fehlt",
       "detected": "Nacht automatisch aus der Herzfrequenz erkannt",
@@ -4191,6 +4353,14 @@
       "admin": "Administrator",
       "member": "Fachkraft",
       "owner": "Inhaber"
+    },
+    "switcher": {
+      "active": "Aktiv",
+      "intro": "{count, plural, one {Sie gehören # Organisation an.} other {Sie gehören # Organisationen an: wählen Sie, welche Sie auf dieser Seite verwalten.}}",
+      "members": "{count, plural, one {# aktives Mitglied} other {# aktive Mitglieder}}",
+      "switch": "Aktivieren",
+      "switching": "Wechsel läuft…",
+      "title": "Ihre Organisationen"
     },
     "tabs": {
       "overview": "Übersicht",
@@ -4891,6 +5061,14 @@
       "title": "Sport-Modul"
     },
     "heading": "<em>Sport</em>-Modul",
+    "na": {
+      "noQuestionnaire": "Fragebogen nach der Einheit nicht ausgefüllt",
+      "noValidSession": "Keine gültige Sporteinheit (mindestens 5 Minuten)",
+      "noValidSessionWeek": "Keine gültige Sporteinheit (mindestens 5 Minuten) in den letzten 7 Tagen",
+      "notComputed": "Wert von der App für diese Einheit nicht berechnet",
+      "short": "k. A.",
+      "sportNotSet": "Sportart für diese Einheit nicht angegeben"
+    },
     "pagination": {
       "next": "Weiter",
       "page": "Seite {page} von {total}",
@@ -4932,7 +5110,9 @@
       "period7": "Letzte 7 Tage",
       "period90": "Letzte 90 Tage",
       "periodAll": "Gesamt",
-      "thresholdBadge": "Schwellentest"
+      "thresholdBadge": "Schwellentest",
+      "tooShortBadge": "Zu kurz",
+      "tooShortHint": "Unter {minutes} Minuten: aus Statistiken und Diagrammen ausgeschlossen"
     },
     "soreness": {
       "addome": "Bauch",

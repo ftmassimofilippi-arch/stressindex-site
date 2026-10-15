@@ -1,0 +1,14 @@
+{
+  "na": {
+    "short": "k. A.",
+    "noValidSessionWeek": "Keine gültige Sporteinheit (mindestens 5 Minuten) in den letzten 7 Tagen",
+    "noValidSession": "Keine gültige Sporteinheit (mindestens 5 Minuten)",
+    "notComputed": "Wert von der App für diese Einheit nicht berechnet",
+    "noQuestionnaire": "Fragebogen nach der Einheit nicht ausgefüllt",
+    "sportNotSet": "Sportart für diese Einheit nicht angegeben"
+  },
+  "sessions": {
+    "tooShortBadge": "Zu kurz",
+    "tooShortHint": "Unter {minutes} Minuten: aus Statistiken und Diagrammen ausgeschlossen"
+  }
+}

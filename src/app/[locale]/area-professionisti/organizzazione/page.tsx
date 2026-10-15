@@ -7,6 +7,7 @@ import {
   getProfessionalProfile,
 } from '@/lib/dashboard-data'
 import { CreateOrganizationForm } from './CreateOrganizationForm'
+import { OrganizationSwitcher } from './OrganizationSwitcher'
 import { OrganizationTabs } from './OrganizationTabs'
 import { MemberView } from './MemberView'
 
@@ -24,7 +25,9 @@ export default async function OrganizationPage() {
     getTranslations('organization'),
   ])
 
-  if (!ctx.organization) {
+  // Il form di creazione compare SOLO se l'utente non ha nessuna organizzazione
+  // viva (né come owner né come membro): `organization` è null solo in quel caso.
+  if (!ctx.organization || ctx.organizations.length === 0) {
     return (
       <DashboardLayout professional={professional}>
         <header className="mb-6">
@@ -38,10 +41,15 @@ export default async function OrganizationPage() {
     )
   }
 
+  const switcher = ctx.organizations.length > 1 ? (
+    <OrganizationSwitcher organizations={ctx.organizations} activeId={ctx.organization.id} />
+  ) : null
+
   if (ctx.role === 'owner' || ctx.role === 'admin') {
     const [stats, overview] = await Promise.all([getOrgMembersStats(), getOrgOverview()])
     return (
       <DashboardLayout professional={professional}>
+        {switcher}
         <header className="mb-6">
           <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
             {ctx.organization.name}
@@ -61,6 +69,7 @@ export default async function OrganizationPage() {
 
   return (
     <DashboardLayout professional={professional}>
+      {switcher}
       <header className="mb-6">
         <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
           {ctx.organization.name}

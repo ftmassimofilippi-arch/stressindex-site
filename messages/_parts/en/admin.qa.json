@@ -1,0 +1,59 @@
+{
+  "tabs": {
+    "duplicates": "Possible duplicates",
+    "unassigned": "Without record"
+  },
+  "overview": {
+    "trialHint": "Trial plan not expired",
+    "proNoExpiry": "Pro with no expiry",
+    "proNoExpiryHint": "Pro subscription with no end date",
+    "legacySource": "{count, plural, one {# professional has} other {# professionals have}} no row in subscriptions: the status shown comes from old data (profile plan and sign-up trial end). Look for the \"Old data\" badge in Users."
+  },
+  "users": {
+    "proNoExpiry": "Pro with no expiry",
+    "legacyBadge": "Old data",
+    "legacyHint": "No subscription row: status derived from the profile plan and the sign-up trial end"
+  },
+  "duplicates": {
+    "search": "Search name, email or professional…",
+    "count": "{count, plural, one {# group} other {# groups}}",
+    "subtitle": "Unmerged records with the same first name, last name and date of birth, or the same email, including across professionals. Nothing is merged automatically.",
+    "empty": "No possible duplicates.",
+    "reasonName": "Same name and date of birth",
+    "reasonEmail": "Same email",
+    "crossProfessional": "Different professionals",
+    "crossProfessionalHint": "Records can only be merged under the same professional: move the record first from the Clients tab.",
+    "merge": "Merge",
+    "mergeHint": "Open the merge with preview",
+    "thClient": "Record",
+    "thBirth": "Date of birth",
+    "thEmail": "Email",
+    "thProfessional": "Professional",
+    "thMeasurements": "Measurements",
+    "thLast": "Last measurement",
+    "never": "None",
+    "loadError": "Could not load possible duplicates."
+  },
+  "unassigned": {
+    "loadError": "Could not load measurements without a record.",
+    "roleClient": "Client account (measured in their app)",
+    "roleProfessional": "Professional account (in session, no record chosen)",
+    "roleUnknown": "Account without role",
+    "daysOption": "Last {days} days",
+    "roleAll": "All accounts ({count})",
+    "roleClientOption": "Client accounts ({count})",
+    "roleProfessionalOption": "Professional accounts ({count})",
+    "count": "{count, plural, one {# measurement} other {# measurements}}",
+    "subtitle": "Measurements with no client record. From a client account this is expected (the site shows them through the link); from a professional it means no record was chosen. List only, no automatic action.",
+    "thDate": "Date",
+    "thAccount": "Recorded by",
+    "thType": "Type",
+    "thDuration": "Duration",
+    "thClientName": "Name given",
+    "thCard": "Inferred record",
+    "openHint": "Open the measurement in {name}'s record (read only)",
+    "open": "Open",
+    "noCard": "No inferable record",
+    "empty": "No measurements without a record in this period."
+  }
+}

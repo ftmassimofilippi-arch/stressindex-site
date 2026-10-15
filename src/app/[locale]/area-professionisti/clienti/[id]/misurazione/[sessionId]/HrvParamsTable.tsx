@@ -1,6 +1,9 @@
+import type { ReactNode } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
-import { intlTag, num, toStr } from '@/lib/format'
-import { NORMATIVE_RANGES, paramsSummary, rangeStatus, type RangeStatus, type ReferenceRange } from '@/lib/hrv-reference-ranges'
+import { Link } from '@/i18n/navigation'
+import { intlTag, num, toNum, toStr } from '@/lib/format'
+import { paramsSummary, rangeStatus, withPersonalRanges, type RangeStatus, type ReferenceRange } from '@/lib/hrv-reference-ranges'
+import type { ClientNorms } from '@/lib/hrv-norms'
 import type { MeasurementAnalytics } from '@/lib/types'
 
 // signal_quality è un'etichetta testuale ("good"|"fair"|"poor"), non un numero:
@@ -108,10 +111,63 @@ function StatusDot({ status, title, print = false }: { status: RangeStatus; titl
   )
 }
 
-export function HrvParamsTable({ measurement, print = false }: { measurement: MeasurementAnalytics; print?: boolean }) {
+// Avviso sopra la tabella: da dove vengono i range. Con i range per età e
+// sesso dice la fascia del cliente; senza sesso o data di nascita invita a
+// completare l'anagrafica (link alla scheda, tab Impostazioni, quando c'è).
+function NormsNotice({ norms, settingsHref, print }: { norms: ClientNorms; settingsHref?: string; print: boolean }) {
+  const t = useTranslations('measurement.params.norms')
+  const tMetrics = useTranslations('charts.metrics')
+  const link = (c: ReactNode) =>
+    settingsHref && !print ? (
+      <Link href={settingsHref} className="underline hover:text-anthracite">{c}</Link>
+    ) : (
+      <>{c}</>
+    )
+  let body: ReactNode = null
+  if (norms.kind === 'missing') {
+    const key = norms.sexOther
+      ? 'sexOther'
+      : norms.missing.length === 2
+        ? 'missingBoth'
+        : norms.missing[0] === 'sex'
+          ? 'missingSex'
+          : 'missingBirthDate'
+    body = t.rich(key, { link })
+  } else if (norms.kind === 'personal') {
+    body = t('personal', {
+      sex: norms.profile.sex,
+      age: t(`age.${norms.profile.ageGroup}`),
+      fitness: t(`fitness.${norms.profile.fitness}`),
+      sources: t('sources'),
+      metrics: Object.keys(norms.ranges).map((k) => tMetrics(k)).join(', '),
+    })
+  } else {
+    return null
+  }
+  const tone = norms.kind === 'missing' ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-surface border-surface-border text-anthracite'
+  return (
+    <p className={`rounded-lg border ${tone} ${print ? 'mb-2 px-2.5 py-1.5 text-[9.5px]' : 'mb-4 px-3 py-2 text-xs'}`}>{body}</p>
+  )
+}
+
+export function HrvParamsTable({
+  measurement,
+  print = false,
+  norms = null,
+  settingsHref,
+}: {
+  measurement: MeasurementAnalytics
+  print?: boolean
+  /** Range per età e sesso da `hrv_norms` (loadClientNorms); null = solo tabella generica. */
+  norms?: ClientNorms | null
+  /** Scheda cliente, tab Impostazioni: per completare sesso e data di nascita. */
+  settingsHref?: string
+}) {
   const locale = useLocale()
   const t = useTranslations('measurement.params')
   const tMetrics = useTranslations('charts.metrics')
+  const personal = norms?.kind === 'personal' ? norms.ranges : null
+  const ranges = withPersonalRanges(personal)
 
   const signalQualityLabel = (value: unknown): string => {
     const raw = toStr(value)
@@ -126,6 +182,7 @@ export function HrvParamsTable({ measurement, print = false }: { measurement: Me
 
   return (
     <div>
+      {norms && <NormsNotice norms={norms} settingsHref={settingsHref} print={print} />}
       <div className={`grid ${print ? 'grid-cols-2 gap-x-6 gap-y-3' : 'grid-cols-1 md:grid-cols-2 gap-6'}`}>
         {GROUPS.map((g) => (
           <div key={g.key} className={print ? 'break-inside-avoid' : undefined}>
@@ -134,11 +191,16 @@ export function HrvParamsTable({ measurement, print = false }: { measurement: Me
               {g.fields.map((f) => {
                 const key = String(f.key)
                 const v = measurement[f.key] as number | null | undefined
-                const range = NORMATIVE_RANGES[key] ?? null
+                const range = ranges[key] ?? null
+                const isPersonal = !!personal?.[key]
                 const status = rangeStatus(v, range)
                 const bounds = range ? rangeBounds(range, locale) : null
                 const statusLabel = t(`reference.status.${status}`)
-                const title = bounds ? `${statusLabel} · ${t('reference.title', bounds)}` : statusLabel
+                const rangeTitle = bounds ? t(isPersonal ? 'reference.titlePersonal' : 'reference.title', bounds) : null
+                const title = rangeTitle ? `${statusLabel} · ${rangeTitle}` : statusLabel
+                // Valore assente: "n.d." senza unità, con il motivo nel tooltip.
+                const missing = toNum(v) == null
+                const naTitle = key === 'sdnn_index' ? t('na.sdnnIndex') : t('na.generic')
                 return (
                   <div key={key} className={rowCls}>
                     <dt className="text-anthracite-lighter min-w-0 truncate">{tMetrics(key)}</dt>
@@ -146,14 +208,18 @@ export function HrvParamsTable({ measurement, print = false }: { measurement: Me
                       {bounds && (
                         <span
                           className={`text-anthracite-lighter tabular-nums ${print ? 'text-[9px]' : 'text-[10px]'}`}
-                          title={t('reference.title', bounds)}
+                          title={rangeTitle ?? undefined}
                         >
                           {bounds.from}–{bounds.to}
                         </span>
                       )}
-                      <span className="font-medium text-anthracite tabular-nums">
-                        {num(v, f.digits ?? 1, locale)} {f.unit ? <span className={`text-anthracite-lighter ml-0.5 ${print ? 'text-[9px]' : 'text-xs'}`}>{f.unit}</span> : null}
-                      </span>
+                      {missing ? (
+                        <span className="text-anthracite-lighter tabular-nums" title={naTitle}>{t('na.short')}</span>
+                      ) : (
+                        <span className="font-medium text-anthracite tabular-nums">
+                          {num(v, f.digits ?? 1, locale)} {f.unit ? <span className={`text-anthracite-lighter ml-0.5 ${print ? 'text-[9px]' : 'text-xs'}`}>{f.unit}</span> : null}
+                        </span>
+                      )}
                       <StatusDot status={status} title={title} print={print} />
                     </dd>
                   </div>
@@ -172,16 +238,25 @@ export function HrvParamsTable({ measurement, print = false }: { measurement: Me
           </div>
         ))}
       </div>
-      <p className={`text-anthracite-lighter ${print ? 'mt-2 text-[9px]' : 'mt-4 text-[11px]'}`}>{t('reference.legend')}</p>
+      <p className={`text-anthracite-lighter ${print ? 'mt-2 text-[9px]' : 'mt-4 text-[11px]'}`}>{t(personal ? 'reference.legendPersonal' : 'reference.legend')}</p>
     </div>
   )
 }
 
 // Card di riepilogo: quanti parametri (fra quelli con un intervallo di
 // riferimento) sono nella norma, al limite o fuori range.
-export function ParamsSummaryCard({ measurement, print = false }: { measurement: MeasurementAnalytics; print?: boolean }) {
+export function ParamsSummaryCard({
+  measurement,
+  print = false,
+  norms = null,
+}: {
+  measurement: MeasurementAnalytics
+  print?: boolean
+  /** Stessi range della tabella: con i range per età e sesso il conteggio cambia. */
+  norms?: ClientNorms | null
+}) {
   const t = useTranslations('measurement.params.summary')
-  const s = paramsSummary(measurement)
+  const s = paramsSummary(measurement, withPersonalRanges(norms?.kind === 'personal' ? norms.ranges : null))
   const tiles: Array<{ key: RangeStatus; count: number; label: string }> = [
     { key: 'in', count: s.inRange, label: t('inRange') },
     { key: 'edge', count: s.edge, label: t('edge') },

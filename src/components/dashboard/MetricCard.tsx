@@ -9,9 +9,13 @@ type Props = {
   trend?: number | null // % variazione
   hint?: string
   inverted?: boolean // true se valore basso = positivo
+  /** Classe aggiunta al valore (es. colore del segno di un trend). */
+  valueClassName?: string
+  /** Tooltip sulla card: spiega un "n.d." o da dove viene il numero. */
+  title?: string
 }
 
-export function MetricCard({ label, value, unit, trend, hint, inverted }: Props) {
+export function MetricCard({ label, value, unit, trend, hint, inverted, valueClassName = '', title }: Props) {
   const locale = useLocale()
   const trendColor = trend == null
     ? 'text-anthracite-lighter'
@@ -20,10 +24,10 @@ export function MetricCard({ label, value, unit, trend, hint, inverted }: Props)
   const TrendIcon = trend == null ? Minus : trend > 0 ? ArrowUpRight : trend < 0 ? ArrowDownRight : Minus
 
   return (
-    <div className="card p-5 min-w-0">
+    <div className="card p-5 min-w-0" title={title}>
       <div className="text-xs font-medium text-anthracite-lighter uppercase tracking-wide truncate">{label}</div>
       <div className="mt-2 flex items-baseline gap-1">
-        <span className="text-3xl font-serif text-anthracite">{value}</span>
+        <span className={`text-3xl font-serif ${valueClassName || 'text-anthracite'}`}>{value}</span>
         {unit && <span className="text-sm text-anthracite-lighter">{unit}</span>}
       </div>
       {(trend != null || hint) && (

@@ -2,6 +2,8 @@ import { Link } from '@/i18n/navigation'
 import { getTranslations } from 'next-intl/server'
 import { ArrowLeft, Lock } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { getDataScope } from '@/lib/data-scope-server'
+import { GlobalScopePanel } from '@/components/dashboard/GlobalScopePanel'
 import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
 import { getProfessionalProfile } from '@/lib/dashboard-data'
 import {
@@ -24,6 +26,19 @@ export default async function SportPage({
 }: {
   searchParams?: { professionista?: string }
 }) {
+  // Vista globale del superadmin (data-scope.ts): conteggi, nessuna riga altrui.
+  const { scope } = await getDataScope()
+  if (scope === 'all') {
+    const tScope = await getTranslations('dashboard.scope')
+    return (
+      <DashboardLayout professional={await getProfessionalProfile()}>
+        <header className="mb-6">
+          <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">{tScope('homeTitle')}</h1>
+        </header>
+        <GlobalScopePanel />
+      </DashboardLayout>
+    )
+  }
   const t = await getTranslations('sport')
   const { professionalId, viewing, access } = await resolveSportContext(searchParams?.professionista)
   const [professional] = await Promise.all([

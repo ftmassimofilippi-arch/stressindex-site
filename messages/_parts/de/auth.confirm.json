@@ -1,0 +1,29 @@
+{
+  "confirm": {
+    "recovery": {
+      "title": "Neues Passwort festlegen",
+      "intro": "Aus Sicherheitsgründen wird der Link erst aktiv, wenn Sie die Schaltfläche drücken: so können automatische Prüfungen Ihres Postfachs ihn nicht verbrauchen.",
+      "cta": "Neues Passwort festlegen"
+    },
+    "invite": {
+      "title": "Konto aktivieren",
+      "intro": "Drücken Sie die Schaltfläche, um das Konto zu aktivieren und ein Passwort zu wählen.",
+      "cta": "Konto aktivieren"
+    },
+    "signup": {
+      "title": "E-Mail-Adresse bestätigen",
+      "intro": "Drücken Sie die Schaltfläche, um die Adresse zu bestätigen und sich anzumelden.",
+      "cta": "E-Mail bestätigen"
+    },
+    "other": {
+      "title": "Anmelden",
+      "intro": "Drücken Sie die Schaltfläche, um die Anmeldung abzuschließen.",
+      "cta": "Weiter"
+    },
+    "working": "Prüfung läuft…",
+    "missing": "Unvollständiger Link: der Bestätigungscode fehlt. Fordern Sie einen neuen Link an.",
+    "failed": "Der Link ist ungültig oder abgelaufen. Fordern Sie einen neuen Link an.",
+    "requestNew": "Neuen Link anfordern",
+    "backLogin": "Zurück zur Anmeldung"
+  }
+}

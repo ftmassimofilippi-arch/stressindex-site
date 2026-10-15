@@ -6,16 +6,15 @@ import { useLocale, useTranslations } from 'next-intl'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { fullName, num } from '@/lib/format'
-import type { MeasurementAnalytics } from '@/lib/types'
-import type { ClientWithLastMeasurement } from '@/lib/dashboard-data'
+import type { ClientWithLastMeasurement, MeasurementAnalyticsSummary } from '@/lib/dashboard-data'
 import type { Tr } from '@/i18n/types'
 import { Link } from '@/i18n/navigation'
 import { intervalloGiorniIta, measuredInstant } from '@/lib/format'
 import type { MonitoringSession } from '@/lib/monitoring-types'
 import { isSleepSession } from '@/lib/monitoring-types'
-import { PROFILE_LABEL, PROFILE_ORDER, effectiveProfile, wallDate } from '@/lib/monitoring-format'
+import { PROFILE_LABEL, PROFILE_ORDER, effectiveProfile } from '@/lib/monitoring-format'
 
-type Props = { clients: ClientWithLastMeasurement[]; measurements: MeasurementAnalytics[]; monitoring?: MonitoringSession[] }
+type Props = { clients: ClientWithLastMeasurement[]; measurements: MeasurementAnalyticsSummary[]; monitoring?: MonitoringSession[] }
 
 type SegmentDim = 'tag' | 'sesso' | 'atleta' | 'fumatore'
 
@@ -90,11 +89,15 @@ export function AnalyticsClient({ clients, measurements, monitoring = [] }: Prop
   const segments = useMemo(() => buildSegments(clients, filtered, segmentDim, tSeg), [clients, filtered, segmentDim, tSeg])
 
   // Monitoraggi nel periodo, per tipo e per profilo (conteggi, nessun ricalcolo).
+  // Stessa finestra delle misurazioni: giorni ITALIANI sull'istante reale
+  // (`start_time` è già un istante, vedi monitoring-format.ts). Con gli estremi
+  // a mezzanotte UTC le due sezioni della pagina contavano periodi diversi.
   const monitoringStats = useMemo(() => {
-    const f = new Date(range.from + 'T00:00:00Z').getTime()
-    const tt = new Date(range.to + 'T23:59:59Z').getTime()
+    const { fromIso, toIso } = intervalloGiorniIta(range.from, range.to)
+    const f = new Date(fromIso).getTime()
+    const tt = new Date(toIso).getTime()
     const inRange = monitoring.filter((s) => {
-      const w = wallDate(s.start_time, s.tz_offset_minutes)?.getTime() ?? 0
+      const w = s.start_time ? new Date(s.start_time).getTime() : NaN
       return w >= f && w <= tt
     })
     const byProfile = new Map<string, number>()
@@ -236,7 +239,7 @@ export function AnalyticsClient({ clients, measurements, monitoring = [] }: Prop
 
 // `tSeg` traduce le etichette dei segmenti (`dashboard.analytics.segments`);
 // i tag liberi del cliente restano com'è stato scritto.
-function buildSegments(clients: ClientWithLastMeasurement[], measurements: MeasurementAnalytics[], dim: SegmentDim, tSeg: Tr) {
+function buildSegments(clients: ClientWithLastMeasurement[], measurements: MeasurementAnalyticsSummary[], dim: SegmentDim, tSeg: Tr) {
   const groups = new Map<string, { stress: number[]; recovery: number[] }>()
   const clientMap = new Map(clients.map((c) => [c.id, c]))
 

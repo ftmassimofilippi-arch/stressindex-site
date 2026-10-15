@@ -11,6 +11,8 @@ import { EmptyState } from '@/components/dashboard/EmptyState'
 import { WeeklySessionsBar } from './SportCharts'
 import { formatIstante, formatMeasuredAt, formatMeasuredDate, measuredInstant, num } from '@/lib/format'
 import { competitiveLevelLabel, formatDuration } from '@/lib/sport-format'
+import { isSportSessionValida } from '@/lib/sport-rules'
+import { SportTooShortBadge } from '@/components/dashboard/SportTooShortBadge'
 import type {
   SportAthleteCard,
   SportDashboardStats,
@@ -78,7 +80,12 @@ function DashboardTab({ stats, baseQuery }: { stats: SportDashboardStats; baseQu
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard label={t('dashboard.totalSessions')} value={stats.total_sessions} />
         <MetricCard label={t('dashboard.thisWeek')} value={stats.sessions_this_week} hint={t('dashboard.last7d')} />
-        <MetricCard label={t('dashboard.avgTrimp')} value={stats.avg_trimp_week == null ? '—' : Math.round(stats.avg_trimp_week)} hint={t('dashboard.weekly')} />
+        <MetricCard
+          label={t('dashboard.avgTrimp')}
+          value={stats.avg_trimp_week == null ? t('na.short') : Math.round(stats.avg_trimp_week)}
+          hint={t('dashboard.weekly')}
+          title={stats.avg_trimp_week == null ? t('na.noValidSessionWeek') : undefined}
+        />
         <MetricCard label={t('dashboard.activeAthletes')} value={stats.active_athletes} hint={t('dashboard.last30d')} />
       </div>
 
@@ -289,8 +296,12 @@ function AtletiTab({ athletes, baseQuery }: { athletes: SportAthleteCard[]; base
 
           <div className="grid grid-cols-3 gap-2 mt-4 text-center">
             <Stat label={t('athletes.sessions30d')} value={a.sessions_30d} />
-            <Stat label={t('athletes.trimp7d')} value={a.trimp_7d == null ? '—' : Math.round(a.trimp_7d)} />
-            <Stat label={t('athletes.lastTrimp')} value={a.last_session_trimp == null ? '—' : Math.round(a.last_session_trimp)} />
+            <Stat label={t('athletes.trimp7d')} value={a.trimp_7d == null ? t('na.short') : Math.round(a.trimp_7d)} title={a.trimp_7d == null ? t('na.noValidSessionWeek') : undefined} />
+            <Stat
+              label={t('athletes.lastTrimp')}
+              value={a.last_session_trimp == null ? t('na.short') : Math.round(a.last_session_trimp)}
+              title={a.last_session_trimp == null ? (a.last_session_at ? t('na.notComputed') : t('na.noValidSession')) : undefined}
+            />
           </div>
 
           <div className="mt-4 pt-3 border-t border-surface-border flex items-center justify-between gap-2 text-xs">
@@ -332,8 +343,8 @@ function SessionRow({ s, baseQuery, variant = 'recent' }: { s: SportSessionWithA
         <>
           <Td href={href} primary className="font-medium text-anthracite">{s.athlete_name}</Td>
           <Td href={href} className="text-anthracite-lighter">{formatMeasuredDate(s, undefined, locale)}</Td>
-          <Td href={href}>{s.sport ?? '—'}</Td>
-          <Td href={href}>{formatDuration(s.duration_s)}</Td>
+          <Td href={href}>{s.sport ?? <span title={t('na.sportNotSet')}>—</span>}</Td>
+          <Td href={href}>{formatDuration(s.duration_s)}{!isSportSessionValida(s) && <SportTooShortBadge />}</Td>
           <Td href={href}>{s.trimp == null ? '—' : Math.round(s.trimp)}</Td>
           <Td href={href}>{s.hr_avg == null ? '—' : `${s.hr_avg} bpm`}</Td>
           <Td href={href}>{num(s.dfa_alpha1_avg, 2, locale)}</Td>
@@ -342,8 +353,8 @@ function SessionRow({ s, baseQuery, variant = 'recent' }: { s: SportSessionWithA
         <>
           <Td href={href} primary className="text-anthracite-lighter whitespace-nowrap">{formatMeasuredAt(s, locale)}</Td>
           <Td href={href} className="font-medium text-anthracite">{s.athlete_name}</Td>
-          <Td href={href}>{s.sport ?? '—'}{s.test_type === 'threshold_test' && <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap">{t('sessions.thresholdBadge')}</span>}</Td>
-          <Td href={href}>{formatDuration(s.duration_s)}</Td>
+          <Td href={href}>{s.sport ?? <span title={t('na.sportNotSet')}>—</span>}{s.test_type === 'threshold_test' && <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap">{t('sessions.thresholdBadge')}</span>}</Td>
+          <Td href={href}>{formatDuration(s.duration_s)}{!isSportSessionValida(s) && <SportTooShortBadge />}</Td>
           <Td href={href}>{s.hr_avg == null ? '—' : `${s.hr_avg}`}</Td>
           <Td href={href}>{s.hr_max == null ? '—' : `${s.hr_max}`}</Td>
           <Td href={href}>{s.trimp == null ? '—' : Math.round(s.trimp)}</Td>
@@ -378,9 +389,9 @@ function Filter({ label, children }: { label: string; children: React.ReactNode 
   )
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
+function Stat({ label, value, title }: { label: string; value: string | number; title?: string }) {
   return (
-    <div className="rounded-lg bg-surface px-2 py-2 min-w-0">
+    <div className="rounded-lg bg-surface px-2 py-2 min-w-0" title={title}>
       <div className="text-base font-serif text-anthracite">{value}</div>
       <div className="text-[10px] text-anthracite-lighter mt-0.5 leading-tight">{label}</div>
     </div>

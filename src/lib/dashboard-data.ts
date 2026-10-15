@@ -7,6 +7,7 @@ import { perBlocchiDiUtenti, perimetroProfessionista } from './perimetro-server'
 import { SUPERADMIN_VEDE_DATI_CLIENTI } from './superadmin-scope'
 import { selectWithMissingColumnFallback } from './safe-select'
 import { dataLoadError, reportDataError } from './data-error'
+import { trendMensileDaGiorni, type TrendMensile } from './home-metrics'
 import {
   conIstanteSessione,
   giornoItaFa,
@@ -509,6 +510,68 @@ export async function listAlerts(opts?: { status?: Alert['status'][]; limit?: nu
   return data ?? []
 }
 
+/**
+ * Alert del professionista loggato risolti negli ultimi `days` giorni:
+ * `status = 'resolved'` con `resolved_at` nella finestra (la risoluzione è
+ * automatica, quando la metrica rientra). `0` è un valore legittimo; `null`
+ * solo se la lettura fallisce, e la card lo dice.
+ */
+export async function countAlertsResolved(days = 7): Promise<number | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const da = new Date(Date.now() - days * 86_400_000).toISOString()
+  const { count, error } = await supabase
+    .from('alerts')
+    .select('id', { count: 'exact', head: true })
+    .eq('professional_id', user.id)
+    .eq('status', 'resolved')
+    .gte('resolved_at', da)
+  if (error) {
+    reportDataError('countAlertsResolved', error)
+    return null
+  }
+  return count ?? 0
+}
+
+/**
+ * Misurazioni del perimetro negli ultimi 30 giorni italiani contro i 30
+ * precedenti (card "Trend" della home). Legge le sole colonne dell'istante,
+ * normalizza con la sessione e conta per giorno italiano con
+ * `trendMensileDaGiorni`. `null` se la lettura fallisce.
+ */
+export async function trendMisurazioniMensile(): Promise<TrendMensile | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const perimetro = await perimetroProfessionista(user.id)
+  const GIORNI = 60
+  // Margine di tre ore come nelle altre letture: il giorno lo decide
+  // `measuredDayKey` sull'istante normalizzato, non il filtro grezzo.
+  const daIso = new Date(new Date(inizioGiornoItaFa(GIORNI - 1)).getTime() - 3 * 3_600_000).toISOString()
+  type Row = { session_id: string | null; user_id: string | null; measured_at: string; measured_at_utc: string | null; tz_offset_minutes: number | null }
+  const { data, error } = await perBlocchiDiUtenti<Row, PostgrestError>(perimetro, (utenti) =>
+    tutteLePagine<Row, PostgrestError>((from, to) =>
+      supabase
+        .from('measurement_analytics')
+        .select('session_id, user_id, measured_at, measured_at_utc, tz_offset_minutes')
+        .in('user_id', utenti)
+        .gte('measured_at_utc', daIso)
+        .order('measured_at_utc', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to) as unknown as PromiseLike<{ data: Row[] | null; error: PostgrestError | null }>,
+    ),
+  )
+  if (error) {
+    reportDataError('trendMisurazioniMensile', error)
+    return null
+  }
+  const righe = await conIstantiDiSessione(supabase, data.filter((r) => nelPerimetro(r, perimetro)))
+  const giorni: string[] = []
+  for (let i = GIORNI - 1; i >= 0; i--) giorni.push(giornoItaFa(i))
+  return trendMensileDaGiorni(righe.map((r) => measuredDayKey(r)), giorni)
+}
+
 export async function listRecentNotes(limit = 3): Promise<ClientNote[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -840,8 +903,17 @@ export interface Organization {
   name: string
   owner_id: string
   logo_url: string | null
+  /** Valorizzato se l'organizzazione è stata unita in un'altra (sito-043): il sito la ignora. */
+  merged_into_id: string | null
   created_at: string
   updated_at: string
+}
+
+/** Un'organizzazione dell'utente con il ruolo che vi ricopre (per il selettore). */
+export interface OrganizationWithRole extends Organization {
+  my_role: OrganizationMember['role']
+  /** Membri attivi; null quando l'utente è semplice membro (la RLS gli mostra solo la propria riga). */
+  active_members: number | null
 }
 
 export interface OrganizationMember {
@@ -857,36 +929,118 @@ export interface OrganizationMember {
 }
 
 export interface OrganizationContext {
+  /** Organizzazione attiva (quella di `profiles.organization_id`, riallineata se serve). */
   organization: Organization | null
+  /** Tutte le organizzazioni vive dell'utente: prima quelle di cui è owner, poi per data di creazione. */
+  organizations: OrganizationWithRole[]
   members: OrganizationMember[]
   role: OrganizationMember['role'] | null
 }
 
+const CONTESTO_VUOTO: OrganizationContext = { organization: null, organizations: [], members: [], role: null }
+
+/**
+ * Organizzazioni dell'utente: quelle di cui è owner più quelle in cui è membro
+ * attivo, tutte vive (`merged_into_id is null`, sito-043). Mai `.single()`:
+ * un owner può averne più di una (audit QA 14/10, C2). Se `profiles.organization_id`
+ * è nullo o punta a un'organizzazione non più viva, l'attiva diventa la prima
+ * della lista e il profilo viene riallineato (errore non bloccante).
+ */
 export async function getOrganizationContext(): Promise<OrganizationContext> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { organization: null, members: [], role: null }
+  if (!user) return CONTESTO_VUOTO
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('id', user.id)
-    .maybeSingle()
-  if (!profile?.organization_id) return { organization: null, members: [], role: null }
-
-  const [{ data: organization }, { data: members }] = await Promise.all([
-    supabase.from('organizations').select('*').eq('id', profile.organization_id).maybeSingle(),
+  const [profileRes, ownedRes, membershipsRes] = await Promise.all([
+    supabase.from('profiles').select('organization_id').eq('id', user.id).maybeSingle(),
+    supabase
+      .from('organizations')
+      .select('*')
+      .eq('owner_id', user.id)
+      .is('merged_into_id', null)
+      .order('created_at', { ascending: true }),
     supabase
       .from('organization_members')
-      .select('*')
-      .eq('organization_id', profile.organization_id)
-      .order('invited_at', { ascending: true }),
+      .select('organization_id, role')
+      .eq('user_id', user.id)
+      .eq('status', 'active'),
   ])
-  const myMember = (members ?? []).find((m) => m.user_id === user.id) ?? null
+  if (profileRes.error) reportDataError('getOrganizationContext.profile', profileRes.error)
+  if (ownedRes.error) reportDataError('getOrganizationContext.owned', ownedRes.error)
+  if (membershipsRes.error) reportDataError('getOrganizationContext.memberships', membershipsRes.error)
+
+  const owned = (ownedRes.data ?? []) as Organization[]
+  const ownedIds = new Set(owned.map((o) => o.id))
+  const memberships = (membershipsRes.data ?? []) as Array<{ organization_id: string; role: OrganizationMember['role'] }>
+  const roleByOrg = new Map<string, OrganizationMember['role']>()
+  for (const m of memberships) roleByOrg.set(m.organization_id, m.role)
+  const memberOnlyIds = memberships.map((m) => m.organization_id).filter((id) => !ownedIds.has(id))
+
+  let joined: Organization[] = []
+  if (memberOnlyIds.length > 0) {
+    const joinedRes = await supabase
+      .from('organizations')
+      .select('*')
+      .in('id', memberOnlyIds)
+      .is('merged_into_id', null)
+      .order('created_at', { ascending: true })
+    if (joinedRes.error) reportDataError('getOrganizationContext.joined', joinedRes.error)
+    joined = (joinedRes.data ?? []) as Organization[]
+  }
+
+  const all: Organization[] = [...owned, ...joined]
+  if (all.length === 0) return CONTESTO_VUOTO
+
+  const profileOrgId = (profileRes.data?.organization_id as string | null | undefined) ?? null
+  const active = all.find((o) => o.id === profileOrgId) ?? all[0]
+  if (active.id !== profileOrgId) {
+    // Profilo nullo o puntato a un'organizzazione unita/lasciata: lo riallineo una volta.
+    const { error } = await supabase.from('profiles').update({ organization_id: active.id }).eq('id', user.id)
+    if (error) reportDataError('getOrganizationContext.realignProfile', error)
+  }
+
+  const membersRes = await supabase
+    .from('organization_members')
+    .select('*')
+    .eq('organization_id', active.id)
+    .order('invited_at', { ascending: true })
+  if (membersRes.error) reportDataError('getOrganizationContext.members', membersRes.error)
+  const members = (membersRes.data ?? []) as OrganizationMember[]
+
+  const roleOf = (o: Organization): OrganizationMember['role'] =>
+    o.owner_id === user.id ? 'owner' : (roleByOrg.get(o.id) ?? 'member')
+
+  // Conteggio membri attivi per il selettore: la RLS mostra tutti i membri solo a owner e admin.
+  const activeCount = new Map<string, number>()
+  if (all.length > 1) {
+    const countRes = await supabase
+      .from('organization_members')
+      .select('organization_id, status')
+      .in('organization_id', all.map((o) => o.id))
+      .eq('status', 'active')
+    if (countRes.error) reportDataError('getOrganizationContext.counts', countRes.error)
+    for (const r of (countRes.data ?? []) as Array<{ organization_id: string }>) {
+      activeCount.set(r.organization_id, (activeCount.get(r.organization_id) ?? 0) + 1)
+    }
+  } else {
+    activeCount.set(active.id, members.filter((m) => m.status === 'active').length)
+  }
+
+  const organizations: OrganizationWithRole[] = all.map((o) => {
+    const my_role = roleOf(o)
+    return {
+      ...o,
+      my_role,
+      active_members: my_role === 'member' ? null : (activeCount.get(o.id) ?? 0),
+    }
+  })
+
+  const myMember = members.find((m) => m.user_id === user.id) ?? null
   return {
-    organization: (organization as Organization) ?? null,
-    members: (members ?? []) as OrganizationMember[],
-    role: (myMember?.role as OrganizationMember['role']) ?? null,
+    organization: active,
+    organizations,
+    members,
+    role: myMember?.role ?? roleOf(active),
   }
 }
 
@@ -910,9 +1064,16 @@ export async function listPendingInvitesForCurrentUser(): Promise<PendingInvite[
     .eq('status', 'pending')
   if (!invites || invites.length === 0) return []
   const orgIds = invites.map((i) => i.organization_id as string)
-  const { data: orgs } = await supabase.from('organizations').select('id, name').in('id', orgIds)
+  // Solo organizzazioni vive (sito-043): un invito a un'organizzazione unita non si mostra.
+  const { data: orgs, error } = await supabase
+    .from('organizations')
+    .select('id, name')
+    .in('id', orgIds)
+    .is('merged_into_id', null)
+  if (error) reportDataError('listPendingInvitesForCurrentUser.organizations', error)
   const orgMap = new Map<string, string>((orgs ?? []).map((o) => [o.id as string, o.name as string]))
-  return invites.map((i) => ({
+  const vivi = error ? invites : invites.filter((i) => orgMap.has(i.organization_id as string))
+  return vivi.map((i) => ({
     id: i.id as string,
     organization_id: i.organization_id as string,
     organization_name: orgMap.get(i.organization_id as string) ?? null,
@@ -1328,29 +1489,78 @@ export async function listAllProfessionalsStats(): Promise<ProfessionalStats[]> 
 // Carica tutte le misurazioni dello studio del professionista loggato (pagina
 // Analytics): le sue sessioni e quelle dei clienti collegati, non ciò che la
 // RLS concede a un superadmin.
-export async function listAllMeasurements(opts?: { from?: string; to?: string }): Promise<MeasurementAnalytics[]> {
+//
+// Colonne lette: solo quelle che la pagina usa (conteggi, istante, score,
+// segmenti per cliente). Con `select('*')` arrivavano anche `rr_intervals`,
+// `segments` e `rolling_series`: la pagina pesava 2 MB di HTML. Le righe si
+// leggono a pagine di 1000 (PostgREST tronca oltre, in silenzio) e un errore
+// risale al chiamante: una Analytics a zero non è "nessuna misurazione".
+const ANALYTICS_SUMMARY_COLUMNS = [
+  'id', 'session_id', 'client_id', 'user_id',
+  'measured_at', 'measured_at_utc', 'tz_offset_minutes',
+  'test_type', 'duration_seconds',
+  'score_stress', 'score_recupero', 'score_equilibrio', 'score_energia',
+  'score_modulazione_infiammatoria', 'score_composito',
+  'mean_hr', 'rmssd', 'sdnn', 'artifact_percentage',
+] as const
+
+/** Riga di `measurement_analytics` ridotta alle colonne della pagina Analytics. */
+export type MeasurementAnalyticsSummary = Pick<MeasurementAnalytics, typeof ANALYTICS_SUMMARY_COLUMNS[number]>
+
+/** Pagina di PostgREST: oltre le 1000 righe la risposta viene tagliata senza avviso. */
+const PAGINA_POSTGREST = 1000
+
+/**
+ * Tutte le righe di una query, a pagine di 1000: `build` riceve gli estremi da
+ * passare a `.range(from, to)` e deve avere un ordinamento stabile. Si ferma
+ * alla prima pagina non piena; il primo errore interrompe e torna al chiamante.
+ */
+async function tutteLePagine<T, E>(
+  build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: E | null }>,
+): Promise<{ data: T[]; error: E | null }> {
+  const out: T[] = []
+  for (let from = 0; from < 1_000_000; from += PAGINA_POSTGREST) {
+    const { data, error } = await build(from, from + PAGINA_POSTGREST - 1)
+    if (error) return { data: [], error }
+    const pagina = data ?? []
+    out.push(...pagina)
+    if (pagina.length < PAGINA_POSTGREST) break
+  }
+  return { data: out, error: null }
+}
+
+export async function listAllMeasurements(opts?: { from?: string; to?: string }): Promise<MeasurementAnalyticsSummary[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
   const perimetro = await perimetroProfessionista(user.id)
-  const { data, error } = await perBlocchiDiUtenti<MeasurementAnalytics, PostgrestError>(perimetro, (utenti) => {
-    let q = supabase
-      .from('measurement_analytics')
-      .select('*')
-      .in('user_id', utenti)
-      .order('measured_at_utc', { ascending: true })
-    // Margine di tre ore sugli estremi: le righe con `measured_at_utc` ancora
-    // sfasato rientrano nella finestra, e il filtro fine avviene a valle
-    // sull'istante normalizzato (pagina Analytics).
-    if (opts?.from) q = q.gte('measured_at_utc', new Date(new Date(opts.from).getTime() - 3 * 3_600_000).toISOString())
-    if (opts?.to) q = q.lte('measured_at_utc', new Date(new Date(opts.to).getTime() + 3 * 3_600_000).toISOString())
-    return q
-  })
-  if (error) reportDataError('listAllMeasurements', error)
-  const mie = (data as MeasurementAnalytics[]).filter((m) => nelPerimetro(m, perimetro))
+  const { data, error } = await perBlocchiDiUtenti<MeasurementAnalyticsSummary, PostgrestError>(perimetro, (utenti) =>
+    tutteLePagine<MeasurementAnalyticsSummary, PostgrestError>((from, to) => {
+      let q = supabase
+        .from('measurement_analytics')
+        .select(ANALYTICS_SUMMARY_COLUMNS.join(','))
+        .in('user_id', utenti)
+        // Ordine stabile per la paginazione: a parità di istante decide l'id.
+        .order('measured_at_utc', { ascending: true })
+        .order('id', { ascending: true })
+      // Margine di tre ore sugli estremi: le righe con `measured_at_utc` ancora
+      // sfasato rientrano nella finestra, e il filtro fine avviene a valle
+      // sull'istante normalizzato (pagina Analytics).
+      if (opts?.from) q = q.gte('measured_at_utc', new Date(new Date(opts.from).getTime() - 3 * 3_600_000).toISOString())
+      if (opts?.to) q = q.lte('measured_at_utc', new Date(new Date(opts.to).getTime() + 3 * 3_600_000).toISOString())
+      return q.range(from, to) as unknown as PromiseLike<{ data: MeasurementAnalyticsSummary[] | null; error: PostgrestError | null }>
+    }),
+  )
+  // Senza questo `throw` l'errore diventava `[]` e la pagina mostrava zeri:
+  // la pagina lo raccoglie con `caricaOErrore` e mostra `DataLoadNotice`.
+  if (error) throw dataLoadError('listAllMeasurements', error)
+  const mie = data.filter((m) => nelPerimetro(m, perimetro))
+  const conIstante = await conIstantiDiSessione(supabase, mie)
   // Senza il ponte, `buildSegments` scartava con `continue` ogni misurazione
   // auto-misurata: i segmenti di Analytics contavano solo le righe scritte dal
   // professionista, silenziosamente.
-  const rows = await conClienteRisolto(await conIstantiDiSessione(supabase, mie))
+  const rows = conIstante.some((r) => !r.client_id)
+    ? conClientIdDalPonte(conIstante, await ponteClienti(user.id))
+    : conIstante
   return rows.sort((a, b) => (measuredInstant(a)?.getTime() ?? 0) - (measuredInstant(b)?.getTime() ?? 0))
 }

@@ -10,6 +10,15 @@ type ClientHit = { kind: 'client'; id: string; nome: string | null; cognome: str
 type ProfHit = { kind: 'professional'; id: string; nome: string | null; cognome: string | null; email: string | null }
 type Hit = ClientHit | ProfHit
 
+/** Minuscolo, senza accenti, senza i caratteri speciali dei filtri PostgREST. */
+function normalizzaRicerca(q: string): string {
+  return q
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[,()%*\\:"']/g, ' ')
+}
+
 function label(h: Hit, fallback: string): string {
   const full = `${h.nome ?? ''} ${h.cognome ?? ''}`.trim()
   return full || h.email || fallback
@@ -57,21 +66,23 @@ export function GlobalSearch({ className = '' }: { className?: string }) {
         setLoading(false)
         return
       }
-      const like = `%${q}%`
-      const [clientsRes, profsRes] = await Promise.all([
-        supabase
-          .from('clients')
-          .select('id, nome, cognome, email')
-          .eq('professionista_id', uid)
-          .or(`nome.ilike.${like},cognome.ilike.${like},email.ilike.${like}`)
-          .limit(8),
-        supabase
-          .from('profiles')
-          .select('id, nome, cognome, email')
-          .eq('role', 'professional')
-          .or(`nome.ilike.${like},cognome.ilike.${like},email.ilike.${like}`)
-          .limit(8),
-      ])
+      // Ogni parola deve comparire (in qualsiasi ordine) in nome, cognome o
+      // email; accenti e maiuscole non contano: le schede hanno la colonna
+      // `ricerca` normalizzata (sito-044), la parola si normalizza qui allo
+      // stesso modo. Caratteri che rompono i filtri PostgREST tolti.
+      const parole = normalizzaRicerca(q).split(/\s+/).filter(Boolean).slice(0, 5)
+      let clientsQ = supabase
+        .from('clients')
+        .select('id, nome, cognome, email')
+        .eq('professionista_id', uid)
+        .is('merged_into_client_id', null)
+      for (const p of parole) clientsQ = clientsQ.ilike('ricerca', `%${p}%`)
+      let profsQ = supabase
+        .from('profiles')
+        .select('id, nome, cognome, email')
+        .eq('role', 'professional')
+      for (const p of parole) profsQ = profsQ.or(`nome.ilike.%${p}%,cognome.ilike.%${p}%,email.ilike.%${p}%`)
+      const [clientsRes, profsRes] = await Promise.all([clientsQ.limit(5), profsQ.limit(5)])
       const clientHits: Hit[] = (clientsRes.data ?? []).map((c) => ({
         kind: 'client',
         id: c.id as string,
@@ -138,7 +149,7 @@ export function GlobalSearch({ className = '' }: { className?: string }) {
         onKeyDown={onKeyDown}
         placeholder={t('placeholder')}
         aria-label={t('placeholder')}
-        className="w-full pl-9 pr-9 py-2 text-sm bg-surface border border-surface-border rounded-xl placeholder:text-anthracite-lighter focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal focus:bg-white transition-colors"
+        className="w-full pl-9 pr-9 py-2 text-sm bg-surface border border-surface-border rounded-xl placeholder:text-transparent sm:placeholder:text-anthracite-lighter focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal focus:bg-white transition-colors"
       />
       {query && (
         <button

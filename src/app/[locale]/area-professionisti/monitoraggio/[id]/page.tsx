@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
@@ -9,6 +9,7 @@ import { SleepDetail } from '@/components/monitoring/SleepDetail'
 import { getProfessionalProfile, resolveViewingProfessional } from '@/lib/dashboard-data'
 import { getMonitoringSession } from '@/lib/monitoring-data'
 import { isSleepSession } from '@/lib/monitoring-types'
+import { dayMedium, hm } from '@/lib/monitoring-format'
 import { ModuleLocked } from '@/components/dashboard/ModuleLocked'
 import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
 
@@ -27,6 +28,7 @@ export default async function MonitoringDetailPage({
   searchParams?: { professionista?: string }
 }) {
   const t = await getTranslations('monitoring')
+  const locale = await getLocale()
   const { viewing, currentUserId } = await resolveViewingProfessional(searchParams?.professionista)
   const professionalId = viewing?.user_id ?? currentUserId
   const [professional, session] = await Promise.all([
@@ -49,10 +51,14 @@ export default async function MonitoringDetailPage({
   const readOnly = !!viewing
   const isSuperadminView = viewing?.access === 'superadmin'
   const baseQuery = viewing ? `?professionista=${viewing.user_id}` : ''
+  // Briciola leggibile al posto dell'id della sessione: "Nome Cognome · 12 set 2026 22:41".
+  const crumb = [session.client_name, `${dayMedium(session.start_time, session.tz_offset_minutes, locale)} ${hm(session.start_time, session.tz_offset_minutes)}`]
+    .filter(Boolean)
+    .join(' · ')
   const clientHref = session.client_id ? `/area-professionisti/clienti/${session.client_id}${baseQuery}` : undefined
 
   return (
-    <DashboardLayout professional={professional}>
+    <DashboardLayout professional={professional} breadcrumbLabels={{ [params.id]: crumb }}>
       {viewing && currentUserId && isSuperadminView && (
         <SuperadminAccessLog adminId={currentUserId} professionistaId={viewing.user_id} professionalName={viewing.full_name} />
       )}

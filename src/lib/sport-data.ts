@@ -9,6 +9,7 @@ import { giornoItaFa, inizioGiornoItaFa, measuredDayKey, measuredInstant, type C
 import { selectWithMissingColumnFallback } from './safe-select'
 import { dataLoadError } from './data-error'
 import { parseHrZones, parseThresholdTest, type AthleteThresholds, type ThresholdTestRecord } from './threshold-types'
+import { isSportSessionValida } from './sport-rules'
 
 // ============================================================================
 // MODULO SPORT — data layer
@@ -511,17 +512,21 @@ export async function listSportAthletes(professionalId: string | null): Promise<
   // Tutte le sessioni del professionista (servono per stats per-atleta).
   const { data: sessRows } = await supabase
     .from('sport_sessions')
-    .select('athlete_id, start_time, start_time_utc, tz_offset_minutes, trimp, rmssd_avg')
+    .select('athlete_id, start_time, start_time_utc, tz_offset_minutes, duration_s, trimp, rmssd_avg')
     .eq('professional_id', professionalId)
     .order('start_time_utc', { ascending: false, nullsFirst: false })
-  const sessions = (sessRows ?? []) as Array<{
+  const allSessions = (sessRows ?? []) as Array<{
     athlete_id: string
     start_time: string
     start_time_utc: string | null
+    duration_s: number | null
     trimp: number | null
     rmssd_avg: number | null
   }>
-  const athleteIds = Array.from(new Set(sessions.map((s) => s.athlete_id)))
+  // L'atleta compare anche se ha solo sessioni troppo brevi; le statistiche
+  // (sessioni 30 gg, TRIMP, trend) contano solo quelle valide (sport-rules.ts).
+  const athleteIds = Array.from(new Set(allSessions.map((s) => s.athlete_id)))
+  const sessions = allSessions.filter(isSportSessionValida)
   if (athleteIds.length === 0) return []
 
   const { data: clientRows } = await supabase
@@ -665,9 +670,12 @@ export async function getSportDashboardStats(professionalId: string | null): Pro
   // Tutte le sessioni (servono count totale + grafico 12 settimane + atleti attivi).
   const { data: allRows } = await supabase
     .from('sport_sessions')
-    .select('id, athlete_id, start_time, start_time_utc, trimp')
+    .select('id, athlete_id, start_time, start_time_utc, duration_s, trimp')
     .eq('professional_id', professionalId)
-  const all = (allRows ?? []) as Array<{ id: string; athlete_id: string; start_time: string; start_time_utc: string | null; trimp: number | null }>
+  // Sessioni sotto i 5 minuti fuori da conteggi, TRIMP medio e grafico
+  // settimanale; restano nell'elenco "recenti" con il badge (sport-rules.ts).
+  const all = ((allRows ?? []) as Array<{ id: string; athlete_id: string; start_time: string; start_time_utc: string | null; duration_s: number | null; trimp: number | null }>)
+    .filter(isSportSessionValida)
 
   const now = Date.now()
   const DAY = 86_400_000

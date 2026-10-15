@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import {
   Users, UserCog, Link2, Search, Loader2, AlertTriangle, Plus,
-  ArrowRightLeft, RefreshCw, CheckCircle2, Ban, SunMoon, HeartPulse, Merge, LayoutDashboard, Trash2,
+  ArrowRightLeft, RefreshCw, CheckCircle2, Ban, SunMoon, HeartPulse, Merge, LayoutDashboard, Trash2, Copy, Unlink,
 } from 'lucide-react'
 import { MonitoringTable } from '@/components/monitoring/MonitoringTable'
 import type { AdminMonitoringRow } from '@/lib/admin-monitoring'
@@ -13,16 +13,17 @@ import { isSleepSession } from '@/lib/monitoring-types'
 import { Modal } from '@/components/dashboard/Modal'
 import { ConfirmDialog } from '@/components/dashboard/ConfirmDialog'
 import { formatDate } from '@/lib/format'
-import type { AdminUser, AdminClientRow, AdminLink } from '@/lib/admin-data'
+import type { AdminUser, AdminClientRow, AdminLink, DuplicateGroup, UnassignedSession } from '@/lib/admin-data'
 import { clientLinkStatusKey, clientLinkStatusLabel } from '@/lib/admin-issues'
 import { api, errorText, type Toast } from './adminApi'
 import { ManualLinkModal } from './ManualLinkModal'
 import { MergeClientsModal } from './MergeClientsModal'
 import { SaluteTab } from './SaluteTab'
 import { UsersTab } from './UsersTab'
-import { OverviewTab, overviewCounts } from './OverviewTab'
+import { OverviewTab, overviewCounts, type UsersFilter } from './OverviewTab'
+import { DuplicatesTab } from './DuplicatesTab'
+import { UnassignedTab } from './UnassignedTab'
 import type { Catalogo } from './commerciale-ui'
-import type { AccountStato } from '@/lib/admin-commerciale'
 
 // ============================================================================
 // Pannello Super Admin — panoramica commerciale, utenti (stato, abbonamento,
@@ -31,17 +32,25 @@ import type { AccountStato } from '@/lib/admin-commerciale'
 // verifica superadmin lato server). Questo componente è solo presentazione + fetch.
 // ============================================================================
 
-type Tab = 'overview' | 'users' | 'clients' | 'links' | 'monitoring' | 'salute'
+type Tab = 'overview' | 'users' | 'clients' | 'duplicates' | 'unassigned' | 'links' | 'monitoring' | 'salute'
 
 type ProfessionalOption = { id: string; name: string; email: string | null }
 
+// Periodo iniziale della tab "Senza scheda" (la tab può chiederne altri alla route).
+const UNASSIGNED_DAYS = 30
+
 export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: boolean }) {
   const t = useTranslations('admin')
+  const tErr = useTranslations('errors.api')
   const [tab, setTab] = useState<Tab>('overview')
   const [users, setUsers] = useState<AdminUser[]>([])
   const [catalogo, setCatalogo] = useState<Catalogo | null>(null)
-  const [usersFilter, setUsersFilter] = useState<{ key: number; scadenza30?: boolean; stato?: AccountStato }>({ key: 0 })
+  const [usersFilter, setUsersFilter] = useState<UsersFilter & { key: number }>({ key: 0 })
   const [clients, setClients] = useState<AdminClientRow[]>([])
+  const [duplicates, setDuplicates] = useState<DuplicateGroup[]>([])
+  const [duplicatesError, setDuplicatesError] = useState<string | null>(null)
+  const [unassigned, setUnassigned] = useState<UnassignedSession[]>([])
+  const [unassignedError, setUnassignedError] = useState<string | null>(null)
   const [links, setLinks] = useState<AdminLink[]>([])
   const [monitoring, setMonitoring] = useState<AdminMonitoringRow[]>([])
   const [saluteCount, setSaluteCount] = useState(0)
@@ -65,12 +74,14 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
   const reload = useCallback(async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) setLoading(true)
     setLoadError(null)
-    const [u, c, l, m, s] = await Promise.all([
+    const [u, c, l, m, s, d, n] = await Promise.all([
       api('GET', '/api/admin/users'),
       api('GET', '/api/admin/clients'),
       api('GET', '/api/admin/links'),
       api('GET', '/api/admin/monitoring'),
       api('GET', '/api/admin/collegamenti'),
+      api('GET', '/api/admin/clients/duplicates'),
+      api('GET', `/api/admin/sessions/unassigned?days=${UNASSIGNED_DAYS}`),
     ])
     setSaluteCount(s.json?.total ?? 0)
     setSaluteAlert(!!s.json?.alert)
@@ -80,8 +91,13 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
     setClients(c.json?.clients ?? [])
     setLinks(l.json?.links ?? [])
     setMonitoring(m.json?.sessions ?? [])
+    // Nessun errore muto: una route che fallisce lascia la tab con l'avviso, non con una lista vuota.
+    setDuplicates(d.ok ? d.json?.groups ?? [] : [])
+    setDuplicatesError(d.ok ? null : errorText(d.json, tErr, t('duplicates.loadError')))
+    setUnassigned(n.ok ? n.json?.sessions ?? [] : [])
+    setUnassignedError(n.ok ? null : errorText(n.json, tErr, t('unassigned.loadError')))
     setLoading(false)
-  }, [t])
+  }, [t, tErr])
 
   useEffect(() => {
     if (serviceRoleConfigured) reload()
@@ -114,6 +130,8 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
     { key: 'overview', label: t('tabs.overview'), icon: LayoutDashboard, count: catalogo ? counts.scadenza30 : null, alert: counts.scadenza30 > 0 },
     { key: 'users', label: t('tabs.users'), icon: Users, count: users.length },
     { key: 'clients', label: t('tabs.clients'), icon: UserCog, count: clients.length },
+    { key: 'duplicates', label: t('tabs.duplicates'), icon: Copy, count: duplicatesError ? null : duplicates.length, alert: !!duplicatesError || duplicates.length > 0 },
+    { key: 'unassigned', label: t('tabs.unassigned'), icon: Unlink, count: unassignedError ? null : unassigned.length, alert: !!unassignedError },
     { key: 'links', label: t('tabs.links'), icon: Link2, count: links.length },
     { key: 'monitoring', label: t('tabs.monitoring'), icon: SunMoon, count: monitoring.length },
     { key: 'salute', label: t('tabs.health'), icon: HeartPulse, count: saluteCount, alert: saluteAlert },
@@ -194,6 +212,10 @@ export function AdminPanel({ serviceRoleConfigured }: { serviceRoleConfigured: b
         />
       ) : tab === 'clients' ? (
         <ClientsTab clients={clients} professionals={professionals} onChanged={reload} showToast={showToast} />
+      ) : tab === 'duplicates' ? (
+        <DuplicatesTab groups={duplicates} loadError={duplicatesError} onChanged={reload} showToast={showToast} />
+      ) : tab === 'unassigned' ? (
+        <UnassignedTab initial={unassigned} initialDays={UNASSIGNED_DAYS} loadError={unassignedError} />
       ) : tab === 'monitoring' ? (
         <MonitoringAdminTab sessions={monitoring} />
       ) : tab === 'salute' ? (

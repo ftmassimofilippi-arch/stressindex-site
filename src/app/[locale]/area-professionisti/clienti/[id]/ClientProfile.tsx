@@ -5,7 +5,8 @@ import { useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { Download, Mail, MoreHorizontal, ArrowLeft } from 'lucide-react'
 import { Link } from '@/i18n/navigation'
-import type { Alert, Client, ClientNote, ClientSettings, MeasurementAnalytics, Message, ProfessionalProfile } from '@/lib/types'
+import type { Client, ClientNote, ClientSettings, MeasurementAnalytics, Message, ProfessionalProfile } from '@/lib/types'
+import type { AlertGruppo } from '@/lib/alert-group'
 import { age, fullName, initials } from '@/lib/format'
 import { OverviewTab } from './tabs/OverviewTab'
 import { MeasurementsTab } from './tabs/MeasurementsTab'
@@ -46,7 +47,10 @@ type Props = {
   client: Client
   measurements: MeasurementAnalytics[]
   monitoring?: MonitoringSession[]
-  alerts: Alert[]
+  /** Alert attivi della tabella `alerts` (new/seen), già raggruppati. */
+  alerts: AlertGruppo[]
+  /** Eventi dell'app (alert_events) non letti, già raggruppati: lista a parte. */
+  appEvents?: AlertGruppo[]
   notes: ClientNote[]
   settings: ClientSettings | null
   messages: Message[]
@@ -62,7 +66,7 @@ type Props = {
   currentUserId?: string
 }
 
-export function ClientProfile({ client, measurements, monitoring = [], alerts, notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId, superadminAccess, adminId, alertRules = [], currentUserId }: Props) {
+export function ClientProfile({ client, measurements, monitoring = [], alerts, appEvents = [], notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId, superadminAccess, adminId, alertRules = [], currentUserId }: Props) {
   const t = useTranslations('clients.profile')
   const tTabs = useTranslations('clients.tabs')
   const tScores = useTranslations('scores')
@@ -217,7 +221,7 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, n
         ))}
       </div>
 
-      {tab === 'panoramica' && <OverviewTab client={client} measurements={measurements} monitoring={monitoring} alerts={alerts} professionistaId={professionistaId} filter={filter} onFilterChange={setFilter} detailQs={detailQs} />}
+      {tab === 'panoramica' && <OverviewTab client={client} measurements={measurements} monitoring={monitoring} alerts={alerts} appEvents={appEvents} professionistaId={professionistaId} filter={filter} onFilterChange={setFilter} detailQs={detailQs} />}
       {tab === 'misurazioni' && <MeasurementsTab client={client} measurements={measurements} filter={filter} onFilterChange={setFilter} detailQs={detailQs} />}
       {tab === 'prima-dopo' && <BeforeAfterTab client={client} measurements={measurements} professionistaId={professionistaId} />}
       {tab === 'monitoraggi' && <MonitoringTab sessions={monitoring} professionistaId={professionistaId} />}

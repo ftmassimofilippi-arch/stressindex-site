@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { getTranslations } from 'next-intl/server'
 import { LoginForm } from './LoginForm'
+import { SignOutOnMount } from './SignOutOnMount'
 import { Link } from '@/i18n/navigation'
 import { splitLocale } from '@/i18n/routing'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
@@ -59,6 +60,7 @@ export default async function LoginPage({ searchParams }: Props) {
           <h1 className="font-serif text-4xl text-anthracite tracking-tight">{t('title')}</h1>
           <p className="mt-3 text-anthracite-light">{t('intro')}</p>
 
+          {searchParams.stato === 'bloccato' && <SignOutOnMount />}
           {searchParams.stato === 'bloccato' && (
             <div className="mt-6 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700" role="alert">
               {t.rich('blocked', {

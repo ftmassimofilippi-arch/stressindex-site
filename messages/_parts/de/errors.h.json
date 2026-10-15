@@ -68,6 +68,11 @@
     "not_found": "Element nicht gefunden.",
     "nothing_to_update": "Nichts zu aktualisieren.",
     "cannot_modify_self": "Sie können Ihre eigene Rolle nicht ändern.",
-    "cannot_remove_owner": "Der Inhaber kann nicht entfernt werden."
+    "cannot_remove_owner": "Der Inhaber kann nicht entfernt werden.",
+    "network": "Verbindung fehlgeschlagen. Prüfen Sie Ihre Netzwerkverbindung und versuchen Sie es erneut.",
+    "organization_exists": "Sie haben bereits eine Organisation mit diesem Namen.",
+    "profile_update_failed": "Ihr Profil konnte nicht aktualisiert werden. Laden Sie die Seite neu und versuchen Sie es erneut.",
+    "organization_required": "Organisation fehlt.",
+    "organization_not_found": "Organisation nicht gefunden."
   }
 }

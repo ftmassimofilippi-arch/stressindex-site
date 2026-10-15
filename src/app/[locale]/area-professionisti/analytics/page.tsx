@@ -1,5 +1,9 @@
 import { getTranslations } from 'next-intl/server'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { getDataScope } from '@/lib/data-scope-server'
+import { GlobalScopePanel } from '@/components/dashboard/GlobalScopePanel'
+import { DataLoadNotice } from '@/components/dashboard/DataLoadNotice'
+import { caricaOErrore } from '@/lib/data-error'
 import { getCurrentUser, getProfessionalProfile, listAllMeasurements, listClientsEnriched } from '@/lib/dashboard-data'
 import { listMonitoringSessionsForProfessional } from '@/lib/monitoring-data'
 import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
@@ -13,12 +17,27 @@ export async function generateMetadata({ params }: { params: { locale: string } 
 }
 
 export default async function AnalyticsPage() {
+  // Vista globale del superadmin (data-scope.ts): conteggi di piattaforma,
+  // nessuna riga dei clienti altrui.
+  const { scope } = await getDataScope()
+  if (scope === 'all') {
+    const tScope = await getTranslations('dashboard.scope')
+    return (
+      <DashboardLayout professional={await getProfessionalProfile()}>
+        <header className="mb-6">
+          <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">{tScope('homeTitle')}</h1>
+        </header>
+        <GlobalScopePanel />
+      </DashboardLayout>
+    )
+  }
   const t = await getTranslations('dashboard.analytics')
   const user = await getCurrentUser()
   const [professional, clients, measurements, monitoring] = await Promise.all([
     getProfessionalProfile(),
     listClientsEnriched(),
-    listAllMeasurements(),
+    // Un errore di lettura non diventa una pagina di zeri: si mostra l'avviso.
+    caricaOErrore(listAllMeasurements()),
     user ? listMonitoringSessionsForProfessional(user.id) : Promise.resolve([]),
   ])
 
@@ -31,7 +50,11 @@ export default async function AnalyticsPage() {
         <p className="mt-1.5 text-sm text-anthracite-lighter">{t('subtitle')}</p>
       </header>
 
-      <AnalyticsClient clients={clients} measurements={measurements} monitoring={filterMonitoringByModules(monitoring, await getMyAccountAccess())} />
+      {measurements.ok ? (
+        <AnalyticsClient clients={clients} measurements={measurements.data} monitoring={filterMonitoringByModules(monitoring, await getMyAccountAccess())} />
+      ) : (
+        <DataLoadNotice />
+      )}
     </DashboardLayout>
   )
 }

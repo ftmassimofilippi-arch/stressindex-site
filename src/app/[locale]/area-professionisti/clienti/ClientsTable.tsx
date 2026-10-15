@@ -1,12 +1,13 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { Search } from 'lucide-react'
 import { DataTable, type Column } from '@/components/dashboard/DataTable'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { CountBadge } from '@/components/dashboard/AlertBadge'
-import { age, fullName, initials, formatRelative } from '@/lib/format'
+import { age, fullName, initials, formatRelative, oggiIta } from '@/lib/format'
 import type { ClientWithLastMeasurement } from '@/lib/dashboard-data'
 
 type Props = { clients: ClientWithLastMeasurement[]; professionistaId?: string }
@@ -21,14 +22,28 @@ const FILTER_PERIODS = [
   { value: 'never', labelKey: 'never' },
 ] as const
 
+type PeriodFilter = typeof FILTER_PERIODS[number]['value']
+
+/** `?periodo=` nell'URL (la home linka `oggi`): accetta anche i valori interni. */
+function periodoDaUrl(v: string | null): PeriodFilter {
+  switch (v) {
+    case 'oggi': case 'today': return 'today'
+    case '7': case '7d': case '7giorni': return '7d'
+    case '30': case '30d': case '30giorni': return '30d'
+    case 'mai': case 'never': return 'never'
+    default: return 'all'
+  }
+}
+
 export function ClientsTable({ clients, professionistaId }: Props) {
   const t = useTranslations('clients.list')
   const tScores = useTranslations('scores')
   const locale = useLocale()
+  const searchParams = useSearchParams()
   const qs = professionistaId ? `?professionista=${professionistaId}` : ''
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState<string>('')
-  const [periodFilter, setPeriodFilter] = useState<typeof FILTER_PERIODS[number]['value']>('all')
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>(() => periodoDaUrl(searchParams.get('periodo')))
 
   const allTags = useMemo(() => {
     const set = new Set<string>()
@@ -39,6 +54,10 @@ export function ClientsTable({ clients, professionistaId }: Props) {
   const filtered = useMemo(() => {
     const now = Date.now()
     const dayMs = 24 * 3600 * 1000
+    // "Oggi" è il giorno di calendario italiano, non le ultime 24 ore: una
+    // misurazione di ieri sera non è "di oggi". "7/30 giorni" restano finestre
+    // mobili, e le etichette dicono "Ultimi 7 giorni" / "Ultimi 30 giorni".
+    const oggi = oggiIta()
     return clients.filter((c) => {
       if (search) {
         const s = search.toLowerCase()
@@ -53,7 +72,7 @@ export function ClientsTable({ clients, professionistaId }: Props) {
         if (periodFilter === 'never') return last == null
         if (last == null) return false
         const ms = now - last
-        if (periodFilter === 'today' && ms > dayMs) return false
+        if (periodFilter === 'today' && oggiIta(new Date(last)) !== oggi) return false
         if (periodFilter === '7d' && ms > 7 * dayMs) return false
         if (periodFilter === '30d' && ms > 30 * dayMs) return false
       }

@@ -1,0 +1,29 @@
+{
+  "confirm": {
+    "recovery": {
+      "title": "Imposta una nuova password",
+      "intro": "Per sicurezza il link si attiva solo quando premi il pulsante: così non viene consumato dai controlli automatici della tua casella di posta.",
+      "cta": "Imposta nuova password"
+    },
+    "invite": {
+      "title": "Attiva il tuo account",
+      "intro": "Premi il pulsante per attivare l'account e scegliere la password.",
+      "cta": "Attiva account"
+    },
+    "signup": {
+      "title": "Conferma il tuo indirizzo email",
+      "intro": "Premi il pulsante per confermare l'indirizzo e accedere.",
+      "cta": "Conferma email"
+    },
+    "other": {
+      "title": "Accedi",
+      "intro": "Premi il pulsante per completare l'accesso.",
+      "cta": "Continua"
+    },
+    "working": "Verifica in corso…",
+    "missing": "Link incompleto: manca il codice di verifica. Richiedi un nuovo link.",
+    "failed": "Il link non è valido o è scaduto. Richiedi un nuovo link.",
+    "requestNew": "Richiedi un nuovo link",
+    "backLogin": "Torna al login"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "sensorFallback": "BLE-Sensor",
+  "params": {
+    "na": {
+      "short": "k. A.",
+      "generic": "Wert von der App für diese Messung nicht berechnet",
+      "sdnnIndex": "Der SDNN-Index wird von der App nicht berechnet: Er erfordert eine lange Aufzeichnung, aufgeteilt in 5-Minuten-Segmente"
+    },
+    "reference": {
+      "titlePersonal": "Bereich nach Alter und Geschlecht (25.-75. Perzentil der Gruppe): {from}–{to}",
+      "legendPersonal": "Grün im Bereich, gelb an der Grenze, rot außerhalb, grau ohne Referenz. Wo angegeben, gilt der Bereich nach Alter und Geschlecht (25.-75. Perzentil der Gruppe); für die übrigen Parameter ist er ein Richtwert für gesunde Erwachsene, Aufzeichnung von 5-10 Minuten."
+    },
+    "norms": {
+      "missingBoth": "Allgemeine Bereiche: Ergänze Geschlecht und Geburtsdatum in den <link>Stammdaten</link>, um Bereiche nach Alter und Geschlecht zu erhalten.",
+      "missingSex": "Allgemeine Bereiche: Ergänze das Geschlecht in den <link>Stammdaten</link>, um Bereiche nach Alter und Geschlecht zu erhalten.",
+      "missingBirthDate": "Allgemeine Bereiche: Ergänze das Geburtsdatum in den <link>Stammdaten</link>, um Bereiche nach Alter und Geschlecht zu erhalten.",
+      "sexOther": "Allgemeine Bereiche: Die Tabellen nach Alter und Geschlecht gibt es nur für Frauen und Männer.",
+      "personal": "Bereiche für {sex, select, female {Frauen} other {Männer}}, {age}, Aktivitätsniveau {fitness} ({sources}) bei {metrics}. Die übrigen Parameter behalten die allgemeinen Bereiche für gesunde Erwachsene.",
+      "sources": "Nunan 2010, Voss 2015, Schumann & Bär 2022",
+      "age": {
+        "young": "bis 30 Jahre",
+        "midAdult": "31-45 Jahre",
+        "senior": "46-60 Jahre",
+        "elderly": "über 60 Jahre"
+      },
+      "fitness": {
+        "sedentary": "inaktiv",
+        "active": "aktiv",
+        "athlete": "Athlet"
+      }
+    }
+  }
+}

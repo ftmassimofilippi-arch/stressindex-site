@@ -3,6 +3,47 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-15 — audit QA del 14/10: blocchi C, D e F
+
+Un solo commit per tre blocchi: le modifiche condividono `dashboard-data.ts`,
+`DashboardLayout`/`TopBar` e i file messaggi, separarle avrebbe lasciato
+commit intermedi che non compilano.
+
+**C, dati e scope.** Vista unica `getDataScope()` (`src/lib/data-scope.ts`,
+testato: un professionista non superadmin resta sempre sui propri dati);
+per il superadmin interruttore "I miei dati / Tutta la piattaforma" nella
+barra in alto, cookie `sx-scope`, badge VISTA GLOBALE: in modalità globale
+Oggi, Clienti, Analytics, Sport e Monitoraggio mostrano solo conteggi di
+piattaforma (`GlobalScopePanel`), mai righe dei clienti altrui (decisione del
+15/10). Analytics: solo le colonne usate, paginazione a 1000, errori visibili
+(65 misurazioni e 31 clienti attivi nel periodo invece di zero).
+Organizzazione: elenco delle proprie organizzazioni, selettore dell'attiva,
+form solo senza organizzazioni e senza doppio invio, codici d'errore. Filtro
+"Oggi" della lista clienti sul giorno italiano, `?periodo=oggi` dalla home.
+Alert: stessa definizione (new, seen) in lista e scheda, segnalazioni
+dell'app in una card separata, alert identici raggruppati con "×N", card
+"Alert risolti" e "Trend vs mese scorso" calcolate davvero, "Clienti totali"
+con gli attivi a 90 giorni. Pannello Super Admin: stato commerciale da
+`abbonamenti` (KPI "Pro senza scadenza"), tab "Possibili duplicati" (47
+gruppi) e "Senza scheda"; menu clienti di Monitoraggio solo con chi ha
+monitoraggi.
+
+**D, sicurezza.** Middleware ridotto a sessione e redirect: niente più RPC a
+ogni richiesta (lo stato sospeso/bloccato lo legge il layout dell'area), un
+refresh token non valido cancella i cookie `sb-*` e manda al login invece di
+lanciare. `/auth/confirm` (token consumato solo al clic, contro i
+prescanner delle email) e `/auth/callback` (PKCE lato server); template email
+in `docs/email-templates` con `token_hash`. Registrazione con
+`method="post"` e messaggio dedicato per le password compromesse.
+
+**F, dettaglio e UX.** Ricerca globale per parole, senza accenti
+(`sito-044`), placeholder nascosto su mobile. Briciole con nome del cliente e
+data invece degli id. Sensore leggibile o "Sensore BLE" (niente più "Polar
+H10" inventato). Sessioni sport sotto 5 minuti fuori dalle statistiche, con
+badge "Troppo breve". Range di riferimento per età e sesso da `hrv_norms`,
+con avviso quando mancano in anagrafica. "n.d." con spiegazione al posto di
+"—" nelle card.
+
 ## 2026-10-15 — audit QA del 14/10: blocchi A e B, nove migrazioni in produzione
 
 Analisi in `docs/ANALISI_QA_2026-10-14.md`, report in

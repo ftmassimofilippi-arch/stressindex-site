@@ -1,0 +1,59 @@
+{
+  "tabs": {
+    "duplicates": "Mögliche Duplikate",
+    "unassigned": "Ohne Profil"
+  },
+  "overview": {
+    "trialHint": "Testtarif nicht abgelaufen",
+    "proNoExpiry": "Pro ohne Ablauf",
+    "proNoExpiryHint": "Pro-Abonnement ohne Enddatum",
+    "legacySource": "{count, plural, one {# Fachkraft hat} other {# Fachkräfte haben}} keine Zeile in den Abonnements: der angezeigte Status stammt aus alten Daten (Tarif im Profil und Testende der Registrierung). Achten Sie in Nutzer auf das Abzeichen \"Alte Daten\"."
+  },
+  "users": {
+    "proNoExpiry": "Pro ohne Ablauf",
+    "legacyBadge": "Alte Daten",
+    "legacyHint": "Keine Abonnementzeile: Status aus dem Tarif im Profil und dem Testende der Registrierung abgeleitet"
+  },
+  "duplicates": {
+    "search": "Name, E-Mail oder Fachkraft suchen…",
+    "count": "{count, plural, one {# Gruppe} other {# Gruppen}}",
+    "subtitle": "Nicht zusammengeführte Profile mit gleichem Vornamen, Nachnamen und Geburtsdatum oder gleicher E-Mail, auch bei verschiedenen Fachkräften. Es wird nichts automatisch zusammengeführt.",
+    "empty": "Keine möglichen Duplikate.",
+    "reasonName": "Gleicher Name und Geburtsdatum",
+    "reasonEmail": "Gleiche E-Mail",
+    "crossProfessional": "Verschiedene Fachkräfte",
+    "crossProfessionalHint": "Zusammenführen ist nur bei Profilen derselben Fachkraft möglich: verschieben Sie das Profil zuerst im Tab Klienten.",
+    "merge": "Zusammenführen",
+    "mergeHint": "Zusammenführung mit Vorschau öffnen",
+    "thClient": "Profil",
+    "thBirth": "Geburtsdatum",
+    "thEmail": "E-Mail",
+    "thProfessional": "Fachkraft",
+    "thMeasurements": "Messungen",
+    "thLast": "Letzte Messung",
+    "never": "Keine",
+    "loadError": "Mögliche Duplikate konnten nicht geladen werden."
+  },
+  "unassigned": {
+    "loadError": "Messungen ohne Profil konnten nicht geladen werden.",
+    "roleClient": "Klientenkonto (Messung in der eigenen App)",
+    "roleProfessional": "Fachkraftkonto (in der Praxis, kein Profil gewählt)",
+    "roleUnknown": "Konto ohne Rolle",
+    "daysOption": "Letzte {days} Tage",
+    "roleAll": "Alle Konten ({count})",
+    "roleClientOption": "Klientenkonten ({count})",
+    "roleProfessionalOption": "Fachkraftkonten ({count})",
+    "count": "{count, plural, one {# Messung} other {# Messungen}}",
+    "subtitle": "Messungen ohne Klientenprofil. Bei einem Klientenkonto ist das normal (die Website zeigt sie über die Verknüpfung); bei einer Fachkraft wurde kein Profil gewählt. Nur Liste, keine automatische Aktion.",
+    "thDate": "Datum",
+    "thAccount": "Erfasst von",
+    "thType": "Typ",
+    "thDuration": "Dauer",
+    "thClientName": "Angegebener Name",
+    "thCard": "Ableitbares Profil",
+    "openHint": "Messung im Profil von {name} öffnen (nur lesen)",
+    "open": "Öffnen",
+    "noCard": "Kein ableitbares Profil",
+    "empty": "Keine Messungen ohne Profil im Zeitraum."
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "scope": {
+    "mine": "I miei dati",
+    "all": "Tutta la piattaforma",
+    "label": "Vista",
+    "badge": "VISTA GLOBALE",
+    "title": "Tutti i <em>clienti</em>",
+    "homeTitle": "Tutta la piattaforma",
+    "note": "Vista globale: conteggi di tutta la piattaforma, senza nomi né misurazioni dei clienti degli altri professionisti (il consenso del cliente vale verso il suo professionista). Torna a \"I miei dati\" per vedere le schede.",
+    "counts": {
+      "professionisti": "Professionisti",
+      "schede": "Schede cliente",
+      "schedeAttive90": "Schede attive (90 giorni)",
+      "collegamenti": "Collegamenti attivi",
+      "misurazioni": "Misurazioni",
+      "misurazioni30": "Misurazioni (30 giorni)",
+      "misurazioniOggi": "Misurazioni di oggi",
+      "inStudio": "in studio",
+      "daRemoto": "da remoto",
+      "professionistiOggi": "Professionisti attivi oggi",
+      "alertAttivi": "Alert attivi",
+      "alertRisolti7": "Alert risolti (7 giorni)",
+      "monitoraggi": "Monitoraggi",
+      "monitoraggi30": "Monitoraggi (30 giorni)"
+    },
+    "unavailable": "Conteggi non disponibili: errore di lettura, segnalato.",
+    "switchError": "Cambio vista non riuscito."
+  }
+}

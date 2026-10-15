@@ -3,6 +3,7 @@ import type { DfaWindow } from '@/lib/sport-data'
 import { DFA_ZONES, dfaZoneLabel, zoneForAlpha1 } from '@/lib/sport-format'
 import { formatClock } from '@/lib/sport-format'
 import { num } from '@/lib/format'
+import { isOpaqueSensorId } from '@/lib/sensor-label'
 import {
   formatIntensity,
   hrr60Band,
@@ -68,7 +69,7 @@ export async function ThresholdTestView({ record, windows }: { record: Threshold
               {a.hr_max_observed != null && <Pill label={t('threshold.pillHrMax')} value={`${Math.round(a.hr_max_observed)} bpm`} />}
               <Pill label={t('threshold.pillStep')} value={stepReached} />
               <Pill label={t('threshold.pillStop')} value={formatClock(record.stop_at_s * 1000)} />
-              {record.sensor_name && <Pill label={t('threshold.pillSensor')} value={record.sensor_name} />}
+              {!isOpaqueSensorId(record.sensor_name) && <Pill label={t('threshold.pillSensor')} value={record.sensor_name ?? ''} />}
             </div>
           </>
         )}

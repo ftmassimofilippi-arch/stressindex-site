@@ -1,0 +1,33 @@
+{
+  "sensorFallback": "Sensore BLE",
+  "params": {
+    "na": {
+      "short": "n.d.",
+      "generic": "Valore non calcolato dall'app per questa misurazione",
+      "sdnnIndex": "SDNN Index non è calcolato dall'app: richiede una registrazione lunga, divisa in segmenti da 5 minuti"
+    },
+    "reference": {
+      "titlePersonal": "Range per età e sesso (25°-75° percentile della fascia): {from}–{to}",
+      "legendPersonal": "Verde dentro l'intervallo, giallo al limite, rosso fuori, grigio senza riferimento. Dove indicato il range è per età e sesso (25°-75° percentile della fascia); per gli altri parametri è indicativo per adulto sano, registrazione di 5-10 minuti."
+    },
+    "norms": {
+      "missingBoth": "Range generici: completa sesso e data di nascita nell'<link>anagrafica</link> per avere i range per età e sesso.",
+      "missingSex": "Range generici: completa il sesso nell'<link>anagrafica</link> per avere i range per età e sesso.",
+      "missingBirthDate": "Range generici: completa la data di nascita nell'<link>anagrafica</link> per avere i range per età e sesso.",
+      "sexOther": "Range generici: le tabelle per età e sesso coprono solo donna e uomo.",
+      "personal": "Range per {sex, select, female {donna} other {uomo}}, {age}, livello di attività {fitness} ({sources}) su {metrics}. Gli altri parametri restano sui range generici per adulto sano.",
+      "sources": "Nunan 2010, Voss 2015, Schumann & Bär 2022",
+      "age": {
+        "young": "fino a 30 anni",
+        "midAdult": "31-45 anni",
+        "senior": "46-60 anni",
+        "elderly": "oltre 60 anni"
+      },
+      "fitness": {
+        "sedentary": "sedentario",
+        "active": "attivo",
+        "athlete": "atleta"
+      }
+    }
+  }
+}

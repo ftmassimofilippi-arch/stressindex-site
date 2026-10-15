@@ -12,10 +12,11 @@ import {
   resolveViewingProfessional,
 } from '@/lib/dashboard-data'
 import { listMonitoringSessionsForClient } from '@/lib/monitoring-data'
-import { mergeAlerts } from '@/lib/alert-rules'
+import { raggruppaAlert } from '@/lib/alert-group'
 import { listAlertEvents, listAlertRules } from '@/lib/alert-rules-server'
 import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
 import { ClientProfile } from './ClientProfile'
+import { fullName } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,6 +45,8 @@ export default async function ClientPage({
     // da auth.uid() e per un superadmin non trova nessun collegamento, quindi
     // la scheda appariva senza misurazioni (vedi sito-032).
     listMeasurementsForClient(params.id, viewing ? { professionistaId: viewing.user_id } : undefined),
+    // "Alert attivi" = tabella `alerts` con status new/seen: la stessa
+    // definizione della colonna Alert nella lista clienti (listClientsEnriched).
     listAlerts({ clientId: params.id, status: ['new', 'seen'] }),
     listNotesForClient(params.id),
     getClientSettings(params.id),
@@ -57,17 +60,23 @@ export default async function ClientPage({
     listAlertEvents({ clientId: params.id, unreadOnly: true, days: 30 }),
   ])
   const monitoring = filterMonitoringByModules(allMonitoring, access)
-  const alerts = mergeAlerts(cronAlerts, appEvents)
+  // Gli eventi dell'app non letti restano visibili nella scheda, ma in una
+  // lista a parte ("Segnalazioni dall'app"): non entrano nel conteggio degli
+  // alert attivi, che deve coincidere con la lista clienti. I doppioni si
+  // raggruppano (×N) in entrambe le liste.
+  const alerts = raggruppaAlert(cronAlerts)
+  const appSegnalazioni = raggruppaAlert(appEvents)
 
   if (!client) notFound()
 
   return (
-    <DashboardLayout professional={professional}>
+    <DashboardLayout professional={professional} breadcrumbLabels={{ [client.id]: fullName(client) }}>
       <ClientProfile
         client={client}
         measurements={measurements}
         monitoring={monitoring}
         alerts={alerts}
+        appEvents={appSegnalazioni}
         notes={notes}
         settings={settings}
         messages={messages}

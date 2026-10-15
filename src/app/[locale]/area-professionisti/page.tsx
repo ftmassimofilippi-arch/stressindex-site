@@ -6,6 +6,8 @@ import { listMonitoringSessionsForProfessional } from '@/lib/monitoring-data'
 import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
 import { MON } from '@/lib/monitoring-format'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { getDataScope } from '@/lib/data-scope-server'
+import { GlobalScopePanel } from '@/components/dashboard/GlobalScopePanel'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { AdvancedTrendChart } from '@/components/dashboard/AdvancedTrendChart'
 import { AlertBadge } from '@/components/dashboard/AlertBadge'
@@ -16,6 +18,7 @@ import { LinkCell } from '@/components/dashboard/LinkCell'
 import {
   aggregatedDailyAverages,
   clientsToContact,
+  countAlertsResolved,
   getCurrentUser,
   getProfessionalProfile,
   listAlerts,
@@ -23,9 +26,12 @@ import {
   listPendingInvitesForCurrentUser,
   listRecentNotes,
   todaysMeasurements,
+  trendMisurazioniMensile,
 } from '@/lib/dashboard-data'
 import { identificaCliente, ponteClienti } from '@/lib/client-bridge'
 import { alertMessage, alertTypeLabel, alertValueDecimals, mergeAlerts } from '@/lib/alert-rules'
+import { raggruppaAlert } from '@/lib/alert-group'
+import { clientiAttivi } from '@/lib/home-metrics'
 import { listAlertEvents } from '@/lib/alert-rules-server'
 import { noteCategoryLabel } from '@/lib/types'
 import { formatDate, formatGreeting, formatMeasuredTime, fullName, num, todayLong, daysSince } from '@/lib/format'
@@ -49,6 +55,20 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardHome() {
+  // Vista globale del superadmin (data-scope.ts): conteggi di piattaforma,
+  // nessuna riga dei clienti altrui.
+  const { scope } = await getDataScope()
+  if (scope === 'all') {
+    const tScope = await getTranslations('dashboard.scope')
+    return (
+      <DashboardLayout professional={await getProfessionalProfile()}>
+        <header className="mb-6">
+          <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">{tScope('homeTitle')}</h1>
+        </header>
+        <GlobalScopePanel />
+      </DashboardLayout>
+    )
+  }
   const locale = await getLocale()
   const [tGreeting, t, tAlerts, tScores, tClients, tc] = await Promise.all([
     getTranslations('dashboard.greeting'),
@@ -59,9 +79,11 @@ export default async function DashboardHome() {
     getTranslations('common'),
   ])
   const user = await getCurrentUser()
-  const [professional, cronAlerts, appEvents, measurements, contacts, trend, allClients, notes, invites, monitoring] = await Promise.all([
+  const [professional, cronAlerts, appEvents, measurements, contacts, trend, allClients, notes, invites, monitoring, alertsResolved, trendMensile] = await Promise.all([
     getProfessionalProfile(),
-    listAlerts({ status: ['new', 'seen'], limit: 5 }),
+    // Attivi = `new` e `seen` (i `resolved` e i `duplicate` restano fuori). Se
+    // ne leggono più dei 6 mostrati perché i doppioni si raggruppano dopo.
+    listAlerts({ status: ['new', 'seen'], limit: 30 }),
     // Eventi valutati dall'app sulle regole di alert_rules (con la precedenza
     // per cliente): si mostrano insieme agli alert del cron.
     listAlertEvents({ unreadOnly: true, days: 14, limit: 10 }),
@@ -72,12 +94,30 @@ export default async function DashboardHome() {
     listRecentNotes(3),
     listPendingInvitesForCurrentUser(),
     user ? listMonitoringSessionsForProfessional(user.id) : Promise.resolve([]),
+    countAlertsResolved(7),
+    trendMisurazioniMensile(),
   ])
   const recentMonitoring = filterMonitoringByModules(monitoring, await getMyAccountAccess()).slice(0, 5)
-  const alerts = mergeAlerts(cronAlerts, appEvents, 6)
+  // Gli alert identici (stesso cliente, tipo e valore) si mostrano una volta,
+  // con il numero di ripetizioni e la data dell'ultimo.
+  const alerts = raggruppaAlert(mergeAlerts(cronAlerts, appEvents)).slice(0, 6)
 
   const clientMap = new Map(allClients.map((c) => [c.id, c]))
-  const totalActive = allClients.length
+  const totalClients = allClients.length
+  const activeClients90 = clientiAttivi(allClients, 90)
+  // Card "Trend": variazione delle misurazioni degli ultimi 30 giorni rispetto
+  // ai 30 precedenti. "n.d." quando il mese precedente è a zero o la lettura
+  // non è riuscita: il tooltip dice quale dei due. Mai "—".
+  const variazione = trendMensile?.variazione ?? null
+  const trendValue = variazione == null
+    ? t('notAvailable')
+    : `${variazione > 0 ? '+' : variazione < 0 ? '-' : ''}${num(Math.abs(variazione), 0, locale)}%`
+  const trendClass = variazione == null ? 'text-anthracite-lighter' : variazione > 0 ? 'text-emerald-600' : variazione < 0 ? 'text-red-500' : 'text-anthracite'
+  const trendTitle = trendMensile == null
+    ? t('trendUnavailable')
+    : trendMensile.variazione == null
+      ? t('trendNoPreviousMonth')
+      : t('trendTitle', { current: trendMensile.correnti, previous: trendMensile.precedenti })
   // Numeri estratti dai messaggi dell'app: si conservano i decimali che hanno
   // (0.45 → "0,45", 32 → "32"), al massimo due.
   const fmtNum = (v: number) => num(v, alertValueDecimals(v), locale)
@@ -120,8 +160,9 @@ export default async function DashboardHome() {
               <EmptyState icon={UserCheck} title={t('noAlertsTitle')} description={t('noAlertsBody')} />
             ) : (
               <ul className="divide-y divide-surface-border">
-                {alerts.map((a) => {
+                {alerts.map(({ alert: a, count }) => {
                   const detail = alertMessage(a, tAlerts, fmtNum, alertOpts)
+                  const quando = formatDate(a.created_at, undefined, locale)
                   return (
                     <li key={a.id}>
                       <Link
@@ -130,9 +171,19 @@ export default async function DashboardHome() {
                       >
                         <AlertBadge severity={a.severity} />
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-anthracite truncate">{clientName(a.client_id)}</div>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm font-medium text-anthracite truncate">{clientName(a.client_id)}</span>
+                            {count > 1 && (
+                              <span
+                                className="inline-flex items-center px-1.5 h-5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700 whitespace-nowrap"
+                                title={tAlerts('group.title', { count, date: quando })}
+                              >
+                                {tAlerts('group.badge', { count })}
+                              </span>
+                            )}
+                          </div>
                           <div className="text-xs text-anthracite-lighter mt-0.5">
-                            {alertTypeLabel(a.type, tAlerts)}{detail ? ` · ${detail}` : ''}
+                            {alertTypeLabel(a.type, tAlerts)}{detail ? ` · ${detail}` : ''} · {quando}
                           </div>
                         </div>
                         <ArrowRight size={16} className="text-anthracite-lighter flex-shrink-0" />
@@ -145,12 +196,17 @@ export default async function DashboardHome() {
           </section>
 
           <section className="card overflow-hidden">
-            <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2 min-w-0">
                 <Activity size={18} className="text-teal flex-shrink-0" />
                 <h2 className="font-serif text-lg text-anthracite">{t('todaysMeasurements')}</h2>
                 <span className="text-sm text-anthracite-lighter">({measurements.length})</span>
               </div>
+              {/* La tabella mostra al massimo 10 righe: il resto sta nella lista
+                  clienti filtrata su oggi. */}
+              {measurements.length > 0 && (
+                <Link href="/area-professionisti/clienti?periodo=oggi" className="text-sm text-teal-dark hover:underline whitespace-nowrap">{t('seeAllMeasurements')}</Link>
+              )}
             </div>
             {measurements.length === 0 ? (
               <div className="px-6 py-8 text-center text-sm text-anthracite-lighter">
@@ -258,10 +314,15 @@ export default async function DashboardHome() {
 
         <aside className="lg:col-span-4 space-y-6">
           <div className="grid grid-cols-2 gap-3">
-            <MetricCard label={t('activeClients')} value={totalActive} hint={t('totalHint')} />
+            <MetricCard label={t('totalClients')} value={totalClients} hint={t('activeInDaysHint', { count: activeClients90, days: 90 })} />
             <MetricCard label={t('measurementsToday')} value={measurements.length} />
-            <MetricCard label={t('alertsResolved')} value="—" hint={t('weekHint')} />
-            <MetricCard label={t('trend')} value="—" hint={t('vsLastMonth')} />
+            <MetricCard
+              label={t('alertsResolved')}
+              value={alertsResolved ?? t('notAvailable')}
+              hint={t('weekHint')}
+              title={alertsResolved == null ? t('alertsResolvedUnavailable') : undefined}
+            />
+            <MetricCard label={t('trend')} value={trendValue} valueClassName={trendClass} hint={t('vsLastMonth')} title={trendTitle} />
           </div>
 
           <section className="card p-5">

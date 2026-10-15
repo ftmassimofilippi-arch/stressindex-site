@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import {
-  CalendarPlus, Link2, MoreHorizontal, PanelRight, PauseCircle, PlayCircle, Search, ShieldCheck, Ban, AlertTriangle, Clock,
+  CalendarPlus, Infinity, Link2, MoreHorizontal, PanelRight, PauseCircle, PlayCircle, Search, ShieldCheck, Ban, AlertTriangle, Clock,
 } from 'lucide-react'
 import { formatRelative } from '@/lib/format'
 import type { AdminUser } from '@/lib/admin-data'
@@ -12,6 +12,7 @@ import { type AdminIssue, adminIssueHint, adminIssueLabel, ADMIN_ISSUE_ORDER, AD
 import type { Toast } from './adminApi'
 import { ManualLinkModal } from './ManualLinkModal'
 import { UserSidePanel } from './UserSidePanel'
+import { isProSenzaScadenza, type UsersFilter } from './OverviewTab'
 import {
   accountAction, MenuItem, MenuLabel, ModuleIcons, moduleIcon, moduloNome, PianoPill, pianoNome, ReasonDialog, RowMenu, ScadenzaCell, scadenzaLivello,
   STATI, statoLabel, StatoDot, type Catalogo,
@@ -49,7 +50,7 @@ export function UsersTab({
   professionals: ProfessionalOption[]
   onChanged: () => void
   showToast: (t: Toast) => void
-  initialFilter?: { scadenza30?: boolean; stato?: AccountStato }
+  initialFilter?: UsersFilter
 }) {
   const t = useTranslations('admin')
   const tu = useTranslations('admin.users')
@@ -62,6 +63,7 @@ export function UsersTab({
   const [pianoFilter, setPianoFilter] = useState<string>('all')
   const [moduloFilter, setModuloFilter] = useState<string>('all')
   const [scadenza30, setScadenza30] = useState(!!initialFilter?.scadenza30)
+  const [proSenzaScadenza, setProSenzaScadenza] = useState(!!initialFilter?.proSenzaScadenza)
   const [issueFilter, setIssueFilter] = useState<'all' | 'any' | AdminIssue>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [linkUser, setLinkUser] = useState<AdminUser | null>(null)
@@ -86,16 +88,21 @@ export function UsersTab({
       if (issueFilter === 'any' && !u.issue) return false
       if (issueFilter !== 'all' && issueFilter !== 'any' && u.issue !== issueFilter) return false
       const c = u.commerciale
-      if (statoFilter !== 'all' && c?.stato !== statoFilter) return false
+      // "In prova" = piano prova con scadenza oggi o futura (abbonamenti), come
+      // il contatore della Panoramica; gli altri stati vengono da account_stato.
+      if (statoFilter === 'prova') {
+        if (u.subscription_status !== 'trial_active') return false
+      } else if (statoFilter !== 'all' && c?.stato !== statoFilter) return false
       if (pianoFilter !== 'all' && (c?.piano ?? (hasCommerciale ? null : u.plan)) !== pianoFilter) return false
       if (moduloFilter !== 'all' && !c?.moduli.some((m) => m.codice === moduloFilter && m.attivo)) return false
       if (scadenza30) {
         const g = c?.giorni_alla_scadenza
         if (g === null || g === undefined || g > 30 || c?.stato === 'sospeso' || c?.stato === 'bloccato') return false
       }
+      if (proSenzaScadenza && !isProSenzaScadenza(u)) return false
       return true
     })
-  }, [users, search, roleFilter, issueFilter, statoFilter, pianoFilter, moduloFilter, scadenza30, hasCommerciale])
+  }, [users, search, roleFilter, issueFilter, statoFilter, pianoFilter, moduloFilter, scadenza30, proSenzaScadenza, hasCommerciale])
 
   async function extend(u: AdminUser, mesi: number) {
     setMenu(null)
@@ -143,6 +150,10 @@ export function UsersTab({
             <label className={`inline-flex items-center gap-1.5 text-[13px] px-2.5 py-1.5 rounded-lg border cursor-pointer ${scadenza30 ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-surface-border bg-white text-anthracite'}`}>
               <input type="checkbox" className="sr-only" checked={scadenza30} onChange={(e) => setScadenza30(e.target.checked)} />
               <CalendarPlus size={13} className="flex-shrink-0" /> {tu('expiring30')}
+            </label>
+            <label className={`inline-flex items-center gap-1.5 text-[13px] px-2.5 py-1.5 rounded-lg border cursor-pointer ${proSenzaScadenza ? 'border-teal-200 bg-teal-50 text-teal-dark' : 'border-surface-border bg-white text-anthracite'}`}>
+              <input type="checkbox" className="sr-only" checked={proSenzaScadenza} onChange={(e) => setProSenzaScadenza(e.target.checked)} />
+              <Infinity size={13} className="flex-shrink-0" /> {tu('proNoExpiry')}
             </label>
           </>
         )}
@@ -208,7 +219,12 @@ export function UsersTab({
                     <td className="px-3 py-2 text-anthracite-light whitespace-nowrap">{roleLabel(u.role)}</td>
                     <td className="px-3 py-2">{c ? <span title={c.stato_motivo ?? undefined}><StatoDot stato={c.stato} /></span> : <span className="text-anthracite-lighter">—</span>}</td>
                     <td className="px-3 py-2">
-                      {c ? <PianoPill piano={c.piano} catalogo={catalogo} /> : u.role === 'professional' ? <PianoPill piano={u.plan} catalogo={null} /> : <span className="text-anthracite-lighter">—</span>}
+                      <span className="inline-flex items-center gap-1">
+                        {c ? <PianoPill piano={c.piano} catalogo={catalogo} /> : u.role === 'professional' ? <PianoPill piano={u.plan} catalogo={null} /> : <span className="text-anthracite-lighter">—</span>}
+                        {u.subscription_source === 'legacy' && (
+                          <span title={tu('legacyHint')} className="inline-flex items-center px-1.5 py-0.5 rounded-md border border-dashed border-amber-400 bg-amber-50 text-amber-700 text-[10px] whitespace-nowrap">{tu('legacyBadge')}</span>
+                        )}
+                      </span>
                     </td>
                     <td className="px-3 py-2">{u.role === 'professional' ? <ScadenzaCell c={c} /> : <span className="text-anthracite-lighter">—</span>}</td>
                     <td className="px-3 py-2"><ModuleIcons c={c} catalogo={catalogo} /></td>

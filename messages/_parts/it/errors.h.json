@@ -68,6 +68,11 @@
     "not_found": "Elemento non trovato.",
     "nothing_to_update": "Nessuna modifica da applicare.",
     "cannot_modify_self": "Non puoi modificare il tuo ruolo.",
-    "cannot_remove_owner": "Il titolare non può essere rimosso."
+    "cannot_remove_owner": "Il titolare non può essere rimosso.",
+    "network": "Connessione non riuscita. Controlla la rete e riprova.",
+    "organization_exists": "Hai già un'organizzazione con questo nome.",
+    "profile_update_failed": "Il profilo non è stato aggiornato. Ricarica la pagina e riprova.",
+    "organization_required": "Organizzazione mancante.",
+    "organization_not_found": "Organizzazione non trovata."
   }
 }

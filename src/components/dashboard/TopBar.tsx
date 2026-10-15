@@ -7,6 +7,8 @@ import { Link } from '@/i18n/navigation'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { GlobalSearch } from './GlobalSearch'
 import { NotificationsBell } from './NotificationsBell'
+import { ScopeSwitch } from './ScopeSwitch'
+import type { DataScope } from '@/lib/data-scope'
 
 // Segmento di URL → chiave in dashboard.breadcrumb. Gli slug restano italiani
 // in tutte le lingue; i segmenti non elencati (id di clienti e sessioni)
@@ -24,9 +26,29 @@ const SEGMENT_KEY: Record<string, string> = {
   sessione: 'sessione',
   organizzazione: 'organizzazione',
   professionisti: 'professionisti',
+  confronto: 'confronto',
 }
 
-export function TopBar({ alertCount = 0 }: { alertCount?: number }) {
+// Percorsi intermedi che non hanno una pagina propria: la briciola resta
+// testo, altrimenti il link porta a un 404.
+const SENZA_PAGINA: RegExp[] = [
+  /^\/area-professionisti\/clienti\/[^/]+\/misurazione$/,
+  /^\/area-professionisti\/sport\/atleta$/,
+  /^\/area-professionisti\/sport\/sessione$/,
+]
+
+export function TopBar({
+  alertCount = 0,
+  scope = 'mine',
+  canSwitchScope = false,
+  breadcrumbLabels,
+}: {
+  alertCount?: number
+  scope?: DataScope
+  canSwitchScope?: boolean
+  /** Segmento di URL → etichetta (nome del cliente, data della sessione). Vince su SEGMENT_KEY. */
+  breadcrumbLabels?: Record<string, string>
+}) {
   const t = useTranslations('dashboard.breadcrumb')
   // `usePathname` di @/i18n/navigation restituisce il percorso senza prefisso di lingua.
   const pathname = usePathname()
@@ -35,10 +57,13 @@ export function TopBar({ alertCount = 0 }: { alertCount?: number }) {
     const parts = pathname.split('/').filter(Boolean)
     return parts.map((seg, i) => {
       const href = '/' + parts.slice(0, i + 1).join('/')
+      const custom = breadcrumbLabels?.[seg]
       const key = SEGMENT_KEY[seg]
-      return { href, label: key ? t(key) : seg }
+      const label = custom ?? (key ? t(key) : seg)
+      const linkable = !SENZA_PAGINA.some((re) => re.test(href))
+      return { href, label, linkable }
     })
-  }, [pathname, t])
+  }, [pathname, t, breadcrumbLabels])
 
   return (
     <div className="sticky top-0 z-20 bg-white/85 backdrop-blur-md border-b border-surface-border">
@@ -48,8 +73,8 @@ export function TopBar({ alertCount = 0 }: { alertCount?: number }) {
           {breadcrumbs.map((b, i) => (
             <span key={b.href} className="flex items-center gap-1.5 min-w-0">
               {i > 0 && <span className="opacity-50">/</span>}
-              {i === breadcrumbs.length - 1 ? (
-                <span className="text-anthracite font-medium truncate">{b.label}</span>
+              {i === breadcrumbs.length - 1 || !b.linkable ? (
+                <span className={i === breadcrumbs.length - 1 ? 'text-anthracite font-medium truncate' : 'truncate'}>{b.label}</span>
               ) : (
                 <Link href={b.href} className="hover:text-teal transition-colors truncate">
                   {b.label}
@@ -60,6 +85,8 @@ export function TopBar({ alertCount = 0 }: { alertCount?: number }) {
         </nav>
 
         <div className="flex items-center gap-2 ml-auto min-w-0 flex-1 lg:flex-initial justify-end">
+          {/* Solo superadmin: "I miei dati / Tutta la piattaforma" (data-scope.ts). */}
+          {canSwitchScope && <ScopeSwitch scope={scope} />}
           <GlobalSearch className="w-full max-w-xs sm:w-72" />
 
           <NotificationsBell alertCount={alertCount} />

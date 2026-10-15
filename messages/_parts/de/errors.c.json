@@ -8,6 +8,7 @@
     "otpExpired": "Der Link ist abgelaufen oder wurde bereits verwendet. Fordern Sie einen neuen an.",
     "banned": "Konto gesperrt. Für Informationen schreiben Sie an support@stressindex.io",
     "sessionMissing": "Ihre Sitzung ist nicht mehr gültig. Bitte melden Sie sich erneut an.",
-    "generic": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es in Kürze erneut."
+    "generic": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es in Kürze erneut.",
+    "leakedPassword": "Dieses Passwort steht auf Listen kompromittierter Passwörter: wählen Sie ein anderes."
   }
 }

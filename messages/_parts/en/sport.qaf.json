@@ -1,0 +1,14 @@
+{
+  "na": {
+    "short": "n/a",
+    "noValidSessionWeek": "No valid sport session (at least 5 minutes) in the last 7 days",
+    "noValidSession": "No valid sport session (at least 5 minutes)",
+    "notComputed": "Value not computed by the app for this session",
+    "noQuestionnaire": "Post-session questionnaire not filled in",
+    "sportNotSet": "Sport not specified for this session"
+  },
+  "sessions": {
+    "tooShortBadge": "Too short",
+    "tooShortHint": "Under {minutes} minutes: excluded from statistics and charts"
+  }
+}

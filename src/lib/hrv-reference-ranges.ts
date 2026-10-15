@@ -62,10 +62,15 @@ export type ParamsSummary = {
 }
 
 /** Conteggio dei parametri della misurazione rispetto agli intervalli di riferimento. */
-export function paramsSummary(measurement: Partial<MeasurementAnalytics> | Record<string, unknown>): ParamsSummary {
+// `ranges`: di norma la tabella generica; con i range per età e sesso del
+// cliente (hrv_norms) si passa la loro unione, vedi `withPersonalRanges`.
+export function paramsSummary(
+  measurement: Partial<MeasurementAnalytics> | Record<string, unknown>,
+  ranges: Record<string, ReferenceRange> = NORMATIVE_RANGES,
+): ParamsSummary {
   const out: ParamsSummary = { inRange: 0, outOfRange: 0, edge: 0, total: 0 }
   const m = measurement as Record<string, unknown>
-  for (const [key, range] of Object.entries(NORMATIVE_RANGES)) {
+  for (const [key, range] of Object.entries(ranges)) {
     const status = rangeStatus(m[key], range)
     if (status === 'none') continue
     out.total++
@@ -74,4 +79,9 @@ export function paramsSummary(measurement: Partial<MeasurementAnalytics> | Recor
     else out.outOfRange++
   }
   return out
+}
+
+/** Tabella generica con sopra i range personali (che vincono dove ci sono). */
+export function withPersonalRanges(personal?: Record<string, ReferenceRange> | null): Record<string, ReferenceRange> {
+  return personal ? { ...NORMATIVE_RANGES, ...personal } : NORMATIVE_RANGES
 }

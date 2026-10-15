@@ -89,7 +89,7 @@ export function RegistrationForm() {
         const key = supabaseAuthErrorKey(authError)
         if (key === 'alreadyRegistered') {
           setErrors({ email: tSupabase(key) })
-        } else if (key === 'weakPassword') {
+        } else if (key === 'weakPassword' || key === 'leakedPassword') {
           setErrors({ password: tSupabase(key) })
         } else {
           setErrors({ general: tSupabase(key) })
@@ -147,8 +147,10 @@ export function RegistrationForm() {
 
   const required = <span className="text-red-400" aria-hidden="true">*</span>
 
+  // method="post": se il JavaScript non parte il browser non mette mai i campi
+  // (password compresa) nell'URL; onSubmit fa sempre preventDefault.
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-5 stagger-children">
+    <form method="post" onSubmit={handleSubmit} noValidate className="space-y-5 stagger-children">
       {/* General error */}
       {errors.general && (
         <div className="px-4 py-3 bg-red-50 border-l-4 border-red-400 rounded-lg text-sm text-red-700 flex items-start gap-3" role="alert">

@@ -14,6 +14,8 @@ import { ThresholdTestView } from './ThresholdTestView'
 import { formatMeasuredAt, num } from '@/lib/format'
 import { energyEmoji, energyLabel, formatClock, formatDuration, rpeColor, sorenessZoneLabel } from '@/lib/sport-format'
 import { DfaAlpha1Chart, DfaZoneBar, HrChart, RmssdChart } from '../../SportCharts'
+import { isSportSessionValida } from '@/lib/sport-rules'
+import { SportTooShortBadge } from '@/components/dashboard/SportTooShortBadge'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,18 +50,28 @@ export default async function SportSessionPage({
   const baseQuery = searchParams?.professionista ? `?professionista=${searchParams.professionista}` : ''
   const q = session.questionnaire
 
-  const kpis: Array<{ id: string; label: React.ReactNode; value: string }> = [
-    { id: 'hrAvg', label: t('session.kpiHrAvg'), value: session.hr_avg == null ? '—' : `${session.hr_avg} bpm` },
-    { id: 'hrMax', label: t('session.kpiHrMax'), value: session.hr_max == null ? '—' : `${session.hr_max} bpm` },
-    { id: 'rmssd', label: t('session.kpiRmssd'), value: session.rmssd_avg == null ? '—' : `${num(session.rmssd_avg, 1, locale)} ms` },
+  // KPI assenti: "n.d." con il motivo nel tooltip (title), non un trattino muto.
+  const na = t('na.short')
+  const kpis: Array<{ id: string; label: React.ReactNode; value: string; title?: string }> = [
+    { id: 'hrAvg', label: t('session.kpiHrAvg'), value: session.hr_avg == null ? na : `${session.hr_avg} bpm`, title: session.hr_avg == null ? t('na.notComputed') : undefined },
+    { id: 'hrMax', label: t('session.kpiHrMax'), value: session.hr_max == null ? na : `${session.hr_max} bpm`, title: session.hr_max == null ? t('na.notComputed') : undefined },
+    { id: 'rmssd', label: t('session.kpiRmssd'), value: session.rmssd_avg == null ? na : `${num(session.rmssd_avg, 1, locale)} ms`, title: session.rmssd_avg == null ? t('na.notComputed') : undefined },
     // "DFA α1" dentro un'intestazione `uppercase`: il simbolo lo rende Alpha1.
-    { id: 'dfa', label: t.rich('session.kpiDfa', { dfa: () => <Alpha1 /> }), value: num(session.dfa_alpha1_avg, 2, locale) },
-    { id: 'trimp', label: t('session.kpiTrimp'), value: session.trimp == null ? '—' : `${Math.round(session.trimp)}` },
-    { id: 'rpe', label: t('session.kpiRpe'), value: q?.rpe == null ? '—' : `${q.rpe}/10` },
+    {
+      id: 'dfa',
+      label: t.rich('session.kpiDfa', { dfa: () => <Alpha1 /> }),
+      value: session.dfa_alpha1_avg == null ? na : num(session.dfa_alpha1_avg, 2, locale),
+      title: session.dfa_alpha1_avg == null ? t('na.notComputed') : undefined,
+    },
+    { id: 'trimp', label: t('session.kpiTrimp'), value: session.trimp == null ? na : `${Math.round(session.trimp)}`, title: session.trimp == null ? t('na.notComputed') : undefined },
+    { id: 'rpe', label: t('session.kpiRpe'), value: q?.rpe == null ? na : `${q.rpe}/10`, title: q?.rpe == null ? t('na.noQuestionnaire') : undefined },
   ]
 
   return (
-    <DashboardLayout professional={professional}>
+    <DashboardLayout
+      professional={professional}
+      breadcrumbLabels={{ [params.id]: [session.athlete_name, formatMeasuredAt(session, locale)].filter(Boolean).join(' · ') }}
+    >
       <Link
         href={`/area-professionisti/sport${baseQuery}`}
         className="inline-flex items-center gap-1.5 text-sm text-anthracite-lighter hover:text-anthracite mb-5"
@@ -74,6 +86,7 @@ export default async function SportSessionPage({
             {formatMeasuredAt(session, locale)} · {formatDuration(session.duration_s)}
             {session.sport ? ` · ${session.sport}` : ''}
             {session.test_type === THRESHOLD_TEST_TYPE ? ` · ${t('session.thresholdKind')}` : ''}
+            {!isSportSessionValida(session) && <SportTooShortBadge />}
           </p>
         </div>
         <button
@@ -89,9 +102,9 @@ export default async function SportSessionPage({
       {/* SEZIONE 1 — KPI */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         {kpis.map((k) => (
-          <div key={k.id} className="card p-4 min-w-0">
+          <div key={k.id} className="card p-4 min-w-0" title={k.title}>
             <div className="text-[11px] font-medium text-anthracite-lighter uppercase tracking-wide">{k.label}</div>
-            <div className="mt-1.5 text-xl font-serif text-anthracite">{k.value}</div>
+            <div className={`mt-1.5 text-xl font-serif ${k.title ? 'text-anthracite-lighter' : 'text-anthracite'}`}>{k.value}</div>
           </div>
         ))}
       </div>

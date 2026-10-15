@@ -76,5 +76,13 @@
   "memberView": {
     "title": "I tuoi colleghi",
     "count": "{count, plural, one {# professionista attivo} other {# professionisti attivi}}"
+  },
+  "switcher": {
+    "title": "Le tue organizzazioni",
+    "intro": "{count, plural, one {Fai parte di # organizzazione.} other {Fai parte di # organizzazioni: scegli quale gestire in questa pagina.}}",
+    "members": "{count, plural, one {# membro attivo} other {# membri attivi}}",
+    "active": "Attiva",
+    "switch": "Rendi attiva",
+    "switching": "Cambio in corso…"
   }
 }

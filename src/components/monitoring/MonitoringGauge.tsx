@@ -16,9 +16,11 @@ type Props = {
   compact?: boolean
   /** Pagina di stampa: card non spezzabile tra due pagine. */
   print?: boolean
+  /** Tooltip quando il valore manca: perché il numero non c'è. */
+  naTitle?: string
 }
 
-export function MonitoringGauge({ value, title, label, colorFor, leftLabel, rightLabel, centerMark = false, compact = false, print = false }: Props) {
+export function MonitoringGauge({ value, title, label, colorFor, leftLabel, rightLabel, centerMark = false, compact = false, print = false, naTitle }: Props) {
   const t = useTranslations('monitoring')
   const v = value == null || !Number.isFinite(value) ? null : Math.max(0, Math.min(100, value))
   const color = v == null ? MON.textMuted : colorFor(v)
@@ -37,7 +39,7 @@ export function MonitoringGauge({ value, title, label, colorFor, leftLabel, righ
     return `M ${p0.x} ${p0.y} A ${r} ${r} 0 ${to - from > 0.5 ? 1 : 0} 1 ${p1.x} ${p1.y}`
   }
   return (
-    <div className={`card flex flex-col items-center min-w-0 ${compact ? 'p-3' : 'p-4'} ${print ? 'print-avoid' : ''}`}>
+    <div className={`card flex flex-col items-center min-w-0 ${compact ? 'p-3' : 'p-4'} ${print ? 'print-avoid' : ''}`} title={v == null ? naTitle : undefined}>
       <div className="text-xs font-semibold text-anthracite-lighter text-center">{title}</div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[220px] mt-1" role="img" aria-label={`${title}: ${v == null ? t('gauge.na') : Math.round(v)}`}>
         {Array.from({ length: segments }, (_, i) => (
@@ -57,7 +59,7 @@ export function MonitoringGauge({ value, title, label, colorFor, leftLabel, righ
           <line x1={cx} x2={cx} y1={cy - r - stroke / 2 - 2} y2={cy - r + stroke / 2 + 2} stroke={MON.textPrimary} strokeOpacity={0.6} strokeWidth={2} />
         )}
         <text x={cx} y={cy - 4} textAnchor="middle" fontSize={30} fontWeight={800} fill={color}>
-          {v == null ? '—' : Math.round(v)}
+          {v == null ? t('naCard.short') : Math.round(v)}
         </text>
       </svg>
       {(leftLabel || rightLabel) && (

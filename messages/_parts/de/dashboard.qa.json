@@ -1,0 +1,12 @@
+{
+  "home": {
+    "totalClients": "Klienten gesamt",
+    "activeInDaysHint": "{count} aktiv in den letzten {days} Tagen",
+    "seeAllMeasurements": "Alle anzeigen",
+    "notAvailable": "k. A.",
+    "alertsResolvedUnavailable": "Anzahl nicht verfügbar: die Warnungen konnten nicht gelesen werden",
+    "trendTitle": "{current, plural, one {# Messung} other {# Messungen}} in den letzten 30 Tagen, {previous} in den 30 davor",
+    "trendNoPreviousMonth": "Keine Messungen im Vormonat",
+    "trendUnavailable": "Veränderung nicht verfügbar: die Messungen konnten nicht gelesen werden"
+  }
+}

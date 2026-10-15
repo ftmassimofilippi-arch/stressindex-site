@@ -23,6 +23,8 @@ import { DataLoadNotice } from '@/components/dashboard/DataLoadNotice'
 import { formatMeasuredDate, measuredInstant, num } from '@/lib/format'
 import { competitiveLevelLabel, formatDuration } from '@/lib/sport-format'
 import { LnRmssdChart, PmcChart } from '../../SportCharts'
+import { isSportSessionValida } from '@/lib/sport-rules'
+import { SportTooShortBadge } from '@/components/dashboard/SportTooShortBadge'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,14 +69,17 @@ export default async function SportAthletePage({
   // Finestre temporali e serie sull'ISTANTE: `start_time` è la forma legacy
   // (ora italiana etichettata UTC) e sposta tutto di due ore.
   const ist = (s: { start_time: string; start_time_utc: string | null }) => measuredInstant(s)?.getTime() ?? 0
-  const lnPoints = sessions
+  // Statistiche e grafici solo sulle sessioni di almeno 5 minuti; lo storico
+  // qui sotto le mostra tutte, le brevi con il badge (sport-rules.ts).
+  const valide = sessions.filter(isSportSessionValida)
+  const lnPoints = valide
     .filter((s) => s.rmssd_avg != null && s.rmssd_avg > 0 && now - ist(s) <= 60 * DAY)
     .map((s) => ({ date: measuredInstant(s)?.toISOString() ?? s.start_time, ln: Math.log(s.rmssd_avg as number) }))
     .sort((a, b) => a.date.localeCompare(b.date))
 
   // ── Carico di allenamento (dalle sessioni) ──────────────────────────────────
   const sumTrimp = (fromDays: number, toDays: number) =>
-    sessions
+    valide
       .filter((s) => {
         const age = now - ist(s)
         return age > fromDays * DAY && age <= toDays * DAY
@@ -83,7 +88,7 @@ export default async function SportAthletePage({
   const trimp7 = sumTrimp(0, 7)
   const trimpPrev7 = sumTrimp(7, 14)
   const trimp30 = sumTrimp(0, 30)
-  const sessions7 = sessions.filter((s) => now - ist(s) <= 7 * DAY).length
+  const sessions7 = valide.filter((s) => now - ist(s) <= 7 * DAY).length
   const weeklyDelta = trimpPrev7 > 0 ? ((trimp7 - trimpPrev7) / trimpPrev7) * 100 : null
 
   // ── PMC (training_load_daily) ───────────────────────────────────────────────
@@ -94,7 +99,7 @@ export default async function SportAthletePage({
   const recent = sessions.slice(0, 20)
 
   return (
-    <DashboardLayout professional={professional}>
+    <DashboardLayout professional={professional} breadcrumbLabels={{ [params.id]: fullName }}>
       <Link
         href={`/area-professionisti/sport${baseQuery}`}
         className="inline-flex items-center gap-1.5 text-sm text-anthracite-lighter hover:text-anthracite mb-5"
@@ -201,7 +206,7 @@ export default async function SportAthletePage({
                   return (
                     <tr key={s.id} className="border-t border-surface-border hover:bg-surface transition-colors">
                       <LinkCell href={href} primary padding="px-6 py-3" className="text-anthracite font-medium">{formatMeasuredDate(s, undefined, locale)}</LinkCell>
-                      <LinkCell href={href}>{formatDuration(s.duration_s)}</LinkCell>
+                      <LinkCell href={href}>{formatDuration(s.duration_s)}{!isSportSessionValida(s) && <SportTooShortBadge />}</LinkCell>
                       <LinkCell href={href}>{s.trimp == null ? '—' : Math.round(s.trimp)}</LinkCell>
                       <LinkCell href={href}>{s.hr_avg == null ? '—' : `${s.hr_avg} bpm`}</LinkCell>
                       <LinkCell href={href}>{num(s.dfa_alpha1_avg, 2, locale)}</LinkCell>

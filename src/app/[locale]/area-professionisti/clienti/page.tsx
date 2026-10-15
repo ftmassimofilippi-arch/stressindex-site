@@ -3,6 +3,8 @@ import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { ArrowLeft, Users } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { getDataScope } from '@/lib/data-scope-server'
+import { GlobalScopePanel } from '@/components/dashboard/GlobalScopePanel'
 import { EmptyState } from '@/components/dashboard/EmptyState'
 import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
 import { PlanToggle } from '@/components/dashboard/PlanToggle'
@@ -31,6 +33,20 @@ export default async function ClientiPage({
 }: {
   searchParams?: { professionista?: string }
 }) {
+  // Vista globale del superadmin (data-scope.ts): conteggi di piattaforma,
+  // nessuna riga dei clienti altrui.
+  const { scope } = await getDataScope()
+  if (scope === 'all') {
+    const tScope = await getTranslations('dashboard.scope')
+    return (
+      <DashboardLayout professional={await getProfessionalProfile()}>
+        <header className="mb-6">
+          <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">{tScope.rich('title', { em: (c) => <em className="italic text-teal-dark">{c}</em> })}</h1>
+        </header>
+        <GlobalScopePanel />
+      </DashboardLayout>
+    )
+  }
   const t = await getTranslations('clients.list')
   const { viewing, currentUserId } = await resolveViewingProfessional(searchParams?.professionista)
   const effectiveId = viewing?.user_id

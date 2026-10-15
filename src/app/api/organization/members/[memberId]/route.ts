@@ -5,22 +5,24 @@ import { createClient } from '@/lib/supabase-server'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-async function resolveOwnerOrgId(userId: string, supabase: Awaited<ReturnType<typeof createClient>>) {
+// L'utente è owner dell'organizzazione (viva) a cui appartiene il membro?
+// Si parte dal membro e non dall'owner: un owner può avere più organizzazioni
+// (sito-043), quindi `organizations where owner_id = me` non è una riga sola.
+async function isOwnerOf(orgId: string, userId: string, supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: org } = await supabase
     .from('organizations')
     .select('id')
+    .eq('id', orgId)
     .eq('owner_id', userId)
+    .is('merged_into_id', null)
     .maybeSingle()
-  return org?.id as string | undefined
+  return !!org
 }
 
 export async function PATCH(req: NextRequest, ctx: { params: { memberId: string } }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return apiError('unauthorized', 401)
-
-  const orgId = await resolveOwnerOrgId(user.id, supabase)
-  if (!orgId) return apiError('forbidden', 403)
 
   const { memberId } = ctx.params
   const body = await req.json().catch(() => ({}))
@@ -41,9 +43,9 @@ export async function PATCH(req: NextRequest, ctx: { params: { memberId: string 
     .select('id, organization_id, user_id')
     .eq('id', memberId)
     .maybeSingle()
-  if (!target || target.organization_id !== orgId) {
-    return apiError('not_found', 404)
-  }
+  if (!target) return apiError('not_found', 404)
+  const orgId = target.organization_id as string
+  if (!(await isOwnerOf(orgId, user.id, supabase))) return apiError('forbidden', 403)
   if (target.user_id === user.id) {
     return apiError('cannot_modify_self', 400)
   }
@@ -72,9 +74,6 @@ export async function DELETE(_req: NextRequest, ctx: { params: { memberId: strin
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return apiError('unauthorized', 401)
 
-  const orgId = await resolveOwnerOrgId(user.id, supabase)
-  if (!orgId) return apiError('forbidden', 403)
-
   const { memberId } = ctx.params
 
   const { data: target } = await supabase
@@ -82,9 +81,9 @@ export async function DELETE(_req: NextRequest, ctx: { params: { memberId: strin
     .select('id, organization_id, user_id, role')
     .eq('id', memberId)
     .maybeSingle()
-  if (!target || target.organization_id !== orgId) {
-    return apiError('not_found', 404)
-  }
+  if (!target) return apiError('not_found', 404)
+  const orgId = target.organization_id as string
+  if (!(await isOwnerOf(orgId, user.id, supabase))) return apiError('forbidden', 403)
   if (target.role === 'owner') {
     return apiError('cannot_remove_owner', 400)
   }

@@ -11,6 +11,7 @@ import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadg
 import { LastMonitoringCard } from '@/components/monitoring/LastMonitoringCard'
 import type { MonitoringSession } from '@/lib/monitoring-types'
 import type { Alert, Client, MeasurementAnalytics } from '@/lib/types'
+import type { AlertGruppo } from '@/lib/alert-group'
 import { alertMessage, alertTypeLabel, alertValueDecimals } from '@/lib/alert-rules'
 import { formatDate, formatDateTime, formatMeasuredAt, num } from '@/lib/format'
 import { measuredDayKey } from '@/lib/format'
@@ -18,11 +19,14 @@ import { tagLabel } from '@/lib/before-after'
 import { measurementTypeLabel } from '@/lib/measurement-type'
 import { isFilterActive, matchesMeasurementFilter, type MeasurementFilter } from '@/lib/measurement-filter'
 
-export function OverviewTab({ client, measurements, monitoring = [], alerts, professionistaId, filter, onFilterChange, detailQs }: {
+export function OverviewTab({ client, measurements, monitoring = [], alerts, appEvents = [], professionistaId, filter, onFilterChange, detailQs }: {
   client: Client
   measurements: MeasurementAnalytics[]
   monitoring?: MonitoringSession[]
-  alerts: Alert[]
+  /** Alert attivi (tabella `alerts`, new/seen) raggruppati: il titolo conta questi. */
+  alerts: AlertGruppo[]
+  /** Eventi dell'app non letti, raggruppati: lista separata, non contati sopra. */
+  appEvents?: AlertGruppo[]
   professionistaId?: string
   /** Filtro scelto in "Misurazioni": vale solo per il grafico Andamento. */
   filter: MeasurementFilter
@@ -124,32 +128,32 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, pro
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <section className="card overflow-hidden">
-          <div className="px-5 py-4 border-b border-surface-border flex items-center gap-2">
-            <AlertTriangle size={16} className="text-amber-500" />
-            <h3 className="font-serif text-base text-anthracite">{t('activeAlerts')}</h3>
-            <span className="text-sm text-anthracite-lighter">({alerts.length})</span>
-          </div>
-          {alerts.length === 0 ? (
-            <div className="px-5 py-6 text-sm text-anthracite-lighter text-center">{t('noAlerts')}</div>
-          ) : (
-            <ul className="divide-y divide-surface-border">
-              {alerts.map((a) => {
-                const detail = alertDetail(a)
-                return (
-                  <li key={a.id} className="px-5 py-3 flex items-center gap-3">
-                    <AlertBadge severity={a.severity} />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-anthracite">{alertTypeLabel(a.type, tAlerts)}</div>
-                      {detail && <div className="text-xs text-anthracite-lighter mt-0.5">{detail}</div>}
-                    </div>
-                    <span className="text-xs text-anthracite-lighter">{formatDateTime(a.created_at, locale)}</span>
-                  </li>
-                )
-              })}
-            </ul>
+        <div className="space-y-6">
+          <section className="card overflow-hidden">
+            <div className="px-5 py-4 border-b border-surface-border flex items-center gap-2">
+              <AlertTriangle size={16} className="text-amber-500" />
+              <h3 className="font-serif text-base text-anthracite">{t('activeAlerts')}</h3>
+              <span className="text-sm text-anthracite-lighter">({alerts.length})</span>
+            </div>
+            {alerts.length === 0 ? (
+              <div className="px-5 py-6 text-sm text-anthracite-lighter text-center">{t('noAlerts')}</div>
+            ) : (
+              <AlertGroupList groups={alerts} detail={alertDetail} />
+            )}
+          </section>
+
+          {appEvents.length > 0 && (
+            <section className="card overflow-hidden">
+              <div className="px-5 py-4 border-b border-surface-border flex items-center gap-2 flex-wrap">
+                <AlertTriangle size={16} className="text-blue-500" />
+                <h3 className="font-serif text-base text-anthracite">{t('appEvents')}</h3>
+                <span className="text-sm text-anthracite-lighter">({appEvents.length})</span>
+                <span className="text-xs text-anthracite-lighter basis-full">{t('appEventsHint')}</span>
+              </div>
+              <AlertGroupList groups={appEvents} detail={alertDetail} />
+            </section>
           )}
-        </section>
+        </div>
 
         <section className="card overflow-hidden">
           <div className="px-5 py-4 border-b border-surface-border flex items-center justify-between">
@@ -182,5 +186,39 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, pro
 
       <LastMonitoringCard session={monitoring[0] ?? null} baseQuery={qs} />
     </div>
+  )
+}
+
+/** Lista di alert raggruppati: una riga per gruppo, "×N" se ha doppioni, data dell'ultimo. */
+function AlertGroupList({ groups, detail }: { groups: AlertGruppo[]; detail: (a: Alert) => string | null }) {
+  const tAlerts = useTranslations('alerts')
+  const locale = useLocale()
+  return (
+    <ul className="divide-y divide-surface-border">
+      {groups.map(({ alert: a, count }) => {
+        const d = detail(a)
+        const quando = formatDateTime(a.created_at, locale)
+        return (
+          <li key={a.id} className="px-5 py-3 flex items-center gap-3">
+            <AlertBadge severity={a.severity} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-medium text-anthracite">{alertTypeLabel(a.type, tAlerts)}</span>
+                {count > 1 && (
+                  <span
+                    className="inline-flex items-center px-1.5 h-5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700 whitespace-nowrap"
+                    title={tAlerts('group.title', { count, date: quando })}
+                  >
+                    {tAlerts('group.badge', { count })}
+                  </span>
+                )}
+              </div>
+              {d && <div className="text-xs text-anthracite-lighter mt-0.5">{d}</div>}
+            </div>
+            <span className="text-xs text-anthracite-lighter whitespace-nowrap">{quando}</span>
+          </li>
+        )
+      })}
+    </ul>
   )
 }

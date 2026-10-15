@@ -21,14 +21,19 @@ export async function GET() {
   if (!invites || invites.length === 0) return NextResponse.json({ invites: [] })
 
   const orgIds = invites.map((i) => i.organization_id)
-  const { data: orgs } = await supabase
+  // Solo organizzazioni vive (sito-043): un invito a un'organizzazione unita non si mostra.
+  const { data: orgs, error } = await supabase
     .from('organizations')
     .select('id, name')
     .in('id', orgIds)
+    .is('merged_into_id', null)
+  if (error) return apiError('generic', 500, { detail: error.message })
   const orgMap = new Map((orgs ?? []).map((o) => [o.id, o.name as string]))
 
   return NextResponse.json({
-    invites: invites.map((i) => ({ ...i, organization_name: orgMap.get(i.organization_id) ?? null })),
+    invites: invites
+      .filter((i) => orgMap.has(i.organization_id))
+      .map((i) => ({ ...i, organization_name: orgMap.get(i.organization_id) ?? null })),
   })
 }
 

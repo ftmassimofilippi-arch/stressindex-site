@@ -1,0 +1,6 @@
+{
+  "group": {
+    "badge": "×{count}",
+    "title": "{count} identische Warnungen, die letzte am {date}"
+  }
+}

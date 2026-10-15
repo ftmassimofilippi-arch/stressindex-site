@@ -10,6 +10,8 @@ import { getClient, getMeasurementBySessionId, getProfessionalProfile, resolveVi
 import { fullName, formatMeasuredAt, num, toNum } from '@/lib/format'
 import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
 import { normalizeTestType, isLongMeasurement, formatDurationHuman } from '@/lib/measurement-type'
+import { sensorLabel as sensorLabelOf } from '@/lib/sensor-label'
+import { loadClientNorms } from '@/lib/hrv-norms-server'
 import { PoincareScatter, Rhythmogram, PsdPlaceholder, PsdPie } from './HrvCharts'
 import { HrvParamsTable, ParamsSummaryCard } from './HrvParamsTable'
 import { OrthostaticView } from './OrthostaticView'
@@ -33,6 +35,7 @@ export default async function SessionDetailPage({
   const locale = await getLocale()
   const t = await getTranslations('measurement.detail')
   const tScores = await getTranslations('scores.names')
+  const tMeasurement = await getTranslations('measurement')
 
   // Vista "come un altro professionista": il ripiego sulle misurazioni remote
   // va chiesto per conto del proprietario della scheda, come nella scheda cliente.
@@ -45,6 +48,13 @@ export default async function SessionDetailPage({
 
   if (!measurement || !client) notFound()
 
+  // Range per età e sesso (hrv_norms): se mancano sesso o data di nascita la
+  // tabella resta generica con l'avviso; se la tabella non risponde, generica
+  // senza avviso e l'errore va a Sentry (hrv-norms-server.ts).
+  const norms = await loadClientNorms(client)
+  // Impostazioni della scheda: solo per il titolare (in vista altrui la tab non c'è).
+  const settingsHref = viewing ? undefined : `/area-professionisti/clienti/${client.id}?tab=impostazioni`
+
   // Ritorno alla scheda cliente con scheda e filtro di partenza (la scheda li
   // valida). Senza `tab` si torna a "Misurazioni", come prima.
   const back = new URLSearchParams()
@@ -55,7 +65,9 @@ export default async function SessionDetailPage({
   const backHref = `/area-professionisti/clienti/${client.id}?${back.toString()}`
 
   const duration = formatDurationHuman(measurement.duration_seconds)
-  const sensorLabel = measurement.sensor_name ?? measurement.sensor_type ?? 'Polar H10'
+  // Niente "Polar H10" di default: se il nome è un UUID o un indirizzo BLE si
+  // ripiega sul tipo, altrimenti su "Sensore BLE" (src/lib/sensor-label.ts).
+  const sensorLabel = sensorLabelOf(measurement.sensor_name, measurement.sensor_type, tMeasurement('sensorFallback'))
   const artifact = toNum(measurement.artifact_percentage)
 
   const typeKey = normalizeTestType(measurement.test_type)
@@ -68,7 +80,10 @@ export default async function SessionDetailPage({
   const em = (c: ReactNode) => <em className="italic">{c}</em>
 
   return (
-    <DashboardLayout professional={professional}>
+    <DashboardLayout
+      professional={professional}
+      breadcrumbLabels={{ [client.id]: fullName(client), [params.sessionId]: formatMeasuredAt(measurement, locale) }}
+    >
       <div className="mb-6">
         <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm text-anthracite-lighter hover:text-anthracite transition-colors">
           <ArrowLeft size={14} /> {t('backLink', { name: fullName(client) })}
@@ -143,12 +158,12 @@ export default async function SessionDetailPage({
 
       <section className="card p-6 mb-6">
         <div className="mb-4">
-          <ParamsSummaryCard measurement={measurement} />
+          <ParamsSummaryCard measurement={measurement} norms={norms} />
         </div>
         <details>
           <summary className="font-serif text-lg text-anthracite cursor-pointer">{t('fullParams')}</summary>
           <div className="mt-4">
-            <HrvParamsTable measurement={measurement} />
+            <HrvParamsTable measurement={measurement} norms={norms} settingsHref={settingsHref} />
           </div>
         </details>
       </section>

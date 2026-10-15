@@ -160,6 +160,7 @@ function Monitoring24hBody({ session: s, readOnly, clientHref }: { session: Moni
             value={sum?.night_recovery_quality}
             title={m('night_quality')}
             label={sum?.night_recovery_quality == null ? m('night_na_short') : qualityLabel(sum.night_recovery_quality, t)}
+            naTitle={m('night_na')}
             colorFor={qualityColor}
             leftLabel="0"
             rightLabel="100"
@@ -323,17 +324,24 @@ function KpiRow({ s }: { s: Monitoring24hSession }) {
       { label: m('kpi_return'), value: rt?.median == null ? '—' : `${Math.round(rt.median)}`, unit: 'min', color: MON.accent },
     )
   }
+  // Dato assente: "n.d." con il motivo nel tooltip, non un trattino muto.
+  // Le KPI notturne mancano quando la registrazione non ha una notte analizzabile.
+  const nightKpi = f.hasNightPages && !f.hasWakePages
   return (
     <div className={`grid gap-3 ${print ? 'grid-cols-3' : 'grid-cols-1 sm:grid-cols-3'}`}>
-      {items.map((k) => (
-        <div key={k.label} className={`card p-4 min-w-0 ${print ? 'print-avoid' : ''}`}>
-          <div className="text-[11px] font-medium text-anthracite-lighter">{k.label}</div>
-          <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="font-serif text-2xl" style={{ color: k.color }}>{k.value}</span>
-            {k.unit && <span className="text-xs text-anthracite-lighter">{k.unit}</span>}
+      {items.map((k, i) => {
+        const na = k.value === '—'
+        const naTitle = !sum ? t('naCard.noSummary') : nightKpi && i > 0 ? m('night_na') : t('naCard.notComputed')
+        return (
+          <div key={k.label} className={`card p-4 min-w-0 ${print ? 'print-avoid' : ''}`} title={na ? naTitle : undefined}>
+            <div className="text-[11px] font-medium text-anthracite-lighter">{k.label}</div>
+            <div className="mt-1 flex items-baseline gap-1.5">
+              <span className="font-serif text-2xl" style={{ color: na ? MON.textMuted : k.color }}>{na ? t('naCard.short') : k.value}</span>
+              {k.unit && !na && <span className="text-xs text-anthracite-lighter">{k.unit}</span>}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
