@@ -52,5 +52,26 @@
     "prev": "Previous",
     "next": "Next",
     "counter": "{i} of {n}"
+  },
+  "beforeAfter": {
+    "viewStartNow": "Start and now",
+    "viewSession": "Effect of the session",
+    "startNowSubtitle": "Start (average of the first 7 reference days), average of the last 7 days, change and verdict. Standard morning measurements only.",
+    "colIndex": "Index",
+    "colStart": "Start",
+    "colNow": "Now",
+    "colChange": "Change",
+    "colVerdict": "Verdict",
+    "colTrend": "7-day average",
+    "verdictReal": "real change, outside the starting range",
+    "verdictStable": "within the starting range",
+    "verdictProvisional": "indicative, over {n, plural, one {# measurement} other {# measurements}}",
+    "verdictUnknown": "n/a",
+    "noReference": "No reference measurement: standard morning measurements (4 am to 12 pm) are needed. The others stay in the measurement list.",
+    "noPrePost": "No before and after pair: in the app choose the \"before\" tag before the treatment (or workout) and \"after\" afterwards, on the same day.",
+    "coherenceTitle": "Morning and coherence",
+    "coherenceKind": "Morning → coherence",
+    "coherenceSubtitle": "The morning reference measurement and the coherence session of the same day: how much changes right after guided breathing.",
+    "noCoherencePairs": "No morning and coherence pair: a coherence session (guided breathing) on the same day, after the morning measurement, is needed."
   }
 }

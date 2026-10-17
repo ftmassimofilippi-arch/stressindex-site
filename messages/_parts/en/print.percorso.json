@@ -1,0 +1,23 @@
+{
+  "report": {
+    "panelsTitle": "Trend",
+    "panelsSubtitle": "One panel per index: measurement dots, 7-day average and starting range. Only standard morning measurements count.",
+    "startNowTitle": "Start and now",
+    "startNowSubtitle": "Start (average of the first 7 reference days), average of the last 7 days, change and verdict.",
+    "colIndex": "Index",
+    "colStart": "Start",
+    "colNow": "Now",
+    "colChange": "Change",
+    "colVerdict": "Verdict",
+    "colCv": "CV",
+    "cvHint": "CV: coefficient of variation of the daily reference values in the period (standard deviation / mean).",
+    "regularityLine": "Regularity in the period: {days, plural, one {# day} other {# days}} with a reference measurement out of {total}.",
+    "excludedNote": "{count, plural, one {# measurement excluded} other {# measurements excluded}} from the calculations: {reasons}.",
+    "sessionsTitle": "Effect of the sessions",
+    "sessionsSubtitle": "Before and after pairs of the same day, and morning measurement followed by a coherence session.",
+    "noSessions": "No pair in the period.",
+    "colPair": "Pair",
+    "kindCoherence": "morning → coherence",
+    "noReference": "No reference measurement in the period: the trend is calculated on standard morning measurements (4 am to 12 pm)."
+  }
+}

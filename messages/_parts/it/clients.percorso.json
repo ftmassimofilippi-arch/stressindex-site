@@ -52,5 +52,26 @@
     "prev": "Precedente",
     "next": "Successivo",
     "counter": "{i} di {n}"
+  },
+  "beforeAfter": {
+    "viewStartNow": "Inizio e adesso",
+    "viewSession": "Effetto della seduta",
+    "startNowSubtitle": "Partenza (media dei primi 7 giorni di riferimento), media degli ultimi 7 giorni, variazione e verdetto. Solo misurazioni standard del mattino.",
+    "colIndex": "Indice",
+    "colStart": "Partenza",
+    "colNow": "Adesso",
+    "colChange": "Variazione",
+    "colVerdict": "Verdetto",
+    "colTrend": "Media 7 giorni",
+    "verdictReal": "cambiamento reale, fuori dalla fascia di partenza",
+    "verdictStable": "dentro la fascia di partenza",
+    "verdictProvisional": "indicativo, su {n, plural, one {# misurazione} other {# misurazioni}}",
+    "verdictUnknown": "n.d.",
+    "noReference": "Nessuna misurazione di riferimento: servono misurazioni standard del mattino (dalle 4 alle 12). Le altre restano nell'elenco delle misurazioni.",
+    "noPrePost": "Nessuna coppia pre e post: nell'app scegli l'etichetta pre prima del trattamento (o dell'allenamento) e post dopo, nello stesso giorno.",
+    "coherenceTitle": "Mattino e coerenza",
+    "coherenceKind": "Mattino → coerenza",
+    "coherenceSubtitle": "La misurazione di riferimento del mattino e la sessione di coerenza dello stesso giorno: quanto cambia subito dopo la respirazione guidata.",
+    "noCoherencePairs": "Nessuna coppia mattino e coerenza: serve una sessione di coerenza (respirazione guidata) nello stesso giorno, dopo la misurazione del mattino."
   }
 }

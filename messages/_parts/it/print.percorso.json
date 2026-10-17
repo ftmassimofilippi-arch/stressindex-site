@@ -1,0 +1,23 @@
+{
+  "report": {
+    "panelsTitle": "Andamento",
+    "panelsSubtitle": "Un pannello per indice: punti delle misurazioni, media a 7 giorni e fascia di partenza. Nei conti entrano solo le misurazioni standard del mattino.",
+    "startNowTitle": "Inizio e adesso",
+    "startNowSubtitle": "Partenza (media dei primi 7 giorni di riferimento), media degli ultimi 7 giorni, variazione e verdetto.",
+    "colIndex": "Indice",
+    "colStart": "Partenza",
+    "colNow": "Adesso",
+    "colChange": "Variazione",
+    "colVerdict": "Verdetto",
+    "colCv": "CV",
+    "cvHint": "CV: coefficiente di variazione dei valori giornalieri di riferimento nel periodo (deviazione standard / media).",
+    "regularityLine": "Regolarità nel periodo: {days, plural, one {# giorno} other {# giorni}} con misurazione di riferimento su {total}.",
+    "excludedNote": "{count, plural, one {# misurazione esclusa} other {# misurazioni escluse}} dai conti: {reasons}.",
+    "sessionsTitle": "Effetto delle sedute",
+    "sessionsSubtitle": "Coppie pre e post dello stesso giorno, e misurazione del mattino seguita da una sessione di coerenza.",
+    "noSessions": "Nessuna coppia nel periodo.",
+    "colPair": "Coppia",
+    "kindCoherence": "mattino → coerenza",
+    "noReference": "Nessuna misurazione di riferimento nel periodo: l'andamento si calcola sulle misurazioni standard del mattino (dalle 4 alle 12)."
+  }
+}

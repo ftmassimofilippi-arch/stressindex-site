@@ -30,6 +30,18 @@ dei clienti con account, responsabile per i dati dei clienti dei professionisti)
   select e insert per l'utente; `gdpr_consents` (1.0, una riga per utente,
   scritta dall'app) non cambia, perde solo i grant ad `anon`. Finché non è applicata la
   riaccettazione non blocca nessuno.
+## 2026-10-17 — grafici del percorso: fase 4, Prima e dopo
+
+La scheda ha due viste. "Inizio e adesso" (default, da mostrare al cliente):
+una riga per indice (Stress, Recupero, Equilibrio, Energia, Adattamento,
+RMSSD) con partenza, adesso, variazione, verdetto e mini linea della media
+mobile, dagli stessi conti dei grafici. "Effetto della seduta": le coppie
+pre/post dell'app (regola invariata, `pairBeforeAfter` identico al Dart) più
+il nuovo tipo "mattino → coerenza" (`pairMorningCoherence`, solo sito, con
+test): la misurazione di riferimento del mattino e la sessione di coerenza
+dello stesso giorno (Sara 16/10: RMSSD 23,9 → 45,0 ms). Ogni vista vuota
+spiega perché e cosa fare.
+
 ## 2026-10-17 — grafici del percorso: fase 3b, strumenti del professionista
 
 Pannello "Prepara la vista" nella scheda: data di inizio percorso (salvata su

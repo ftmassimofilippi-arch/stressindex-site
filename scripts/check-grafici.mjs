@@ -63,6 +63,8 @@ await shot('scheda-tutto', `/area-professionisti/clienti/${clientId}`, 1280, { c
 await shot('prepara', `/area-professionisti/clienti/${clientId}`, 1280, { clickText: ['Prepara la vista'] })
 await shot('cliente', `/area-professionisti/clienti/${clientId}`, 1280, { clickText: ['Mostra al cliente'] })
 await shot('cliente-390', `/area-professionisti/clienti/${clientId}`, 390, { clickText: ['Mostra al cliente'] })
+await shot('prima-dopo', `/area-professionisti/clienti/${clientId}?tab=prima-dopo`, 1280)
+await shot('seduta', `/area-professionisti/clienti/${clientId}?tab=prima-dopo`, 1280, { clickText: ['Effetto della seduta'] })
 await shot('home-1280', `/area-professionisti`, 1280)
 await shot('analytics-1280', `/area-professionisti/clienti/${clientId}?tab=analytics`, 1280)
 await shot('stampa', `/stampa/report-periodico?clientId=${clientId}&from=2026-09-18&to=2026-10-17`, 1000)

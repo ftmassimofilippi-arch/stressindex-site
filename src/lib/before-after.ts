@@ -198,6 +198,49 @@ export function pairBeforeAfter<T extends PairableRow>(rows: T[]): BeforeAfterPa
   return out
 }
 
+// ── Mattino + coerenza dello stesso giorno (SOLO sito, 17/10/2026) ──────────
+// Non è nel Dart: `pairBeforeAfter` sopra resta identico all'app, questa è una
+// funzione a parte (da portare nell'app: docs/FIX_APP_DA_FARE.md, G6). La
+// misurazione di RIFERIMENTO del mattino (standard, 04:00-11:59, vedi
+// reference-trend.ts) accoppiata con la sessione di coerenza dello stesso
+// giorno che la segue; con più coerenze ogni coerenza prende la riferimento
+// precedente più vicina, come per pre e post. Chi chiama decide che cosa è
+// riferimento e che cosa è coerenza (`reference`, `coherence`), così la regola
+// del tipo vive in un posto solo.
+
+export interface CoherencePairableRow extends PairableRow {
+  reference: boolean
+  coherence: boolean
+}
+
+export interface MorningCoherencePair<T extends CoherencePairableRow = CoherencePairableRow> {
+  morning: T
+  coherence: T
+}
+
+/** Le coppie mattino + coerenza, dalla più recente (istante della coerenza). */
+export function pairMorningCoherence<T extends CoherencePairableRow>(rows: T[]): MorningCoherencePair<T>[] {
+  const mornings = new Map<string, T[]>()
+  const keyOf = (r: T) => `${r.clientId ?? ''}|${r.dayKey}`
+  for (const r of rows) {
+    if (!r.reference) continue
+    const k = keyOf(r)
+    mornings.set(k, [...(mornings.get(k) ?? []), r])
+  }
+  const out: MorningCoherencePair<T>[] = []
+  for (const c of rows) {
+    if (!c.coherence) continue
+    let best: T | null = null
+    for (const m of mornings.get(keyOf(c)) ?? []) {
+      if (m.id === c.id || !(m.instantMs < c.instantMs)) continue
+      if (best == null || m.instantMs > best.instantMs) best = m
+    }
+    if (best) out.push({ morning: best, coherence: c })
+  }
+  out.sort((a, b) => b.coherence.instantMs - a.coherence.instantMs)
+  return out
+}
+
 // ── Delta e semantica (freccia = direzione del numero, colore = significato) ─
 
 /** Per lo Stress il calo è un miglioramento; per gli altri score la salita.

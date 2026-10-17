@@ -232,7 +232,7 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, a
 
       {tab === 'panoramica' && <OverviewTab client={client} measurements={measurements} monitoring={monitoring} alerts={alerts} appEvents={appEvents} professionistaId={professionistaId} filter={filter} onFilterChange={setFilter} detailQs={detailQs} prefs={chartPrefs} readOnly={readOnly} />}
       {tab === 'misurazioni' && <MeasurementsTab client={client} measurements={measurements} filter={filter} onFilterChange={setFilter} detailQs={detailQs} />}
-      {tab === 'prima-dopo' && <BeforeAfterTab client={client} measurements={measurements} professionistaId={professionistaId} />}
+      {tab === 'prima-dopo' && <BeforeAfterTab client={client} measurements={measurements} professionistaId={professionistaId} excluded={chartPrefs.exclusions.map((e) => e.session_id)} />}
       {tab === 'monitoraggi' && <MonitoringTab sessions={monitoring} professionistaId={professionistaId} />}
       {tab === 'analytics' && <AdvancedAnalyticsTab measurements={measurements} courseStart={client.data_inizio_percorso ?? null} excluded={chartPrefs.exclusions.map((e) => e.session_id)} annotations={chartPrefs.annotations} />}
       {tab === 'report' && <ReportTab client={client} />}

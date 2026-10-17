@@ -52,5 +52,26 @@
     "prev": "Zurück",
     "next": "Weiter",
     "counter": "{i} von {n}"
+  },
+  "beforeAfter": {
+    "viewStartNow": "Anfang und jetzt",
+    "viewSession": "Wirkung der Sitzung",
+    "startNowSubtitle": "Ausgangswert (Mittel der ersten 7 Referenztage), Mittel der letzten 7 Tage, Veränderung und Urteil. Nur Standardmessungen am Morgen.",
+    "colIndex": "Index",
+    "colStart": "Anfang",
+    "colNow": "Jetzt",
+    "colChange": "Veränderung",
+    "colVerdict": "Urteil",
+    "colTrend": "7-Tage-Mittel",
+    "verdictReal": "echte Veränderung, außerhalb des Ausgangsbereichs",
+    "verdictStable": "innerhalb des Ausgangsbereichs",
+    "verdictProvisional": "vorläufig, aus {n, plural, one {# Messung} other {# Messungen}}",
+    "verdictUnknown": "k. A.",
+    "noReference": "Keine Referenzmessung: es braucht Standardmessungen am Morgen (4 bis 12 Uhr). Die anderen bleiben in der Messliste.",
+    "noPrePost": "Kein Vorher-Nachher-Paar: wählen Sie in der App das Etikett \"vorher\" vor der Behandlung (oder dem Training) und \"nachher\" danach, am selben Tag.",
+    "coherenceTitle": "Morgen und Kohärenz",
+    "coherenceKind": "Morgen → Kohärenz",
+    "coherenceSubtitle": "Die Referenzmessung am Morgen und die Kohärenzsitzung desselben Tages: wie viel sich direkt nach der geführten Atmung ändert.",
+    "noCoherencePairs": "Kein Paar Morgen und Kohärenz: es braucht eine Kohärenzsitzung (geführte Atmung) am selben Tag nach der Morgenmessung."
   }
 }

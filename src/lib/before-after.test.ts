@@ -2,7 +2,7 @@
 // Si esegue con `npm test` (node --test, senza dipendenze aggiuntive).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { deltaVerdict, normalizeTagKey, pairBeforeAfter, tagCounts, type PairableRow } from './before-after.ts'
+import { deltaVerdict, normalizeTagKey, pairBeforeAfter, pairMorningCoherence, tagCounts, type PairableRow } from './before-after.ts'
 
 function row(id: string, day: number, hour: number, tags: string[], clientId: string | null = 'c1', minute = 0): PairableRow {
   const d = Date.UTC(2026, 8, day, hour, minute)
@@ -87,4 +87,42 @@ test('deltaVerdict: per lo Stress il calo è un miglioramento', () => {
   assert.equal(deltaVerdict(55, 70, false), 'declined')
   assert.equal(deltaVerdict(50, 52, true), 'stable')
   assert.equal(deltaVerdict(null, 52, true), 'unknown')
+})
+
+// ── Mattino + coerenza (solo sito, non nel Dart) ─────────────────────────────
+
+function mc(id: string, day: number, hour: number, minute: number, kind: 'reference' | 'coherence' | 'other') {
+  return { ...row(id, day, hour, [], 'c1', minute), reference: kind === 'reference', coherence: kind === 'coherence' }
+}
+
+test('mattino + coerenza: la riferimento del mattino con la coerenza dello stesso giorno che la segue (Sara 16 e 17/10)', () => {
+  const pairs = pairMorningCoherence([
+    mc('m16', 16, 6, 59, 'reference'), mc('c16', 16, 7, 25, 'coherence'),
+    mc('m17', 17, 6, 55, 'reference'), mc('c17', 17, 10, 39, 'coherence'),
+    mc('m15', 15, 7, 32, 'reference'),
+  ])
+  assert.equal(pairs.length, 2)
+  assert.equal(pairs[0].morning.id, 'm17')
+  assert.equal(pairs[0].coherence.id, 'c17')
+  assert.equal(pairs[1].morning.id, 'm16')
+  assert.equal(pairs[1].coherence.id, 'c16')
+})
+
+test('mattino + coerenza: niente coppia senza riferimento, se la coerenza viene prima, o in giorni diversi', () => {
+  assert.equal(pairMorningCoherence([mc('c', 16, 7, 25, 'coherence')]).length, 0)
+  assert.equal(pairMorningCoherence([mc('c', 16, 6, 0, 'coherence'), mc('m', 16, 7, 0, 'reference')]).length, 0)
+  assert.equal(pairMorningCoherence([mc('m', 15, 7, 0, 'reference'), mc('c', 16, 7, 25, 'coherence')]).length, 0)
+  // Una misurazione pomeridiana (non di riferimento) non fa da mattino.
+  assert.equal(pairMorningCoherence([mc('p', 16, 15, 0, 'other'), mc('c', 16, 16, 0, 'coherence')]).length, 0)
+})
+
+test('mattino + coerenza: con due mattine la coerenza prende la più vicina, due coerenze danno due coppie', () => {
+  const pairs = pairMorningCoherence([
+    mc('m1', 3, 7, 9, 'reference'), mc('m2', 3, 7, 38, 'reference'),
+    mc('c1', 3, 8, 0, 'coherence'), mc('c2', 3, 11, 0, 'coherence'),
+  ])
+  assert.equal(pairs.length, 2)
+  assert.equal(pairs[0].coherence.id, 'c2')
+  assert.equal(pairs[0].morning.id, 'm2')
+  assert.equal(pairs[1].morning.id, 'm2')
 })

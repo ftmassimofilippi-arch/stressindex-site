@@ -1,0 +1,23 @@
+{
+  "report": {
+    "panelsTitle": "Verlauf",
+    "panelsSubtitle": "Ein Diagramm pro Index: Messpunkte, 7-Tage-Mittel und Ausgangsbereich. Gezählt werden nur Standardmessungen am Morgen.",
+    "startNowTitle": "Anfang und jetzt",
+    "startNowSubtitle": "Ausgangswert (Mittel der ersten 7 Referenztage), Mittel der letzten 7 Tage, Veränderung und Urteil.",
+    "colIndex": "Index",
+    "colStart": "Anfang",
+    "colNow": "Jetzt",
+    "colChange": "Veränderung",
+    "colVerdict": "Urteil",
+    "colCv": "VK",
+    "cvHint": "VK: Variationskoeffizient der täglichen Referenzwerte im Zeitraum (Standardabweichung / Mittelwert).",
+    "regularityLine": "Regelmäßigkeit im Zeitraum: {days, plural, one {# Tag} other {# Tage}} mit Referenzmessung von {total}.",
+    "excludedNote": "{count, plural, one {# Messung} other {# Messungen}} aus der Berechnung ausgeschlossen: {reasons}.",
+    "sessionsTitle": "Wirkung der Sitzungen",
+    "sessionsSubtitle": "Vorher-Nachher-Paare desselben Tages und Morgenmessung mit anschließender Kohärenzsitzung.",
+    "noSessions": "Kein Paar im Zeitraum.",
+    "colPair": "Paar",
+    "kindCoherence": "Morgen → Kohärenz",
+    "noReference": "Keine Referenzmessung im Zeitraum: der Verlauf wird aus Standardmessungen am Morgen (4 bis 12 Uhr) berechnet."
+  }
+}
