@@ -3,7 +3,7 @@
 Scritta il 17/10/2026 prima di toccare il codice. Il piano è in
 `docs/PROMPT_GRAFICI_ANALISI_2026-10-17.md`; qui ci sono la mappa del codice,
 i punti in cui le decisioni prese si scontrano con quello che c'è, le scelte
-fatte dove le regole lasciano spazio e la proposta della migrazione `sito-048`
+fatte dove le regole lasciano spazio e la proposta della migrazione `sito-049`
 (fase 3b, da approvare prima di applicarla).
 
 Dati letti in produzione in sola lettura (connettore Supabase, il CLI si è
@@ -228,7 +228,7 @@ Firma prevista (fase 1): `isReferenceMeasurement`, `dailyReferenceValues`,
 `rollingMean7`, `courseBaseline`, `rollingBand60`, `changeSummary`,
 `regularity`, con i conti RMSSD in `ln` e il ritorno in ms.
 
-## 7. Proposta `sito-048` (fase 3b, da approvare prima)
+## 7. Proposta `sito-049` (fase 3b, da approvare prima)
 
 Nessuna tabella esistente copre annotazioni ed esclusioni. Per la vista salvata
 `client_settings` (una riga per cliente, RLS `client_settings_own_data` sulla
