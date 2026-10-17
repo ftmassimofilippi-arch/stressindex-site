@@ -30,6 +30,18 @@ dei clienti con account, responsabile per i dati dei clienti dei professionisti)
   select e insert per l'utente; `gdpr_consents` (1.0, una riga per utente,
   scritta dall'app) non cambia, perde solo i grant ad `anon`. Finché non è applicata la
   riaccettazione non blocca nessuno.
+## 2026-10-17 — grafici del percorso: fase 3b, strumenti del professionista
+
+Pannello "Prepara la vista" nella scheda: data di inizio percorso (salvata su
+`clients.data_inizio_percorso`, la partenza si ricalcola), indici e ordine,
+vista salvata per cliente (`client_settings.chart_view`), annotazioni (linee
+verticali con una parola) ed esclusioni dai conti con motivo obbligatorio
+(punto barrato, `measurement_analytics` mai toccata). "Mostra al cliente":
+schermo intero, un indice alla volta con le frecce, frase, grafico senza
+puntini, "All'inizio" e "Adesso", Esc per uscire. Migrazione `sito-049`
+scritta e **non applicata**: in attesa del via libera; senza, la parte
+annotazioni/esclusioni/vista resta spenta con un avviso.
+
 ## 2026-10-17 — grafici del percorso: fase 3, i numeri
 
 Sopra ogni pannello la frase di sintesi generata dai numeri nelle tre lingue

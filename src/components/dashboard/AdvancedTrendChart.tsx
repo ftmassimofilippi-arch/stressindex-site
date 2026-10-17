@@ -19,6 +19,8 @@ import {
 import { formatDate, formatIstante, intlTag, measuredDayKey, num, oggiIta } from '@/lib/format'
 import { FUSO } from '@/lib/measured-time'
 import type { Tr } from '@/i18n/types'
+import { GROUP_ORDER, METRIC_MAP, PANEL_NAMES, TREND_METRICS, type MetricDef, type MetricGroup } from '@/lib/trend-metrics.ts'
+import { COMPARE_KINDS, type ChartView, type CompareKind } from '@/lib/chart-view.ts'
 import { PRESETS, PRESET_KEYS, periodoDaPreset, type Periodo, type PresetKey } from '@/lib/trend-period.ts'
 import {
   changeSummary,
@@ -51,77 +53,14 @@ import {
 } from '@/lib/trend-panel.ts'
 
 // ============================================================================
-// ELENCO DELLE METRICHE
+// METRICHE
 // ============================================================================
-// L'etichetta di ogni metrica è in `charts.metrics.<key>` (chiave = colonna
-// di measurement_analytics): si legge con `metricLabel(m, t)`, dove
-// `t = useTranslations('charts.metrics')`. I nomi dei gruppi sono in
-// `charts.groups.<group>`. Per i pannelli alcune metriche hanno un nome più
-// parlante in `charts.panel.names.<key>` ("Variabilità cardiaca (RMSSD)").
+// L'elenco vive in `src/lib/trend-metrics.ts` (modulo puro, lo leggono anche
+// le pagine server); qui si riesporta per i chiamanti storici.
 
-type Group = 'score' | 'time' | 'welch' | 'lomb' | 'nonlinear' | 'geometric'
+export { TREND_METRICS, type MetricDef } from '@/lib/trend-metrics.ts'
 
-export type MetricDef = {
-  key: string
-  color: string
-  group: Group
-  unit?: string
-  decimals?: number
-}
-
-export const TREND_METRICS: MetricDef[] = [
-  // Score proprietari (0-100)
-  { key: 'score_stress', color: '#E85D4A', group: 'score', unit: '/100', decimals: 1 },
-  { key: 'score_recupero', color: '#4FA39A', group: 'score', unit: '/100', decimals: 1 },
-  { key: 'score_equilibrio', color: '#F59E0B', group: 'score', unit: '/100', decimals: 1 },
-  { key: 'score_energia', color: '#6366F1', group: 'score', unit: '/100', decimals: 1 },
-  { key: 'score_modulazione_infiammatoria', color: '#8B5CF6', group: 'score', unit: '/100', decimals: 1 },
-  { key: 'score_composito', color: '#2E746C', group: 'score', unit: '/100', decimals: 1 },
-
-  // Time domain (blu)
-  { key: 'sdnn', color: '#0EA5E9', group: 'time', unit: 'ms', decimals: 1 },
-  { key: 'rmssd', color: '#0284C7', group: 'time', unit: 'ms', decimals: 1 },
-  { key: 'pnn50', color: '#7DD3FC', group: 'time', unit: '%', decimals: 1 },
-  { key: 'pnn20', color: '#BAE6FD', group: 'time', unit: '%', decimals: 1 },
-  { key: 'mean_hr', color: '#1D4ED8', group: 'time', unit: 'bpm', decimals: 1 },
-  { key: 'cv', color: '#0369A1', group: 'time', unit: '', decimals: 2 },
-  { key: 'rmssd_sdnn_ratio', color: '#075985', group: 'time', unit: '', decimals: 2 },
-
-  // Frequency Welch (viola)
-  { key: 'vlf_power', color: '#A855F7', group: 'welch', unit: 'ms²', decimals: 0 },
-  { key: 'lf_power', color: '#C084FC', group: 'welch', unit: 'ms²', decimals: 0 },
-  { key: 'hf_power', color: '#D8B4FE', group: 'welch', unit: 'ms²', decimals: 0 },
-  { key: 'total_power', color: '#7C3AED', group: 'welch', unit: 'ms²', decimals: 0 },
-  { key: 'lf_hf_ratio', color: '#6D28D9', group: 'welch', unit: '', decimals: 2 },
-  { key: 'lf_nu', color: '#5B21B6', group: 'welch', unit: 'n.u.', decimals: 1 },
-  { key: 'hf_nu', color: '#4C1D95', group: 'welch', unit: 'n.u.', decimals: 1 },
-
-  // Frequency Lomb-Scargle (rosa)
-  { key: 'vlf_power_ls', color: '#EC4899', group: 'lomb', unit: 'ms²', decimals: 0 },
-  { key: 'lf_power_ls', color: '#F472B6', group: 'lomb', unit: 'ms²', decimals: 0 },
-  { key: 'hf_power_ls', color: '#F9A8D4', group: 'lomb', unit: 'ms²', decimals: 0 },
-  { key: 'total_power_ls', color: '#DB2777', group: 'lomb', unit: 'ms²', decimals: 0 },
-  { key: 'lf_hf_ratio_ls', color: '#BE185D', group: 'lomb', unit: '', decimals: 2 },
-
-  // Non-lineari (arancio)
-  { key: 'sd1', color: '#F97316', group: 'nonlinear', unit: 'ms', decimals: 1 },
-  { key: 'sd2', color: '#FB923C', group: 'nonlinear', unit: 'ms', decimals: 1 },
-  { key: 'sd1_sd2_ratio', color: '#FDBA74', group: 'nonlinear', unit: '', decimals: 2 },
-  { key: 'dfa_alpha1', color: '#EA580C', group: 'nonlinear', unit: '', decimals: 2 },
-  { key: 'dfa_alpha2', color: '#C2410C', group: 'nonlinear', unit: '', decimals: 2 },
-  { key: 'sample_entropy', color: '#9A3412', group: 'nonlinear', unit: '', decimals: 2 },
-  { key: 'approximate_entropy', color: '#7C2D12', group: 'nonlinear', unit: '', decimals: 2 },
-
-  // Geometrici (lime)
-  { key: 'triangular_index', color: '#84CC16', group: 'geometric', unit: '', decimals: 1 },
-  { key: 'tinn', color: '#65A30D', group: 'geometric', unit: 'ms', decimals: 1 },
-  { key: 'stress_index_baevsky', color: '#4D7C0F', group: 'geometric', unit: '', decimals: 1 },
-]
-
-const METRIC_MAP: Record<string, MetricDef> = Object.fromEntries(TREND_METRICS.map((m) => [m.key, m]))
-
-/** Metriche con un nome parlante per i pannelli (`charts.panel.names.<key>`). */
-const PANEL_NAMES: ReadonlySet<string> = new Set(['rmssd', 'sdnn', 'mean_hr'])
+type Group = MetricGroup
 
 /** Etichetta tradotta di una metrica del trend (`t = useTranslations('charts.metrics')`). */
 export function metricLabel(m: MetricDef | string, t: Tr): string {
@@ -132,8 +71,6 @@ export function metricLabel(m: MetricDef | string, t: Tr): string {
 export function panelName(key: string, tCharts: Tr, tMetrics: Tr): string {
   return PANEL_NAMES.has(key) ? tCharts(`panel.names.${key}`) : metricLabel(key, tMetrics)
 }
-
-const GROUP_ORDER: Group[] = ['score', 'time', 'welch', 'lomb', 'nonlinear', 'geometric']
 
 function formatValue(value: number | null | undefined, m: MetricDef | undefined, locale: string, withUnit = true): string {
   if (value == null || !Number.isFinite(value)) return '—'
@@ -150,9 +87,7 @@ function formatValue(value: number | null | undefined, m: MetricDef | undefined,
 // Con che cosa si confronta la media mobile di oggi. "course" (partenza del
 // percorso) è il default e l'unico che non dipende dal periodo scelto.
 
-export type CompareKind = 'course' | 'periodStart' | 'previous' | 'last60'
-
-export const COMPARE_KINDS: CompareKind[] = ['course', 'periodStart', 'previous', 'last60']
+export type { CompareKind } from '@/lib/chart-view.ts'
 
 /** Una misurazione come arriva dalla scheda (measurement_analytics o sessione sintetizzata). */
 export type TrendMeasurement = ReferenceRow & { id?: string }
@@ -203,6 +138,12 @@ type Props = {
   renderHeader?: (p: PanelSummary) => ReactNode
   /** Chiamata quando cambia il periodo (per chi mostra la regolarità fuori dal grafico). */
   onPeriodChange?: (periodo: Periodo) => void
+  /**
+   * Vista del cliente (salvata o in bozza): quando c'è vince sul localStorage e
+   * ogni cambio fatto dalla barra dei comandi torna su con `onViewChange`.
+   */
+  view?: ChartView | null
+  onViewChange?: (v: ChartView) => void
 }
 
 // Larghezza di default del grafico in stampa (px, area utile di un A4).
@@ -230,6 +171,8 @@ export function AdvancedTrendChart({
   clientMode = false,
   renderHeader,
   onPeriodChange,
+  view = null,
+  onViewChange,
 }: Props) {
   const locale = useLocale()
   const t = useTranslations('charts')
@@ -238,15 +181,38 @@ export function AdvancedTrendChart({
   const excludedSet = useMemo(() => new Set(excluded ?? []), [excluded])
 
   // periodo
-  const [activeKey, setActiveKey] = useState<PresetKey>(defaultPreset)
-  const [customFrom, setCustomFrom] = useState(() => giornoFa(30))
-  const [customTo, setCustomTo] = useState(() => oggiIta())
+  const [activeKey, setActiveKey] = useState<PresetKey>(view?.preset ?? defaultPreset)
+  const [customFrom, setCustomFrom] = useState(() => view?.customFrom ?? giornoFa(30))
+  const [customTo, setCustomTo] = useState(() => view?.customTo ?? oggiIta())
 
   // selezione metriche, scala, punti
-  const [selected, setSelected] = useState<string[]>(() => defaultSelected.filter((k) => METRIC_MAP[k]))
-  const [fullScale, setFullScale] = useState(false)
-  const [compare, setCompare] = useState<CompareKind>(compareProp)
-  const [showPoints, setShowPoints] = useState(showPointsProp ?? !clientMode)
+  const [selected, setSelected] = useState<string[]>(() => (view?.metrics ?? defaultSelected).filter((k) => METRIC_MAP[k]))
+  const [fullScale, setFullScale] = useState(view?.scale === 'full')
+  const [compare, setCompare] = useState<CompareKind>(view?.compare ?? compareProp)
+  const [showPoints, setShowPoints] = useState(showPointsProp ?? view?.points ?? !clientMode)
+
+  // La vista arriva dal padre (salvata o bozza): ogni cambio si riflette qui...
+  useEffect(() => {
+    if (!view) return
+    setActiveKey(view.preset)
+    if (view.customFrom) setCustomFrom(view.customFrom)
+    if (view.customTo) setCustomTo(view.customTo)
+    setSelected(view.metrics.filter((k) => METRIC_MAP[k]))
+    setFullScale(view.scale === 'full')
+    setCompare(view.compare)
+    if (showPointsProp == null) setShowPoints(view.points)
+  }, [view, showPointsProp])
+  // ...e ogni cambio fatto dai comandi torna su, così la bozza resta in pari.
+  const currentView = useMemo<ChartView>(() => ({
+    metrics: selected,
+    preset: activeKey,
+    customFrom: activeKey === 'custom' ? customFrom : null,
+    customTo: activeKey === 'custom' ? customTo : null,
+    compare,
+    points: showPoints,
+    scale: fullScale ? 'full' : 'fit',
+  }), [selected, activeKey, customFrom, customTo, compare, showPoints, fullScale])
+  useEffect(() => { onViewChange?.(currentView) }, [currentView, onViewChange])
   const [panelOpen, setPanelOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [expandedGroups, setExpandedGroups] = useState<Set<Group>>(() => new Set(['score']))
@@ -256,9 +222,9 @@ export function AdvancedTrendChart({
   }, [showPointsProp])
   useEffect(() => { setCompare(compareProp) }, [compareProp])
 
-  // hydration da localStorage (mai in stampa: contano solo le prop)
+  // hydration da localStorage (mai in stampa né con una vista del cliente: contano solo le prop)
   useEffect(() => {
-    if (print || typeof window === 'undefined' || !storageKey) return
+    if (print || view || typeof window === 'undefined' || !storageKey) return
     const savedPreset = window.localStorage.getItem(`${storageKey}:range`)
     const savedMetrics = window.localStorage.getItem(`${storageKey}:metrics`)
     const savedScale = window.localStorage.getItem(`${storageKey}:scale`)
@@ -443,7 +409,7 @@ export function AdvancedTrendChart({
       )}
 
       {/* Didascalia (quante misurazioni di riferimento su quante nel periodo) e confronto. */}
-      {counts && (
+      {counts && !clientMode && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3 text-xs text-anthracite-lighter">
           {counts.from && counts.to && (
             <span aria-live="polite">

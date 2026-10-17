@@ -6,5 +6,51 @@
   },
   "profile": {
     "ofDate": "on {date}"
+  },
+  "prepare": {
+    "title": "Prepare the view",
+    "subtitle": "You adjust how it looks, not the data.",
+    "showClient": "Show to the client",
+    "courseStart": "Start of the journey",
+    "courseStartHint": "The starting point is calculated on the first 7 reference days from this date. Empty: from the beginning of the history.",
+    "save": "Save",
+    "clear": "No date",
+    "saved": "Saved.",
+    "saveError": "Could not save: {message}",
+    "metricsTitle": "Indexes shown and order",
+    "metricsHint": "Add or remove with \"Select metrics\" in the chart; here you set the order.",
+    "up": "Move up",
+    "down": "Move down",
+    "remove": "Remove",
+    "saveView": "Save the view for this client",
+    "viewSaved": "View saved",
+    "viewHint": "You will find the saved view again, the PDF report uses it and so will the client app.",
+    "annotationsTitle": "Annotations",
+    "annotationsHint": "One word on a date: shown in the charts and in the report.",
+    "annotationPlaceholder": "e.g. start, session 3, holiday",
+    "add": "Add",
+    "noAnnotations": "No annotations.",
+    "exclusionsTitle": "Measurements excluded from the calculations",
+    "exclusionsHint": "They stay visible as crossed dots and in a note in the report. The reason is required.",
+    "exclusionPick": "Pick the measurement",
+    "exclusionNote": "Note (optional)",
+    "exclude": "Exclude",
+    "restore": "Count it again",
+    "noExclusions": "No excluded measurement.",
+    "reasons": {
+      "artefatti": "artifacts",
+      "condizioni_anomale": "measured in unusual conditions",
+      "malattia": "illness",
+      "altro": "other"
+    },
+    "notReady": "Annotations, exclusions and the saved view arrive with migration sito-049: until it is applied this part stays off.",
+    "excludedNote": "{count, plural, one {# measurement excluded} other {# measurements excluded}}: {reasons}"
+  },
+  "clientMode": {
+    "title": "Your progress",
+    "close": "Exit (Esc)",
+    "prev": "Previous",
+    "next": "Next",
+    "counter": "{i} of {n}"
   }
 }

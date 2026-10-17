@@ -1153,6 +1153,13 @@
       "pairsSubtitle": "Neueste zuerst · Zeile anklicken, um den Vergleich der beiden Sitzungen zu öffnen",
       "pairsTitle": "Vorher-Nachher-Paare"
     },
+    "clientMode": {
+      "close": "Beenden (Esc)",
+      "counter": "{i} von {n}",
+      "next": "Weiter",
+      "prev": "Zurück",
+      "title": "Ihre Fortschritte"
+    },
     "compare": {
       "after": "Nachher",
       "backLabel": "{name} · Vorher und Nachher",
@@ -1391,6 +1398,45 @@
       "preview": "Vorschau: Das PDF enthält <b>{count, plural, one {# Messung} other {# Messungen}}</b> im Zeitraum, die Kopfzeile der Praxis{studio} und optional die Notizen. PSD-, Poincaré- und Rhythmogramm-Grafiken folgen mit der serverseitigen Erstellung.",
       "title": "PDF-Bericht exportieren",
       "to": "Bis"
+    },
+    "prepare": {
+      "add": "Hinzufügen",
+      "annotationPlaceholder": "z. B. Start, Sitzung 3, Urlaub",
+      "annotationsHint": "Ein Wort zu einem Datum: erscheint in den Diagrammen und im Bericht.",
+      "annotationsTitle": "Anmerkungen",
+      "clear": "Kein Datum",
+      "courseStart": "Beginn des Wegs",
+      "courseStartHint": "Der Ausgangswert wird aus den ersten 7 Referenztagen ab diesem Datum berechnet. Leer: ab Beginn des Verlaufs.",
+      "down": "Nach unten",
+      "exclude": "Ausschließen",
+      "excludedNote": "{count, plural, one {# Messung ausgeschlossen} other {# Messungen ausgeschlossen}}: {reasons}",
+      "exclusionNote": "Notiz (optional)",
+      "exclusionPick": "Messung wählen",
+      "exclusionsHint": "Sie bleiben als durchgestrichene Punkte und als Hinweis im Bericht sichtbar. Der Grund ist Pflicht.",
+      "exclusionsTitle": "Aus der Berechnung ausgeschlossene Messungen",
+      "metricsHint": "Hinzufügen oder entfernen über \"Metriken auswählen\" im Diagramm; hier legen Sie die Reihenfolge fest.",
+      "metricsTitle": "Gezeigte Indizes und Reihenfolge",
+      "noAnnotations": "Keine Anmerkungen.",
+      "noExclusions": "Keine ausgeschlossene Messung.",
+      "notReady": "Anmerkungen, Ausschlüsse und gespeicherte Ansicht kommen mit der Migration sito-049: bis dahin bleibt dieser Teil aus.",
+      "reasons": {
+        "altro": "anderes",
+        "artefatti": "Artefakte",
+        "condizioni_anomale": "unter ungewöhnlichen Bedingungen gemessen",
+        "malattia": "Krankheit"
+      },
+      "remove": "Entfernen",
+      "restore": "Wieder zählen",
+      "save": "Speichern",
+      "saveError": "Speichern fehlgeschlagen: {message}",
+      "saveView": "Ansicht für diese Person speichern",
+      "saved": "Gespeichert.",
+      "showClient": "Dem Klienten zeigen",
+      "subtitle": "Sie regeln die Darstellung, nicht die Daten.",
+      "title": "Ansicht vorbereiten",
+      "up": "Nach oben",
+      "viewHint": "Die gespeicherte Ansicht finden Sie wieder, der PDF-Bericht nutzt sie und künftig auch die App.",
+      "viewSaved": "Ansicht gespeichert"
     },
     "profile": {
       "age": "{n, plural, one {# Jahr} other {# Jahre}}",

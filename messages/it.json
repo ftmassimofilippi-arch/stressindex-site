@@ -1153,6 +1153,13 @@
       "pairsSubtitle": "Dalla più recente · clicca una riga per aprire il confronto delle due sessioni",
       "pairsTitle": "Coppie prima e dopo"
     },
+    "clientMode": {
+      "close": "Esci (Esc)",
+      "counter": "{i} di {n}",
+      "next": "Successivo",
+      "prev": "Precedente",
+      "title": "I tuoi progressi"
+    },
     "compare": {
       "after": "Dopo",
       "backLabel": "{name} · Prima e dopo",
@@ -1391,6 +1398,45 @@
       "preview": "Anteprima: il PDF includerà <b>{count, plural, one {# misurazione} other {# misurazioni}}</b> nel periodo, l'intestazione dello studio{studio} ed eventualmente le note. I grafici PSD, Poincaré e ritmogramma sono in arrivo con la generazione server-side.",
       "title": "Esporta report PDF",
       "to": "Al"
+    },
+    "prepare": {
+      "add": "Aggiungi",
+      "annotationPlaceholder": "es. inizio percorso, seduta 3, vacanza",
+      "annotationsHint": "Una parola su una data: compare nei grafici e nel report.",
+      "annotationsTitle": "Annotazioni",
+      "clear": "Nessuna data",
+      "courseStart": "Inizio del percorso",
+      "courseStartHint": "La partenza si calcola sui primi 7 giorni di riferimento da questa data. Vuota: dall'inizio della storia.",
+      "down": "Sposta giù",
+      "exclude": "Escludi",
+      "excludedNote": "{count, plural, one {# misurazione esclusa} other {# misurazioni escluse}}: {reasons}",
+      "exclusionNote": "Nota (facoltativa)",
+      "exclusionPick": "Scegli la misurazione",
+      "exclusionsHint": "Restano visibili come punti barrati e in nota nel report. Il motivo è obbligatorio.",
+      "exclusionsTitle": "Misurazioni escluse dai conti",
+      "metricsHint": "Aggiungi o togli con \"Seleziona metriche\" nel grafico; qui decidi l'ordine.",
+      "metricsTitle": "Indici mostrati e ordine",
+      "noAnnotations": "Nessuna annotazione.",
+      "noExclusions": "Nessuna misurazione esclusa.",
+      "notReady": "Annotazioni, esclusioni e vista salvata arrivano con la migrazione sito-049: finché non è applicata questa parte resta spenta.",
+      "reasons": {
+        "altro": "altro",
+        "artefatti": "artefatti",
+        "condizioni_anomale": "misurata in condizioni anomale",
+        "malattia": "malattia"
+      },
+      "remove": "Togli",
+      "restore": "Rimetti nei conti",
+      "save": "Salva",
+      "saveError": "Salvataggio non riuscito: {message}",
+      "saveView": "Salva la vista per questo cliente",
+      "saved": "Salvato.",
+      "showClient": "Mostra al cliente",
+      "subtitle": "Regoli come si vede, non i dati.",
+      "title": "Prepara la vista",
+      "up": "Sposta su",
+      "viewHint": "La vista salvata la ritrovi tu, la usa il report PDF e domani l'app del cliente.",
+      "viewSaved": "Vista salvata"
     },
     "profile": {
       "age": "{n, plural, one {# anno} other {# anni}}",

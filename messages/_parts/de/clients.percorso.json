@@ -6,5 +6,51 @@
   },
   "profile": {
     "ofDate": "vom {date}"
+  },
+  "prepare": {
+    "title": "Ansicht vorbereiten",
+    "subtitle": "Sie regeln die Darstellung, nicht die Daten.",
+    "showClient": "Dem Klienten zeigen",
+    "courseStart": "Beginn des Wegs",
+    "courseStartHint": "Der Ausgangswert wird aus den ersten 7 Referenztagen ab diesem Datum berechnet. Leer: ab Beginn des Verlaufs.",
+    "save": "Speichern",
+    "clear": "Kein Datum",
+    "saved": "Gespeichert.",
+    "saveError": "Speichern fehlgeschlagen: {message}",
+    "metricsTitle": "Gezeigte Indizes und Reihenfolge",
+    "metricsHint": "Hinzufügen oder entfernen über \"Metriken auswählen\" im Diagramm; hier legen Sie die Reihenfolge fest.",
+    "up": "Nach oben",
+    "down": "Nach unten",
+    "remove": "Entfernen",
+    "saveView": "Ansicht für diese Person speichern",
+    "viewSaved": "Ansicht gespeichert",
+    "viewHint": "Die gespeicherte Ansicht finden Sie wieder, der PDF-Bericht nutzt sie und künftig auch die App.",
+    "annotationsTitle": "Anmerkungen",
+    "annotationsHint": "Ein Wort zu einem Datum: erscheint in den Diagrammen und im Bericht.",
+    "annotationPlaceholder": "z. B. Start, Sitzung 3, Urlaub",
+    "add": "Hinzufügen",
+    "noAnnotations": "Keine Anmerkungen.",
+    "exclusionsTitle": "Aus der Berechnung ausgeschlossene Messungen",
+    "exclusionsHint": "Sie bleiben als durchgestrichene Punkte und als Hinweis im Bericht sichtbar. Der Grund ist Pflicht.",
+    "exclusionPick": "Messung wählen",
+    "exclusionNote": "Notiz (optional)",
+    "exclude": "Ausschließen",
+    "restore": "Wieder zählen",
+    "noExclusions": "Keine ausgeschlossene Messung.",
+    "reasons": {
+      "artefatti": "Artefakte",
+      "condizioni_anomale": "unter ungewöhnlichen Bedingungen gemessen",
+      "malattia": "Krankheit",
+      "altro": "anderes"
+    },
+    "notReady": "Anmerkungen, Ausschlüsse und gespeicherte Ansicht kommen mit der Migration sito-049: bis dahin bleibt dieser Teil aus.",
+    "excludedNote": "{count, plural, one {# Messung ausgeschlossen} other {# Messungen ausgeschlossen}}: {reasons}"
+  },
+  "clientMode": {
+    "title": "Ihre Fortschritte",
+    "close": "Beenden (Esc)",
+    "prev": "Zurück",
+    "next": "Weiter",
+    "counter": "{i} von {n}"
   }
 }

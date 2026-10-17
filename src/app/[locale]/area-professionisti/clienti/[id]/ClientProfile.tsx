@@ -23,6 +23,7 @@ import { MessageComposer } from './MessageComposer'
 import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
 import { formatDate, formatMeasuredDate } from '@/lib/format'
 import { isReferenceMeasurement } from '@/lib/reference-trend.ts'
+import { EMPTY_CHART_PREFS, type ChartPrefs } from '@/lib/chart-view.ts'
 import type { AlertRule } from '@/lib/alert-rules'
 import { parseMeasurementFilter, type MeasurementFilter } from '@/lib/measurement-filter'
 
@@ -65,9 +66,11 @@ type Props = {
   alertRules?: AlertRule[]
   /** Utente loggato: serve per scrivere gli override su alert_rules. */
   currentUserId?: string
+  /** Vista salvata, annotazioni ed esclusioni dei grafici (sito-049). */
+  chartPrefs?: ChartPrefs
 }
 
-export function ClientProfile({ client, measurements, monitoring = [], alerts, appEvents = [], notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId, superadminAccess, adminId, alertRules = [], currentUserId }: Props) {
+export function ClientProfile({ client, measurements, monitoring = [], alerts, appEvents = [], notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId, superadminAccess, adminId, alertRules = [], currentUserId, chartPrefs = EMPTY_CHART_PREFS }: Props) {
   const t = useTranslations('clients.profile')
   const tTabs = useTranslations('clients.tabs')
   const tScores = useTranslations('scores')
@@ -227,11 +230,11 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, a
         ))}
       </div>
 
-      {tab === 'panoramica' && <OverviewTab client={client} measurements={measurements} monitoring={monitoring} alerts={alerts} appEvents={appEvents} professionistaId={professionistaId} filter={filter} onFilterChange={setFilter} detailQs={detailQs} />}
+      {tab === 'panoramica' && <OverviewTab client={client} measurements={measurements} monitoring={monitoring} alerts={alerts} appEvents={appEvents} professionistaId={professionistaId} filter={filter} onFilterChange={setFilter} detailQs={detailQs} prefs={chartPrefs} readOnly={readOnly} />}
       {tab === 'misurazioni' && <MeasurementsTab client={client} measurements={measurements} filter={filter} onFilterChange={setFilter} detailQs={detailQs} />}
       {tab === 'prima-dopo' && <BeforeAfterTab client={client} measurements={measurements} professionistaId={professionistaId} />}
       {tab === 'monitoraggi' && <MonitoringTab sessions={monitoring} professionistaId={professionistaId} />}
-      {tab === 'analytics' && <AdvancedAnalyticsTab measurements={measurements} courseStart={client.data_inizio_percorso ?? null} />}
+      {tab === 'analytics' && <AdvancedAnalyticsTab measurements={measurements} courseStart={client.data_inizio_percorso ?? null} excluded={chartPrefs.exclusions.map((e) => e.session_id)} annotations={chartPrefs.annotations} />}
       {tab === 'report' && <ReportTab client={client} />}
       {!readOnly && tab === 'note' && <NotesTab client={client} initialNotes={notes} />}
       {readOnly && tab === 'note' && <ReadOnlyNotesList notes={notes} />}

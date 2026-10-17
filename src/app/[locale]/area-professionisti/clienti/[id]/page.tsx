@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { loadChartPrefs } from '@/lib/chart-prefs-server'
+import { METRIC_KEYS } from '@/lib/trend-metrics.ts'
 import { getTranslations } from 'next-intl/server'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import {
@@ -37,7 +39,7 @@ export default async function ClientPage({
   const superadminAccess = viewing?.access === 'superadmin'
 
   const professionalId = viewing?.user_id ?? currentUserId
-  const [client, professional, measurements, cronAlerts, notes, settings, messages, allAlerts, allMonitoring, access, alertRules, appEvents] = await Promise.all([
+  const [client, professional, measurements, cronAlerts, notes, settings, messages, allAlerts, allMonitoring, access, alertRules, appEvents, chartPrefs] = await Promise.all([
     getClient(params.id, { professionistaId: viewing?.user_id }),
     getProfessionalProfile(),
     // Nella vista "come un altro professionista" le misurazioni remote vanno
@@ -58,6 +60,8 @@ export default async function ClientPage({
     // dell'app: la stessa precedenza per cliente dell'app.
     readOnly ? Promise.resolve([]) : listAlertRules(),
     listAlertEvents({ clientId: params.id, unreadOnly: true, days: 30 }),
+    // Vista salvata, annotazioni ed esclusioni dei grafici (vuote finché la sito-049 non è applicata).
+    loadChartPrefs(params.id, METRIC_KEYS),
   ])
   const monitoring = filterMonitoringByModules(allMonitoring, access)
   // Gli eventi dell'app non letti restano visibili nella scheda, ma in una
@@ -88,6 +92,7 @@ export default async function ClientPage({
         adminId={currentUserId ?? undefined}
         alertRules={alertRules}
         currentUserId={currentUserId ?? undefined}
+        chartPrefs={chartPrefs}
       />
     </DashboardLayout>
   )

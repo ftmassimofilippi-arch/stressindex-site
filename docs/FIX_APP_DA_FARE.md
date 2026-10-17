@@ -115,3 +115,28 @@ derivato. L'app non deve più scrivere `trial_expires_at` né `profiles.plan`
 un'altra sessione, in `public`, **senza RLS** (advisor: ERROR). Chi le ha
 create le sposti in uno schema non esposto o attivi la RLS; il sito non le
 tocca.
+
+## G5. `clients.data_inizio_percorso`: l'app non la legge dal server
+
+**Da dove nasce**: dal 17/10/2026 il sito salva la data di inizio percorso su
+`clients.data_inizio_percorso` (pannello "Prepara la vista") e ci calcola la
+partenza dei grafici. L'app la mostra nel form della scheda ma la tiene solo
+nella cache cifrata del telefono: `_clientToRow` (`sync_service.dart:896`)
+non la manda e il download delle schede non la legge. Risultato: due date
+diverse per la stessa scheda senza che nessuno se ne accorga.
+
+**Da fare nell'app**: leggere `data_inizio_percorso` dalla riga `clients`
+quando si scaricano le schede e scriverla nell'upsert come `_dateOnly(...)`
+(stessa convenzione di `data_nascita`). Nessuna migrazione: la colonna è
+`date` ed esiste già.
+
+## G6. Coppia "mattino + coerenza dello stesso giorno" (solo sito, da portare)
+
+**Cosa c'è sul sito**: `src/lib/before-after.ts`, funzione
+`pairMorningCoherence` (17/10/2026): la misurazione di riferimento del
+mattino (standard, 04:00-11:59) accoppiata con la sessione di coerenza dello
+stesso giorno che la segue. `pairBeforeAfter` è rimasta identica al Dart.
+
+**Da fare nell'app**: se la scheda "Prima e dopo" dell'app vuole la stessa
+vista, portare la funzione in `before_after_pairs.dart` con gli stessi test
+(`before-after.test.ts`, casi "mattino + coerenza").

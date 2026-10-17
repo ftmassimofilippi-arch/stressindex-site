@@ -6,5 +6,51 @@
   },
   "profile": {
     "ofDate": "del {date}"
+  },
+  "prepare": {
+    "title": "Prepara la vista",
+    "subtitle": "Regoli come si vede, non i dati.",
+    "showClient": "Mostra al cliente",
+    "courseStart": "Inizio del percorso",
+    "courseStartHint": "La partenza si calcola sui primi 7 giorni di riferimento da questa data. Vuota: dall'inizio della storia.",
+    "save": "Salva",
+    "clear": "Nessuna data",
+    "saved": "Salvato.",
+    "saveError": "Salvataggio non riuscito: {message}",
+    "metricsTitle": "Indici mostrati e ordine",
+    "metricsHint": "Aggiungi o togli con \"Seleziona metriche\" nel grafico; qui decidi l'ordine.",
+    "up": "Sposta su",
+    "down": "Sposta giù",
+    "remove": "Togli",
+    "saveView": "Salva la vista per questo cliente",
+    "viewSaved": "Vista salvata",
+    "viewHint": "La vista salvata la ritrovi tu, la usa il report PDF e domani l'app del cliente.",
+    "annotationsTitle": "Annotazioni",
+    "annotationsHint": "Una parola su una data: compare nei grafici e nel report.",
+    "annotationPlaceholder": "es. inizio percorso, seduta 3, vacanza",
+    "add": "Aggiungi",
+    "noAnnotations": "Nessuna annotazione.",
+    "exclusionsTitle": "Misurazioni escluse dai conti",
+    "exclusionsHint": "Restano visibili come punti barrati e in nota nel report. Il motivo è obbligatorio.",
+    "exclusionPick": "Scegli la misurazione",
+    "exclusionNote": "Nota (facoltativa)",
+    "exclude": "Escludi",
+    "restore": "Rimetti nei conti",
+    "noExclusions": "Nessuna misurazione esclusa.",
+    "reasons": {
+      "artefatti": "artefatti",
+      "condizioni_anomale": "misurata in condizioni anomale",
+      "malattia": "malattia",
+      "altro": "altro"
+    },
+    "notReady": "Annotazioni, esclusioni e vista salvata arrivano con la migrazione sito-049: finché non è applicata questa parte resta spenta.",
+    "excludedNote": "{count, plural, one {# misurazione esclusa} other {# misurazioni escluse}}: {reasons}"
+  },
+  "clientMode": {
+    "title": "I tuoi progressi",
+    "close": "Esci (Esc)",
+    "prev": "Precedente",
+    "next": "Successivo",
+    "counter": "{i} di {n}"
   }
 }

@@ -36,11 +36,14 @@ async function shot(name, path, width, opts = {}) {
   page.on('pageerror', (e) => errors.push(`pageerror: ${String(e).slice(0, 300)}`))
   const t0 = Date.now()
   const res = await page.goto(`${base}${path}`, { waitUntil: 'networkidle0', timeout: 90000 })
-  if (opts.click) {
-    for (const sel of opts.click) {
-      const h = await page.$(sel)
-      if (h) { await h.click(); await new Promise((r) => setTimeout(r, 800)) }
-    }
+  for (const txt of opts.clickText ?? []) {
+    const ok = await page.evaluate((t) => {
+      const b = Array.from(document.querySelectorAll('button')).find((x) => x.textContent?.trim().startsWith(t))
+      if (b) { b.click(); return true }
+      return false
+    }, txt)
+    console.log(`  click "${txt}": ${ok}`)
+    await new Promise((r) => setTimeout(r, 900))
   }
   await new Promise((r) => setTimeout(r, 1200))
   const texts = await page.evaluate(() => Array.from(document.querySelectorAll('section[aria-label]')).map((s) => s.getAttribute('aria-label') + ' :: ' + s.innerText.replace(/\s+/g, ' ').slice(0, 400)))
@@ -56,7 +59,10 @@ async function shot(name, path, width, opts = {}) {
 
 await shot('scheda-1280', `/area-professionisti/clienti/${clientId}`, 1280)
 await shot('scheda-390', `/area-professionisti/clienti/${clientId}`, 390)
-await shot('scheda-tutto', `/area-professionisti/clienti/${clientId}`, 1280, { click: ['button:nth-of-type(6)'] })
+await shot('scheda-tutto', `/area-professionisti/clienti/${clientId}`, 1280, { clickText: ['Tutto'] })
+await shot('prepara', `/area-professionisti/clienti/${clientId}`, 1280, { clickText: ['Prepara la vista'] })
+await shot('cliente', `/area-professionisti/clienti/${clientId}`, 1280, { clickText: ['Mostra al cliente'] })
+await shot('cliente-390', `/area-professionisti/clienti/${clientId}`, 390, { clickText: ['Mostra al cliente'] })
 await shot('home-1280', `/area-professionisti`, 1280)
 await shot('analytics-1280', `/area-professionisti/clienti/${clientId}?tab=analytics`, 1280)
 await shot('stampa', `/stampa/report-periodico?clientId=${clientId}&from=2026-09-18&to=2026-10-17`, 1000)

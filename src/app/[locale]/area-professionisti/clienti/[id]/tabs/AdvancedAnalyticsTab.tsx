@@ -3,7 +3,7 @@
 import { Fragment, useMemo, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
-import { AdvancedTrendChart } from '@/components/dashboard/AdvancedTrendChart'
+import { AdvancedTrendChart, type TrendAnnotation } from '@/components/dashboard/AdvancedTrendChart'
 import { formatMeasuredAt, intervalloGiorniIta, intlTag, measuredHour, measuredInstant, measuredWeekday, num } from '@/lib/format'
 import type { MeasurementAnalytics } from '@/lib/types'
 
@@ -29,7 +29,13 @@ const METRICS = [
 
 const STAT_KEYS = ['mean', 'min', 'max', 'std'] as const
 
-export function AdvancedAnalyticsTab({ measurements, courseStart = null }: { measurements: MeasurementAnalytics[]; courseStart?: string | null }) {
+export function AdvancedAnalyticsTab({ measurements, courseStart = null, excluded = [], annotations = [] }: {
+  measurements: MeasurementAnalytics[]
+  courseStart?: string | null
+  /** `session_id` esclusi dai conti e annotazioni della scheda (sito-049). */
+  excluded?: string[]
+  annotations?: TrendAnnotation[]
+}) {
   const t = useTranslations('clients.analytics')
   const tScores = useTranslations('scores')
   const locale = useLocale()
@@ -102,6 +108,8 @@ export function AdvancedAnalyticsTab({ measurements, courseStart = null }: { mea
             height={220}
             storageKey="sx-client-trend"
             courseStart={courseStart}
+            excluded={excluded}
+            annotations={annotations}
           />
         )}
       </section>

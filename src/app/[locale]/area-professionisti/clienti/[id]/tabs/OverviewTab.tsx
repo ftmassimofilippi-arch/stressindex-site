@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { AlertTriangle, X } from 'lucide-react'
@@ -17,10 +17,17 @@ import { formatDate, formatDateTime, formatMeasuredAt, num } from '@/lib/format'
 import { tagLabel } from '@/lib/before-after'
 import { measurementTypeLabel, normalizeTestType } from '@/lib/measurement-type'
 import { isReferenceMeasurement } from '@/lib/reference-trend.ts'
+import { DEFAULT_CHART_VIEW, EMPTY_CHART_PREFS, sameChartView, type ChartPrefs, type ChartView } from '@/lib/chart-view.ts'
+import { PrepareViewPanel } from '../PrepareViewPanel'
+import { ClientModeView } from '../ClientModeView'
 import { isFilterActive, matchesMeasurementFilter, type MeasurementFilter } from '@/lib/measurement-filter'
 
-export function OverviewTab({ client, measurements, monitoring = [], alerts, appEvents = [], professionistaId, filter, onFilterChange, detailQs }: {
+export function OverviewTab({ client, measurements, monitoring = [], alerts, appEvents = [], professionistaId, filter, onFilterChange, detailQs, prefs = EMPTY_CHART_PREFS, readOnly = false }: {
   client: Client
+  /** Vista salvata, annotazioni ed esclusioni (sito-049). */
+  prefs?: ChartPrefs
+  /** Vista "come un altro professionista": niente strumenti di preparazione. */
+  readOnly?: boolean
   measurements: MeasurementAnalytics[]
   monitoring?: MonitoringSession[]
   /** Alert attivi (tabella `alerts`, new/seen) raggruppati: il titolo conta questi. */
@@ -67,6 +74,13 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, app
   // Memoizzato: un array nuovo a ogni render rifarebbe tutti i conti dei pannelli.
   const trendRows = useMemo(() => measurements.filter((m) => matchesMeasurementFilter(m, filter)), [measurements, filter])
 
+  // Vista in bozza: parte da quella salvata per il cliente, segue i comandi del
+  // grafico e il pannello "Prepara la vista"; si salva solo su richiesta.
+  const [draft, setDraft] = useState<ChartView>(() => prefs.view ?? DEFAULT_CHART_VIEW)
+  const onViewChange = useCallback((v: ChartView) => setDraft((prev) => (sameChartView(prev, v) ? prev : v)), [])
+  const [clientMode, setClientMode] = useState(false)
+  const excluded = useMemo(() => prefs.exclusions.map((e) => e.session_id), [prefs.exclusions])
+
   return (
     <div className="space-y-6">
       <section>
@@ -106,6 +120,13 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, app
         )}
       </section>
 
+      {!readOnly && (
+        <PrepareViewPanel client={client} measurements={measurements} prefs={prefs} draft={draft} onDraftChange={setDraft} onShowClient={() => setClientMode(true)} />
+      )}
+      {clientMode && (
+        <ClientModeView client={client} measurements={measurements} prefs={prefs} view={draft} onClose={() => setClientMode(false)} />
+      )}
+
       <section className="card p-6">
         <h2 className="font-serif text-lg text-anthracite mb-1">{t('trendTitle')}</h2>
         <p className="text-sm text-anthracite-lighter mb-4">{t('trendSubtitle')}</p>
@@ -135,6 +156,10 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, app
             height={220}
             storageKey="sx-client-overview-trend"
             courseStart={client.data_inizio_percorso ?? null}
+            excluded={excluded}
+            annotations={prefs.annotations}
+            view={draft}
+            onViewChange={onViewChange}
           />
         )}
       </section>
