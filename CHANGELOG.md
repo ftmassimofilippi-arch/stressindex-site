@@ -22,12 +22,13 @@ dei clienti con account, responsabile per i dati dei clienti dei professionisti)
 - `vercel.json`: funzioni server in `fra1` (prima `iad1`, Washington).
 - Registrazione: quattro caselle separate e non pre-spuntate (Termini e
   informativa, DPA, natura wellness, marketing facoltativo); i consensi vanno
-  nei metadata del signUp e diventano righe `gdpr_consents` al primo accesso.
+  nei metadata del signUp e diventano righe `consent_records` al primo accesso.
 - Area professionisti: schermata di riaccettazione (`consensi/ConsentGateView`)
   finché mancano i consensi obbligatori 2.1; `POST /api/consents`.
-- `sito-048_consensi_granulari`: righe di consenso per tipo, con versione,
-  impronta SHA-256, lingua, IP, user agent; policy solo select/insert per le
-  righe 2.1; revoca dei grant ad `anon`. Finché non è applicata la
+- `sito-048_consensi_granulari`: nuova tabella `consent_records`, una riga per
+  consenso con versione, impronta SHA-256, lingua, IP, user agent; solo
+  select e insert per l'utente; `gdpr_consents` (1.0, una riga per utente,
+  scritta dall'app) non cambia, perde solo i grant ad `anon`. Finché non è applicata la
   riaccettazione non blocca nessuno.
 
 ## 2026-10-15 — chiusura delle tabelle di backup leggibili da anon

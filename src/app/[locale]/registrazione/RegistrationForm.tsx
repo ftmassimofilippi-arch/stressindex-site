@@ -92,7 +92,7 @@ export function RegistrationForm() {
             nome_studio: formData.nomeStudio.trim() || null,
             locale,
             // Pacchetto legale 2.1: i consensi dati qui diventano righe di
-            // gdpr_consents al primo accesso all'area professionisti, con la
+            // consent_records al primo accesso all'area professionisti, con la
             // data di adesso (`src/lib/consents-server.ts`, layout dell'area).
             pending_consents: {
               ...consents,

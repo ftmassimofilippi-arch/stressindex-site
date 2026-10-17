@@ -3571,7 +3571,7 @@
           "title": "Functional Software Inc. (Sentry)"
         },
         "s06Allyou": {
-          "body": "Location: Italy.\nService: sending system emails (account confirmation, password recovery, notifications).\nData: email address and content of system emails.\nLocation: European Union.\nSafeguards: contract under Article 28 GDPR.",
+          "body": "Location: Italy.\nService: sending system emails (account confirmation, password recovery, notifications).\nData: email address and content of system emails.\nLocation: European Union.\nSafeguards: contract under Article 28 GDPR being signed.",
           "title": "allyou.srl"
         },
         "s07Anthropic": {

@@ -1,4 +1,4 @@
-// Consensi del pacchetto legale 2.1 (sito-048). Modulo "puro": niente
+// Consensi del pacchetto legale 2.1 (sito-048, tabella consent_records). Modulo "puro": niente
 // next/headers, così lo importano anche i client component.
 
 export const PRO_REQUIRED = ['terms_privacy', 'dpa', 'wellness_ack'] as const

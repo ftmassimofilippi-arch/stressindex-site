@@ -13,7 +13,8 @@ import {
 } from '@/lib/consents'
 
 // Registrazione e verifica dei consensi 2.1 (sito-048). Ogni consenso è una
-// riga a sé in `gdpr_consents`, mai aggiornata: una revoca è una riga nuova.
+// riga a sé in `consent_records`, mai aggiornata: una revoca è una riga nuova.
+// `gdpr_consents` (1.0, una riga per utente) resta all'app e non si tocca.
 // L'impronta SHA-256 è calcolata sui testi pubblicati nella lingua in cui
 // l'utente accetta, quindi insieme al tag git prova quale testo ha visto.
 
@@ -51,12 +52,12 @@ export type ConsentStatus = 'ok' | 'missing' | 'unavailable'
 export async function proConsentStatus(userId: string): Promise<ConsentStatus> {
   const supabase = await createClient()
   const { data, error } = await supabase
-    .from('gdpr_consents_current')
+    .from('consent_records_current')
     .select('consent_type, granted, text_version')
     .eq('user_id', userId)
     .in('consent_type', [...PRO_REQUIRED])
   if (error) {
-    console.error('[consents] gdpr_consents_current', error.message)
+    console.error('[consents] consent_records_current', error.message)
     return 'unavailable'
   }
   const ok = PRO_REQUIRED.every((t) =>
@@ -82,7 +83,7 @@ export async function recordProConsents(input: RecordInput): Promise<{ ok: boole
   const types = [...PRO_REQUIRED, ...PRO_OPTIONAL] as ProConsentType[]
   const rows = await Promise.all(
     types.map(async (t) => ({
-      professionista_id: input.userId,
+      user_id: input.userId,
       consent_type: t,
       granted: input.consents[t] === true,
       text_version: LEGAL_VERSION,
@@ -92,15 +93,9 @@ export async function recordProConsents(input: RecordInput): Promise<{ ok: boole
       ip_address: input.ip,
       user_agent: input.userAgent?.slice(0, 500) ?? null,
       source: 'site',
-      // colonne 1.0, tenute coerenti per le versioni dell'app che le leggono
-      privacy_accepted: input.consents.terms_privacy,
-      service_accepted: input.consents.terms_privacy,
-      marketing_accepted: input.consents.marketing,
-      accepted_at: grantedAt,
-      version: LEGAL_VERSION,
     })),
   )
-  const { error } = await supabase.from('gdpr_consents').insert(rows)
+  const { error } = await supabase.from('consent_records').insert(rows)
   if (error) {
     console.error('[consents] insert', error.message)
     return { ok: false, error: 'insert_failed' }
