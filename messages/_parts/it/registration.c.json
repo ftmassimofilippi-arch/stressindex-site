@@ -31,7 +31,6 @@
     },
     "studioName": "Nome studio",
     "studioNamePlaceholder": "Studio Benessere Milano",
-    "consent": "Registrandoti accetti i <terms>Termini di Servizio</terms> e la <privacy>Privacy Policy</privacy>. I tuoi dati sono protetti e conservati su server EU in conformità al GDPR.",
     "submit": "Crea il tuo account gratuito",
     "submitting": "Creazione account in corso...",
     "createFailed": "Errore nella creazione dell'account. Riprova."

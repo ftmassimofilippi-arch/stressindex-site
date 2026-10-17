@@ -1518,6 +1518,27 @@
     "yes": "Ja",
     "yesterday": "gestern"
   },
+  "consents": {
+    "dpa": "Ich schließe den <dpa>Auftragsverarbeitungsvertrag</dpa> ab: Für die Daten meiner Klienten bin ich verantwortlich, und The Performance Lab S.r.l. handelt als Auftragsverarbeiter nach meinen Weisungen.",
+    "gate": {
+      "accept": "Akzeptieren und fortfahren",
+      "back": "Zurück",
+      "body": "Wir haben die Datenschutzerklärung, die Nutzungsbedingungen und den Auftragsverarbeitungsvertrag für die Daten Ihrer Klienten neu gefasst. Neu sind: klare Regeln dazu, was mit den Daten bei Schließung eines Kontos geschieht, die öffentliche Liste der Dienstleister, getrennte und einzeln gespeicherte Einwilligungen. Um den Fachkräftebereich weiter zu nutzen, lesen und akzeptieren Sie bitte die aktualisierten Dokumente.",
+      "decline": "Ich akzeptiere nicht",
+      "declinedBody": "Sie können zurückgehen und akzeptieren oder das Konto in den App-Einstellungen schließen. Für den Export der Daten Ihrer Klienten oder Fragen schreiben Sie an {privacyEmail}.",
+      "declinedTitle": "Ohne Zustimmung können Sie Stress Index nicht nutzen",
+      "error": "Ihre Auswahl konnte nicht gespeichert werden. Bitte versuchen Sie es gleich noch einmal.",
+      "saving": "Wird gespeichert...",
+      "signOut": "Abmelden",
+      "title": "Wir haben unsere Datenschutzregeln aktualisiert"
+    },
+    "marketing": "Ich möchte Neuigkeiten, Einladungen zu Veranstaltungen und Angebote von The Performance Lab per E-Mail erhalten. Ich kann mich jederzeit abmelden.",
+    "optional": "freiwillig",
+    "required": "Pflichtfeld",
+    "requiredMissing": "Für das Konto sind die drei Pflicht-Einwilligungen erforderlich.",
+    "terms_privacy": "Ich habe die <terms>Nutzungsbedingungen</terms> und die <privacy>Datenschutzerklärung</privacy> von Stress Index gelesen und akzeptiere sie.",
+    "wellness_ack": "Ich nehme zur Kenntnis, dass Stress Index ein Werkzeug zur Bewertung des Wohlbefindens ist und kein Medizinprodukt."
+  },
   "dashboard": {
     "analytics": {
       "activeAlerts": "Aktive Alerts",
@@ -1790,6 +1811,7 @@
       "guide_chat_not_configured": "Assistent nicht konfiguriert. Schreiben Sie an support@stressindex.io.",
       "guide_chat_rate_limited": "Zu viele Anfragen, versuchen Sie es in einer Minute erneut.",
       "guide_chat_upstream_error": "Der Assistent antwortet im Moment nicht. Versuchen Sie es gleich noch einmal oder schreiben Sie an support@stressindex.io.",
+      "insert_failed": "Die Einwilligungen konnten nicht gespeichert werden. Bitte versuchen Sie es gleich noch einmal.",
       "invalid_action": "Ungültige Aktion.",
       "invalid_body": "Ungültige Anfrage.",
       "invalid_date_format": "Datumsangaben müssen im Format JJJJ-MM-TT vorliegen.",
@@ -1860,6 +1882,7 @@
       "report_read_failed": "Die Messungen des Zeitraums konnten nicht gelesen werden. Bitte versuchen Sie es in Kürze erneut.",
       "report_render_failed": "Die Daten wurden gelesen, das Dokument konnte jedoch nicht erstellt werden. Versuchen Sie es erneut; falls das Problem bestehen bleibt, melden Sie es uns.",
       "requested_by_non_scritto": "Die Verbindung wurde als ausstehend angelegt, aber ohne requested_by = Fachanwender: die App würde sie nie unter den zu bestätigenden Anfragen anzeigen. Prüfen, ob app-035 und sito-031 in dieser Reihenfolge angewendet sind.",
+      "required_missing": "Die Pflicht-Einwilligungen fehlen.",
       "reset_failed": "Die Wiederherstellungs-E-Mail konnte nicht gesendet werden.",
       "residui": "Die abschließende Prüfung hat noch verknüpfte Daten gefunden: Es wurde nichts geändert. Schreiben Sie an hello@stressindex.io.",
       "same_email": "Das ist bereits die E-Mail des Kontos.",
@@ -1984,7 +2007,7 @@
       "titleLead": "Ein professionelles PDF."
     },
     "privacy": {
-      "description": "Die sensiblen Daten Ihrer Klienten sind durch die strengste europäische Regelung geschützt. Kein verstecktes Tracking, keine Dritten, keine Überraschungen.",
+      "description": "Die Daten Ihrer Klienten bleiben in Europa und sind durch europäisches Recht geschützt. Wir verkaufen sie nicht und nutzen sie nicht für Werbung: Wir arbeiten nur mit ausgewählten technischen Dienstleistern, öffentlich aufgeführt und vertraglich gebunden.",
       "eyebrow": "Sicherheit und Datenschutz",
       "items": [
         {
@@ -2000,8 +2023,8 @@
           "body": "Daten bei der Übertragung und im Ruhezustand verschlüsselt."
         },
         {
-          "title": "Keine Weitergabe",
-          "body": "Die Daten verlassen Europa nicht. Nie."
+          "title": "Kein Datenverkauf",
+          "body": "In Europa gespeichert, nie verkauft, nie für Werbung genutzt."
         }
       ],
       "titleEm": "Per Gesetz.",
@@ -3256,10 +3279,13 @@
     },
     "footer": {
       "legal": "Rechtliches",
+      "pec": "PEC {pec}",
       "product": "Produkt",
+      "rea": "REA {rea}",
+      "shareCapital": "Stammkapital {capital}",
       "support": "Support",
       "tagline": "Professionelle HRV-Software für Physiotherapeuten, Osteopathen, Sportmediziner und Wellness-Coaches. Messen Sie den Stress des autonomen Nervensystems in 10 Minuten.",
-      "vat": "USt-IdNr. {vat}"
+      "vat": "USt-IdNr. und Steuernummer {vat}"
     },
     "hero": {
       "body": "Stress Index misst das autonome Nervensystem in 10 Minuten und liefert Ihnen 5 Scores, die Sie direkt in der Sitzung nutzen. Schluss mit Einschätzungen nach Gefühl. Schluss mit Erklärungen ohne Daten.",
@@ -3382,7 +3408,7 @@
           "title": "Was Cookies sind"
         },
         "s02Technical": {
-          "body": "[DA COMPLETARE CON IL LEGALE]\n\nDie Website verwendet ausschließlich technische Cookies, die für das Funktionieren der Seiten oder zum Speichern einer ausdrücklichen Auswahl des Besuchers erforderlich sind. Für diese Cookies ist keine Einwilligung erforderlich.\n\n• SITZUNG IM BEREICH FÜR FACHKRÄFTE: Cookies mit dem Präfix \"sb-\", die von Supabase (dem Authentifizierungsdienst) gesetzt werden, wenn sich die Fachkraft im geschützten Bereich anmeldet. Sie enthalten das Sitzungstoken, halten Sie angemeldet und werden beim Abmelden entfernt. Besuchern, die nur die öffentlichen Seiten aufrufen, werden sie nicht gesetzt.\n\n• SPRACHE: das Cookie \"NEXT_LOCALE\", das gesetzt wird, wenn Sie im Sprachwähler eine Sprache auswählen (IT / EN / DE). Es merkt sich die bevorzugte Sprache für 12 Monate.\n\nWeitere Cookies setzt die Website nicht.",
+          "body": "Die Website verwendet ausschließlich technische Cookies, die für das Funktionieren der Seiten oder zum Speichern einer ausdrücklichen Auswahl des Besuchers erforderlich sind. Für diese Cookies ist keine Einwilligung erforderlich.\n\n• SITZUNG IM BEREICH FÜR FACHKRÄFTE: Cookies mit dem Präfix \"sb-\", die von Supabase (dem Authentifizierungsdienst) gesetzt werden, wenn sich die Fachkraft im geschützten Bereich anmeldet. Sie enthalten das Sitzungstoken, halten Sie angemeldet und werden beim Abmelden entfernt. Besuchern, die nur die öffentlichen Seiten aufrufen, werden sie nicht gesetzt.\n\n• SPRACHE: das Cookie \"NEXT_LOCALE\", das gesetzt wird, wenn Sie im Sprachwähler eine Sprache auswählen (IT / EN / DE). Es merkt sich die bevorzugte Sprache für 12 Monate.\n\nWeitere Cookies setzt die Website nicht.",
           "title": "Von der Website verwendete technische Cookies"
         },
         "s03Storage": {
@@ -3390,7 +3416,7 @@
           "title": "Im Browser gespeicherte Einstellungen"
         },
         "s04Sentry": {
-          "body": "[DA COMPLETARE CON IL LEGALE]\n\nUm Störungen zu bemerken, sendet die Website bei einem technischen Fehler automatisch eine Meldung an Sentry. Dieser Dienst setzt keine Cookies und verfolgt das Surfverhalten nicht: Er erfasst die Fehlerart, die Stelle im Programm, an der der Fehler auftrat, die Version der Website und den Browsertyp, zusammen mit einer anonymen Kontokennung. Name, E-Mail, Messungen und Notizen werden nicht gesendet.\n\nDie Einzelheiten (verarbeitete Daten, Speicherung in der Europäischen Union, Aufbewahrung 90 Tage) stehen im Abschnitt \"Erkennung technischer Fehler\" der Datenschutzerklärung.",
+          "body": "Um Störungen zu bemerken, sendet die Website bei einem technischen Fehler automatisch eine Meldung an Sentry. Dieser Dienst setzt keine Cookies und verfolgt das Surfverhalten nicht: Er erfasst die Fehlerart, die Stelle im Programm, an der der Fehler auftrat, die Version der Website und den Browsertyp, zusammen mit einer pseudonymen Kontokennung. Name, E-Mail, Messungen und Notizen werden nicht gesendet.\n\nDie Einzelheiten (verarbeitete Daten, Speicherung in der Europäischen Union, Aufbewahrung 90 Tage) stehen im Abschnitt \"Erkennung technischer Fehler\" der Datenschutzerklärung.",
           "title": "Erkennung technischer Fehler"
         },
         "s05NoProfiling": {
@@ -3408,7 +3434,166 @@
       },
       "subtitle": "Welche Cookies und welche im Browser gespeicherten Daten die von {company} betriebene Website stressindex.io verwendet.",
       "title": "Cookie-Richtlinie",
-      "updated": "Letzte Aktualisierung: 15. Oktober 2026"
+      "updated": "Letzte Aktualisierung: 17. Oktober 2026 · Version 2.1"
+    },
+    "dpa": {
+      "sections": {
+        "s01Parties": {
+          "body": "Verantwortlicher: die auf Stress Index registrierte Fachkraft mit den bei der Registrierung angegebenen Daten (\"Fachkraft\").\n\nAuftragsverarbeiter: {company}, {address}, USt-IdNr. und Steuernummer {vat}, PEC {pec}, E-Mail {privacyEmail} (\"Performance Lab\").\n\nDieser Vertrag ergänzt die Nutzungsbedingungen und gilt für jede Fachkraft, die Stress Index nutzt. Bei Widersprüchen geht dieser Vertrag hinsichtlich der Verarbeitung personenbezogener Daten vor. Er wird mit dem eigenen Kontrollkästchen bei der Registrierung oder der erneuten Zustimmung angenommen; Performance Lab speichert Datum, Uhrzeit, Version und Fingerabdruck des angenommenen Textes.",
+          "title": "Parteien und Geltungsbereich"
+        },
+        "s02Roles": {
+          "body": "1.1 Performance Lab stellt der Fachkraft die Plattform Stress Index (App und Fachkräftebereich der Website) bereit, um Messungen der Herzfrequenzvariabilität und weitere Wohlbefindensparameter ihrer Klienten zu erfassen, auszuwerten und zu speichern.\n\n1.2 Für Daten, die die Fachkraft in ihrer Tätigkeit erhebt oder erhält (Klientenprofile, Messungen in der Praxis, vom Klienten geteilte Messungen, Notizen), ist die Fachkraft Verantwortliche und Performance Lab Auftragsverarbeiter.\n\n1.3 Performance Lab ist eigenständiger Verantwortlicher für: die Kontodaten der Fachkraft; die Kontodaten der Klienten, die sich in der App registrieren; Messungen, die Klienten mit dem eigenen Konto durchführen; Sicherheitsprotokolle. Diese Verarbeitungen sind in den Datenschutzerklärungen von Performance Lab beschrieben und fallen nicht unter diesen Vertrag.\n\n1.4 Die Parteien schließen eine gemeinsame Verantwortlichkeit aus: Jede entscheidet allein über Zwecke und Mittel ihrer Verarbeitungen. Das Teilen einer Messung vom Klienten an die Fachkraft erfolgt auf Entscheidung des Klienten und ist eine Übermittlung zwischen eigenständigen Verantwortlichen.",
+          "title": "1. Gegenstand und Rollen"
+        },
+        "s03Description": {
+          "body": "• Zweck: der Fachkraft ermöglichen, Wohlbefindensparameter ihrer Klienten zu messen, auszuwerten und zu speichern sowie Berichte zu erstellen.\n• Art: Erfassung per Sensor, Berechnung von Parametern und Werten, Speicherung, Anzeige, PDF-Berichte, Vergleich im Zeitverlauf.\n• Betroffene: Klienten der Fachkraft, volljährig, oder Minderjährige mit Einwilligung der Sorgeberechtigten, eingeholt von der Fachkraft.\n• Daten: Stamm- und Kontaktdaten; Profil (körperliche Aktivität, Rauchen, Trainingsniveau); Intervalle zwischen Herzschlägen und HRV-Parameter; Wohlbefindenswerte; Schlafdaten (Sauerstoffsättigung, Pulsfrequenz); Körperzusammensetzung; Notizen und Tags der Fachkraft.\n• Besondere Kategorien: Gesundheitsdaten (Art. 9 DSGVO).\n• Dauer: für die gesamte Vertragslaufzeit, mit den Beendigungsregeln aus Punkt 10.",
+          "title": "2. Beschreibung der Verarbeitung"
+        },
+        "s04Instructions": {
+          "body": "3.1 Performance Lab verarbeitet die Daten nur auf dokumentierte Weisung der Fachkraft: dieser Vertrag, die Nutzungsbedingungen und die Nutzung der Plattformfunktionen durch die Fachkraft.\n\n3.2 Die Fachkraft weist Performance Lab hiermit an: (a) die Daten bei den unter stressindex.io/legal/subprocessors genannten Dienstleistern zu speichern; (b) die vorgesehenen Berechnungen und Berichte zu erstellen; (c) einem Klienten, der sich mit eigenem Konto mit der Fachkraft verbindet, die ihn betreffenden Messungen bereitzustellen; (d) bei Schließung des Kontos der Fachkraft das Verfahren aus Punkt 10 anzuwenden; (e) Statistiken aus anonymisierten Daten nach Punkt 7 zu erstellen.\n\n3.3 Performance Lab informiert die Fachkraft, wenn eine Weisung nach seiner Auffassung gegen Datenschutzrecht verstößt.",
+          "title": "3. Weisungen des Verantwortlichen"
+        },
+        "s05ProfessionalDuties": {
+          "body": "4.1 Die Fachkraft gewährleistet für jeden Klienten eine gültige Rechtsgrundlage. In jedem Fall holt sie die ausdrückliche Einwilligung des Klienten in die Verarbeitung von Gesundheitsdaten ein (Art. 9 Abs. 2 lit. a DSGVO), mit dem in der App bereitgestellten oder einem gleichwertigen Formular, und bewahrt sie auf. Gesundheitsfachkräfte können die Verarbeitung zusätzlich auf Art. 9 Abs. 2 lit. h stützen.\n\n4.2 Die Fachkraft händigt jedem Klienten die Datenschutzinformation aus, nutzt die Plattform nur zur Bewertung des Wohlbefindens im Rahmen ihrer Tätigkeit und Kompetenzen und gibt keine Daten von Personen ein, die nicht ihre Klienten sind.\n\n4.3 Die Fachkraft schützt ihre Zugangsdaten, sichert das Gerät mit einer Sperre und meldet Performance Lab jeden unbefugten Zugriff.",
+          "title": "4. Pflichten der Fachkraft"
+        },
+        "s06ProcessorDuties": {
+          "body": "5.1 Vertraulichkeit: Die von Performance Lab befugten Personen sind zur Vertraulichkeit verpflichtet und im Datenschutz geschult.\n\n5.2 Sicherheit (Art. 32 DSGVO): Verschlüsselung bei Übertragung und Speicherung; Trennung der Daten jeder Fachkraft durch Zugriffsrichtlinien auf Zeilenebene; Authentifizierung bei jedem Zugriff; Verschleierung des App-Codes; Protokollierung administrativer Zugriffe in einem unveränderlichen Protokoll mit Benachrichtigung der Fachkraft; automatische Backups. Das Personal von Performance Lab greift auf identifizierbare Daten nur für Support oder Vorfallbearbeitung zu, auf dokumentierte Anfrage, im notwendigen Umfang und protokolliert; Werkzeuge der Softwareentwicklung arbeiten mit pseudonymisierten Daten.\n\n5.3 Unterstützung: Performance Lab unterstützt die Fachkraft bei Anfragen Betroffener mit den Export- und Löschfunktionen der Plattform und greift, wenn diese nicht ausreichen, innerhalb von 10 Tagen ein. Anfragen, die Klienten direkt an Performance Lab zu für die Fachkraft verarbeiteten Daten richten, werden innerhalb von 3 Werktagen weitergeleitet.\n\n5.4 Folgenabschätzung: Performance Lab stellt der Fachkraft die für ihre Abschätzung nötigen Informationen bereit, einschließlich einer Zusammenfassung der eigenen.\n\n5.5 Datenschutzverletzungen: Performance Lab meldet der Fachkraft jede Verletzung ihrer Daten unverzüglich, spätestens innerhalb von 48 Stunden nach Entdeckung, mit den Angaben nach Art. 33 Abs. 3 DSGVO, und wirkt bei der Meldung an die Aufsichtsbehörde und der Benachrichtigung der Betroffenen mit.\n\n5.6 Überprüfungen: Performance Lab stellt die Informationen zum Nachweis der Einhaltung von Art. 28 bereit und ermöglicht Überprüfungen, auch durch unabhängige Prüfer, mit 30 Tagen Vorankündigung, höchstens einmal jährlich außer nach einem Vorfall, auf Kosten der Fachkraft.",
+          "title": "5. Pflichten des Auftragsverarbeiters"
+        },
+        "s07Subprocessors": {
+          "body": "6.1 Die Fachkraft genehmigt allgemein die unter stressindex.io/legal/subprocessors genannten Dienstleister mit Sitz, Leistung, Speicherort und Garantien.\n\n6.2 Performance Lab kündigt jede Ergänzung oder Ersetzung 30 Tage im Voraus per E-Mail an. Die Fachkraft kann innerhalb dieser Frist aus berechtigten Gründen widersprechen; findet sich keine Lösung, kann sie ohne Vertragsstrafe kündigen. Schweigen gilt als Genehmigung.\n\n6.3 Performance Lab erlegt jedem Dienstleister Pflichten auf, die denen dieses Vertrags gleichwertig sind, und haftet gegenüber der Fachkraft für deren Tätigkeit.",
+          "title": "6. Unterauftragsverarbeiter"
+        },
+        "s08Anonymous": {
+          "body": "7.1 Die Fachkraft ermächtigt Performance Lab, die Daten zu anonymisieren, indem jedes identifizierende Element unumkehrbar entfernt wird, und die so anonymisierten Daten für Statistiken, die Verbesserung der Algorithmen und Veröffentlichungen zu verwenden.\n\n7.2 Eine andere Nutzung der Daten für eigene Zwecke von Performance Lab ist nicht erlaubt. Die Verarbeitung identifizierbarer Daten für Zwecke von Performance Lab ist nur mit einer von Performance Lab beim Klienten mit eigenem Konto eingeholten Einwilligung möglich und betrifft nur Daten, für die Performance Lab verantwortlich ist.",
+          "title": "7. Statistiken aus anonymen Daten"
+        },
+        "s09Transfers": {
+          "body": "Die Daten werden in der Europäischen Union gespeichert. Eine Übermittlung in Drittländer erfolgt nur über genehmigte Dienstleister, auf Grundlage eines Angemessenheitsbeschlusses (einschließlich des EU-US Data Privacy Framework für zertifizierte Dienstleister) und zusätzlich der Standardvertragsklauseln der Europäischen Kommission, mit ergänzenden Maßnahmen, wo nötig.",
+          "title": "8. Übermittlungen außerhalb der Europäischen Union"
+        },
+        "s10ClientLink": {
+          "body": "9.1 Verbindet sich ein Klient der Fachkraft mit eigenem Konto, entscheidet er selbst, ob er seine Messungen teilt, und kann das Teilen widerrufen. Vor dem Widerruf erhaltene Messungen bleiben der Fachkraft als Verantwortlicher verfügbar.\n\n9.2 Die Fachkraft nimmt zur Kenntnis, dass ein Klient mit Konto in seinem Profil auch die ihn betreffenden Messungen aus der Praxis sieht, in Umsetzung der Rechte auf Auskunft und Datenübertragbarkeit.",
+          "title": "9. Verbindung mit dem Konto des Klienten"
+        },
+        "s11Termination": {
+          "body": "10.1 Die Fachkraft kann die Daten ihrer Klienten jederzeit als PDF und CSV exportieren.\n\n10.2 Bei Schließung des Kontos der Fachkraft: (a) die Plattform bietet vor der Bestätigung einen vollständigen Export an; (b) Messungen von Klienten mit eigenem Konto werden dem Klienten angeboten, der sie mit ausdrücklicher Einwilligung innerhalb von 30 Tagen in seinem Profil behalten kann, andernfalls werden sie gelöscht; (c) Daten von Klienten ohne Konto werden gelöscht, nach einer Einladung, innerhalb von 30 Tagen ein Konto zu erstellen, wenn die Fachkraft dies wünscht; (d) Konto und verbleibende Daten werden endgültig gelöscht, ausgenommen Backups, die innerhalb von 35 Tagen überschrieben werden, und pseudonymisierte Sicherheitsprotokolle, die bis zu 12 Monate aufbewahrt werden.\n\n10.3 Die Fachkraft bleibt für berufsbezogene Aufbewahrungspflichten verantwortlich, die sie über den Export erfüllt.",
+          "title": "10. Beendigung und Löschung"
+        },
+        "s12Liability": {
+          "body": "11.1 Jede Partei haftet für Schäden aus einer verordnungswidrigen Verarbeitung im Rahmen von Art. 82 DSGVO. Performance Lab haftet nur für Schäden aus der Verletzung der Pflichten des Auftragsverarbeiters oder der rechtmäßigen Weisungen der Fachkraft.\n\n11.2 Im Verhältnis der Parteien ist die Haftung von Performance Lab, außer bei Vorsatz oder grober Fahrlässigkeit und soweit gesetzlich nicht ausschließbar, auf den Betrag begrenzt, den die Fachkraft in den 12 Monaten vor dem Ereignis gezahlt hat.",
+          "title": "11. Haftung"
+        },
+        "s13Final": {
+          "body": "12.1 Der Vertrag hat dieselbe Laufzeit wie die Nutzungsbedingungen. Die Klauseln zu Vertraulichkeit, Löschung und Haftung gelten über die Beendigung hinaus.\n\n12.2 Performance Lab kann den Vertrag an Gesetze, Entscheidungen oder Änderungen der Plattform anpassen, mit 30 Tagen Vorankündigung; wesentliche Änderungen erfordern eine erneute Zustimmung.\n\n12.3 Es gilt italienisches Recht; ausschließlicher Gerichtsstand ist {court} (Padua).",
+          "title": "12. Laufzeit und Schlussbestimmungen"
+        }
+      },
+      "subtitle": "Vertrag nach Art. 28 der Verordnung (EU) 2016/679 zwischen der Fachkraft, die Stress Index nutzt, und {company}.",
+      "title": "Auftragsverarbeitungsvertrag (AVV)",
+      "updated": "Letzte Aktualisierung: 17. Oktober 2026 · Version 2.1"
+    },
+    "links": {
+      "cookie": "Cookie-Richtlinie",
+      "dpa": "Auftragsverarbeitungsvertrag (AVV)",
+      "prevails": "Version 2.1 vom 17. Oktober 2026. Dies ist eine Übersetzung: bei Abweichungen ist der italienische Text maßgeblich.",
+      "privacyApp": "Datenschutzerklärung der App",
+      "privacySite": "Datenschutzerklärung der Website",
+      "subprocessors": "Dienstleister, die Daten verarbeiten",
+      "terms": "Nutzungsbedingungen",
+      "title": "Rechtliche Dokumente von Stress Index"
+    },
+    "privacyApp": {
+      "sections": {
+        "s01Disclaimer": {
+          "body": "Verantwortlicher: {company}, {address}, USt-IdNr. und Steuernummer {vat}, PEC {pec}, E-Mail {privacyEmail}. Datenschutzbeauftragter: Benennung läuft; bis dahin schreiben Sie an {privacyEmail}.\n\nStress Index ist ein Werkzeug zur Bewertung des Wohlbefindens auf Basis der Herzfrequenzvariabilität. Es ist kein Medizinprodukt, stellt keine Diagnose und ersetzt nicht den Rat eines Arztes.\n\nDiese Seite hat zwei Teile: der erste für Fachkräfte, der zweite für Klienten, die die App mit eigenem Konto nutzen.",
+          "title": "Wer wir sind und was Stress Index tut"
+        },
+        "s02ProRoles": {
+          "body": "Für die Daten Ihres Kontos und Ihre Nutzung der Plattform ist {company} verantwortlich, und diese Erklärung beschreibt die Verarbeitung.\n\nFür die Daten Ihrer Klienten, die Sie eingeben oder messen, sind Sie verantwortlich, und {company} handelt als Auftragsverarbeiter nach dem Auftragsverarbeitungsvertrag (AVV), den Sie bei der Registrierung annehmen. Diese Daten werden nicht für unsere Zwecke verwendet, außer für Statistiken aus anonymisierten Daten gemäß AVV.",
+          "title": "Fachkräfte: zwei Rollen"
+        },
+        "s03ProData": {
+          "body": "• Vorname, Nachname, E-Mail, verschlüsseltes Passwort, Beruf, Praxisname, Telefon und Adresse, falls angegeben. Zum Anlegen und Verwalten des Kontos, zur Erbringung des Dienstes und für Ihre Angaben in Berichten. Rechtsgrundlage: Vertrag (Art. 6 Abs. 1 lit. b). Speicherdauer: Kontolaufzeit plus 30 Tage.\n• Tarif, Testzeitraum, Abonnement, Rechnungsdaten. Zur Vertragsabwicklung und für steuerliche Pflichten. Grundlage: Vertrag und rechtliche Pflicht (Art. 6 Abs. 1 lit. b und c). Speicherdauer: 10 Jahre für Steuerunterlagen.\n• Kennungen verbundener Geräte (höchstens 3). Für die Kontosicherheit. Grundlage: Vertrag und berechtigtes Interesse (Art. 6 Abs. 1 lit. b und f). Speicherdauer: Kontolaufzeit.\n• Zugriffs- und Nutzungsprotokolle, IP-Adresse, App- und Betriebssystemversion. Für Sicherheit, Missbrauchsvermeidung, Support. Grundlage: berechtigtes Interesse (Art. 6 Abs. 1 lit. f). Speicherdauer: bis zu 12 Monate, pseudonymisiert.\n• Automatische Fehlerberichte (Sentry) mit pseudonymer Kennung, ohne Namen, E-Mails oder Messungen. Zur Fehlerbehebung. Grundlage: berechtigtes Interesse. Speicherdauer: 90 Tage.\n• Erteilte Einwilligungen mit Version, Datum und Fingerabdruck des Textes. Zum Nachweis (Art. 7 Abs. 1). Grundlage: rechtliche Pflicht. Speicherdauer: Kontolaufzeit plus 5 Jahre.\n• Protokoll administrativer Zugriffe auf Ihre Daten. Für Transparenz und Sicherheit. Grundlage: berechtigtes Interesse. Speicherdauer: 12 Monate.\n• E-Mail für Werbemitteilungen, nur mit Ihrer Einwilligung (Art. 6 Abs. 1 lit. a), jederzeit widerruflich.",
+          "title": "Fachkräfte: Daten, Zwecke und Speicherdauer"
+        },
+        "s04ProClosure": {
+          "body": "Sie können das Konto in den Einstellungen schließen. Vor der Bestätigung bieten wir einen vollständigen Export der Daten Ihrer Klienten an. Bei Schließung: Ihre Kontodaten werden innerhalb von 30 Tagen gelöscht; Messungen von Klienten mit eigenem Konto werden ihnen angeboten und nur bei Zustimmung behalten; Daten von Klienten ohne Konto werden gelöscht. Steuerunterlagen und pseudonymisierte Sicherheitsprotokolle bleiben für die genannten Fristen.\n\nAnfragen Ihrer Klienten zu Daten, für die Sie verantwortlich sind, bearbeiten Sie selbst mit den Export- und Löschfunktionen der Plattform. Schreibt uns einer Ihrer Klienten, leiten wir die Anfrage innerhalb von 3 Werktagen an Sie weiter.",
+          "title": "Fachkräfte: Schließung des Kontos"
+        },
+        "s05ClientSummary": {
+          "body": "• Die Messungen mit Ihrem Konto gehören Ihnen, und wir verwalten sie als Verantwortlicher.\n• Wenn Sie sich mit einer Fachkraft verbinden, entscheiden Sie, ob Sie sie teilen, und können jederzeit aufhören.\n• Die Messungen Ihrer Fachkraft in der Praxis sehen Sie auch in Ihrem Profil.\n• Wir nutzen Ihre Daten nicht für eigene Zwecke ohne Ihre gesonderte Einwilligung, die Sie in den Einstellungen erteilen und widerrufen können.\n• Sie können das Konto jederzeit schließen oder die Löschung aller Daten verlangen.",
+          "title": "Klienten mit Konto: in Kürze"
+        },
+        "s06ClientData": {
+          "body": "• Vorname, Nachname, E-Mail, verschlüsseltes Passwort, Geburtsdatum, Geschlecht. Zum Anlegen des Kontos und zur Berechnung der Werte nach Alter und Geschlecht. Grundlage: Vertrag (Art. 6 Abs. 1 lit. b). Speicherdauer: Kontolaufzeit.\n• Profil: körperliche Aktivität, Rauchen, Trainingsniveau. Zur Kalibrierung der Werte. Grundlage: ausdrückliche Einwilligung (Art. 9 Abs. 2 lit. a). Speicherdauer: Kontolaufzeit.\n• Intervalle zwischen Herzschlägen, HRV-Parameter, Wohlbefindenswerte, Tags, Orthostase- und Atemtests. Für Berechnung, Verlauf, Vergleiche und Berichte. Grundlage: ausdrückliche Einwilligung (Art. 9 Abs. 2 lit. a). Speicherdauer: Kontolaufzeit.\n• Schlafdaten (Sauerstoffsättigung, Pulsfrequenz, Bewegung) und Körperzusammensetzung, wenn Sie diese Geräte nutzen. Grundlage: ausdrückliche Einwilligung (Art. 9 Abs. 2 lit. a). Speicherdauer: Kontolaufzeit.\n• Verbindung mit einer Fachkraft und geteilte Messungen. Damit sie Sie begleiten kann. Grundlage: Einwilligung (Art. 9 Abs. 2 lit. a), widerruflich. Speicherdauer: bis zum Widerruf.\n• Gerätekennungen, Zugriffsprotokolle, IP, App-Version. Für Sicherheit und Support. Grundlage: berechtigtes Interesse (Art. 6 Abs. 1 lit. f). Speicherdauer: bis zu 12 Monate, pseudonymisiert.\n• Automatische Fehlerberichte (Sentry) ohne Namen, E-Mails oder Messungen. Grundlage: berechtigtes Interesse. Speicherdauer: 90 Tage.\n• Erteilte Einwilligungen mit Version und Datum. Grundlage: rechtliche Pflicht. Speicherdauer: Kontolaufzeit plus 5 Jahre.\n\nEs handelt sich um Gesundheitsdaten: Deshalb bitten wir um eine ausdrückliche und gesonderte Einwilligung, ohne die die App nicht funktionieren kann.",
+          "title": "Klienten mit Konto: Daten, Zwecke und Speicherdauer"
+        },
+        "s07ClientOptional": {
+          "body": "In den Einstellungen können Sie getrennt wählen, ob wir: (a) Ihre Daten pseudonymisiert für Statistiken und zur Verbesserung der Algorithmen nutzen dürfen; (b) sie für wissenschaftliche Forschung mit den Garantien des Art. 89 DSGVO nutzen dürfen; (c) Sie mit Angeboten und Initiativen kontaktieren dürfen. Ohne diese Einwilligungen sieht niemand bei {company} Ihre identifizierbaren Daten, außer für Support auf Ihre Anfrage oder zur Behebung eines Sicherheitsproblems, mit protokolliertem Zugriff. Sie können jede Einwilligung jederzeit widerrufen und wieder erteilen.",
+          "title": "Klienten mit Konto: freiwillige Einwilligungen"
+        },
+        "s08ClientProfessional": {
+          "body": "Wenn Sie sich mit einer Fachkraft verbinden, erhält sie die Messungen, die Sie teilen, und verarbeitet sie als Verantwortliche im Rahmen ihrer Arbeit mit Ihnen. Widerrufen Sie die Verbindung, erhält sie nichts mehr; bereits erhaltene Messungen bleiben bei ihr, und für deren Löschung müssen Sie sich an sie wenden.\n\nSchließt die Fachkraft ihr Konto, fragen wir Sie, ob Sie die Messungen aus der Praxis in Ihrem Profil behalten möchten: Sie haben 30 Tage Zeit, danach werden sie gelöscht.",
+          "title": "Klienten mit Konto: Ihre Fachkraft"
+        },
+        "s09ClientClosure": {
+          "body": "Das sind zwei verschiedene Entscheidungen.\n\nKonto schließen: Sie verlieren den Zugang, Ihre Kontodaten und die Messungen mit Ihrem Konto werden innerhalb von 30 Tagen gelöscht, Ihre Fachkraft behält die bereits geteilten.\n\nAlle meine Daten löschen: wie oben, zusätzlich bitten wir Ihre Fachkraft, die Löschung der von ihr verarbeiteten Daten zu prüfen, und bestätigen per E-Mail.\n\nIn beiden Fällen bleiben für die genannten Fristen nur pseudonymisierte Sicherheitsprotokolle.\n\nDie App ist Volljährigen vorbehalten. Ein Minderjähriger darf nur von seiner Fachkraft gemessen werden, mit Einwilligung der Sorgeberechtigten.",
+          "title": "Klienten mit Konto: Konto schließen oder alles löschen"
+        },
+        "s10Common": {
+          "body": "Die Daten werden in der Europäischen Union in Frankfurt gespeichert. Unsere Dienstleister sind unter stressindex.io/legal/subprocessors aufgeführt; Dienstleister mit Sitz in den USA verarbeiten Daten auf Grundlage des EU-US Data Privacy Framework und der Standardvertragsklauseln. Wir verkaufen keine Daten und nutzen sie nicht für Werbung.\n\nSie können Auskunft, Berichtigung, Löschung, Einschränkung und Datenübertragbarkeit verlangen, der Verarbeitung auf Grundlage berechtigten Interesses widersprechen und Einwilligungen widerrufen, in den App-Einstellungen oder per E-Mail an {privacyEmail}. Wir antworten innerhalb von 30 Tagen. Sie können sich bei der italienischen Datenschutzbehörde (www.garanteprivacy.it) oder der Behörde Ihres Landes beschweren.\n\nDie Pflichtangaben bei der Registrierung sind für den Dienst erforderlich; freiwillige Einwilligungen beeinflussen die Nutzung der App nicht. Über relevante Änderungen informieren wir in der App und per E-Mail; wesentliche Änderungen erfordern eine erneute Zustimmung.",
+          "title": "Speicherort, Rechte und Änderungen"
+        }
+      },
+      "subtitle": "Information nach Art. 13 und 14 der Verordnung (EU) 2016/679 für Nutzer der App Stress Index: Fachkräfte und Klienten mit eigenem Konto.",
+      "title": "Datenschutzerklärung der App",
+      "updated": "Letzte Aktualisierung: 17. Oktober 2026 · Version 2.1"
+    },
+    "subprocessors": {
+      "sections": {
+        "s01Intro": {
+          "body": "Die Daten der Plattform werden in der Europäischen Union gespeichert. Jeder Dienstleister ist durch einen Vertrag zur Datenverarbeitung gebunden, mit Pflichten, die unserem Auftragsverarbeitungsvertrag gleichwertig sind. Bei Dienstleistern mit Sitz in den USA stützen sich Übermittlungen auf das EU-US Data Privacy Framework und zusätzlich auf die Standardvertragsklauseln der Europäischen Kommission.\n\nJede Ergänzung oder Ersetzung wird den Fachkräften 30 Tage im Voraus per E-Mail angekündigt, mit der Möglichkeit zu widersprechen.",
+          "title": "So funktioniert diese Liste"
+        },
+        "s02Supabase": {
+          "body": "Sitz: USA.\nLeistung: Datenbank, Authentifizierung, Dateispeicher, Serverfunktionen.\nDaten: alle Daten der Plattform, einschließlich Gesundheitsdaten.\nSpeicherort: Europäische Union, Frankfurt (Deutschland).\nGarantien: AVV des Dienstleisters mit Standardvertragsklauseln.",
+          "title": "Supabase Inc."
+        },
+        "s03Vercel": {
+          "body": "Sitz: USA.\nLeistung: Hosting der Website und des Fachkräftebereichs, Serverfunktionen.\nDaten: Nutzungsdaten der Website; Daten des Fachkräftebereichs bei der Übertragung.\nStandort: Funktionen in der Region Frankfurt (Deutschland); statische Inhalte über ein globales Auslieferungsnetz.\nGarantien: AVV des Dienstleisters mit Standardvertragsklauseln.",
+          "title": "Vercel Inc."
+        },
+        "s04Sentry": {
+          "body": "Sitz: USA.\nLeistung: Meldung technischer Fehler von App und Website.\nDaten: Fehlertyp, Gerät, Version, pseudonyme Kennung; keine Namen, E-Mails oder Messungen.\nSpeicherort: Europäische Union (Deutschland).\nGarantien: AVV des Dienstleisters mit Standardvertragsklauseln.",
+          "title": "Functional Software Inc. (Sentry)"
+        },
+        "s05ActiveCampaign": {
+          "body": "Sitz: USA.\nLeistung: E-Mails an Fachkräfte; Werbemitteilungen nur mit Einwilligung.\nDaten: Name, E-Mail und Tags der Fachkräfte; keine Daten von Endklienten.\nSpeicherort: USA.\nGarantien: EU-US Data Privacy Framework und Standardvertragsklauseln.",
+          "title": "ActiveCampaign LLC"
+        },
+        "s06Allyou": {
+          "body": "Sitz: Italien.\nLeistung: Versand von System-E-Mails (Kontobestätigung, Passwort-Wiederherstellung, Benachrichtigungen).\nDaten: E-Mail-Adresse und Inhalt der System-E-Mails.\nSpeicherort: Europäische Union.\nGarantien: Vertrag nach Art. 28 DSGVO.",
+          "title": "allyou.srl"
+        },
+        "s07Anthropic": {
+          "body": "Sitz: Irland, mit Infrastruktur in den USA.\nLeistung: automatischer Assistent der Support-Gruppe.\nDaten: an die Support-Gruppe gesendete Nachrichten. Erhält keine Messungen und keine Daten der Plattform.\nSpeicherort: USA.\nGarantien: gewerbliche Bedingungen mit AVV und Standardvertragsklauseln; die Daten werden nicht zum Training von Modellen verwendet.",
+          "title": "Anthropic Ireland Ltd"
+        },
+        "s08Stores": {
+          "body": "Sie vertreiben die App und stellen Benachrichtigungen zu. Sie erhalten Installationskennungen und Benachrichtigungstoken, nicht den Inhalt der Messungen. Sie handeln als eigenständige Verantwortliche nach den Bedingungen ihrer Stores.",
+          "title": "Apple und Google"
+        },
+        "s09Sensors": {
+          "body": "Kompatible Herzfrequenzsensoren (Polar, Garmin, Wahoo und ähnliche) kommunizieren nur per Bluetooth mit dem Telefon und erhalten keine Daten von der Plattform.",
+          "title": "Sensoren"
+        }
+      },
+      "subtitle": "Die technischen Dienstleister, die im Auftrag von {company} personenbezogene Daten für Stress Index verarbeiten.",
+      "title": "Dienstleister, die Daten verarbeiten",
+      "updated": "Letzte Aktualisierung: 17. Oktober 2026 · Version 2.1"
     },
     "terms": {
       "sections": {
@@ -3421,11 +3606,11 @@
           "title": "2. Konto und Voraussetzungen"
         },
         "s03Trial": {
-          "body": "[DA COMPLETARE CON IL LEGALE]\n\nJedes neue Konto einer Fachkraft beginnt mit einer kostenlosen Testphase von 60 Tagen, in der der Dienst vollständig nutzbar ist. Nach Ablauf der Testphase wird der Dienst mit dem gewählten Abonnement fortgesetzt, zum Preis und mit dem Abrechnungszeitraum, die zum Zeitpunkt des Abschlusses auf der Website angegeben sind; Preise verstehen sich in Euro, zuzüglich Umsatzsteuer, sofern nicht anders angegeben.\n\nDas Abonnement verlängert sich am Ende jedes Zeitraums automatisch, sofern es nicht gekündigt wird. Die Kündigung ist jederzeit möglich und wirkt zum Ende des laufenden Zeitraums; für bereits begonnene Zeiträume erfolgt keine Erstattung.\n\nDer Anbieter kann die Preisliste mit einer schriftlichen Ankündigungsfrist von mindestens 30 Tagen ändern; Änderungen gelten ab der nächsten Verlängerung. Zusatzmodule (zum Beispiel Sport oder Monitoring) können eigene Konditionen haben, die bei der Aktivierung angezeigt werden.\n\nBei Zahlungsverzug kann der Anbieter den Zugang zum Bereich für Fachkräfte bis zum Ausgleich sperren und bewahrt die Daten für den im Abschnitt \"Sperrung und Kündigung\" genannten Zeitraum auf.",
+          "body": "Jedes neue Konto einer Fachkraft beginnt mit einer kostenlosen Testphase von 60 Tagen, in der der Dienst vollständig nutzbar ist. Nach Ablauf der Testphase wird der Dienst mit dem gewählten Abonnement fortgesetzt, zum Preis und mit dem Abrechnungszeitraum, die zum Zeitpunkt des Abschlusses auf der Website angegeben sind; Preise verstehen sich in Euro, zuzüglich Umsatzsteuer, sofern nicht anders angegeben.\n\nDas Abonnement verlängert sich am Ende jedes Zeitraums automatisch, sofern es nicht gekündigt wird. Die Kündigung ist jederzeit möglich und wirkt zum Ende des laufenden Zeitraums; für bereits begonnene Zeiträume erfolgt keine Erstattung.\n\nDer Anbieter kann die Preisliste mit einer schriftlichen Ankündigungsfrist von mindestens 30 Tagen ändern; Änderungen gelten ab der nächsten Verlängerung. Zusatzmodule (zum Beispiel Sport oder Monitoring) können eigene Konditionen haben, die bei der Aktivierung angezeigt werden.\n\nBei Zahlungsverzug kann der Anbieter den Zugang zum Bereich für Fachkräfte bis zum Ausgleich sperren und bewahrt die Daten für den im Abschnitt \"Sperrung und Kündigung\" genannten Zeitraum auf.",
           "title": "3. Kostenlose Testphase und Abonnement"
         },
         "s04Obligations": {
-          "body": "[DA COMPLETARE CON IL LEGALE]\n\nSie verpflichten sich:\n\n• den Dienst im Einklang mit dem Gesetz, diesen Bedingungen und den Regeln Ihres Berufs zu nutzen;\n• vor der Einladung eines Klienten dessen informierte Einwilligung in die Verarbeitung seiner Daten einzuholen, wie in der Datenschutzerklärung vorgesehen (die Fachkraft ist Verantwortliche für die Daten ihrer Klienten);\n• keine rechtswidrigen, beleidigenden oder Rechte Dritter verletzenden Inhalte hochzuladen;\n• nicht zu versuchen, Sicherheitsmaßnahmen zu umgehen, auf fremde Konten oder Daten zuzugreifen, die Software zu dekompilieren oder zu kopieren oder den Dienst zum Aufbau eines Konkurrenzprodukts zu nutzen;\n• keine automatisierten Systeme (Scraping, Bots) einzusetzen, um Daten aus Website oder App zu extrahieren, abgesehen von den vorgesehenen Exportfunktionen;\n• den Dienst nicht weiterzuverkaufen oder unterzulizenzieren.\n\nSie sind für die von Ihnen eingegebenen Inhalte (Notizen, Klientendaten, Einstellungen) und für die Verwendung der vom Dienst bereitgestellten Informationen verantwortlich.",
+          "body": "Sie verpflichten sich:\n\n• den Dienst im Einklang mit dem Gesetz, diesen Bedingungen und den Regeln Ihres Berufs zu nutzen;\n• von ihren Klienten die Einwilligung in die Verarbeitung von Gesundheitsdaten einzuholen, mit dem in der App bereitgestellten Formular, wie im Auftragsverarbeitungsvertrag vorgesehen (die Fachkraft ist Verantwortliche für die Daten ihrer Klienten);\n• keine rechtswidrigen, beleidigenden oder Rechte Dritter verletzenden Inhalte hochzuladen;\n• nicht zu versuchen, Sicherheitsmaßnahmen zu umgehen, auf fremde Konten oder Daten zuzugreifen, die Software zu dekompilieren oder zu kopieren oder den Dienst zum Aufbau eines Konkurrenzprodukts zu nutzen;\n• keine automatisierten Systeme (Scraping, Bots) einzusetzen, um Daten aus Website oder App zu extrahieren, abgesehen von den vorgesehenen Exportfunktionen;\n• den Dienst nicht weiterzuverkaufen oder unterzulizenzieren.\n\nSie sind für die von Ihnen eingegebenen Inhalte (Notizen, Klientendaten, Einstellungen) und für die Verwendung der vom Dienst bereitgestellten Informationen verantwortlich.",
           "title": "4. Pflichten des Nutzers und der Endklienten"
         },
         "s05Disclaimer": {
@@ -3433,29 +3618,29 @@
           "title": "5. Art des Dienstes: Wellness, nicht Medizin"
         },
         "s06Ip": {
-          "body": "[DA COMPLETARE CON IL LEGALE]\n\nSoftware, Berechnungsalgorithmen, Oberflächen, Texte, Grafiken, die Marken \"Stress Index\" und der Domainname sind Eigentum des Anbieters oder seiner Lizenzgeber und durch Urheber- und gewerbliches Schutzrecht geschützt.\n\nMit dem Abonnement erhalten Sie eine persönliche, nicht ausschließliche, nicht übertragbare und widerrufliche Lizenz, den Dienst für Ihre berufliche Tätigkeit für die Dauer des Abonnements zu nutzen. Weitere Rechte werden nicht eingeräumt.\n\nDie von Ihnen eingegebenen Daten und die Messungen Ihrer Klienten bleiben Eigentum von Ihnen und Ihren Klienten. Sie räumen dem Anbieter das Recht ein, sie im für die Erbringung des Dienstes erforderlichen Umfang zu verarbeiten, wie in der Datenschutzerklärung beschrieben. Der Anbieter darf aggregierte, anonyme und nicht auf Personen rückführbare Daten zur Verbesserung des Dienstes verwenden.",
+          "body": "Software, Berechnungsalgorithmen, Oberflächen, Texte, Grafiken, die Marken \"Stress Index\" und der Domainname sind Eigentum des Anbieters oder seiner Lizenzgeber und durch Urheber- und gewerbliches Schutzrecht geschützt.\n\nMit dem Abonnement erhalten Sie eine persönliche, nicht ausschließliche, nicht übertragbare und widerrufliche Lizenz, den Dienst für Ihre berufliche Tätigkeit für die Dauer des Abonnements zu nutzen. Weitere Rechte werden nicht eingeräumt.\n\nDie von Ihnen eingegebenen Daten und die Messungen Ihrer Klienten bleiben Eigentum von Ihnen und Ihren Klienten. Sie räumen dem Anbieter das Recht ein, sie im für die Erbringung des Dienstes erforderlichen Umfang zu verarbeiten, wie in der Datenschutzerklärung beschrieben. Der Anbieter darf aggregierte, anonyme und nicht auf Personen rückführbare Daten zur Verbesserung des Dienstes verwenden.\n\nDie Verarbeitung der Klientendaten regelt der Auftragsverarbeitungsvertrag (AVV), der Bestandteil dieser Bedingungen ist.",
           "title": "6. Geistiges Eigentum"
         },
         "s07Liability": {
-          "body": "[DA COMPLETARE CON IL LEGALE]\n\nDer Anbieter bemüht sich mit beruflicher Sorgfalt, den Dienst verfügbar und aktuell zu halten, garantiert jedoch nicht, dass er fehlerfrei oder ohne Unterbrechung erreichbar ist. Wartungsarbeiten werden nach Möglichkeit vorab angekündigt.\n\nSoweit gesetzlich zulässig, haftet der Anbieter nicht für mittelbare Schäden, entgangenen Gewinn, Datenverlust aus Gründen, die der Anbieter nicht zu vertreten hat, oder für Entscheidungen, die der Nutzer oder seine Klienten auf Grundlage der vom Dienst bereitgestellten Informationen treffen. In jedem Fall übersteigt die Gesamthaftung des Anbieters gegenüber dem Nutzer nicht den Betrag, den der Nutzer in den 12 Monaten vor dem Ereignis für den Dienst gezahlt hat.\n\nDer Dienst hängt von Drittanbietern (Hosting, Authentifizierung, E-Mail-Versand, App-Stores) und von Hardware Dritter (Brustgurte, Smartphones) ab: Für Störungen, die diesen zuzurechnen sind, haftet der Anbieter nicht.\n\nNichts in diesen Bedingungen beschränkt die Haftung für Vorsatz oder grobe Fahrlässigkeit oder eine sonstige gesetzlich nicht ausschließbare Haftung.",
+          "body": "Der Anbieter bemüht sich mit beruflicher Sorgfalt, den Dienst verfügbar und aktuell zu halten, garantiert jedoch nicht, dass er fehlerfrei oder ohne Unterbrechung erreichbar ist. Wartungsarbeiten werden nach Möglichkeit vorab angekündigt.\n\nSoweit gesetzlich zulässig, haftet der Anbieter nicht für mittelbare Schäden, entgangenen Gewinn, Datenverlust aus Gründen, die der Anbieter nicht zu vertreten hat, oder für Entscheidungen, die der Nutzer oder seine Klienten auf Grundlage der vom Dienst bereitgestellten Informationen treffen. In jedem Fall übersteigt die Gesamthaftung des Anbieters gegenüber dem Nutzer nicht den Betrag, den der Nutzer in den 12 Monaten vor dem Ereignis für den Dienst gezahlt hat.\n\nDer Dienst hängt von Drittanbietern (Hosting, Authentifizierung, E-Mail-Versand, App-Stores) und von Hardware Dritter (Brustgurte, Smartphones) ab: Für Störungen, die diesen zuzurechnen sind, haftet der Anbieter nicht.\n\nNichts in diesen Bedingungen beschränkt die Haftung für Vorsatz oder grobe Fahrlässigkeit oder eine sonstige gesetzlich nicht ausschließbare Haftung.",
           "title": "7. Haftungsbeschränkung"
         },
         "s08Suspension": {
-          "body": "[DA COMPLETARE CON IL LEGALE]\n\nSie können jederzeit kündigen, indem Sie das Abonnement beenden oder die Löschung des Kontos unter {email} beantragen. Die Kündigung wirkt zum Ende des laufenden Abonnementzeitraums.\n\nDer Anbieter kann das Konto unter Benachrichtigung des Nutzers sperren oder schließen bei schwerwiegendem oder wiederholtem Verstoß gegen diese Bedingungen, bei Zahlungsverzug, bei einer Nutzung, die die Sicherheit des Dienstes gefährdet, oder auf behördliche Anordnung.\n\nNach Schließung des Kontos bleiben die Daten 30 Tage lang exportierbar; danach werden sie gemäß der Datenschutzerklärung gelöscht oder anonymisiert, vorbehaltlich gesetzlicher Aufbewahrungspflichten. Es liegt in der Verantwortung der Fachkraft, die Daten ihrer Klienten vor der Schließung zu exportieren und die Klienten zu informieren.\n\nDer Anbieter kann den Dienst oder einzelne Funktionen mit einer Frist von mindestens 90 Tagen einstellen und erstattet den nicht genutzten Teil des Abonnements.",
+          "body": "Sie können jederzeit kündigen, indem Sie das Abonnement beenden oder die Löschung des Kontos unter {email} beantragen. Die Kündigung wirkt zum Ende des laufenden Abonnementzeitraums.\n\nDer Anbieter kann das Konto unter Benachrichtigung des Nutzers sperren oder schließen bei schwerwiegendem oder wiederholtem Verstoß gegen diese Bedingungen, bei Zahlungsverzug, bei einer Nutzung, die die Sicherheit des Dienstes gefährdet, oder auf behördliche Anordnung.\n\nNach Schließung des Kontos bleiben die Daten 30 Tage lang exportierbar; danach werden sie gemäß der Datenschutzerklärung gelöscht oder anonymisiert, vorbehaltlich gesetzlicher Aufbewahrungspflichten. Es liegt in der Verantwortung der Fachkraft, die Daten ihrer Klienten vor der Schließung zu exportieren und die Klienten zu informieren.\n\nDer Anbieter kann den Dienst oder einzelne Funktionen mit einer Frist von mindestens 90 Tagen einstellen und erstattet den nicht genutzten Teil des Abonnements.",
           "title": "8. Sperrung und Kündigung"
         },
         "s09Law": {
-          "body": "[DA COMPLETARE CON IL LEGALE]\n\nDiese Bedingungen unterliegen italienischem Recht. Für alle Streitigkeiten über ihre Auslegung oder Erfüllung ist ausschließlich das Gericht am Sitz des Anbieters zuständig, unbeschadet des zwingenden Gerichtsstands, den das Gesetz für Nutzer vorsieht, die als Verbraucher handeln.\n\nDer Anbieter kann diese Bedingungen aktualisieren. Wesentliche Änderungen werden per E-Mail oder im geschützten Bereich mindestens 30 Tage im Voraus mitgeteilt; die Nutzung des Dienstes nach dem Wirksamkeitsdatum gilt als Zustimmung. Wer die Änderungen nicht akzeptieren möchte, kann vor diesem Datum kostenlos kündigen.\n\nSollte eine Klausel unwirksam sein, bleiben die übrigen wirksam.",
+          "body": "Diese Bedingungen unterliegen italienischem Recht. Für alle Streitigkeiten über ihre Auslegung oder Erfüllung ist ausschließlich das Gericht von {court} (Padua) zuständig, unbeschadet des zwingenden Gerichtsstands, den das Gesetz für Nutzer vorsieht, die als Verbraucher handeln.\n\nDer Anbieter kann diese Bedingungen aktualisieren. Wesentliche Änderungen werden per E-Mail oder im geschützten Bereich mindestens 30 Tage im Voraus mitgeteilt; die Nutzung des Dienstes nach dem Wirksamkeitsdatum gilt als Zustimmung. Wer die Änderungen nicht akzeptieren möchte, kann vor diesem Datum kostenlos kündigen.\n\nSollte eine Klausel unwirksam sein, bleiben die übrigen wirksam.",
           "title": "9. Anwendbares Recht und Gerichtsstand"
         },
         "s10Contacts": {
-          "body": "Bei Fragen zu diesen Bedingungen, zum Abonnement oder zum Konto:\n\n{company}\nE-Mail: {email}\n\nDie vollständigen Angaben zum Anbieter (Sitz und Umsatzsteuer-Identifikationsnummer) stehen am Ende jeder Seite der Website.",
+          "body": "Bei Fragen zu diesen Bedingungen, zum Abonnement oder zum Konto:\n\n{company}\n{address}\nUSt-IdNr. und Steuernummer {vat}\nPEC {pec}\nE-Mail: {email}\nDatenschutzanfragen: {privacyEmail}",
           "title": "10. Kontakt"
         }
       },
       "subtitle": "Bedingungen für die Nutzung der Website stressindex.io, der Stress Index App und des Bereichs für Fachkräfte, bereitgestellt von {company}.",
       "title": "Nutzungsbedingungen",
-      "updated": "Letzte Aktualisierung: 15. Oktober 2026"
+      "updated": "Letzte Aktualisierung: 17. Oktober 2026 · Version 2.1"
     }
   },
   "measurement": {
@@ -3726,6 +3911,11 @@
     "dashboardHome": {
       "title": "Heute"
     },
+    "dpa": {
+      "description": "Der Vertrag nach Art. 28 DSGVO zwischen der Fachkraft, die Stress Index nutzt, und The Performance Lab S.r.l.: Rollen, Weisungen, Sicherheit, Dienstleister, Beendigung.",
+      "shortDescription": "Vertrag nach Art. 28 DSGVO zwischen Fachkraft und The Performance Lab S.r.l.",
+      "title": "Auftragsverarbeitungsvertrag (AVV) | Stress Index"
+    },
     "features": {
       "description": "5 eigene Scores, über 25 HRV-Parameter, 3 Testarten, lange Sitzungen, PDF-Berichte, Klienten-CRM, Web-Dashboard. Entdecken Sie alle Funktionen.",
       "shortDescription": "5 eigene Scores, über 25 HRV-Parameter, 3 Testarten, lange Sitzungen, PDF-Berichte, Klienten-CRM, Web-Dashboard.",
@@ -3774,6 +3964,11 @@
       "shortDescription": "Wie Stress Index personenbezogene Daten verarbeitet: erhobene Daten, Zwecke, Speicherung in der EU und Ihre Rechte.",
       "title": "Datenschutzerklärung | Stress Index"
     },
+    "privacyApp": {
+      "description": "Wie die App Stress Index die Daten von Fachkräften und Klienten mit eigenem Konto verarbeitet: Daten, Zwecke, Rechtsgrundlagen, Speicherdauer, Rechte.",
+      "shortDescription": "Datenschutzerklärung der App Stress Index für Fachkräfte und Klienten.",
+      "title": "Datenschutzerklärung der App | Stress Index"
+    },
     "proArea": {
       "description": "Professionelles Stress Index Dashboard, geschützter Bereich",
       "template": "%s | Stress Index Bereich für Fachkräfte",
@@ -3806,6 +4001,11 @@
       "sessionTitle": "Sport-Sitzung",
       "teamLiveTitle": "Team Live",
       "title": "Sport"
+    },
+    "subprocessors": {
+      "description": "Die Liste der technischen Dienstleister, die im Auftrag von The Performance Lab S.r.l. Daten verarbeiten, mit Sitz, Leistung, Speicherort und Garantien.",
+      "shortDescription": "Liste der technischen Dienstleister von Stress Index.",
+      "title": "Dienstleister, die Daten verarbeiten | Stress Index"
     },
     "superadmin": {
       "title": "Super Admin"
@@ -4647,36 +4847,44 @@
     "sections": [
       {
         "title": "Verantwortlicher",
-        "body": "Verantwortlicher für die Daten der Klienten ist die Fachperson, die Stress Index zur Begleitung ihrer eigenen Klienten nutzt.\n\nAngaben zu Ihrem konkreten Verantwortlichen finden Sie in den Kontaktdaten der Fachperson, die Ihnen den Zugang zur App gegeben hat.\n\nDie technische Plattform (App und Website) wird von The Performance Lab S.r.l. bereitgestellt. Für Fragen zur Verarbeitung durch die Plattform:\nE-Mail: support@stressindex.io"
+        "body": "{company}, {address}, USt-IdNr. und Steuernummer {vat}, PEC {pec}.\nDatenschutzkontakt: {privacyEmail}.\nDatenschutzbeauftragter: Benennung läuft; bis dahin schreiben Sie an {privacyEmail}.\nSupport: {email}.\n\nDiese Seite betrifft die Website und den Fachkräftebereich. Die Verarbeitung in der App ist in der Datenschutzerklärung der App beschrieben; von der Fachkraft eingegebene Klientendaten verarbeiten wir als Auftragsverarbeiter nach dem Auftragsverarbeitungsvertrag (AVV)."
       },
       {
-        "title": "Erhobene personenbezogene Daten",
-        "body": "App und Website erheben folgende Datenkategorien:\n\n1. KONTODATEN\n• Vor- und Nachname\n• E-Mail-Adresse\n• Datum und Uhrzeit der Kontoerstellung\n\n2. HRV-MESSDATEN\n• Aufgezeichnete RR-Intervalle (ms)\n• Berechnete HRV-Kennwerte (RMSSD, SDNN, DFA α1 usw.)\n• Datum, Uhrzeit und Dauer der Sitzungen\n\n3. KLIENTENDATEN\n• Vorname, Nachname, Geburtsdatum, Geschlecht\n• Angaben zum Lebensstil (freiwillig)\n• Notizen der Fachperson\n\n4. TECHNISCHE FEHLERDATEN\n• Siehe Abschnitt „Erfassung technischer Fehler“\n\nHRV-Daten können Gesundheitsdaten im Sinne von Art. 9 DSGVO darstellen. Die Fachperson ist dafür verantwortlich, die Einwilligung ihrer Klienten einzuholen."
+        "title": "Besuch der Website",
+        "body": "• IP-Adresse, besuchte Seiten, Browser, Betriebssystem und Uhrzeit in den Serverprotokollen. Zur Bereitstellung der Website, Sicherheit und Missbrauchsvermeidung. Rechtsgrundlage: berechtigtes Interesse (Art. 6 Abs. 1 lit. f). Speicherdauer: nur so lange wie unbedingt nötig, nach den Einstellungen des Hosting-Anbieters.\n• Technische Fehler der Website (Sentry): Seite, Browser, Fehlermeldung und pseudonyme Kennung, ohne in Formulare eingegebene Daten. Zur Fehlerbehebung. Grundlage: berechtigtes Interesse. Speicherdauer: 90 Tage.\n• Technische Cookies für Sitzung und Sprache. Sie erfordern keine Einwilligung; Einzelheiten in der Cookie-Richtlinie.\n\nDie Website verwendet keine Profiling-Cookies, Werbewerkzeuge oder Besucheranalysen, die den Besucher identifizieren."
       },
       {
-        "title": "Zwecke und Rechtsgrundlage",
-        "body": "• ERBRINGUNG DES DIENSTES (Art. 6 Abs. 1 lit. b DSGVO)\nVerwaltung der HRV-Sitzungen, Berechnung der Kennwerte, Speicherung des Verlaufs.\n\n• WOHLBEFINDENSDATEN (Art. 9 Abs. 2 lit. a DSGVO)\nVerarbeitung von Daten zum Wohlbefinden nach ausdrücklicher Einwilligung der betroffenen Person.\n\n• WERBLICHE MITTEILUNGEN (Art. 6 Abs. 1 lit. a DSGVO)\nNur mit ausdrücklicher Einwilligung, die jederzeit in den Einstellungen widerrufen werden kann.\n\n• SICHERHEIT UND ZUVERLÄSSIGKEIT (Art. 6 Abs. 1 lit. f DSGVO)\nZugriffsprotokolle zur Betrugsprävention und Kontosicherheit; Erfassung technischer Fehler, um Störungen der App und der Website zu beheben."
+        "title": "Registrierung zum Testzeitraum",
+        "body": "• Vorname, Nachname, E-Mail, verschlüsseltes Passwort, Beruf, Praxisname. Zum Anlegen des Fachkraft-Kontos und Start des Tests. Grundlage: Vertrag (Art. 6 Abs. 1 lit. b). Speicherdauer: Kontolaufzeit plus 30 Tage.\n• Angenommene Einwilligungen mit Version, Fingerabdruck des Textes, Datum, IP und User-Agent. Zum Nachweis (Art. 7 Abs. 1). Grundlage: rechtliche Pflicht (Art. 6 Abs. 1 lit. c). Speicherdauer: Kontolaufzeit plus 5 Jahre.\n• E-Mail für Werbemitteilungen, nur wenn Sie die entsprechende Einwilligung ankreuzen (Art. 6 Abs. 1 lit. a), jederzeit widerruflich."
       },
       {
-        "title": "Erfassung technischer Fehler",
-        "body": "Damit wir Störungen bemerken und beheben können, senden App und Website automatisch eine Meldung, wenn ein technischer Fehler auftritt. Der Dienst wird von Sentry (Functional Software, Inc.) bereitgestellt, das als Auftragsverarbeiter in unserem Auftrag handelt.\n\nVERARBEITETE DATEN:\n• Technische Fehler: Art des Fehlers, Stelle im Programm, an der er aufgetreten ist, Datum und Uhrzeit\n• Anonyme Nutzerkennung: ein dem Konto zugewiesener Zufallscode, ohne Namen und ohne E-Mail-Adresse\n• Version der App oder der Website\n• Gerät: Modell, Betriebssystem, Browsertyp\n\nNICHT ÜBERMITTELTE DATEN:\n• Vorname, Nachname und E-Mail-Adresse\n• Messungen, RR-Intervalle, Kennwerte und Scores\n• Notizen und Inhalte, die von der Fachperson oder dem Klienten eingegeben wurden\n\nZWECK: Fehler finden und beheben, den Betrieb und die Sicherheit des Dienstes gewährleisten. Diese Daten werden weder für Profiling noch für Werbung verwendet.\n\nRECHTSGRUNDLAGE: berechtigtes Interesse an einem zuverlässigen und sicheren Dienst (Art. 6 Abs. 1 lit. f DSGVO).\n\nSPEICHERORT: Europäische Union (EU-Region von Sentry, Frankfurt, Deutschland).\n\nSPEICHERDAUER: Die Meldungen werden innerhalb von 90 Tagen automatisch gelöscht."
+        "title": "Fachkräftebereich",
+        "body": "Im Fachkräftebereich sehen Sie die Daten Ihrer Klienten als Verantwortliche; wir verarbeiten sie als Auftragsverarbeiter nach dem AVV. Die Serverfunktionen laufen in der Region Frankfurt, die Daten werden in Frankfurt gespeichert."
       },
       {
-        "title": "Speicherung der Daten",
-        "body": "Die Daten werden auf der Infrastruktur von Supabase gespeichert (AWS, Rechenzentrum Frankfurt EU-Central-1, Deutschland).\n\nSPEICHERDAUER:\n• Kontodaten: bis zur Löschung des Kontos\n• HRV- und Klientendaten: bis zur Löschung durch die Fachperson oder zur Schließung des Kontos\n• Zugriffsprotokolle: 90 Tage\n• Meldungen technischer Fehler: 90 Tage\n• Verschlüsselte Backups: 30 Tage\n\nSICHERHEIT:\n• Verschlüsselung bei der Übertragung: TLS 1.3\n• Verschlüsselung im Ruhezustand: AES-256\n• Row-Level Security (RLS): Jede Fachperson erreicht nur ihre eigenen Daten\n• Keine Übermittlung von Daten außerhalb der Europäischen Union"
+        "title": "Kontakt per E-Mail",
+        "body": "Wenn Sie an {email} oder {privacyEmail} schreiben, verarbeiten wir Ihre Angaben, um zu antworten. Grundlage: Vertrag oder berechtigtes Interesse. Speicherdauer: 24 Monate nach Abschluss der Anfrage. Senden Sie keine Gesundheitsdaten Ihrer Klienten per E-Mail: Nutzen Sie die Funktionen der Plattform."
       },
       {
-        "title": "Ihre Rechte (DSGVO)",
-        "body": "Nach den Artikeln 15 bis 22 DSGVO haben Sie das Recht auf:\n\n• AUSKUNFT (Art. 15): eine Kopie Ihrer personenbezogenen Daten erhalten\n• BERICHTIGUNG (Art. 16): unrichtige oder unvollständige Daten korrigieren\n• LÖSCHUNG (Art. 17): die Löschung verlangen („Recht auf Vergessenwerden“)\n• EINSCHRÄNKUNG (Art. 18): die Verarbeitung einschränken\n• DATENÜBERTRAGBARKEIT (Art. 20): Ihre Daten in einem strukturierten, maschinenlesbaren Format erhalten\n• WIDERSPRUCH (Art. 21): der Verarbeitung widersprechen, einschließlich der Erfassung technischer Fehler\n• WIDERRUF DER EINWILLIGUNG: jederzeit, ohne dass die Rechtmäßigkeit der bisherigen Verarbeitung berührt wird\n\nZur Ausübung Ihrer Rechte: support@stressindex.io\nSie haben außerdem das Recht, Beschwerde bei Ihrer nationalen Datenschutzaufsichtsbehörde einzulegen."
+        "title": "Dienstleister und Übermittlungen",
+        "body": "Die Dienstleister, die in unserem Auftrag Daten verarbeiten, sind mit Sitz, Leistung, Speicherort und Garantien auf der Seite Dienstleister, die Daten verarbeiten aufgeführt, die mit 30 Tagen Vorankündigung aktualisiert wird. Die Daten werden in der Europäischen Union gespeichert; Dienstleister mit Sitz in den USA verarbeiten Daten auf Grundlage des EU-US Data Privacy Framework und der Standardvertragsklauseln der Europäischen Kommission.\n\nWir verkaufen keine Daten und geben sie nicht zu Werbezwecken an Dritte weiter."
       },
       {
-        "title": "Kontakt",
-        "body": "E-Mail: support@stressindex.io\nWebsite: stressindex.io\n\nUm Ihre Rechte auszuüben oder bei Fragen zur Verarbeitung Ihrer personenbezogenen Daten schreiben Sie an die oben genannte E-Mail-Adresse. Wir antworten innerhalb von 30 Tagen nach Eingang."
+        "title": "Sicherheit",
+        "body": "Verschlüsselung bei Übertragung und Speicherung; jede Fachkraft greift dank Richtlinien auf Zeilenebene nur auf ihre eigenen Daten zu; Zwei-Faktor-Authentifizierung für Verwaltungswerkzeuge; unveränderliches Protokoll administrativer Zugriffe; automatische Backups, die innerhalb von 35 Tagen überschrieben werden."
+      },
+      {
+        "title": "Ihre Rechte",
+        "body": "Sie können Auskunft (Art. 15), Berichtigung (16), Löschung (17), Einschränkung (18) und Datenübertragbarkeit (20) verlangen, der Verarbeitung auf Grundlage berechtigten Interesses widersprechen (21) und Einwilligungen jederzeit widerrufen, ohne Wirkung auf bereits erfolgte Verarbeitungen. Schreiben Sie an {privacyEmail}: Wir antworten innerhalb von 30 Tagen.\n\nSie können sich bei der italienischen Datenschutzbehörde (www.garanteprivacy.it) oder der Behörde Ihres Landes beschweren."
+      },
+      {
+        "title": "Änderungen",
+        "body": "Über relevante Änderungen informieren wir Sie; wesentliche Änderungen erfordern beim nächsten Login eine erneute Zustimmung. Dies ist eine Übersetzung: bei Abweichungen ist der italienische Text maßgeblich."
       }
     ],
-    "subtitle": "Verordnung (EU) 2016/679 (DSGVO)",
+    "subtitle": "Information über die Verarbeitung personenbezogener Daten auf der Website stressindex.io nach der Verordnung (EU) 2016/679 (DSGVO).",
     "title": "Datenschutzerklärung",
-    "updated": "Zuletzt aktualisiert: 4. Oktober 2026"
+    "updated": "Letzte Aktualisierung: 17. Oktober 2026 · Version 2.1"
   },
   "registration": {
     "confirm": {
@@ -4694,7 +4902,6 @@
     "form": {
       "confirmPassword": "Passwort bestätigen",
       "confirmPasswordPlaceholder": "Passwort wiederholen",
-      "consent": "Mit der Registrierung akzeptieren Sie die <terms>Nutzungsbedingungen</terms> und die <privacy>Datenschutzerklärung</privacy>. Ihre Daten sind geschützt und werden DSGVO-konform auf EU-Servern gespeichert.",
       "createFailed": "Das Konto konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
       "email": "Geschäftliche E-Mail",
       "emailPlaceholder": "anna.mueller@praxis.de",

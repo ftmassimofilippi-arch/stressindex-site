@@ -1,0 +1,161 @@
+{
+  "dpa": {
+    "title": "Accordo sul trattamento dei dati (DPA)",
+    "subtitle": "Accordo ai sensi dell'art. 28 del Regolamento (UE) 2016/679 fra il professionista che usa Stress Index e {company}.",
+    "updated": "Ultimo aggiornamento: 17 ottobre 2026 · versione 2.1",
+    "sections": {
+      "s01Parties": {
+        "title": "Parti e ambito",
+        "body": "Titolare del trattamento: il professionista registrato su Stress Index, con i dati indicati in fase di registrazione (\"Professionista\").\n\nResponsabile del trattamento: {company}, {address}, P.IVA e C.F. {vat}, PEC {pec}, email {privacyEmail} (\"Performance Lab\").\n\nIl presente accordo integra i Termini di Servizio e si applica a ogni Professionista che utilizza Stress Index. In caso di contrasto, per quanto riguarda il trattamento dei dati personali prevale il presente accordo. Si accetta con la casella dedicata in fase di registrazione o di riaccettazione; Performance Lab conserva data, ora, versione e impronta del testo accettato."
+      },
+      "s02Roles": {
+        "title": "1. Oggetto e ruoli",
+        "body": "1.1 Performance Lab fornisce al Professionista la piattaforma Stress Index (app e area professionisti del sito) per raccogliere, analizzare e conservare misurazioni della variabilità della frequenza cardiaca e di altri parametri di benessere dei suoi clienti.\n\n1.2 Per i dati che il Professionista raccoglie o riceve nella propria attività (schede cliente, misurazioni eseguite in studio, misurazioni condivise dal cliente, note) il Professionista è titolare e Performance Lab è responsabile.\n\n1.3 Performance Lab è titolare autonomo per: i dati dell'account del Professionista; i dati degli account dei clienti che si registrano all'app; le misurazioni che i clienti eseguono con il proprio account; i log di sicurezza. Questi trattamenti sono descritti nelle informative di Performance Lab e non rientrano nel presente accordo.\n\n1.4 Le Parti escludono la contitolarità: ciascuna decide da sola finalità e mezzi dei propri trattamenti. La condivisione di una misurazione dal cliente al Professionista avviene per decisione del cliente ed è una comunicazione fra titolari autonomi."
+      },
+      "s03Description": {
+        "title": "2. Descrizione del trattamento",
+        "body": "• Finalità: consentire al Professionista di misurare, analizzare e conservare parametri di benessere dei propri clienti e di produrre report.\n• Natura: raccolta tramite sensore, calcolo di parametri e punteggi, conservazione, visualizzazione, report PDF, confronto nel tempo.\n• Interessati: clienti del Professionista, maggiorenni o minori con il consenso di chi esercita la responsabilità genitoriale, raccolto dal Professionista.\n• Dati: anagrafica e contatti; scheda profilo (attività fisica, fumo, livello di allenamento); intervalli fra i battiti e parametri HRV; punteggi di benessere; dati del sonno (ossigenazione, frequenza del polso); composizione corporea; note e tag del Professionista.\n• Categorie particolari: dati relativi alla salute (art. 9 GDPR).\n• Durata: per tutta la durata del rapporto contrattuale, con le regole di cessazione del punto 10."
+      },
+      "s04Instructions": {
+        "title": "3. Istruzioni del titolare",
+        "body": "3.1 Performance Lab tratta i dati solo su istruzione documentata del Professionista: il presente accordo, i Termini di Servizio e l'uso che il Professionista fa delle funzioni della piattaforma.\n\n3.2 Il Professionista istruisce fin d'ora Performance Lab a: (a) conservare i dati presso i fornitori elencati su stressindex.io/legal/subprocessors; (b) eseguire i calcoli e produrre i report previsti; (c) rendere disponibili al cliente che si collega al Professionista con un proprio account le misurazioni che lo riguardano; (d) applicare alla chiusura dell'account del Professionista la procedura del punto 10; (e) produrre statistiche su dati resi anonimi secondo il punto 7.\n\n3.3 Performance Lab informa il Professionista se ritiene che un'istruzione violi la normativa."
+      },
+      "s05ProfessionalDuties": {
+        "title": "4. Obblighi del Professionista",
+        "body": "4.1 Il Professionista garantisce di avere una base giuridica valida per ogni cliente. In ogni caso raccoglie dal cliente il consenso esplicito al trattamento dei dati relativi alla salute (art. 9.2.a GDPR), con il modulo messo a disposizione nell'app o con un modulo equivalente, e lo conserva. I professionisti sanitari possono fondare il trattamento anche sull'art. 9.2.h.\n\n4.2 Il Professionista consegna a ogni cliente l'informativa, usa la piattaforma solo per la valutazione del benessere nell'ambito della propria attività e nei limiti delle proprie competenze, e non inserisce dati di persone che non sono suoi clienti.\n\n4.3 Il Professionista custodisce le proprie credenziali, protegge il dispositivo con un blocco e comunica a Performance Lab ogni accesso non autorizzato."
+      },
+      "s06ProcessorDuties": {
+        "title": "5. Obblighi del responsabile",
+        "body": "5.1 Riservatezza: le persone autorizzate da Performance Lab sono vincolate alla riservatezza e formate sulla protezione dei dati.\n\n5.2 Sicurezza (art. 32 GDPR): cifratura in transito e a riposo; isolamento dei dati di ciascun Professionista con policy di accesso a livello di riga; autenticazione per ogni accesso; offuscamento del codice dell'app; registrazione degli accessi amministrativi in un registro non modificabile, con notifica al Professionista; backup automatici. Il personale di Performance Lab accede ai dati identificabili solo per assistenza o per gestire incidenti, su richiesta documentata, al minimo necessario e con registrazione; gli strumenti di sviluppo del software lavorano su dati pseudonimizzati.\n\n5.3 Assistenza: Performance Lab aiuta il Professionista a rispondere alle richieste degli interessati con le funzioni di esportazione e cancellazione della piattaforma e, quando non bastano, interviene entro 10 giorni. Le richieste che i clienti rivolgono direttamente a Performance Lab sui dati trattati per il Professionista gli vengono inoltrate entro 3 giorni lavorativi.\n\n5.4 Valutazione d'impatto: Performance Lab mette a disposizione del Professionista le informazioni necessarie per la sua valutazione, con una sintesi della propria.\n\n5.5 Violazioni di dati: Performance Lab comunica al Professionista ogni violazione che riguarda i suoi dati senza ingiustificato ritardo e comunque entro 48 ore dalla scoperta, con le informazioni dell'art. 33.3 GDPR, e collabora alla notifica al Garante e alla comunicazione agli interessati.\n\n5.6 Verifiche: Performance Lab mette a disposizione le informazioni necessarie a dimostrare il rispetto dell'art. 28 e consente verifiche, anche tramite un revisore indipendente, con preavviso di 30 giorni, al massimo una volta l'anno salvo incidenti, a spese del Professionista."
+      },
+      "s07Subprocessors": {
+        "title": "6. Sub-responsabili",
+        "body": "6.1 Il Professionista autorizza in via generale i fornitori elencati su stressindex.io/legal/subprocessors, con sede, servizio, ubicazione dei dati e garanzie.\n\n6.2 Performance Lab comunica via email ogni aggiunta o sostituzione con 30 giorni di anticipo. Il Professionista può opporsi per motivi legittimi entro questo termine; se non si trova una soluzione può recedere senza penali. Il silenzio vale come autorizzazione.\n\n6.3 Performance Lab impone a ogni fornitore obblighi equivalenti a quelli del presente accordo e risponde verso il Professionista del loro operato."
+      },
+      "s08Anonymous": {
+        "title": "7. Statistiche su dati anonimi",
+        "body": "7.1 Il Professionista autorizza Performance Lab a rendere anonimi i dati, eliminando in modo irreversibile ogni elemento identificativo, e a usare i dati così resi anonimi per statistiche, miglioramento degli algoritmi e pubblicazioni.\n\n7.2 Nessun altro uso dei dati per finalità proprie di Performance Lab è consentito. Un trattamento di dati identificabili per finalità di Performance Lab può avvenire solo con un consenso raccolto da Performance Lab presso il cliente con account e riguarda soltanto i dati di cui Performance Lab è titolare."
+      },
+      "s09Transfers": {
+        "title": "8. Trasferimenti fuori dall'Unione europea",
+        "body": "I dati sono conservati nell'Unione europea. Un eventuale trasferimento verso Paesi terzi avviene solo tramite i fornitori autorizzati, sulla base di una decisione di adeguatezza (incluso l'EU-US Data Privacy Framework per i fornitori certificati) e, in aggiunta, delle clausole contrattuali standard della Commissione europea, con misure supplementari ove necessarie."
+      },
+      "s10ClientLink": {
+        "title": "9. Collegamento con l'account del cliente",
+        "body": "9.1 Quando un cliente del Professionista si collega con un proprio account, decide lui se condividere le proprie misurazioni e può revocare la condivisione. Le misurazioni ricevute prima della revoca restano nella disponibilità del Professionista come titolare.\n\n9.2 Il Professionista prende atto che il cliente con account vede nel proprio profilo anche le misurazioni eseguite in studio che lo riguardano, in attuazione dei diritti di accesso e portabilità."
+      },
+      "s11Termination": {
+        "title": "10. Cessazione e cancellazione",
+        "body": "10.1 Il Professionista può esportare in ogni momento i dati dei propri clienti in PDF e CSV.\n\n10.2 Alla chiusura dell'account del Professionista: (a) la piattaforma propone l'esportazione completa prima della conferma; (b) le misurazioni dei clienti che hanno un proprio account vengono offerte al cliente, che può conservarle nel proprio profilo con consenso esplicito entro 30 giorni, altrimenti vengono cancellate; (c) i dati dei clienti senza account vengono cancellati, dopo un invito a creare un account entro 30 giorni se il Professionista lo chiede; (d) l'account e i dati residui vengono cancellati in modo definitivo, salvo le copie di backup, sovrascritte entro 35 giorni, e i log di sicurezza pseudonimizzati, conservati fino a 12 mesi.\n\n10.3 Il Professionista resta responsabile degli obblighi di conservazione propri della sua professione, da assolvere con l'esportazione."
+      },
+      "s12Liability": {
+        "title": "11. Responsabilità",
+        "body": "11.1 Ciascuna Parte risponde dei danni causati da un trattamento in violazione del Regolamento nei limiti dell'art. 82 GDPR. Performance Lab risponde solo dei danni derivanti dal mancato rispetto degli obblighi del responsabile o delle istruzioni lecite del Professionista.\n\n11.2 Nei rapporti fra le Parti, salvo dolo o colpa grave e salvo quanto non escludibile per legge, la responsabilità di Performance Lab è limitata all'importo corrisposto dal Professionista nei 12 mesi precedenti l'evento."
+      },
+      "s13Final": {
+        "title": "12. Durata e disposizioni finali",
+        "body": "12.1 L'accordo ha la stessa durata dei Termini di Servizio. Le clausole su riservatezza, cancellazione e responsabilità sopravvivono alla cessazione.\n\n12.2 Performance Lab può aggiornare l'accordo per adeguarlo a norme, provvedimenti o modifiche della piattaforma, con comunicazione di 30 giorni; le modifiche sostanziali richiedono una nuova accettazione.\n\n12.3 Si applica la legge italiana; per ogni controversia è competente in via esclusiva il Foro di {court}."
+      }
+    }
+  },
+  "privacyApp": {
+    "title": "Informativa privacy dell'app",
+    "subtitle": "Informativa ai sensi degli artt. 13 e 14 del Regolamento (UE) 2016/679 per chi usa l'app Stress Index: professionisti e clienti con account.",
+    "updated": "Ultimo aggiornamento: 17 ottobre 2026 · versione 2.1",
+    "sections": {
+      "s01Disclaimer": {
+        "title": "Chi siamo e cosa fa Stress Index",
+        "body": "Titolare del trattamento: {company}, {address}, P.IVA e C.F. {vat}, PEC {pec}, email {privacyEmail}. Responsabile della protezione dei dati: in corso di nomina; nel frattempo scrivi a {privacyEmail}.\n\nStress Index è uno strumento di valutazione del benessere basato sulla variabilità della frequenza cardiaca. Non è un dispositivo medico, non formula diagnosi e non sostituisce il parere di un medico.\n\nQuesta pagina ha due parti: la prima per i professionisti, la seconda per i clienti che usano l'app con un proprio account."
+      },
+      "s02ProRoles": {
+        "title": "Professionisti: due ruoli",
+        "body": "Per i dati del tuo account e dell'uso della piattaforma il titolare è {company}, e questa informativa descrive il trattamento.\n\nPer i dati dei tuoi clienti che inserisci o misuri il titolare sei tu, e {company} agisce come responsabile secondo l'Accordo sul trattamento dei dati (DPA) che accetti in registrazione. Questi dati non vengono usati per finalità nostre, salvo statistiche su dati resi anonimi come previsto dal DPA."
+      },
+      "s03ProData": {
+        "title": "Professionisti: dati, finalità e conservazione",
+        "body": "• Nome, cognome, email, password cifrata, professione, nome dello studio, telefono e indirizzo se inseriti. Per creare e gestire l'account, erogare il servizio e inserire i tuoi riferimenti nei report. Base giuridica: contratto (art. 6.1.b). Conservazione: durata dell'account più 30 giorni.\n• Piano, periodo di prova, abbonamento, dati di fatturazione. Per gestire il contratto e gli obblighi fiscali. Base: contratto e obbligo di legge (art. 6.1.b e c). Conservazione: 10 anni per i documenti fiscali.\n• Identificativi dei dispositivi collegati (massimo 3). Per la sicurezza dell'account. Base: contratto e legittimo interesse (art. 6.1.b e f). Conservazione: durata dell'account.\n• Log di accesso e di utilizzo, indirizzo IP, versione dell'app e del sistema operativo. Per sicurezza, prevenzione di abusi, assistenza. Base: legittimo interesse (art. 6.1.f). Conservazione: fino a 12 mesi, in forma pseudonimizzata.\n• Segnalazioni automatiche di errori tecnici (Sentry), con identificativo pseudonimo e senza nomi, email o misurazioni. Per correggere i malfunzionamenti. Base: legittimo interesse. Conservazione: 90 giorni.\n• Consensi dati, con versione, data e impronta del testo. Per dimostrarli (art. 7.1). Base: obbligo di legge. Conservazione: durata dell'account più 5 anni.\n• Registro degli accessi amministrativi ai tuoi dati. Per trasparenza e sicurezza. Base: legittimo interesse. Conservazione: 12 mesi.\n• Email per comunicazioni commerciali, solo con il tuo consenso (art. 6.1.a), revocabile in ogni momento."
+      },
+      "s04ProClosure": {
+        "title": "Professionisti: chiusura dell'account",
+        "body": "Puoi chiudere l'account dalle impostazioni. Prima della conferma ti proponiamo l'esportazione completa dei dati dei tuoi clienti. Alla chiusura: i dati del tuo account vengono cancellati entro 30 giorni; le misurazioni dei clienti con un proprio account vengono offerte a loro e conservate solo se accettano; i dati dei clienti senza account vengono cancellati. Restano, per i periodi indicati, i documenti fiscali e i log di sicurezza pseudonimizzati.\n\nLe richieste dei tuoi clienti sui dati che tratti come titolare le gestisci tu, con l'esportazione e la cancellazione della piattaforma. Se un tuo cliente scrive a noi, ti inoltriamo la richiesta entro 3 giorni lavorativi."
+      },
+      "s05ClientSummary": {
+        "title": "Clienti con account: in breve",
+        "body": "• Le misurazioni che fai con il tuo account sono tue e le gestiamo noi come titolari.\n• Se ti colleghi a un professionista decidi tu se condividerle con lui, e puoi smettere quando vuoi.\n• Le misurazioni fatte in studio dal tuo professionista le vedi anche tu nel tuo profilo.\n• Non usiamo i tuoi dati per scopi nostri senza un tuo consenso separato, che puoi dare e togliere dalle impostazioni.\n• Puoi chiudere l'account o chiederci di cancellare tutto, in ogni momento."
+      },
+      "s06ClientData": {
+        "title": "Clienti con account: dati, finalità e conservazione",
+        "body": "• Nome, cognome, email, password cifrata, data di nascita, sesso. Per creare l'account e calcolare i punteggi in base a età e sesso. Base: contratto (art. 6.1.b). Conservazione: durata dell'account.\n• Scheda profilo: attività fisica, fumo, livello di allenamento. Per calibrare i punteggi. Base: consenso esplicito (art. 9.2.a). Conservazione: durata dell'account.\n• Intervalli fra i battiti, parametri HRV, punteggi di benessere, tag, test ortostatici e di respirazione. Per calcolo, storico, confronti e report. Base: consenso esplicito (art. 9.2.a). Conservazione: durata dell'account.\n• Dati del sonno (ossigenazione, frequenza del polso, movimento) e composizione corporea, se usi questi dispositivi. Base: consenso esplicito (art. 9.2.a). Conservazione: durata dell'account.\n• Collegamento con un professionista e misurazioni condivise. Per permettergli di seguirti. Base: consenso (art. 9.2.a), revocabile. Conservazione: fino alla revoca.\n• Identificativi dei dispositivi, log di accesso, IP, versione dell'app. Per sicurezza e assistenza. Base: legittimo interesse (art. 6.1.f). Conservazione: fino a 12 mesi, pseudonimizzati.\n• Segnalazioni automatiche di errori tecnici (Sentry), senza nomi, email o misurazioni. Base: legittimo interesse. Conservazione: 90 giorni.\n• Consensi dati, con versione e data. Base: obbligo di legge. Conservazione: durata dell'account più 5 anni.\n\nSono dati relativi alla salute: per questo chiediamo un consenso esplicito e separato, senza il quale l'app non può funzionare."
+      },
+      "s07ClientOptional": {
+        "title": "Clienti con account: consensi facoltativi",
+        "body": "Dalle impostazioni puoi scegliere, separatamente, se permetterci di: (a) usare i tuoi dati in forma pseudonimizzata per statistiche e per migliorare gli algoritmi; (b) usarli per ricerca scientifica, con le garanzie dell'art. 89 GDPR; (c) contattarti per proposte e iniziative. Senza questi consensi nessuna persona di {company} vede i tuoi dati identificabili, se non per assistenza su tua richiesta o per gestire un problema di sicurezza, con accesso registrato. Puoi revocare e riattivare ogni consenso quando vuoi."
+      },
+      "s08ClientProfessional": {
+        "title": "Clienti con account: il tuo professionista",
+        "body": "Quando ti colleghi a un professionista, lui riceve le misurazioni che decidi di condividere e le tratta come titolare nell'ambito del suo lavoro con te. Se revochi il collegamento non riceve più nulla; le misurazioni già ricevute restano a lui e per cancellarle devi chiederlo a lui.\n\nSe il professionista chiude il suo account ti chiediamo se vuoi conservare nel tuo profilo le misurazioni fatte in studio: hai 30 giorni per decidere, poi vengono cancellate."
+      },
+      "s09ClientClosure": {
+        "title": "Clienti con account: chiudere l'account o cancellare tutto",
+        "body": "Sono due scelte diverse.\n\nChiudo l'account: perdi l'accesso, i dati del tuo account e le misurazioni fatte con il tuo account vengono cancellati entro 30 giorni, il tuo professionista conserva quelle che gli hai già condiviso.\n\nCancellate tutti i miei dati: come sopra, in più chiediamo al tuo professionista di valutare la cancellazione dei dati che tratta lui, e ti confermiamo via email.\n\nIn entrambi i casi restano, per i periodi indicati, solo i log di sicurezza pseudonimizzati.\n\nL'app è riservata ai maggiorenni. Un minore può essere misurato solo dal proprio professionista, con il consenso di chi esercita la responsabilità genitoriale."
+      },
+      "s10Common": {
+        "title": "Dove sono i dati, diritti e modifiche",
+        "body": "I dati sono conservati nell'Unione europea, a Francoforte. I fornitori che ci aiutano sono elencati su stressindex.io/legal/subprocessors; quelli con sede negli Stati Uniti trattano i dati sulla base dell'EU-US Data Privacy Framework e delle clausole contrattuali standard. Non vendiamo dati e non li usiamo per pubblicità.\n\nPuoi chiedere accesso, rettifica, cancellazione, limitazione, portabilità, opporti al trattamento basato sul legittimo interesse e revocare i consensi, dalle impostazioni dell'app o scrivendo a {privacyEmail}. Rispondiamo entro 30 giorni. Puoi proporre reclamo al Garante per la protezione dei dati personali (www.garanteprivacy.it).\n\nI dati obbligatori in registrazione sono necessari per il servizio; i consensi facoltativi non condizionano l'uso dell'app. Ti avvisiamo in app e via email di ogni modifica rilevante; le modifiche sostanziali richiedono una nuova accettazione."
+      }
+    }
+  },
+  "subprocessors": {
+    "title": "Fornitori che trattano dati",
+    "subtitle": "I fornitori tecnici che trattano dati personali per conto di {company} nell'erogazione di Stress Index.",
+    "updated": "Ultimo aggiornamento: 17 ottobre 2026 · versione 2.1",
+    "sections": {
+      "s01Intro": {
+        "title": "Come funziona questo elenco",
+        "body": "I dati della piattaforma sono conservati nell'Unione europea. Ogni fornitore è vincolato da un contratto sul trattamento dei dati con obblighi equivalenti al nostro Accordo sul trattamento dei dati. Per i fornitori con sede negli Stati Uniti i trasferimenti si basano sull'EU-US Data Privacy Framework e, in aggiunta, sulle clausole contrattuali standard della Commissione europea.\n\nOgni aggiunta o sostituzione viene comunicata via email ai professionisti con 30 giorni di anticipo, con la possibilità di opporsi."
+      },
+      "s02Supabase": {
+        "title": "Supabase Inc.",
+        "body": "Sede: Stati Uniti.\nServizio: database, autenticazione, archiviazione dei file, funzioni server.\nDati: tutti i dati della piattaforma, compresi i dati relativi alla salute.\nUbicazione dei dati: Unione europea, Francoforte (Germania).\nGaranzie: DPA del fornitore con clausole contrattuali standard."
+      },
+      "s03Vercel": {
+        "title": "Vercel Inc.",
+        "body": "Sede: Stati Uniti.\nServizio: hosting del sito e dell'area professionisti, funzioni server.\nDati: dati di navigazione; dati dell'area professionisti in transito.\nUbicazione: funzioni eseguite nella regione di Francoforte (Germania); contenuti statici su rete di distribuzione globale.\nGaranzie: DPA del fornitore con clausole contrattuali standard."
+      },
+      "s04Sentry": {
+        "title": "Functional Software Inc. (Sentry)",
+        "body": "Sede: Stati Uniti.\nServizio: segnalazione degli errori tecnici di app e sito.\nDati: tipo di errore, dispositivo, versione, identificativo pseudonimo; nessun nome, email o misurazione.\nUbicazione: Unione europea (Germania).\nGaranzie: DPA del fornitore con clausole contrattuali standard."
+      },
+      "s05ActiveCampaign": {
+        "title": "ActiveCampaign LLC",
+        "body": "Sede: Stati Uniti.\nServizio: email ai professionisti; le comunicazioni commerciali solo con consenso.\nDati: nome, email ed etichette dei professionisti; nessun dato dei clienti finali.\nUbicazione: Stati Uniti.\nGaranzie: EU-US Data Privacy Framework e clausole contrattuali standard."
+      },
+      "s06Allyou": {
+        "title": "allyou.srl",
+        "body": "Sede: Italia.\nServizio: invio delle email di sistema (conferma account, recupero password, notifiche).\nDati: indirizzo email e contenuto delle email di sistema.\nUbicazione: Unione europea.\nGaranzie: contratto ai sensi dell'art. 28 GDPR."
+      },
+      "s07Anthropic": {
+        "title": "Anthropic Ireland Ltd",
+        "body": "Sede: Irlanda, con infrastruttura negli Stati Uniti.\nServizio: assistente automatico del gruppo di supporto.\nDati: i messaggi inviati al gruppo di supporto. Non riceve misurazioni né dati della piattaforma.\nUbicazione: Stati Uniti.\nGaranzie: termini commerciali con DPA e clausole contrattuali standard; i dati non sono usati per addestrare i modelli."
+      },
+      "s08Stores": {
+        "title": "Apple e Google",
+        "body": "Distribuiscono l'app e inviano le notifiche. Ricevono identificativi di installazione e token di notifica, non il contenuto delle misurazioni. Agiscono come titolari autonomi secondo le condizioni dei rispettivi store."
+      },
+      "s09Sensors": {
+        "title": "Sensori",
+        "body": "I sensori cardiaci compatibili (Polar, Garmin, Wahoo e simili) comunicano solo via Bluetooth con il telefono e non ricevono dati dalla piattaforma."
+      }
+    }
+  },
+  "links": {
+    "title": "Documenti legali di Stress Index",
+    "privacySite": "Informativa privacy del sito",
+    "privacyApp": "Informativa privacy dell'app",
+    "terms": "Termini di Servizio",
+    "dpa": "Accordo sul trattamento dei dati (DPA)",
+    "subprocessors": "Fornitori che trattano dati",
+    "cookie": "Cookie Policy",
+    "prevails": "Versione 2.1 del 17 ottobre 2026. In caso di divergenza fra le versioni linguistiche prevale il testo italiano."
+  }
+}

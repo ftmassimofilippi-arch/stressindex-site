@@ -2,26 +2,44 @@ import { getTranslations } from 'next-intl/server'
 import { COMPANY } from '@/config/company'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { LegalLinks } from '@/components/LegalLinks'
 
 // Pagina legale "a sezioni" (Termini, Cookie): stesso impianto di /privacy.
 // I testi stanno in `messages/_parts/<lingua>/legal.a.json`, sotto il
 // namespace passato (`legal.terms`, `legal.cookie`): `title`, `subtitle`,
 // `updated` e `sections`, un oggetto di { title, body } con chiavi s01..., s02...
 // (l'ordine di lettura è quello delle chiavi).
-// Le sezioni che il legale deve ancora verificare si aprono con
-// "[DA COMPLETARE CON IL LEGALE]": la dicitura si toglie solo a testo approvato.
-// Nei corpi, {company} ed {email} vengono da `src/config/company.ts`.
+// Dalla versione 2.1 (17/10/2026) nessun testo pubblico porta segnaposto: ciò
+// che il legale deve ancora validare è tracciato nel pacchetto legale, non nella
+// pagina. Nei corpi, {company}, {email}, {privacyEmail}, {address}, {vat}, {pec}
+// e {court} vengono da `src/config/company.ts`.
+// Usata da /termini, /cookie, /legal/dpa, /legal/privacy-app, /legal/subprocessors.
 
 type Section = { title: string; body: string }
 
-const VARS: Record<string, string> = { company: COMPANY.legalName, email: COMPANY.email }
+const VARS: Record<string, string> = {
+  company: COMPANY.legalName,
+  email: COMPANY.email,
+  privacyEmail: COMPANY.privacyEmail,
+  address: COMPANY.address,
+  vat: COMPANY.vat,
+  pec: COMPANY.pec,
+  court: COMPANY.court,
+}
 
-// `t.raw` non interpola: sostituisce a mano {company} e {email}.
-function interpolate(text: string): string {
+export type LegalNamespace =
+  | 'legal.terms'
+  | 'legal.cookie'
+  | 'legal.dpa'
+  | 'legal.privacyApp'
+  | 'legal.subprocessors'
+
+// `t.raw` non interpola: sostituisce a mano le variabili societarie.
+export function interpolate(text: string): string {
   return text.replace(/\{(\w+)\}/g, (m, k: string) => VARS[k] ?? m)
 }
 
-export async function LegalDocument({ namespace }: { namespace: 'legal.terms' | 'legal.cookie' }) {
+export async function LegalDocument({ namespace }: { namespace: LegalNamespace }) {
   const t = await getTranslations(namespace)
   // Le chiavi delle sezioni hanno un prefisso numerico (s01..., s02...): i file
   // messaggi vengono riordinati alfabeticamente da i18n-merge, quindi l'ordine
@@ -52,6 +70,8 @@ export async function LegalDocument({ namespace }: { namespace: 'legal.terms' | 
               </div>
             ))}
           </div>
+
+          <LegalLinks />
         </div>
       </section>
 

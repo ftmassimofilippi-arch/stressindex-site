@@ -1,0 +1,6 @@
+{
+  "api": {
+    "required_missing": "The required consents are missing.",
+    "insert_failed": "The consents could not be saved. Please try again shortly."
+  }
+}

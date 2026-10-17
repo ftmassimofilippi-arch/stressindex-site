@@ -1,0 +1,21 @@
+{
+  "terms_privacy": "I have read and accept the Stress Index <terms>Terms of Service</terms> and <privacy>Privacy Notice</privacy>.",
+  "dpa": "I sign the <dpa>Data Processing Agreement</dpa>: for my clients' data I am the controller and The Performance Lab S.r.l. acts as processor on my instructions.",
+  "wellness_ack": "I acknowledge that Stress Index is a wellbeing assessment tool, not a medical device.",
+  "marketing": "I want to receive news, event invitations and offers from The Performance Lab by email. I can unsubscribe at any time.",
+  "required": "required",
+  "optional": "optional",
+  "requiredMissing": "The three required consents are needed to create the account.",
+  "gate": {
+    "title": "We have updated our privacy rules",
+    "body": "We have rewritten the Privacy Notice, the Terms of Service and the Data Processing Agreement for your clients' data. What is new: clear rules on what happens to data when an account is closed, the public list of providers, separate consents recorded one by one. To keep using the professional area, please review and accept the updated documents.",
+    "accept": "Accept and continue",
+    "decline": "I do not accept",
+    "saving": "Saving...",
+    "error": "Your choice could not be saved. Please try again shortly.",
+    "declinedTitle": "Without accepting you cannot use Stress Index",
+    "declinedBody": "You can go back and accept, or close the account from the app settings. To export your clients' data or for any question write to {privacyEmail}.",
+    "back": "Go back",
+    "signOut": "Sign out"
+  }
+}

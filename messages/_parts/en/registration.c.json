@@ -31,7 +31,6 @@
     },
     "studioName": "Practice name",
     "studioNamePlaceholder": "Wellness Studio London",
-    "consent": "By signing up you accept the <terms>Terms of Service</terms> and the <privacy>Privacy Policy</privacy>. Your data is protected and stored on EU servers in compliance with the GDPR.",
     "submit": "Create your free account",
     "submitting": "Creating your account...",
     "createFailed": "We could not create your account. Please try again."

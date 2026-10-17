@@ -120,12 +120,24 @@
     "eyebrow": "Security and privacy",
     "titleLead": "Privacy guaranteed.",
     "titleEm": "By law.",
-    "description": "Your clients’ sensitive data is protected by the strictest European regulation. No hidden tracking, no third parties, no surprises.",
+    "description": "Your clients' data stay in Europe and are protected by European law. We do not sell them or use them for advertising: we rely only on selected technical providers, publicly listed and bound by contract.",
     "items": [
-      { "title": "Servers in Europe", "body": "Data center in Frankfurt, Germany." },
-      { "title": "GDPR compliant", "body": "Consent recorded for every client." },
-      { "title": "Encryption", "body": "Data encrypted in transit and at rest." },
-      { "title": "No sharing", "body": "Data never leaves Europe. Ever." }
+      {
+        "title": "Servers in Europe",
+        "body": "Data center in Frankfurt, Germany."
+      },
+      {
+        "title": "GDPR compliant",
+        "body": "Consent recorded for every client."
+      },
+      {
+        "title": "Encryption",
+        "body": "Data encrypted in transit and at rest."
+      },
+      {
+        "title": "No data selling",
+        "body": "Stored in Europe, never sold, never used for advertising."
+      }
     ]
   },
   "sensors": {
@@ -146,14 +158,38 @@
       "no": "Not compatible"
     },
     "items": {
-      "h10": { "name": "Polar H10", "note": "Our standard, ECG, maximum precision. Recommended." },
-      "h9": { "name": "Polar H9", "note": "Same ECG quality as the H10, excellent value for money." },
-      "oh1": { "name": "Polar OH1 / Verity Sense", "note": "Optical arm sensor, works but less precise than an ECG strap." },
-      "tickr": { "name": "Wahoo TICKR", "note": "Works, good BLE stability. Test it with your own unit." },
-      "coospo": { "name": "CooSpo H808S", "note": "Works, inexpensive ({price}), lower quality than Polar." },
-      "whoop": { "name": "Whoop 4.0", "note": "Transmits BPM only, not the RR intervals needed for HRV analysis." },
-      "garmin": { "name": "Garmin straps (HRM-Dual, HRM-Pro)", "note": "Do not transmit RR intervals over standard BLE." },
-      "watch": { "name": "Apple Watch", "note": "Does not transmit ECG data over BLE." }
+      "h10": {
+        "name": "Polar H10",
+        "note": "Our standard, ECG, maximum precision. Recommended."
+      },
+      "h9": {
+        "name": "Polar H9",
+        "note": "Same ECG quality as the H10, excellent value for money."
+      },
+      "oh1": {
+        "name": "Polar OH1 / Verity Sense",
+        "note": "Optical arm sensor, works but less precise than an ECG strap."
+      },
+      "tickr": {
+        "name": "Wahoo TICKR",
+        "note": "Works, good BLE stability. Test it with your own unit."
+      },
+      "coospo": {
+        "name": "CooSpo H808S",
+        "note": "Works, inexpensive ({price}), lower quality than Polar."
+      },
+      "whoop": {
+        "name": "Whoop 4.0",
+        "note": "Transmits BPM only, not the RR intervals needed for HRV analysis."
+      },
+      "garmin": {
+        "name": "Garmin straps (HRM-Dual, HRM-Pro)",
+        "note": "Do not transmit RR intervals over standard BLE."
+      },
+      "watch": {
+        "name": "Apple Watch",
+        "note": "Does not transmit ECG data over BLE."
+      }
     }
   },
   "cta": {

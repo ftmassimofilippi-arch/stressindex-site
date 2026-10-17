@@ -120,12 +120,24 @@
     "eyebrow": "Sicurezza e Privacy",
     "titleLead": "Privacy garantita.",
     "titleEm": "Per legge.",
-    "description": "I dati sensibili dei tuoi clienti sono protetti dalla normativa europea più rigorosa. Niente tracking nascosto, niente terze parti, nessuna sorpresa.",
+    "description": "I dati dei tuoi clienti restano in Europa e sono protetti dalla normativa europea. Non li vendiamo e non li usiamo per pubblicità: ci affidiamo solo a fornitori tecnici selezionati, elencati pubblicamente e vincolati da contratto.",
     "items": [
-      { "title": "Server in Europa", "body": "Datacenter a Francoforte, Germania." },
-      { "title": "GDPR compliant", "body": "Consenso registrato per ogni cliente." },
-      { "title": "Crittografia", "body": "Dati in transito e a riposo cifrati." },
-      { "title": "Nessuna condivisione", "body": "I dati non escono dall’Europa. Mai." }
+      {
+        "title": "Server in Europa",
+        "body": "Datacenter a Francoforte, Germania."
+      },
+      {
+        "title": "GDPR compliant",
+        "body": "Consenso registrato per ogni cliente."
+      },
+      {
+        "title": "Crittografia",
+        "body": "Dati in transito e a riposo cifrati."
+      },
+      {
+        "title": "Nessuna vendita di dati",
+        "body": "Conservati in Europa, mai venduti, mai usati per pubblicità."
+      }
     ]
   },
   "sensors": {
@@ -146,14 +158,38 @@
       "no": "Non compatibile"
     },
     "items": {
-      "h10": { "name": "Polar H10", "note": "Il nostro standard, ECG, precisione massima. Consigliato." },
-      "h9": { "name": "Polar H9", "note": "Stessa qualità ECG del H10, ottimo rapporto qualità prezzo." },
-      "oh1": { "name": "Polar OH1 / Verity Sense", "note": "Sensore ottico da braccio, funziona ma meno preciso di una fascia ECG." },
-      "tickr": { "name": "Wahoo TICKR", "note": "Funziona, buona stabilità BLE. Da testare con la propria unità." },
-      "coospo": { "name": "CooSpo H808S", "note": "Funziona, economico ({price}), qualità inferiore al Polar." },
-      "whoop": { "name": "Whoop 4.0", "note": "Trasmette solo BPM, non gli intervalli RR necessari per l’analisi HRV." },
-      "garmin": { "name": "Fasce Garmin (HRM-Dual, HRM-Pro)", "note": "Non trasmettono gli intervalli RR via BLE standard." },
-      "watch": { "name": "Apple Watch", "note": "Non trasmette dati ECG via BLE." }
+      "h10": {
+        "name": "Polar H10",
+        "note": "Il nostro standard, ECG, precisione massima. Consigliato."
+      },
+      "h9": {
+        "name": "Polar H9",
+        "note": "Stessa qualità ECG del H10, ottimo rapporto qualità prezzo."
+      },
+      "oh1": {
+        "name": "Polar OH1 / Verity Sense",
+        "note": "Sensore ottico da braccio, funziona ma meno preciso di una fascia ECG."
+      },
+      "tickr": {
+        "name": "Wahoo TICKR",
+        "note": "Funziona, buona stabilità BLE. Da testare con la propria unità."
+      },
+      "coospo": {
+        "name": "CooSpo H808S",
+        "note": "Funziona, economico ({price}), qualità inferiore al Polar."
+      },
+      "whoop": {
+        "name": "Whoop 4.0",
+        "note": "Trasmette solo BPM, non gli intervalli RR necessari per l’analisi HRV."
+      },
+      "garmin": {
+        "name": "Fasce Garmin (HRM-Dual, HRM-Pro)",
+        "note": "Non trasmettono gli intervalli RR via BLE standard."
+      },
+      "watch": {
+        "name": "Apple Watch",
+        "note": "Non trasmette dati ECG via BLE."
+      }
     }
   },
   "cta": {

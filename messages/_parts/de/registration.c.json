@@ -31,7 +31,6 @@
     },
     "studioName": "Name der Praxis",
     "studioNamePlaceholder": "Wellness-Praxis München",
-    "consent": "Mit der Registrierung akzeptieren Sie die <terms>Nutzungsbedingungen</terms> und die <privacy>Datenschutzerklärung</privacy>. Ihre Daten sind geschützt und werden DSGVO-konform auf EU-Servern gespeichert.",
     "submit": "Kostenloses Konto erstellen",
     "submitting": "Konto wird erstellt...",
     "createFailed": "Das Konto konnte nicht erstellt werden. Bitte versuchen Sie es erneut."

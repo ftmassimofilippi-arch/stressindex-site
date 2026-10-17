@@ -1,0 +1,161 @@
+{
+  "dpa": {
+    "title": "Data Processing Agreement (DPA)",
+    "subtitle": "Agreement under Article 28 of Regulation (EU) 2016/679 between the professional using Stress Index and {company}.",
+    "updated": "Last updated: 17 October 2026 · version 2.1",
+    "sections": {
+      "s01Parties": {
+        "title": "Parties and scope",
+        "body": "Controller: the professional registered on Stress Index, with the details provided at registration (\"Professional\").\n\nProcessor: {company}, {address}, VAT and tax code {vat}, certified email (PEC) {pec}, email {privacyEmail} (\"Performance Lab\").\n\nThis agreement supplements the Terms of Service and applies to every Professional using Stress Index. In case of conflict, this agreement prevails as regards the processing of personal data. It is accepted with the dedicated checkbox at registration or re-acceptance; Performance Lab keeps the date, time, version and fingerprint of the accepted text."
+      },
+      "s02Roles": {
+        "title": "1. Subject matter and roles",
+        "body": "1.1 Performance Lab provides the Professional with the Stress Index platform (app and professional area of the website) to collect, analyse and store heart rate variability measurements and other wellbeing parameters of their clients.\n\n1.2 For data the Professional collects or receives in their activity (client records, in-studio measurements, measurements shared by the client, notes) the Professional is the controller and Performance Lab is the processor.\n\n1.3 Performance Lab is an independent controller for: the Professional's account data; the account data of clients who register in the app; measurements that clients take with their own account; security logs. These processing activities are described in Performance Lab's privacy notices and fall outside this agreement.\n\n1.4 The Parties exclude joint controllership: each decides alone on the purposes and means of its own processing. Sharing a measurement from the client to the Professional happens by decision of the client and is a disclosure between independent controllers."
+      },
+      "s03Description": {
+        "title": "2. Description of the processing",
+        "body": "• Purpose: allowing the Professional to measure, analyse and store wellbeing parameters of their clients and to produce reports.\n• Nature: collection via sensor, calculation of parameters and scores, storage, display, PDF reports, comparison over time.\n• Data subjects: the Professional's clients, adults, or minors with the consent of the holder of parental responsibility collected by the Professional.\n• Data: identification and contact details; profile (physical activity, smoking, training level); inter-beat intervals and HRV parameters; wellbeing scores; sleep data (oxygen saturation, pulse rate); body composition; notes and tags of the Professional.\n• Special categories: data concerning health (Article 9 GDPR).\n• Duration: for the entire contractual relationship, with the termination rules in section 10."
+      },
+      "s04Instructions": {
+        "title": "3. Controller's instructions",
+        "body": "3.1 Performance Lab processes the data only on documented instructions from the Professional: this agreement, the Terms of Service and the Professional's use of the platform features.\n\n3.2 The Professional hereby instructs Performance Lab to: (a) store the data with the providers listed at stressindex.io/legal/subprocessors; (b) perform the calculations and produce the reports provided; (c) make available to a client who links to the Professional with their own account the measurements concerning them; (d) apply the procedure in section 10 when the Professional's account is closed; (e) produce statistics on anonymised data under section 7.\n\n3.3 Performance Lab informs the Professional if it considers that an instruction infringes data protection law."
+      },
+      "s05ProfessionalDuties": {
+        "title": "4. Obligations of the Professional",
+        "body": "4.1 The Professional warrants a valid legal basis for every client. In all cases they obtain from the client explicit consent to the processing of data concerning health (Article 9(2)(a) GDPR), using the form provided in the app or an equivalent one, and keep it. Health professionals may also rely on Article 9(2)(h).\n\n4.2 The Professional gives every client the privacy notice, uses the platform only to assess wellbeing within their own activity and competences, and does not enter data of people who are not their clients.\n\n4.3 The Professional keeps their credentials safe, protects the device with a lock and notifies Performance Lab of any unauthorised access."
+      },
+      "s06ProcessorDuties": {
+        "title": "5. Obligations of the processor",
+        "body": "5.1 Confidentiality: persons authorised by Performance Lab are bound by confidentiality and trained in data protection.\n\n5.2 Security (Article 32 GDPR): encryption in transit and at rest; isolation of each Professional's data with row-level access policies; authentication for every access; obfuscation of the app code; logging of administrative access in an immutable log, with notification to the Professional; automatic backups. Performance Lab staff access identifiable data only for support or incident handling, upon documented request, to the minimum necessary and with logging; software development tools work on pseudonymised data.\n\n5.3 Assistance: Performance Lab helps the Professional respond to data subject requests through the platform's export and deletion features and, when these are not enough, acts within 10 days. Requests that clients send directly to Performance Lab about data processed for the Professional are forwarded within 3 working days.\n\n5.4 Impact assessment: Performance Lab provides the Professional with the information needed for their assessment, including a summary of its own.\n\n5.5 Data breaches: Performance Lab notifies the Professional of any breach affecting their data without undue delay and in any case within 48 hours of discovery, with the information in Article 33(3) GDPR, and cooperates in notifying the supervisory authority and the data subjects.\n\n5.6 Audits: Performance Lab makes available the information needed to demonstrate compliance with Article 28 and allows audits, including by an independent auditor, with 30 days' notice, at most once a year except after an incident, at the Professional's expense."
+      },
+      "s07Subprocessors": {
+        "title": "6. Sub-processors",
+        "body": "6.1 The Professional gives general authorisation for the providers listed at stressindex.io/legal/subprocessors, with location, service, data location and safeguards.\n\n6.2 Performance Lab announces any addition or replacement by email 30 days in advance. The Professional may object on legitimate grounds within that period; if no solution is found they may terminate without penalty. Silence counts as authorisation.\n\n6.3 Performance Lab imposes on every provider obligations equivalent to those of this agreement and remains liable to the Professional for their performance."
+      },
+      "s08Anonymous": {
+        "title": "7. Statistics on anonymous data",
+        "body": "7.1 The Professional authorises Performance Lab to anonymise the data, irreversibly removing every identifying element, and to use the anonymised data for statistics, improvement of the algorithms and publications.\n\n7.2 No other use of the data for Performance Lab's own purposes is allowed. Processing of identifiable data for Performance Lab's purposes may only take place with consent collected by Performance Lab from the client with an account, and only concerns data of which Performance Lab is the controller."
+      },
+      "s09Transfers": {
+        "title": "8. Transfers outside the European Union",
+        "body": "The data are stored in the European Union. Any transfer to third countries takes place only through authorised providers, on the basis of an adequacy decision (including the EU-US Data Privacy Framework for certified providers) and, in addition, the European Commission's standard contractual clauses, with supplementary measures where needed."
+      },
+      "s10ClientLink": {
+        "title": "9. Link with the client's account",
+        "body": "9.1 When a client of the Professional links with their own account, the client decides whether to share their measurements and may revoke sharing. Measurements received before revocation remain available to the Professional as controller.\n\n9.2 The Professional acknowledges that a client with an account also sees in their profile the in-studio measurements concerning them, in fulfilment of the rights of access and portability."
+      },
+      "s11Termination": {
+        "title": "10. Termination and deletion",
+        "body": "10.1 The Professional may export their clients' data at any time in PDF and CSV.\n\n10.2 When the Professional's account is closed: (a) the platform offers a full export before confirmation; (b) measurements of clients who have their own account are offered to the client, who may keep them in their profile with explicit consent within 30 days, otherwise they are deleted; (c) data of clients without an account are deleted, after an invitation to create an account within 30 days if the Professional requests it; (d) the account and remaining data are permanently deleted, except backups, overwritten within 35 days, and pseudonymised security logs, kept up to 12 months.\n\n10.3 The Professional remains responsible for any retention obligations of their profession, to be met through the export."
+      },
+      "s12Liability": {
+        "title": "11. Liability",
+        "body": "11.1 Each Party is liable for damage caused by processing in breach of the Regulation within the limits of Article 82 GDPR. Performance Lab is liable only for damage arising from failure to comply with the processor's obligations or the Professional's lawful instructions.\n\n11.2 Between the Parties, except for wilful misconduct or gross negligence and except where liability cannot be excluded by law, Performance Lab's liability is limited to the amount paid by the Professional in the 12 months preceding the event."
+      },
+      "s13Final": {
+        "title": "12. Duration and final provisions",
+        "body": "12.1 The agreement has the same duration as the Terms of Service. The clauses on confidentiality, deletion and liability survive termination.\n\n12.2 Performance Lab may update the agreement to reflect laws, decisions or changes to the platform, with 30 days' notice; material changes require new acceptance.\n\n12.3 Italian law applies; the court of {court} has exclusive jurisdiction over any dispute."
+      }
+    }
+  },
+  "privacyApp": {
+    "title": "App privacy notice",
+    "subtitle": "Notice under Articles 13 and 14 of Regulation (EU) 2016/679 for those using the Stress Index app: professionals and clients with an account.",
+    "updated": "Last updated: 17 October 2026 · version 2.1",
+    "sections": {
+      "s01Disclaimer": {
+        "title": "Who we are and what Stress Index does",
+        "body": "Controller: {company}, {address}, VAT and tax code {vat}, certified email (PEC) {pec}, email {privacyEmail}. Data protection officer: appointment in progress; in the meantime write to {privacyEmail}.\n\nStress Index is a wellbeing assessment tool based on heart rate variability. It is not a medical device, does not provide a diagnosis and does not replace a doctor's advice.\n\nThis page has two parts: the first for professionals, the second for clients who use the app with their own account."
+      },
+      "s02ProRoles": {
+        "title": "Professionals: two roles",
+        "body": "For your account data and your use of the platform the controller is {company}, and this notice describes the processing.\n\nFor the data of your clients that you enter or measure, you are the controller and {company} acts as processor under the Data Processing Agreement (DPA) you accept at registration. These data are not used for our own purposes, except for statistics on anonymised data as provided in the DPA."
+      },
+      "s03ProData": {
+        "title": "Professionals: data, purposes and retention",
+        "body": "• First name, last name, email, encrypted password, profession, practice name, phone and address if entered. To create and manage the account, deliver the service and show your details in reports. Legal basis: contract (Article 6(1)(b)). Retention: account lifetime plus 30 days.\n• Plan, trial period, subscription, billing data. To manage the contract and tax obligations. Basis: contract and legal obligation (Article 6(1)(b) and (c)). Retention: 10 years for tax documents.\n• Identifiers of linked devices (maximum 3). For account security. Basis: contract and legitimate interest (Article 6(1)(b) and (f)). Retention: account lifetime.\n• Access and usage logs, IP address, app and operating system version. For security, abuse prevention, support. Basis: legitimate interest (Article 6(1)(f)). Retention: up to 12 months, pseudonymised.\n• Automatic technical error reports (Sentry), with a pseudonymous identifier and no names, emails or measurements. To fix malfunctions. Basis: legitimate interest. Retention: 90 days.\n• Consents given, with version, date and text fingerprint. To demonstrate them (Article 7(1)). Basis: legal obligation. Retention: account lifetime plus 5 years.\n• Log of administrative access to your data. For transparency and security. Basis: legitimate interest. Retention: 12 months.\n• Email for marketing communications, only with your consent (Article 6(1)(a)), which you can withdraw at any time."
+      },
+      "s04ProClosure": {
+        "title": "Professionals: closing the account",
+        "body": "You can close the account from the settings. Before confirmation we offer a full export of your clients' data. On closure: your account data are deleted within 30 days; measurements of clients with their own account are offered to them and kept only if they accept; data of clients without an account are deleted. Tax documents and pseudonymised security logs remain for the periods stated.\n\nRequests from your clients about data you process as controller are handled by you, with the platform's export and deletion features. If one of your clients writes to us, we forward the request to you within 3 working days."
+      },
+      "s05ClientSummary": {
+        "title": "Clients with an account: in short",
+        "body": "• The measurements you take with your account are yours and we manage them as controller.\n• If you link to a professional, you decide whether to share them, and you can stop at any time.\n• You also see in your profile the measurements taken in the studio by your professional.\n• We do not use your data for our own purposes without your separate consent, which you can give and withdraw in the settings.\n• You can close the account or ask us to delete everything at any time."
+      },
+      "s06ClientData": {
+        "title": "Clients with an account: data, purposes and retention",
+        "body": "• First name, last name, email, encrypted password, date of birth, sex. To create the account and calculate scores based on age and sex. Basis: contract (Article 6(1)(b)). Retention: account lifetime.\n• Profile: physical activity, smoking, training level. To calibrate the scores. Basis: explicit consent (Article 9(2)(a)). Retention: account lifetime.\n• Inter-beat intervals, HRV parameters, wellbeing scores, tags, orthostatic and breathing tests. For calculation, history, comparisons and reports. Basis: explicit consent (Article 9(2)(a)). Retention: account lifetime.\n• Sleep data (oxygen saturation, pulse rate, movement) and body composition, if you use these devices. Basis: explicit consent (Article 9(2)(a)). Retention: account lifetime.\n• Link with a professional and shared measurements. To let them follow you. Basis: consent (Article 9(2)(a)), revocable. Retention: until revoked.\n• Device identifiers, access logs, IP, app version. For security and support. Basis: legitimate interest (Article 6(1)(f)). Retention: up to 12 months, pseudonymised.\n• Automatic technical error reports (Sentry), with no names, emails or measurements. Basis: legitimate interest. Retention: 90 days.\n• Consents given, with version and date. Basis: legal obligation. Retention: account lifetime plus 5 years.\n\nThese are data concerning health: that is why we ask for explicit and separate consent, without which the app cannot work."
+      },
+      "s07ClientOptional": {
+        "title": "Clients with an account: optional consents",
+        "body": "In the settings you can choose, separately, whether to allow us to: (a) use your data in pseudonymised form for statistics and to improve the algorithms; (b) use them for scientific research, with the safeguards of Article 89 GDPR; (c) contact you with proposals and initiatives. Without these consents no one at {company} sees your identifiable data, except for support at your request or to handle a security issue, with logged access. You can withdraw and reactivate each consent at any time."
+      },
+      "s08ClientProfessional": {
+        "title": "Clients with an account: your professional",
+        "body": "When you link to a professional, they receive the measurements you decide to share and process them as controller within their work with you. If you revoke the link they receive nothing further; measurements already received stay with them, and to delete them you must ask them.\n\nIf the professional closes their account we ask whether you want to keep the in-studio measurements in your profile: you have 30 days to decide, after which they are deleted."
+      },
+      "s09ClientClosure": {
+        "title": "Clients with an account: closing the account or deleting everything",
+        "body": "These are two different choices.\n\nClose the account: you lose access, your account data and the measurements taken with your account are deleted within 30 days, your professional keeps those you have already shared.\n\nDelete all my data: as above, and we also ask your professional to consider deleting the data they process, and we confirm by email.\n\nIn both cases only pseudonymised security logs remain, for the periods stated.\n\nThe app is reserved for adults. A minor may only be measured by their own professional, with the consent of the holder of parental responsibility."
+      },
+      "s10Common": {
+        "title": "Where the data are, rights and changes",
+        "body": "The data are stored in the European Union, in Frankfurt. The providers who help us are listed at stressindex.io/legal/subprocessors; those based in the United States process data on the basis of the EU-US Data Privacy Framework and the standard contractual clauses. We do not sell data or use them for advertising.\n\nYou can request access, rectification, erasure, restriction, portability, object to processing based on legitimate interest and withdraw consents, from the app settings or by writing to {privacyEmail}. We reply within 30 days. You can lodge a complaint with the Italian Data Protection Authority (www.garanteprivacy.it) or the authority of your country.\n\nMandatory registration data are necessary for the service; optional consents do not affect use of the app. We inform you in the app and by email of any relevant change; material changes require new acceptance."
+      }
+    }
+  },
+  "subprocessors": {
+    "title": "Providers that process data",
+    "subtitle": "The technical providers that process personal data on behalf of {company} to deliver Stress Index.",
+    "updated": "Last updated: 17 October 2026 · version 2.1",
+    "sections": {
+      "s01Intro": {
+        "title": "How this list works",
+        "body": "The platform data are stored in the European Union. Every provider is bound by a data processing contract with obligations equivalent to our Data Processing Agreement. For providers based in the United States, transfers rely on the EU-US Data Privacy Framework and, in addition, on the European Commission's standard contractual clauses.\n\nAny addition or replacement is announced by email to professionals 30 days in advance, with the possibility to object."
+      },
+      "s02Supabase": {
+        "title": "Supabase Inc.",
+        "body": "Location: United States.\nService: database, authentication, file storage, server functions.\nData: all platform data, including data concerning health.\nData location: European Union, Frankfurt (Germany).\nSafeguards: provider DPA with standard contractual clauses."
+      },
+      "s03Vercel": {
+        "title": "Vercel Inc.",
+        "body": "Location: United States.\nService: hosting of the website and the professional area, server functions.\nData: browsing data; professional area data in transit.\nLocation: functions run in the Frankfurt region (Germany); static content on a global delivery network.\nSafeguards: provider DPA with standard contractual clauses."
+      },
+      "s04Sentry": {
+        "title": "Functional Software Inc. (Sentry)",
+        "body": "Location: United States.\nService: technical error reporting for app and website.\nData: error type, device, version, pseudonymous identifier; no names, emails or measurements.\nLocation: European Union (Germany).\nSafeguards: provider DPA with standard contractual clauses."
+      },
+      "s05ActiveCampaign": {
+        "title": "ActiveCampaign LLC",
+        "body": "Location: United States.\nService: emails to professionals; marketing communications only with consent.\nData: name, email and tags of professionals; no end-client data.\nLocation: United States.\nSafeguards: EU-US Data Privacy Framework and standard contractual clauses."
+      },
+      "s06Allyou": {
+        "title": "allyou.srl",
+        "body": "Location: Italy.\nService: sending system emails (account confirmation, password recovery, notifications).\nData: email address and content of system emails.\nLocation: European Union.\nSafeguards: contract under Article 28 GDPR."
+      },
+      "s07Anthropic": {
+        "title": "Anthropic Ireland Ltd",
+        "body": "Location: Ireland, with infrastructure in the United States.\nService: automated assistant of the support group.\nData: messages sent to the support group. It receives no measurements or platform data.\nLocation: United States.\nSafeguards: commercial terms with DPA and standard contractual clauses; data are not used to train models."
+      },
+      "s08Stores": {
+        "title": "Apple and Google",
+        "body": "They distribute the app and deliver notifications. They receive installation identifiers and notification tokens, not the content of measurements. They act as independent controllers under the terms of their respective stores."
+      },
+      "s09Sensors": {
+        "title": "Sensors",
+        "body": "Compatible heart rate sensors (Polar, Garmin, Wahoo and similar) communicate only via Bluetooth with the phone and receive no data from the platform."
+      }
+    }
+  },
+  "links": {
+    "title": "Stress Index legal documents",
+    "privacySite": "Website privacy notice",
+    "privacyApp": "App privacy notice",
+    "terms": "Terms of Service",
+    "dpa": "Data Processing Agreement (DPA)",
+    "subprocessors": "Providers that process data",
+    "cookie": "Cookie Policy",
+    "prevails": "Version 2.1 of 17 October 2026. This is a translation: in case of any discrepancy, the Italian text prevails."
+  }
+}

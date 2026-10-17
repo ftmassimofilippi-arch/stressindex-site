@@ -3,6 +3,10 @@ import { getTranslations } from 'next-intl/server'
 import { redirect } from '@/i18n/navigation'
 import { getMyAccountAccess } from '@/lib/account-access'
 import { SospesoView } from './sospeso/SospesoView'
+import { ConsentGateView } from './consensi/ConsentGateView'
+import { createClient } from '@/lib/supabase-server'
+import { pendingFromMetadata, proConsentStatus, recordProConsents } from '@/lib/consents-server'
+import type { Locale } from '@/i18n/routing'
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   const t = await getTranslations({ locale: params.locale, namespace: 'meta.proArea' })
@@ -28,5 +32,31 @@ export default async function AreaProfessionistiLayout({ children, params }: { c
   if (access.userId && access.stato === 'sospeso') {
     return <SospesoView />
   }
+  if (access.userId && (await needsConsentGate(access.userId))) {
+    return <ConsentGateView />
+  }
   return <>{children}</>
+}
+
+// Pacchetto legale 2.1: senza i consensi obbligatori nella versione in vigore
+// l'area professionisti mostra la riaccettazione. Chi si è registrato dal sito
+// dopo il 17/10/2026 li ha dati nel form: sono nei metadata del signUp e si
+// registrano qui al primo accesso, senza chiedere due volte. Se la sito-048 non
+// è ancora applicata lo stato è 'unavailable' e nessuno viene bloccato.
+async function needsConsentGate(userId: string): Promise<boolean> {
+  const status = await proConsentStatus(userId)
+  if (status !== 'missing') return false
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const pending = pendingFromMetadata(user?.user_metadata)
+  if (!pending) return true
+  const res = await recordProConsents({
+    userId,
+    consents: pending,
+    lang: (['it', 'en', 'de'].includes(pending.lang) ? pending.lang : 'it') as Locale,
+    ip: null,
+    userAgent: pending.ua ?? null,
+    grantedAt: pending.at,
+  })
+  return !res.ok
 }

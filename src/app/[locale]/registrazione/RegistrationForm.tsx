@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
-import { Link, useRouter } from '@/i18n/navigation'
+import { useRouter } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import {
   validateRegistrationForm,
@@ -11,6 +11,9 @@ import {
   supabaseAuthErrorKey,
   type FormErrors,
 } from '@/lib/validation'
+import { ConsentCheckboxes } from '@/components/ConsentCheckboxes'
+import { EMPTY_PRO_CONSENTS, hasAllRequired, type PendingConsents, type ProConsents } from '@/lib/consents'
+import { LEGAL_VERSION } from '@/config/company'
 
 // I `value` sono salvati in professional_profiles.professione: non cambiano
 // con la lingua, si traducono solo le etichette (registration.form.professions.*).
@@ -23,6 +26,8 @@ export function RegistrationForm() {
   const tValidation = useTranslations('registration.validation')
   const tSupabase = useTranslations('errors.supabase')
   const tCommon = useTranslations('common')
+  const tConsents = useTranslations('consents')
+  const [consents, setConsents] = useState<ProConsents>(EMPTY_PRO_CONSENTS)
   const locale = useLocale()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -59,6 +64,11 @@ export function RegistrationForm() {
       setErrors(translateFormErrors(validationErrors, tValidation))
       return
     }
+    if (!hasAllRequired(consents)) {
+      setErrors({ general: tConsents('requiredMissing') })
+      return
+    }
+    if (loading) return
 
     setLoading(true)
 
@@ -81,6 +91,16 @@ export function RegistrationForm() {
             professione: formData.professione,
             nome_studio: formData.nomeStudio.trim() || null,
             locale,
+            // Pacchetto legale 2.1: i consensi dati qui diventano righe di
+            // gdpr_consents al primo accesso all'area professionisti, con la
+            // data di adesso (`src/lib/consents-server.ts`, layout dell'area).
+            pending_consents: {
+              ...consents,
+              version: LEGAL_VERSION,
+              lang: locale,
+              at: new Date().toISOString(),
+              ua: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 500) : undefined,
+            } satisfies PendingConsents,
           },
         },
       })
@@ -289,26 +309,13 @@ export function RegistrationForm() {
         />
       </div>
 
-      {/* Privacy consent */}
-      <p className="text-xs text-anthracite-lighter leading-relaxed">
-        {t.rich('consent', {
-          terms: (chunks) => (
-            <Link href="/termini" className="text-teal hover:text-teal-dark underline underline-offset-2">
-              {chunks}
-            </Link>
-          ),
-          privacy: (chunks) => (
-            <Link href="/privacy" className="text-teal hover:text-teal-dark underline underline-offset-2">
-              {chunks}
-            </Link>
-          ),
-        })}
-      </p>
+      {/* Consensi del pacchetto legale 2.1: caselle separate, mai pre-spuntate */}
+      <ConsentCheckboxes value={consents} onChange={setConsents} disabled={loading} />
 
       {/* Submit */}
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || !hasAllRequired(consents)}
         className="btn-primary w-full text-base py-3.5"
       >
         {loading ? (

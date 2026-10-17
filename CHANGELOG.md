@@ -3,6 +3,33 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-17 — pacchetto legale 2.1
+
+Ramo `legal/v2.1`. Pagine legali riscritte dal pacchetto legale del 17/10/2026
+(titolarità separata: The Performance Lab titolare per account e misurazioni
+dei clienti con account, responsabile per i dati dei clienti dei professionisti).
+
+- Dati societari reali in `src/config/company.ts` (sede, P.IVA e C.F., PEC,
+  foro di Padova); REA e capitale sociale restano null e non si mostrano.
+  Footer con PEC. Nessun `[DA COMPLETARE]` nei testi pubblici.
+- `/privacy` riscritta (informativa del sito): tolte le dichiarazioni inesatte
+  ("titolare è sempre il professionista", "nessun trasferimento fuori dall'UE").
+- Nuove pagine `/legal/privacy-app`, `/legal/dpa`, `/legal/subprocessors`,
+  in sitemap, con riquadro di collegamento fra tutti i documenti legali.
+- `/termini`: foro di Padova, contatti completi, rimando al DPA; `/cookie`:
+  identificativo Sentry "pseudonimo".
+- `/funzionalita`: sostituito "niente terze parti / i dati non escono dall'Europa".
+- `vercel.json`: funzioni server in `fra1` (prima `iad1`, Washington).
+- Registrazione: quattro caselle separate e non pre-spuntate (Termini e
+  informativa, DPA, natura wellness, marketing facoltativo); i consensi vanno
+  nei metadata del signUp e diventano righe `gdpr_consents` al primo accesso.
+- Area professionisti: schermata di riaccettazione (`consensi/ConsentGateView`)
+  finché mancano i consensi obbligatori 2.1; `POST /api/consents`.
+- `sito-048_consensi_granulari`: righe di consenso per tipo, con versione,
+  impronta SHA-256, lingua, IP, user agent; policy solo select/insert per le
+  righe 2.1; revoca dei grant ad `anon`. Finché non è applicata la
+  riaccettazione non blocca nessuno.
+
 ## 2026-10-15 — chiusura delle tabelle di backup leggibili da anon
 
 `sito-046`: le cinque tabelle `backup_laura_20261015_*` e

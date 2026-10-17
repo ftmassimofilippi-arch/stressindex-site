@@ -1,0 +1,17 @@
+{
+  "dpa": {
+    "title": "Auftragsverarbeitungsvertrag (AVV) | Stress Index",
+    "description": "Der Vertrag nach Art. 28 DSGVO zwischen der Fachkraft, die Stress Index nutzt, und The Performance Lab S.r.l.: Rollen, Weisungen, Sicherheit, Dienstleister, Beendigung.",
+    "shortDescription": "Vertrag nach Art. 28 DSGVO zwischen Fachkraft und The Performance Lab S.r.l."
+  },
+  "privacyApp": {
+    "title": "Datenschutzerklärung der App | Stress Index",
+    "description": "Wie die App Stress Index die Daten von Fachkräften und Klienten mit eigenem Konto verarbeitet: Daten, Zwecke, Rechtsgrundlagen, Speicherdauer, Rechte.",
+    "shortDescription": "Datenschutzerklärung der App Stress Index für Fachkräfte und Klienten."
+  },
+  "subprocessors": {
+    "title": "Dienstleister, die Daten verarbeiten | Stress Index",
+    "description": "Die Liste der technischen Dienstleister, die im Auftrag von The Performance Lab S.r.l. Daten verarbeiten, mit Sitz, Leistung, Speicherort und Garantien.",
+    "shortDescription": "Liste der technischen Dienstleister von Stress Index."
+  }
+}

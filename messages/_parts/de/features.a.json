@@ -120,12 +120,24 @@
     "eyebrow": "Sicherheit und Datenschutz",
     "titleLead": "Datenschutz garantiert.",
     "titleEm": "Per Gesetz.",
-    "description": "Die sensiblen Daten Ihrer Klienten sind durch die strengste europäische Regelung geschützt. Kein verstecktes Tracking, keine Dritten, keine Überraschungen.",
+    "description": "Die Daten Ihrer Klienten bleiben in Europa und sind durch europäisches Recht geschützt. Wir verkaufen sie nicht und nutzen sie nicht für Werbung: Wir arbeiten nur mit ausgewählten technischen Dienstleistern, öffentlich aufgeführt und vertraglich gebunden.",
     "items": [
-      { "title": "Server in Europa", "body": "Rechenzentrum in Frankfurt, Deutschland." },
-      { "title": "DSGVO-konform", "body": "Einwilligung für jeden Klienten dokumentiert." },
-      { "title": "Verschlüsselung", "body": "Daten bei der Übertragung und im Ruhezustand verschlüsselt." },
-      { "title": "Keine Weitergabe", "body": "Die Daten verlassen Europa nicht. Nie." }
+      {
+        "title": "Server in Europa",
+        "body": "Rechenzentrum in Frankfurt, Deutschland."
+      },
+      {
+        "title": "DSGVO-konform",
+        "body": "Einwilligung für jeden Klienten dokumentiert."
+      },
+      {
+        "title": "Verschlüsselung",
+        "body": "Daten bei der Übertragung und im Ruhezustand verschlüsselt."
+      },
+      {
+        "title": "Kein Datenverkauf",
+        "body": "In Europa gespeichert, nie verkauft, nie für Werbung genutzt."
+      }
     ]
   },
   "sensors": {
@@ -146,14 +158,38 @@
       "no": "Nicht kompatibel"
     },
     "items": {
-      "h10": { "name": "Polar H10", "note": "Unser Standard, EKG, höchste Präzision. Empfohlen." },
-      "h9": { "name": "Polar H9", "note": "Gleiche EKG-Qualität wie der H10, sehr gutes Preis-Leistungs-Verhältnis." },
-      "oh1": { "name": "Polar OH1 / Verity Sense", "note": "Optischer Armsensor, funktioniert, aber weniger präzise als ein EKG-Brustgurt." },
-      "tickr": { "name": "Wahoo TICKR", "note": "Funktioniert, gute BLE-Stabilität. Mit dem eigenen Gerät testen." },
-      "coospo": { "name": "CooSpo H808S", "note": "Funktioniert, günstig ({price}), geringere Qualität als Polar." },
-      "whoop": { "name": "Whoop 4.0", "note": "Überträgt nur BPM, nicht die für die HRV-Analyse nötigen RR-Intervalle." },
-      "garmin": { "name": "Garmin-Gurte (HRM-Dual, HRM-Pro)", "note": "Übertragen keine RR-Intervalle über Standard-BLE." },
-      "watch": { "name": "Apple Watch", "note": "Überträgt keine EKG-Daten über BLE." }
+      "h10": {
+        "name": "Polar H10",
+        "note": "Unser Standard, EKG, höchste Präzision. Empfohlen."
+      },
+      "h9": {
+        "name": "Polar H9",
+        "note": "Gleiche EKG-Qualität wie der H10, sehr gutes Preis-Leistungs-Verhältnis."
+      },
+      "oh1": {
+        "name": "Polar OH1 / Verity Sense",
+        "note": "Optischer Armsensor, funktioniert, aber weniger präzise als ein EKG-Brustgurt."
+      },
+      "tickr": {
+        "name": "Wahoo TICKR",
+        "note": "Funktioniert, gute BLE-Stabilität. Mit dem eigenen Gerät testen."
+      },
+      "coospo": {
+        "name": "CooSpo H808S",
+        "note": "Funktioniert, günstig ({price}), geringere Qualität als Polar."
+      },
+      "whoop": {
+        "name": "Whoop 4.0",
+        "note": "Überträgt nur BPM, nicht die für die HRV-Analyse nötigen RR-Intervalle."
+      },
+      "garmin": {
+        "name": "Garmin-Gurte (HRM-Dual, HRM-Pro)",
+        "note": "Übertragen keine RR-Intervalle über Standard-BLE."
+      },
+      "watch": {
+        "name": "Apple Watch",
+        "note": "Überträgt keine EKG-Daten über BLE."
+      }
     }
   },
   "cta": {

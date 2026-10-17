@@ -1,0 +1,21 @@
+{
+  "terms_privacy": "Ho letto e accetto i <terms>Termini di Servizio</terms> e l'<privacy>Informativa privacy</privacy> di Stress Index.",
+  "dpa": "Sottoscrivo l'<dpa>Accordo sul trattamento dei dati</dpa>: per i dati dei miei clienti sono io il titolare e The Performance Lab S.r.l. agisce come responsabile su mie istruzioni.",
+  "wellness_ack": "Prendo atto che Stress Index è uno strumento di valutazione del benessere, non un dispositivo medico.",
+  "marketing": "Voglio ricevere via email novità, inviti a eventi e offerte di The Performance Lab. Posso disiscrivermi quando voglio.",
+  "required": "obbligatorio",
+  "optional": "facoltativo",
+  "requiredMissing": "Per creare l'account servono i tre consensi obbligatori.",
+  "gate": {
+    "title": "Abbiamo aggiornato le regole sulla privacy",
+    "body": "Abbiamo riscritto l'Informativa privacy, i Termini di Servizio e l'Accordo sul trattamento dei dati dei tuoi clienti. Le novità: regole chiare su cosa succede ai dati quando un account viene chiuso, l'elenco pubblico dei fornitori, consensi separati e registrati uno per uno. Per continuare a usare l'area professionisti ti chiediamo di rileggere e accettare i documenti aggiornati.",
+    "accept": "Accetto e continuo",
+    "decline": "Non accetto",
+    "saving": "Salvataggio in corso...",
+    "error": "Non è stato possibile salvare la scelta. Riprova tra poco.",
+    "declinedTitle": "Senza accettare non puoi usare Stress Index",
+    "declinedBody": "Puoi tornare indietro e accettare, oppure chiudere l'account dalle impostazioni dell'app. Per esportare i dati dei tuoi clienti o per qualsiasi domanda scrivi a {privacyEmail}.",
+    "back": "Torna indietro",
+    "signOut": "Esci"
+  }
+}

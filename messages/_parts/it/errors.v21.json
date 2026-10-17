@@ -1,0 +1,6 @@
+{
+  "api": {
+    "required_missing": "Mancano i consensi obbligatori.",
+    "insert_failed": "Non è stato possibile salvare i consensi. Riprova tra poco."
+  }
+}

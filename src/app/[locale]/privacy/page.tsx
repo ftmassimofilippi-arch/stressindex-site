@@ -4,11 +4,13 @@ import type { Locale } from '@/i18n/routing'
 import { pageMetadata } from '@/lib/seo'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { LegalLinks } from '@/components/LegalLinks'
+import { interpolate } from '@/components/LegalDocument'
 
-// Informativa privacy di app e sito, in tre lingue. I testi stanno in
-// `messages/_parts/<lingua>/privacy.a.json`: le sezioni sono le stesse della
-// schermata "Informativa Privacy" dell'app (ARB `setPrivacy*`), più quella sulla
-// rilevazione degli errori tecnici (Sentry). Chi cambia una, cambia l'altra.
+// Informativa privacy del SITO (pacchetto legale 2.1, Doc 4), in tre lingue.
+// Testi in `messages/_parts/<lingua>/privacy.a.json`. L'informativa dell'app
+// (professionisti e clienti con account) è su /legal/privacy-app e la schermata
+// "Informativa Privacy" dell'app deve rimandare lì (ARB `setPrivacy*`).
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   const t = await getTranslations({ locale: params.locale, namespace: 'meta' })
@@ -44,10 +46,12 @@ export default async function PrivacyPage({ params }: { params: { locale: string
             {sections.map((s) => (
               <div key={s.title} className="py-8">
                 <h2 className="font-serif text-xl text-anthracite">{s.title}</h2>
-                <p className="mt-3 text-[15px] text-anthracite-light leading-relaxed whitespace-pre-line">{s.body}</p>
+                <p className="mt-3 text-[15px] text-anthracite-light leading-relaxed whitespace-pre-line">{interpolate(s.body)}</p>
               </div>
             ))}
           </div>
+
+          <LegalLinks />
         </div>
       </section>
 

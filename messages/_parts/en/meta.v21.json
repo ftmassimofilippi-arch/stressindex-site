@@ -1,0 +1,17 @@
+{
+  "dpa": {
+    "title": "Data Processing Agreement (DPA) | Stress Index",
+    "description": "The agreement under Article 28 GDPR between the professional using Stress Index and The Performance Lab S.r.l.: roles, instructions, security, providers, termination.",
+    "shortDescription": "Article 28 GDPR agreement between the professional and The Performance Lab S.r.l."
+  },
+  "privacyApp": {
+    "title": "App privacy notice | Stress Index",
+    "description": "How the Stress Index app processes the data of professionals and of clients with an account: data, purposes, legal bases, retention, rights.",
+    "shortDescription": "Stress Index app privacy notice for professionals and clients."
+  },
+  "subprocessors": {
+    "title": "Providers that process data | Stress Index",
+    "description": "The list of technical providers that process data on behalf of The Performance Lab S.r.l., with location, service, data location and safeguards.",
+    "shortDescription": "List of Stress Index technical providers."
+  }
+}

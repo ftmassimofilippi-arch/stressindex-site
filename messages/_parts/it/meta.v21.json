@@ -1,0 +1,17 @@
+{
+  "dpa": {
+    "title": "Accordo sul trattamento dei dati (DPA) | Stress Index",
+    "description": "L'accordo ai sensi dell'art. 28 GDPR fra il professionista che usa Stress Index e The Performance Lab S.r.l.: ruoli, istruzioni, sicurezza, fornitori, cessazione.",
+    "shortDescription": "Accordo art. 28 GDPR fra il professionista e The Performance Lab S.r.l."
+  },
+  "privacyApp": {
+    "title": "Informativa privacy dell'app | Stress Index",
+    "description": "Come l'app Stress Index tratta i dati dei professionisti e dei clienti con account: dati, finalità, basi giuridiche, conservazione, diritti.",
+    "shortDescription": "Informativa privacy dell'app Stress Index per professionisti e clienti."
+  },
+  "subprocessors": {
+    "title": "Fornitori che trattano dati | Stress Index",
+    "description": "L'elenco dei fornitori tecnici che trattano dati per conto di The Performance Lab S.r.l., con sede, servizio, ubicazione dei dati e garanzie.",
+    "shortDescription": "Elenco dei fornitori tecnici di Stress Index."
+  }
+}

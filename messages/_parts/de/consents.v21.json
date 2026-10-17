@@ -1,0 +1,21 @@
+{
+  "terms_privacy": "Ich habe die <terms>Nutzungsbedingungen</terms> und die <privacy>Datenschutzerklärung</privacy> von Stress Index gelesen und akzeptiere sie.",
+  "dpa": "Ich schließe den <dpa>Auftragsverarbeitungsvertrag</dpa> ab: Für die Daten meiner Klienten bin ich verantwortlich, und The Performance Lab S.r.l. handelt als Auftragsverarbeiter nach meinen Weisungen.",
+  "wellness_ack": "Ich nehme zur Kenntnis, dass Stress Index ein Werkzeug zur Bewertung des Wohlbefindens ist und kein Medizinprodukt.",
+  "marketing": "Ich möchte Neuigkeiten, Einladungen zu Veranstaltungen und Angebote von The Performance Lab per E-Mail erhalten. Ich kann mich jederzeit abmelden.",
+  "required": "Pflichtfeld",
+  "optional": "freiwillig",
+  "requiredMissing": "Für das Konto sind die drei Pflicht-Einwilligungen erforderlich.",
+  "gate": {
+    "title": "Wir haben unsere Datenschutzregeln aktualisiert",
+    "body": "Wir haben die Datenschutzerklärung, die Nutzungsbedingungen und den Auftragsverarbeitungsvertrag für die Daten Ihrer Klienten neu gefasst. Neu sind: klare Regeln dazu, was mit den Daten bei Schließung eines Kontos geschieht, die öffentliche Liste der Dienstleister, getrennte und einzeln gespeicherte Einwilligungen. Um den Fachkräftebereich weiter zu nutzen, lesen und akzeptieren Sie bitte die aktualisierten Dokumente.",
+    "accept": "Akzeptieren und fortfahren",
+    "decline": "Ich akzeptiere nicht",
+    "saving": "Wird gespeichert...",
+    "error": "Ihre Auswahl konnte nicht gespeichert werden. Bitte versuchen Sie es gleich noch einmal.",
+    "declinedTitle": "Ohne Zustimmung können Sie Stress Index nicht nutzen",
+    "declinedBody": "Sie können zurückgehen und akzeptieren oder das Konto in den App-Einstellungen schließen. Für den Export der Daten Ihrer Klienten oder Fragen schreiben Sie an {privacyEmail}.",
+    "back": "Zurück",
+    "signOut": "Abmelden"
+  }
+}

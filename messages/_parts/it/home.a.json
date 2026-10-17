@@ -189,7 +189,10 @@
     "product": "Prodotto",
     "support": "Supporto",
     "legal": "Legale",
-    "vat": "P.IVA {vat}"
+    "vat": "P.IVA e C.F. {vat}",
+    "pec": "PEC {pec}",
+    "rea": "REA {rea}",
+    "shareCapital": "Capitale sociale {capital}"
   },
   "jsonLd": {
     "appDescription": "Software HRV professionale per l’analisi del sistema nervoso autonomo"

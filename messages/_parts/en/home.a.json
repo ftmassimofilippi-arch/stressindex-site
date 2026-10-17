@@ -189,7 +189,10 @@
     "product": "Product",
     "support": "Support",
     "legal": "Legal",
-    "vat": "VAT no. {vat}"
+    "vat": "VAT and tax code {vat}",
+    "pec": "Certified email (PEC) {pec}",
+    "rea": "REA {rea}",
+    "shareCapital": "Share capital {capital}"
   },
   "jsonLd": {
     "appDescription": "Professional HRV software for autonomic nervous system analysis"

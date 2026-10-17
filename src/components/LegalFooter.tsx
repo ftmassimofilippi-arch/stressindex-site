@@ -18,6 +18,9 @@ export function LegalFooter() {
         <div className="font-medium text-anthracite-light">{COMPANY.legalName}</div>
         <div>{COMPANY.address}</div>
         <div>{tf('vat', { vat: COMPANY.vat })}</div>
+        <div>{tf('pec', { pec: COMPANY.pec })}</div>
+        {COMPANY.rea && <div>{tf('rea', { rea: COMPANY.rea })}</div>}
+        {COMPANY.shareCapital && <div>{tf('shareCapital', { capital: COMPANY.shareCapital })}</div>}
       </div>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 md:justify-end">
         <span>
