@@ -184,7 +184,7 @@ export default async function PrintPeriodicReportPage({
         <>
           {/* Pannelli con frase di sintesi e i quattro numeri: la partenza viene dalla storia intera. */}
           <PrintSection title={t('report.panelsTitle')} subtitle={t('report.panelsSubtitle')}>
-            <div className="print-card p-4">
+            <div>
               {!anyReference && <p className="text-[11px] text-amber-700 mb-2">{t('report.noReference')}</p>}
               <AdvancedTrendChart
                 measurements={history}
@@ -198,7 +198,7 @@ export default async function PrintPeriodicReportPage({
                 annotations={prefs.annotations}
                 clientMode={clientVariant}
               />
-              <div className="mt-3 space-y-1 text-[10.5px] text-anthracite-light">
+              <div className="print-card p-3 mt-3 space-y-1 text-[10.5px] text-anthracite-light">
                 {regularity && <p>{t('report.regularityLine', { days: regularity.days, total: regularity.total })}</p>}
                 {excludedNote && <p>{excludedNote}</p>}
               </div>

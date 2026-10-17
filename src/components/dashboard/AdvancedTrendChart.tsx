@@ -679,7 +679,9 @@ function MetricPanel({
   )
 
   return (
-    <section className={print ? 'break-inside-avoid' : ''} aria-label={name}>
+    // In stampa ogni pannello è una card a sé: un'unica card con tre pannelli
+    // non entrava in una pagina e saltava tutta alla successiva.
+    <section className={print ? 'print-card p-4 break-inside-avoid' : ''} aria-label={name}>
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-1">
         <span className="inline-flex items-center gap-1.5 font-medium text-anthracite text-sm">
           <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: metric.color }} />
