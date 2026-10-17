@@ -10,8 +10,8 @@ Ramo `legal/v2.1`. Pagine legali riscritte dal pacchetto legale del 17/10/2026
 dei clienti con account, responsabile per i dati dei clienti dei professionisti).
 
 - Dati societari reali in `src/config/company.ts` (sede, P.IVA e C.F., PEC,
-  foro di Padova); REA e capitale sociale restano null e non si mostrano.
-  Footer con PEC. Nessun `[DA COMPLETARE]` nei testi pubblici.
+  REA VI-395837, capitale € 10.000 i.v., foro di Padova), tutti nel footer.
+  ActiveCampaign tolto dall'elenco fornitori (non in uso). Nessun `[DA COMPLETARE]` nei testi pubblici.
 - `/privacy` riscritta (informativa del sito): tolte le dichiarazioni inesatte
   ("titolare è sempre il professionista", "nessun trasferimento fuori dall'UE").
 - Nuove pagine `/legal/privacy-app`, `/legal/dpa`, `/legal/subprocessors`,

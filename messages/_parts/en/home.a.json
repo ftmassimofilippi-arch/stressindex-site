@@ -192,7 +192,7 @@
     "vat": "VAT and tax code {vat}",
     "pec": "Certified email (PEC) {pec}",
     "rea": "REA {rea}",
-    "shareCapital": "Share capital {capital}"
+    "shareCapital": "Share capital {capital} fully paid up"
   },
   "jsonLd": {
     "appDescription": "Professional HRV software for autonomic nervous system analysis"

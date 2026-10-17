@@ -192,7 +192,7 @@
     "vat": "USt-IdNr. und Steuernummer {vat}",
     "pec": "PEC {pec}",
     "rea": "REA {rea}",
-    "shareCapital": "Stammkapital {capital}"
+    "shareCapital": "Stammkapital {capital} voll eingezahlt"
   },
   "jsonLd": {
     "appDescription": "Professionelle HRV-Software zur Analyse des autonomen Nervensystems"

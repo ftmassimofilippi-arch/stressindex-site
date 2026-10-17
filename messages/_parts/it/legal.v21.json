@@ -126,10 +126,6 @@
         "title": "Functional Software Inc. (Sentry)",
         "body": "Sede: Stati Uniti.\nServizio: segnalazione degli errori tecnici di app e sito.\nDati: tipo di errore, dispositivo, versione, identificativo pseudonimo; nessun nome, email o misurazione.\nUbicazione: Unione europea (Germania).\nGaranzie: DPA del fornitore con clausole contrattuali standard."
       },
-      "s05ActiveCampaign": {
-        "title": "ActiveCampaign LLC",
-        "body": "Sede: Stati Uniti.\nServizio: email ai professionisti; le comunicazioni commerciali solo con consenso.\nDati: nome, email ed etichette dei professionisti; nessun dato dei clienti finali.\nUbicazione: Stati Uniti.\nGaranzie: EU-US Data Privacy Framework e clausole contrattuali standard."
-      },
       "s06Allyou": {
         "title": "allyou.srl",
         "body": "Sede: Italia.\nServizio: invio delle email di sistema (conferma account, recupero password, notifiche).\nDati: indirizzo email e contenuto delle email di sistema.\nUbicazione: Unione europea.\nGaranzie: contratto ai sensi dell'art. 28 GDPR."

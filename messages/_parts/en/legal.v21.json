@@ -126,10 +126,6 @@
         "title": "Functional Software Inc. (Sentry)",
         "body": "Location: United States.\nService: technical error reporting for app and website.\nData: error type, device, version, pseudonymous identifier; no names, emails or measurements.\nLocation: European Union (Germany).\nSafeguards: provider DPA with standard contractual clauses."
       },
-      "s05ActiveCampaign": {
-        "title": "ActiveCampaign LLC",
-        "body": "Location: United States.\nService: emails to professionals; marketing communications only with consent.\nData: name, email and tags of professionals; no end-client data.\nLocation: United States.\nSafeguards: EU-US Data Privacy Framework and standard contractual clauses."
-      },
       "s06Allyou": {
         "title": "allyou.srl",
         "body": "Location: Italy.\nService: sending system emails (account confirmation, password recovery, notifications).\nData: email address and content of system emails.\nLocation: European Union.\nSafeguards: contract under Article 28 GDPR."

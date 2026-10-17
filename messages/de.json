@@ -3282,7 +3282,7 @@
       "pec": "PEC {pec}",
       "product": "Produkt",
       "rea": "REA {rea}",
-      "shareCapital": "Stammkapital {capital}",
+      "shareCapital": "Stammkapital {capital} voll eingezahlt",
       "support": "Support",
       "tagline": "Professionelle HRV-Software für Physiotherapeuten, Osteopathen, Sportmediziner und Wellness-Coaches. Messen Sie den Stress des autonomen Nervensystems in 10 Minuten.",
       "vat": "USt-IdNr. und Steuernummer {vat}"
@@ -3569,10 +3569,6 @@
         "s04Sentry": {
           "body": "Sitz: USA.\nLeistung: Meldung technischer Fehler von App und Website.\nDaten: Fehlertyp, Gerät, Version, pseudonyme Kennung; keine Namen, E-Mails oder Messungen.\nSpeicherort: Europäische Union (Deutschland).\nGarantien: AVV des Dienstleisters mit Standardvertragsklauseln.",
           "title": "Functional Software Inc. (Sentry)"
-        },
-        "s05ActiveCampaign": {
-          "body": "Sitz: USA.\nLeistung: E-Mails an Fachkräfte; Werbemitteilungen nur mit Einwilligung.\nDaten: Name, E-Mail und Tags der Fachkräfte; keine Daten von Endklienten.\nSpeicherort: USA.\nGarantien: EU-US Data Privacy Framework und Standardvertragsklauseln.",
-          "title": "ActiveCampaign LLC"
         },
         "s06Allyou": {
           "body": "Sitz: Italien.\nLeistung: Versand von System-E-Mails (Kontobestätigung, Passwort-Wiederherstellung, Benachrichtigungen).\nDaten: E-Mail-Adresse und Inhalt der System-E-Mails.\nSpeicherort: Europäische Union.\nGarantien: Vertrag nach Art. 28 DSGVO.",

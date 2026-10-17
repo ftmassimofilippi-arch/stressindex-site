@@ -192,7 +192,7 @@
     "vat": "P.IVA e C.F. {vat}",
     "pec": "PEC {pec}",
     "rea": "REA {rea}",
-    "shareCapital": "Capitale sociale {capital}"
+    "shareCapital": "Capitale sociale {capital} interamente versato"
   },
   "jsonLd": {
     "appDescription": "Software HRV professionale per l’analisi del sistema nervoso autonomo"
