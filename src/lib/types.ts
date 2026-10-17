@@ -40,6 +40,8 @@ export interface Client {
   created_at?: string
   avatar_url?: string | null
   note?: string | null
+  /** Inizio del percorso (date): da qui parte la "partenza" dei grafici. L'app non la sincronizza. */
+  data_inizio_percorso?: string | null
 }
 
 // Tabella sessions: solo record raw della misurazione.

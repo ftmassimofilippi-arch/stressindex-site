@@ -21,7 +21,8 @@ import { ClientSettingsTab } from './tabs/ClientSettingsTab'
 import { PdfExportModal } from './PdfExportModal'
 import { MessageComposer } from './MessageComposer'
 import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
-import { formatDate } from '@/lib/format'
+import { formatDate, formatMeasuredDate } from '@/lib/format'
+import { isReferenceMeasurement } from '@/lib/reference-trend.ts'
 import type { AlertRule } from '@/lib/alert-rules'
 import { parseMeasurementFilter, type MeasurementFilter } from '@/lib/measurement-filter'
 
@@ -70,6 +71,7 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, a
   const t = useTranslations('clients.profile')
   const tTabs = useTranslations('clients.tabs')
   const tScores = useTranslations('scores')
+  const locale = useLocale()
   const TABS = readOnly ? READONLY_TABS : ALL_TABS
   // Scheda attiva e filtro delle misurazioni vivono nell'URL (?tab, ?tag,
   // ?tipo): restano cambiando scheda, aprendo una misurazione e tornando
@@ -111,7 +113,9 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, a
     : '/area-professionisti/clienti'
   const [pdfOpen, setPdfOpen] = useState(false)
   const [msgOpen, setMsgOpen] = useState(false)
-  const latest = measurements[0]
+  // Testata: l'ultima misurazione DI RIFERIMENTO (standard, del mattino), con la data.
+  const latest = useMemo(() => measurements.find((m) => isReferenceMeasurement(m)) ?? null, [measurements])
+  const latestDate = latest ? t('ofDate', { date: formatMeasuredDate(latest, undefined, locale) }) : null
 
   const totalMeasurements = measurements.length
   const memberSince = client.created_at ? Math.floor((Date.now() - new Date(client.created_at).getTime()) / (1000 * 60 * 60 * 24)) : null
@@ -169,10 +173,12 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, a
             <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter truncate">{tScores('names.stress')}</div>
               <div className="font-serif text-2xl text-anthracite mt-0.5">{latest?.score_stress != null ? Math.round(latest.score_stress) : '—'}</div>
+              {latestDate && <div className="text-[10px] text-anthracite-lighter truncate">{latestDate}</div>}
             </div>
             <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter truncate">{tScores('names.recovery')}</div>
               <div className="font-serif text-2xl text-anthracite mt-0.5">{latest?.score_recupero != null ? Math.round(latest.score_recupero) : '—'}</div>
+              {latestDate && <div className="text-[10px] text-anthracite-lighter truncate">{latestDate}</div>}
             </div>
             <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter truncate">{t('statMeasurements')}</div>
@@ -225,7 +231,7 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, a
       {tab === 'misurazioni' && <MeasurementsTab client={client} measurements={measurements} filter={filter} onFilterChange={setFilter} detailQs={detailQs} />}
       {tab === 'prima-dopo' && <BeforeAfterTab client={client} measurements={measurements} professionistaId={professionistaId} />}
       {tab === 'monitoraggi' && <MonitoringTab sessions={monitoring} professionistaId={professionistaId} />}
-      {tab === 'analytics' && <AdvancedAnalyticsTab measurements={measurements} />}
+      {tab === 'analytics' && <AdvancedAnalyticsTab measurements={measurements} courseStart={client.data_inizio_percorso ?? null} />}
       {tab === 'report' && <ReportTab client={client} />}
       {!readOnly && tab === 'note' && <NotesTab client={client} initialNotes={notes} />}
       {readOnly && tab === 'note' && <ReadOnlyNotesList notes={notes} />}

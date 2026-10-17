@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { AlertTriangle, X } from 'lucide-react'
 import { GaugeScore } from '@/components/dashboard/GaugeScore'
-import { AdvancedTrendChart, TREND_METRICS } from '@/components/dashboard/AdvancedTrendChart'
+import { AdvancedTrendChart } from '@/components/dashboard/AdvancedTrendChart'
 import { AlertBadge } from '@/components/dashboard/AlertBadge'
 import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadge'
 import { LastMonitoringCard } from '@/components/monitoring/LastMonitoringCard'
@@ -14,9 +14,9 @@ import type { Alert, Client, MeasurementAnalytics } from '@/lib/types'
 import type { AlertGruppo } from '@/lib/alert-group'
 import { alertMessage, alertTypeLabel, alertValueDecimals } from '@/lib/alert-rules'
 import { formatDate, formatDateTime, formatMeasuredAt, num } from '@/lib/format'
-import { measuredDayKey } from '@/lib/format'
 import { tagLabel } from '@/lib/before-after'
-import { measurementTypeLabel } from '@/lib/measurement-type'
+import { measurementTypeLabel, normalizeTestType } from '@/lib/measurement-type'
+import { isReferenceMeasurement } from '@/lib/reference-trend.ts'
 import { isFilterActive, matchesMeasurementFilter, type MeasurementFilter } from '@/lib/measurement-filter'
 
 export function OverviewTab({ client, measurements, monitoring = [], alerts, appEvents = [], professionistaId, filter, onFilterChange, detailQs }: {
@@ -40,7 +40,14 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, app
   const tTags = useTranslations('common.tags')
   const tTypes = useTranslations('measurement.types')
   const locale = useLocale()
-  const latest = measurements[0]
+  // Lancette e testata seguono l'ultima misurazione DI RIFERIMENTO (standard,
+  // del mattino): una coerenza delle 10:39 non deve sembrare "lo stress di
+  // oggi". L'ultima in assoluto, se è di altro tipo, si dice in una riga.
+  const latestAny = measurements[0]
+  const latest = measurements.find((m) => isReferenceMeasurement(m)) ?? null
+  const latestOtherType = latestAny && latest && latestAny.session_id !== latest.session_id
+    ? (latestAny.coherence_data ? 'coherence' : latestAny.orthostatic_data ? 'orthostatic' : normalizeTestType(latestAny.test_type))
+    : null
   const qs = professionistaId ? `?professionista=${professionistaId}` : ''
   // Riga sotto il titolo di ogni alert: tradotta dai numeri, mai il testo
   // grezzo dell'app (che arriva nella lingua del telefono del cliente).
@@ -57,15 +64,8 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, app
     filter.tag ? tagLabel(filter.tag, tTags) : null,
     filter.tipo ? measurementTypeLabel(filter.tipo, tTypes) : null,
   ].filter(Boolean).join(' · ')
-  // Memoizzato: un array nuovo a ogni render faceva rifare `setChartData` al
-  // grafico e riportava la finestra del Brush in fondo.
-  const trendData = useMemo(() => measurements.filter((m) => matchesMeasurementFilter(m, filter)).reverse().map((m) => {
-    const point = { date: measuredDayKey(m) ?? '' } as { date: string } & Record<string, number | string | null>
-    for (const def of TREND_METRICS) {
-      point[def.key] = (m as unknown as Record<string, number | null>)[def.key] ?? null
-    }
-    return point
-  }), [measurements, filter])
+  // Memoizzato: un array nuovo a ogni render rifarebbe tutti i conti dei pannelli.
+  const trendRows = useMemo(() => measurements.filter((m) => matchesMeasurementFilter(m, filter)), [measurements, filter])
 
   return (
     <div className="space-y-6">
@@ -92,7 +92,18 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, app
             ),
           )}
         </div>
-        {latest && <p className="mt-3 text-xs text-anthracite-lighter">{t('lastUpdate', { date: formatMeasuredAt(latest, locale) })}</p>}
+        {latest ? (
+          <p className="mt-3 text-xs text-anthracite-lighter">{t('lastReference', { date: formatMeasuredAt(latest, locale) })}</p>
+        ) : latestAny ? (
+          <p className="mt-3 text-xs text-amber-700">{t('noReferenceYet')}</p>
+        ) : null}
+        {latestOtherType && latestAny && (
+          <p className="mt-1 text-xs text-anthracite-lighter">
+            <Link href={`/area-professionisti/clienti/${client.id}/misurazione/${latestAny.session_id}${detailQs}`} className="hover:text-teal-dark hover:underline">
+              {t('lastOther', { type: tTypes(`${latestOtherType}.short`).toLowerCase(), date: formatMeasuredAt(latestAny, locale) })}
+            </Link>
+          </p>
+        )}
       </section>
 
       <section className="card p-6">
@@ -114,15 +125,16 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, app
             </span>
           </div>
         )}
-        {trendData.length === 0 ? (
+        {trendRows.length === 0 ? (
           <p className="text-sm text-anthracite-lighter">{filterOn ? t('emptyFiltered') : t('noData')}</p>
         ) : (
           <AdvancedTrendChart
-            data={trendData}
-            defaultSelected={['score_stress', 'score_recupero']}
+            measurements={trendRows}
+            defaultSelected={['score_stress', 'score_recupero', 'rmssd']}
             defaultPreset="30"
-            height={280}
+            height={220}
             storageKey="sx-client-overview-trend"
+            courseStart={client.data_inizio_percorso ?? null}
           />
         )}
       </section>

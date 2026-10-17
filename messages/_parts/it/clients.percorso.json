@@ -1,0 +1,10 @@
+{
+  "overview": {
+    "lastReference": "Ultima misurazione di riferimento: {date}",
+    "lastOther": "Ultima misurazione: {type}, {date}",
+    "noReferenceYet": "Nessuna misurazione di riferimento (standard, del mattino): gli indicatori restano vuoti."
+  },
+  "profile": {
+    "ofDate": "del {date}"
+  }
+}

@@ -31,7 +31,7 @@
   "overview": {
     "lastUpdate": "Ultimo aggiornamento: {date}",
     "trendTitle": "Andamento",
-    "trendSubtitle": "Multi-metrica con doppio asse Y: seleziona indicatori e periodo",
+    "trendSubtitle": "Un pannello per indice: punti delle misurazioni, media mobile a 7 giorni e fascia di partenza. Nei conti entrano solo le misurazioni standard del mattino.",
     "noData": "Nessun dato disponibile",
     "filterActive": "Filtro: {label}",
     "filterRemove": "Togli il filtro",
@@ -90,7 +90,6 @@
     "periodB": "Periodo B (confronto)",
     "vsB": "{value} vs B",
     "mean": "Media",
-    "median": "Med.",
     "min": "Min",
     "max": "Max",
     "std": "DS",

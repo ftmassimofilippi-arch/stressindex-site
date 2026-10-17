@@ -1,0 +1,38 @@
+{
+  "panel": {
+    "betterLower": "niedriger ist besser",
+    "betterHigher": "höher ist besser",
+    "referencePoint": "Referenzmessung",
+    "otherPoint": "nicht gezählt",
+    "outType": "Nicht gezählt: {type}, keine Standardmessung",
+    "outHour": "Nicht gezählt: keine Morgenmessung (4 bis 12 Uhr)",
+    "outExcluded": "Von der Fachperson aus der Berechnung ausgeschlossen",
+    "rolling": "7-Tage-Mittel",
+    "rollingValue": "7-Tage-Mittel: {value}",
+    "rollingN": "aus {n, plural, one {# Messung} other {# Messungen}}",
+    "rollingProvisional": "vorläufig, aus {n, plural, one {# Messung} other {# Messungen}}",
+    "bandCourse": "Ausgangsbereich",
+    "bandCourseClient": "wo Sie angefangen haben",
+    "bandPeriodStart": "erste Woche des Zeitraums",
+    "bandPrevious": "Vorzeitraum",
+    "band60": "letzte 60 Tage",
+    "bandProvisional": "vorläufiger Bereich, aus {n} Messungen",
+    "bandNone": "Noch kein Bereich: es braucht mindestens 3 Referenzmessungen.",
+    "baselineOutside": "Der Ausgangspunkt ({from} - {to}) liegt außerhalb des gezeigten Zeitraums: der Bereich bleibt derselbe.",
+    "fullScale": "Volle Skala",
+    "fitScale": "An die Daten angepasste Skala",
+    "showPoints": "Punkte",
+    "showPointsTitle": "Punkte der einzelnen Messungen ein- oder ausblenden",
+    "noReference": "Keine Referenzmessung: der Verlauf wird aus Standardmessungen am Morgen (4 bis 12 Uhr) berechnet. {count, plural, one {# Messung} other {# Messungen}} anderer Art oder Uhrzeit bleiben als leere Punkte sichtbar.",
+    "noReferenceInPeriod": "Keine Referenzmessung im gewählten Zeitraum.",
+    "countsCaption": "{reference, plural, one {# Referenzmessung} other {# Referenzmessungen}} von {total} im Zeitraum · {from} bis {to}",
+    "countsCaptionAll": "{reference, plural, one {# Referenzmessung} other {# Referenzmessungen}} von {total} · {from} bis {to}",
+    "manyPanels": "Sie zeigen {count} Diagramme: ab 6 wird die Seite sehr lang.",
+    "homeCaption": "Tagesmittel der Morgenmessungen Ihrer Klientinnen und Klienten und 7-Tage-Mittel. Kein Ausgangspunkt, kein Bereich: es sind verschiedene Personen.",
+    "names": {
+      "rmssd": "Herzratenvariabilität (RMSSD)",
+      "sdnn": "Gesamtvariabilität (SDNN)",
+      "mean_hr": "Mittlere Herzfrequenz"
+    }
+  }
+}

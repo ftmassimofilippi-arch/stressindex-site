@@ -1,32 +1,63 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { Calendar, ChevronDown, ChevronUp, RotateCcw, Search, Sigma, SlidersHorizontal, X } from 'lucide-react'
-import { format as fmtDate, parseISO, subDays } from 'date-fns'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Calendar, ChevronDown, ChevronUp, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
-import { intlTag, num, toNum } from '@/lib/format'
-import type { Tr } from '@/i18n/types'
 import {
-  Brush,
+  Area,
   CartesianGrid,
+  ComposedChart,
   Line,
-  LineChart,
+  ReferenceArea,
+  ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
-import { PRESETS, PRESET_KEYS, estremiDeiPunti, filtraPerPeriodo, periodoDaPreset, type PresetKey } from '@/lib/trend-period.ts'
-import { periodoPrecedente, riepilogoMetrica, type RiepilogoMetrica, type Verdetto } from '@/lib/trend-stats.ts'
+import { formatDate, formatIstante, intlTag, measuredDayKey, num, oggiIta } from '@/lib/format'
+import { FUSO } from '@/lib/measured-time'
+import type { Tr } from '@/i18n/types'
+import { PRESETS, PRESET_KEYS, periodoDaPreset, type Periodo, type PresetKey } from '@/lib/trend-period.ts'
+import {
+  changeSummary,
+  courseBaseline,
+  dailyReferenceValues,
+  hasLongHistory,
+  last60Reference,
+  nonReferenceReason,
+  periodStartReference,
+  previousPeriodReference,
+  rollingBand60,
+  rollingMean7,
+  toCalc,
+  toDisplay,
+  type ChangeSummary,
+  type DailyValue,
+  type Reference,
+  type ReferenceRow,
+} from '@/lib/reference-trend.ts'
+import {
+  dayNoonMs,
+  niceDomain,
+  pointRows,
+  rollingSegments,
+  xDomain,
+  xTicks,
+  type TrendDayRow,
+  type TrendPointRow,
+  type TrendRow,
+} from '@/lib/trend-panel.ts'
 
 // ============================================================================
-// METRIC REGISTRY
+// ELENCO DELLE METRICHE
 // ============================================================================
 // L'etichetta di ogni metrica è in `charts.metrics.<key>` (chiave = colonna
 // di measurement_analytics): si legge con `metricLabel(m, t)`, dove
 // `t = useTranslations('charts.metrics')`. I nomi dei gruppi sono in
-// `charts.groups.<group>`.
+// `charts.groups.<group>`. Per i pannelli alcune metriche hanno un nome più
+// parlante in `charts.panel.names.<key>` ("Variabilità cardiaca (RMSSD)").
 
 type Group = 'score' | 'time' | 'welch' | 'lomb' | 'nonlinear' | 'geometric'
 
@@ -35,286 +66,247 @@ export type MetricDef = {
   color: string
   group: Group
   unit?: string
-  axis: 'left' | 'right'
   decimals?: number
 }
 
 export const TREND_METRICS: MetricDef[] = [
-  // Score proprietari (0-100, asse sinistro)
-  { key: 'score_stress', color: '#E85D4A', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
-  { key: 'score_recupero', color: '#4FA39A', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
-  { key: 'score_equilibrio', color: '#F59E0B', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
-  { key: 'score_energia', color: '#6366F1', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
-  { key: 'score_modulazione_infiammatoria', color: '#8B5CF6', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
-  { key: 'score_composito', color: '#2E746C', group: 'score', unit: '/100', axis: 'left', decimals: 1 },
+  // Score proprietari (0-100)
+  { key: 'score_stress', color: '#E85D4A', group: 'score', unit: '/100', decimals: 1 },
+  { key: 'score_recupero', color: '#4FA39A', group: 'score', unit: '/100', decimals: 1 },
+  { key: 'score_equilibrio', color: '#F59E0B', group: 'score', unit: '/100', decimals: 1 },
+  { key: 'score_energia', color: '#6366F1', group: 'score', unit: '/100', decimals: 1 },
+  { key: 'score_modulazione_infiammatoria', color: '#8B5CF6', group: 'score', unit: '/100', decimals: 1 },
+  { key: 'score_composito', color: '#2E746C', group: 'score', unit: '/100', decimals: 1 },
 
   // Time domain (blu)
-  { key: 'sdnn', color: '#0EA5E9', group: 'time', unit: 'ms', axis: 'right', decimals: 1 },
-  { key: 'rmssd', color: '#38BDF8', group: 'time', unit: 'ms', axis: 'right', decimals: 1 },
-  { key: 'pnn50', color: '#7DD3FC', group: 'time', unit: '%', axis: 'right', decimals: 1 },
-  { key: 'pnn20', color: '#BAE6FD', group: 'time', unit: '%', axis: 'right', decimals: 1 },
-  { key: 'mean_hr', color: '#0284C7', group: 'time', unit: 'bpm', axis: 'right', decimals: 1 },
-  { key: 'cv', color: '#0369A1', group: 'time', unit: '', axis: 'right', decimals: 2 },
-  { key: 'rmssd_sdnn_ratio', color: '#075985', group: 'time', unit: '', axis: 'right', decimals: 2 },
+  { key: 'sdnn', color: '#0EA5E9', group: 'time', unit: 'ms', decimals: 1 },
+  { key: 'rmssd', color: '#0284C7', group: 'time', unit: 'ms', decimals: 1 },
+  { key: 'pnn50', color: '#7DD3FC', group: 'time', unit: '%', decimals: 1 },
+  { key: 'pnn20', color: '#BAE6FD', group: 'time', unit: '%', decimals: 1 },
+  { key: 'mean_hr', color: '#1D4ED8', group: 'time', unit: 'bpm', decimals: 1 },
+  { key: 'cv', color: '#0369A1', group: 'time', unit: '', decimals: 2 },
+  { key: 'rmssd_sdnn_ratio', color: '#075985', group: 'time', unit: '', decimals: 2 },
 
   // Frequency Welch (viola)
-  { key: 'vlf_power', color: '#A855F7', group: 'welch', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'lf_power', color: '#C084FC', group: 'welch', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'hf_power', color: '#D8B4FE', group: 'welch', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'total_power', color: '#7C3AED', group: 'welch', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'lf_hf_ratio', color: '#6D28D9', group: 'welch', unit: '', axis: 'right', decimals: 2 },
-  { key: 'lf_nu', color: '#5B21B6', group: 'welch', unit: 'n.u.', axis: 'right', decimals: 1 },
-  { key: 'hf_nu', color: '#4C1D95', group: 'welch', unit: 'n.u.', axis: 'right', decimals: 1 },
+  { key: 'vlf_power', color: '#A855F7', group: 'welch', unit: 'ms²', decimals: 0 },
+  { key: 'lf_power', color: '#C084FC', group: 'welch', unit: 'ms²', decimals: 0 },
+  { key: 'hf_power', color: '#D8B4FE', group: 'welch', unit: 'ms²', decimals: 0 },
+  { key: 'total_power', color: '#7C3AED', group: 'welch', unit: 'ms²', decimals: 0 },
+  { key: 'lf_hf_ratio', color: '#6D28D9', group: 'welch', unit: '', decimals: 2 },
+  { key: 'lf_nu', color: '#5B21B6', group: 'welch', unit: 'n.u.', decimals: 1 },
+  { key: 'hf_nu', color: '#4C1D95', group: 'welch', unit: 'n.u.', decimals: 1 },
 
   // Frequency Lomb-Scargle (rosa)
-  { key: 'vlf_power_ls', color: '#EC4899', group: 'lomb', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'lf_power_ls', color: '#F472B6', group: 'lomb', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'hf_power_ls', color: '#F9A8D4', group: 'lomb', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'total_power_ls', color: '#DB2777', group: 'lomb', unit: 'ms²', axis: 'right', decimals: 0 },
-  { key: 'lf_hf_ratio_ls', color: '#BE185D', group: 'lomb', unit: '', axis: 'right', decimals: 2 },
+  { key: 'vlf_power_ls', color: '#EC4899', group: 'lomb', unit: 'ms²', decimals: 0 },
+  { key: 'lf_power_ls', color: '#F472B6', group: 'lomb', unit: 'ms²', decimals: 0 },
+  { key: 'hf_power_ls', color: '#F9A8D4', group: 'lomb', unit: 'ms²', decimals: 0 },
+  { key: 'total_power_ls', color: '#DB2777', group: 'lomb', unit: 'ms²', decimals: 0 },
+  { key: 'lf_hf_ratio_ls', color: '#BE185D', group: 'lomb', unit: '', decimals: 2 },
 
   // Non-lineari (arancio)
-  { key: 'sd1', color: '#F97316', group: 'nonlinear', unit: 'ms', axis: 'right', decimals: 1 },
-  { key: 'sd2', color: '#FB923C', group: 'nonlinear', unit: 'ms', axis: 'right', decimals: 1 },
-  { key: 'sd1_sd2_ratio', color: '#FDBA74', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
-  { key: 'dfa_alpha1', color: '#FED7AA', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
-  { key: 'dfa_alpha2', color: '#EA580C', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
-  { key: 'sample_entropy', color: '#C2410C', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
-  { key: 'approximate_entropy', color: '#9A3412', group: 'nonlinear', unit: '', axis: 'right', decimals: 2 },
+  { key: 'sd1', color: '#F97316', group: 'nonlinear', unit: 'ms', decimals: 1 },
+  { key: 'sd2', color: '#FB923C', group: 'nonlinear', unit: 'ms', decimals: 1 },
+  { key: 'sd1_sd2_ratio', color: '#FDBA74', group: 'nonlinear', unit: '', decimals: 2 },
+  { key: 'dfa_alpha1', color: '#EA580C', group: 'nonlinear', unit: '', decimals: 2 },
+  { key: 'dfa_alpha2', color: '#C2410C', group: 'nonlinear', unit: '', decimals: 2 },
+  { key: 'sample_entropy', color: '#9A3412', group: 'nonlinear', unit: '', decimals: 2 },
+  { key: 'approximate_entropy', color: '#7C2D12', group: 'nonlinear', unit: '', decimals: 2 },
 
   // Geometrici (lime)
-  { key: 'triangular_index', color: '#84CC16', group: 'geometric', unit: '', axis: 'right', decimals: 1 },
-  { key: 'tinn', color: '#A3E635', group: 'geometric', unit: 'ms', axis: 'right', decimals: 1 },
-  { key: 'stress_index_baevsky', color: '#65A30D', group: 'geometric', unit: '', axis: 'right', decimals: 1 },
+  { key: 'triangular_index', color: '#84CC16', group: 'geometric', unit: '', decimals: 1 },
+  { key: 'tinn', color: '#65A30D', group: 'geometric', unit: 'ms', decimals: 1 },
+  { key: 'stress_index_baevsky', color: '#4D7C0F', group: 'geometric', unit: '', decimals: 1 },
 ]
 
 const METRIC_MAP: Record<string, MetricDef> = Object.fromEntries(TREND_METRICS.map((m) => [m.key, m]))
+
+/** Metriche con un nome parlante per i pannelli (`charts.panel.names.<key>`). */
+const PANEL_NAMES: ReadonlySet<string> = new Set(['rmssd', 'sdnn', 'mean_hr'])
 
 /** Etichetta tradotta di una metrica del trend (`t = useTranslations('charts.metrics')`). */
 export function metricLabel(m: MetricDef | string, t: Tr): string {
   return t(typeof m === 'string' ? m : m.key)
 }
 
+/** Nome del pannello: parlante dove c'è, altrimenti l'etichetta della metrica. */
+export function panelName(key: string, tCharts: Tr, tMetrics: Tr): string {
+  return PANEL_NAMES.has(key) ? tCharts(`panel.names.${key}`) : metricLabel(key, tMetrics)
+}
+
 const GROUP_ORDER: Group[] = ['score', 'time', 'welch', 'lomb', 'nonlinear', 'geometric']
 
-function formatMetricValue(value: unknown, m: MetricDef | undefined, locale: string): string {
-  const decimals = m?.decimals ?? 1
-  // I punti del grafico arrivano dal database: coercizione prima di formattare.
-  const n = toNum(value)
-  if (n == null) return '—'
-  const formatted = num(n, decimals, locale)
-  if (!m?.unit) return formatted
-  if (m.unit === '/100') return `${formatted} / 100`
+function formatValue(value: number | null | undefined, m: MetricDef | undefined, locale: string, withUnit = true): string {
+  if (value == null || !Number.isFinite(value)) return '—'
+  const formatted = num(value, m?.decimals ?? 1, locale)
+  if (!withUnit || !m?.unit) return formatted
+  if (m.unit === '/100') return formatted
   if (m.unit === '%') return `${formatted}%`
   return `${formatted} ${m.unit}`
 }
 
 // ============================================================================
-// DATE PRESETS
+// CONFRONTI
 // ============================================================================
-// Preset, chiavi e filtro per periodo vivono in `src/lib/trend-period.ts`
-// (modulo puro, coperto dai test): le chiavi ('7', '30', ...) sono anche il
-// valore salvato in localStorage e non cambiano. L'etichetta è in
-// `charts.presets.<labelKey>`.
+// Con che cosa si confronta la media mobile di oggi. "course" (partenza del
+// percorso) è il default e l'unico che non dipende dal periodo scelto.
 
-export type { PresetKey }
+export type CompareKind = 'course' | 'periodStart' | 'previous' | 'last60'
 
-// Chiave "macchina" del giorno (yyyy-MM-dd): serve per confronti e input date,
-// non è testo visibile, quindi resta senza locale.
-function isoDay(d: Date) { return fmtDate(d, 'yyyy-MM-dd') }
+export const COMPARE_KINDS: CompareKind[] = ['course', 'periodStart', 'previous', 'last60']
 
-// ============================================================================
-// COMPONENT
-// ============================================================================
+/** Una misurazione come arriva dalla scheda (measurement_analytics o sessione sintetizzata). */
+export type TrendMeasurement = ReferenceRow & { id?: string }
 
-type Point = Record<string, number | string | null | undefined> & { date: string }
+/** Una riga per giorno già aggregata (home): niente puntini, niente partenza. */
+export type DailyTrendRow = { date: string } & Record<string, number | string | null | undefined>
+
+export type TrendAnnotation = { day: string; text: string }
+
+export type PanelSummary = { metric: MetricDef; summary: ChangeSummary; reference: Reference | null }
 
 type Props = {
-  data: Point[]
+  /** Misurazioni del cliente, tutta la storia (il periodo si sceglie qui dentro). */
+  measurements?: TrendMeasurement[]
+  /** In alternativa: serie già aggregata per giorno (home). */
+  daily?: DailyTrendRow[]
   defaultSelected?: string[]
   defaultPreset?: PresetKey
+  /** Altezza di ogni pannello, in px. */
   height?: number
-  /** Base key per localStorage. Salva range + metriche + visibilità. */
+  /** Base key per localStorage: periodo, metriche, scala, punti. */
   storageKey?: string
-  /** mostra il brush sotto al grafico (nascosto su mobile per scelta UX) */
-  showBrush?: boolean
   /**
-   * Pagina di stampa: nessun comando, nessun localStorage, grafico a
-   * dimensioni fisse (`width` x `height`), legenda statica, niente tooltip.
-   * Periodo = `range` (o `defaultPreset`), metriche = `metrics` (o `defaultSelected`).
+   * Pagina di stampa: nessun comando, nessun localStorage, pannelli a
+   * dimensioni fisse, niente tooltip. Periodo = `range`, metriche = `metrics`.
    */
   print?: boolean
   /** Larghezza in px, solo in stampa (default 680). */
   width?: number
   /** Periodo esplicito (yyyy-mm-dd, estremi inclusi), solo in stampa. */
   range?: { from: string; to: string }
-  /** Metriche da tracciare (chiavi di TREND_METRICS), solo in stampa. */
+  /** Metriche da tracciare, solo in stampa. */
   metrics?: string[]
-  /**
-   * Preset offerti. La home passa i dati già tagliati a 365 giorni dal server:
-   * lì "Tutto" sarebbe uguale a "1 anno" e non si mostra.
-   */
+  /** Preset offerti (la home passa dati tagliati a 365 giorni: "Tutto" non si mostra). */
   presets?: PresetKey[]
+  /** `clients.data_inizio_percorso`: la partenza riparte da qui. */
+  courseStart?: string | null
+  /** `session_id` esclusi dai conti dal professionista. */
+  excluded?: Iterable<string> | null
+  annotations?: TrendAnnotation[]
+  compare?: CompareKind
+  /** Puntini delle singole misurazioni (default sì). */
+  showPoints?: boolean
+  /** Modalità cliente: parole semplici, nessun comando. */
+  clientMode?: boolean
+  /** Contenuto sopra ogni pannello (fase 3: frase di sintesi e i quattro numeri). */
+  renderHeader?: (p: PanelSummary) => ReactNode
+  /** Chiamata quando cambia il periodo (per chi mostra la regolarità fuori dal grafico). */
+  onPeriodChange?: (periodo: Periodo) => void
 }
 
 // Larghezza di default del grafico in stampa (px, area utile di un A4).
 export const TREND_PRINT_WIDTH = 680
+/** Oltre questo numero di pannelli compare l'avviso. */
+const MANY_PANELS = 6
 
 export function AdvancedTrendChart({
-  data,
-  defaultSelected = ['score_stress', 'score_recupero'],
+  measurements,
+  daily,
+  defaultSelected = ['score_stress', 'score_recupero', 'rmssd'],
   defaultPreset = '30',
-  height = 300,
+  height = 220,
   storageKey,
-  showBrush = true,
   print = false,
   width,
   range,
   metrics,
   presets,
+  courseStart = null,
+  excluded = null,
+  annotations = [],
+  compare = 'course',
+  showPoints: showPointsProp,
+  clientMode = false,
+  renderHeader,
+  onPeriodChange,
 }: Props) {
   const locale = useLocale()
   const t = useTranslations('charts')
   const tMetrics = useTranslations('charts.metrics')
   const presetList = useMemo(() => (presets ? PRESETS.filter((p) => presets.includes(p.key)) : PRESETS), [presets])
-
-  // Formati data per assi e tooltip nella lingua della pagina.
-  const tickDate = useMemo(() => new Intl.DateTimeFormat(intlTag(locale), { day: 'numeric', month: 'short' }), [locale])
-  const fullDate = useMemo(
-    () => new Intl.DateTimeFormat(intlTag(locale), { day: 'numeric', month: 'short', year: 'numeric' }),
-    [locale],
-  )
-  const fmtTick = (v: unknown) => { try { return tickDate.format(parseISO(String(v))) } catch { return String(v) } }
+  const excludedSet = useMemo(() => new Set(excluded ?? []), [excluded])
 
   // periodo
   const [activeKey, setActiveKey] = useState<PresetKey>(defaultPreset)
-  const [customFrom, setCustomFrom] = useState(() => isoDay(subDays(new Date(), 30)))
-  const [customTo, setCustomTo] = useState(() => isoDay(new Date()))
+  const [customFrom, setCustomFrom] = useState(() => giornoFa(30))
+  const [customTo, setCustomTo] = useState(() => oggiIta())
 
-  // selezione metriche e visibilità
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(defaultSelected))
-  const [hidden, setHidden] = useState<Set<string>>(() => new Set())
-
-  // UI state
+  // selezione metriche, scala, punti
+  const [selected, setSelected] = useState<string[]>(() => defaultSelected.filter((k) => METRIC_MAP[k]))
+  const [fullScale, setFullScale] = useState(false)
+  const [showPoints, setShowPoints] = useState(showPointsProp ?? !clientMode)
   const [panelOpen, setPanelOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [expandedGroups, setExpandedGroups] = useState<Set<Group>>(() => new Set(['score']))
-  const [brushKey, setBrushKey] = useState(0)
-  // Media e mediana sul periodo (linee tratteggiate e riga riassuntiva).
-  const [showStats, setShowStats] = useState(true)
-  // Finestra dello zoom (Brush): indici dentro `filtered`; null = tutto il periodo.
-  const [brushWindow, setBrushWindow] = useState<{ start: number; end: number } | null>(null)
+
+  useEffect(() => {
+    if (showPointsProp != null) setShowPoints(showPointsProp)
+  }, [showPointsProp])
 
   // hydration da localStorage (mai in stampa: contano solo le prop)
   useEffect(() => {
     if (print || typeof window === 'undefined' || !storageKey) return
     const savedPreset = window.localStorage.getItem(`${storageKey}:range`)
     const savedMetrics = window.localStorage.getItem(`${storageKey}:metrics`)
-    const savedHidden = window.localStorage.getItem(`${storageKey}:hidden`)
-    const savedStats = window.localStorage.getItem(`${storageKey}:stats`)
-    if (savedPreset && PRESET_KEYS.has(savedPreset)) setActiveKey(savedPreset as PresetKey)
-    if (savedStats === '0') setShowStats(false)
+    const savedScale = window.localStorage.getItem(`${storageKey}:scale`)
+    const savedPoints = window.localStorage.getItem(`${storageKey}:points`)
+    if (savedPreset && PRESET_KEYS.has(savedPreset) && (!presets || presets.includes(savedPreset as PresetKey) || savedPreset === 'custom')) {
+      setActiveKey(savedPreset as PresetKey)
+    }
+    if (savedScale === 'full') setFullScale(true)
+    if (savedPoints === '0' && showPointsProp == null) setShowPoints(false)
     if (savedMetrics) {
       try {
         const arr = JSON.parse(savedMetrics) as string[]
-        if (Array.isArray(arr) && arr.length) setSelected(new Set(arr.filter((k) => METRIC_MAP[k])))
-      } catch {}
-    }
-    if (savedHidden) {
-      try {
-        const arr = JSON.parse(savedHidden) as string[]
-        if (Array.isArray(arr)) setHidden(new Set(arr))
+        if (Array.isArray(arr) && arr.length) setSelected(arr.filter((k) => METRIC_MAP[k]))
       } catch {}
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function persistRange(k: PresetKey) {
-    if (typeof window !== 'undefined' && storageKey) {
-      window.localStorage.setItem(`${storageKey}:range`, k)
-    }
-  }
-  function persistMetrics(s: Set<string>) {
-    if (typeof window !== 'undefined' && storageKey) {
-      window.localStorage.setItem(`${storageKey}:metrics`, JSON.stringify(Array.from(s)))
-    }
-  }
-  function persistHidden(s: Set<string>) {
-    if (typeof window !== 'undefined' && storageKey) {
-      window.localStorage.setItem(`${storageKey}:hidden`, JSON.stringify(Array.from(s)))
-    }
-  }
-
-  // Ogni cambio di periodo (preset o date personalizzate) rimonta il grafico:
-  // in Recharts 3 `setChartData` non azzera l'indice di partenza del Brush, e
-  // uno zoom precedente restava appiccicato al periodo nuovo.
-  function resetZoom() {
-    setBrushWindow(null)
-    setBrushKey((x) => x + 1)
+  function persist(suffix: string, value: string) {
+    if (typeof window !== 'undefined' && storageKey) window.localStorage.setItem(`${storageKey}:${suffix}`, value)
   }
   function setRange(k: PresetKey) {
     setActiveKey(k)
-    persistRange(k)
-    resetZoom()
+    persist('range', k)
   }
-  function setCustomRange(from: string, to: string) {
-    setCustomFrom(from)
-    setCustomTo(to)
-    resetZoom()
+  function toggleScale() {
+    setFullScale((v) => { persist('scale', v ? 'fit' : 'full'); return !v })
   }
-  function toggleStats() {
-    setShowStats((v) => {
-      const next = !v
-      if (typeof window !== 'undefined' && storageKey) window.localStorage.setItem(`${storageKey}:stats`, next ? '1' : '0')
-      return next
-    })
+  function togglePoints() {
+    setShowPoints((v) => { persist('points', v ? '0' : '1'); return !v })
   }
-
   function toggleMetric(key: string) {
     setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      persistMetrics(next)
-      return next
-    })
-    // se aggiungo metrica precedentemente nascosta, rendila visibile
-    setHidden((prev) => {
-      if (!prev.has(key)) return prev
-      const next = new Set(prev)
-      next.delete(key)
-      persistHidden(next)
+      const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+      persist('metrics', JSON.stringify(next))
       return next
     })
   }
-
-  function toggleHidden(key: string) {
-    setHidden((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      persistHidden(next)
-      return next
-    })
-  }
-
   function bulkSelectGroup(g: Group) {
     setSelected((prev) => {
-      const next = new Set(prev)
-      for (const m of TREND_METRICS) if (m.group === g) next.add(m.key)
-      persistMetrics(next)
+      const next = [...prev]
+      for (const m of TREND_METRICS) if (m.group === g && !next.includes(m.key)) next.push(m.key)
+      persist('metrics', JSON.stringify(next))
       return next
     })
   }
   function resetSelection() {
-    const next = new Set(defaultSelected)
+    const next = defaultSelected.filter((k) => METRIC_MAP[k])
     setSelected(next)
-    persistMetrics(next)
-    const cleared = new Set<string>()
-    setHidden(cleared)
-    persistHidden(cleared)
+    persist('metrics', JSON.stringify(next))
   }
-
   function toggleGroupExpanded(g: Group) {
     setExpandedGroups((prev) => {
       const next = new Set(prev)
@@ -324,65 +316,33 @@ export function AdvancedTrendChart({
     })
   }
 
-  // In stampa periodo e metriche vengono solo dalle prop: lo stato interno
-  // (e il localStorage) non entra in gioco.
+  // In stampa periodo e metriche vengono solo dalle prop.
   const effectiveKey: PresetKey = print ? (range ? 'custom' : defaultPreset) : activeKey
   const effectiveFrom = print && range ? range.from : customFrom
   const effectiveTo = print && range ? range.to : customTo
 
-  // Periodo (giorni italiani, estremi inclusi; null = tutto) e punti dentro.
+  // Periodo (giorni italiani, estremi inclusi; null = tutto).
   const periodo = useMemo(
     () => periodoDaPreset(effectiveKey, { from: effectiveFrom, to: effectiveTo }),
     [effectiveKey, effectiveFrom, effectiveTo],
   )
-  const filtered = useMemo(() => filtraPerPeriodo(data, periodo), [data, periodo])
-  // Punti del periodo precedente di pari lunghezza (per lo scostamento fra periodi).
-  const precedenti = useMemo(() => {
-    const estremi = periodo ?? estremiDeiPunti(filtered)
-    if (!periodo || !estremi) return null
-    return filtraPerPeriodo(data, periodoPrecedente(estremi.from, estremi.to))
-  }, [data, filtered, periodo])
-  // Punti davvero visibili: il periodo, ristretto dallo zoom del Brush se c'è.
-  const visibili = useMemo(() => {
-    if (!brushWindow) return filtered
-    const start = Math.max(0, Math.min(brushWindow.start, brushWindow.end))
-    const end = Math.min(filtered.length - 1, Math.max(brushWindow.start, brushWindow.end))
-    return filtered.slice(start, end + 1)
-  }, [filtered, brushWindow])
-  const estremiVisibili = useMemo(() => estremiDeiPunti(visibili), [visibili])
+  useEffect(() => { onPeriodChange?.(periodo) }, [periodo, onPeriodChange])
 
-  // serie da renderizzare (selezionate ∧ non nascoste)
   const renderedKeys = useMemo(
-    () => (print
-      ? (metrics ?? defaultSelected).filter((k) => METRIC_MAP[k])
-      : Array.from(selected).filter((k) => METRIC_MAP[k] && !hidden.has(k))),
-    [print, metrics, defaultSelected, selected, hidden],
+    () => (print ? (metrics ?? defaultSelected) : selected).filter((k) => METRIC_MAP[k]),
+    [print, metrics, defaultSelected, selected],
   )
-  const renderedMetrics = useMemo(() => renderedKeys.map((k) => METRIC_MAP[k]).filter(Boolean), [renderedKeys])
 
-  // Media, mediana e scostamenti per ogni metrica disegnata, sui punti visibili.
-  // I giorni senza misurazione (valore null) non contano; sotto 2 punti è null.
-  const stats = useMemo(() => {
-    const out = new Map<string, RiepilogoMetrica>()
-    if (!showStats) return out
-    for (const m of renderedMetrics) {
-      const serie = visibili.map((p) => toNum(p[m.key]))
-      const prev = brushWindow || !precedenti ? [] : precedenti.map((p) => toNum(p[m.key]))
-      out.set(m.key, riepilogoMetrica(m.key, serie, prev))
-    }
-    return out
-  }, [showStats, renderedMetrics, visibili, precedenti, brushWindow])
-  const fmtStat = (v: number | null | undefined, m: MetricDef) => (v == null ? '—' : num(v, m.decimals ?? 1, locale))
-
-  const hasLeftAxis = renderedMetrics.some((m) => m.axis === 'left')
-  const hasRightAxis = renderedMetrics.some((m) => m.axis === 'right')
-
-  // ricerca metriche (sull'etichetta tradotta e sulla chiave)
-  const filteredMetrics = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return TREND_METRICS
-    return TREND_METRICS.filter((m) => metricLabel(m, tMetrics).toLowerCase().includes(q) || m.key.toLowerCase().includes(q))
-  }, [search, tMetrics])
+  // Quante misurazioni cadono nel periodo e quante sono di riferimento (didascalia).
+  const counts = useMemo(() => {
+    if (!measurements) return null
+    const rows = measurements
+      .map((m) => ({ m, day: measuredDayKey(m) }))
+      .filter((r): r is { m: TrendMeasurement; day: string } => !!r.day && inPeriodo(r.day, periodo))
+    const reference = rows.filter((r) => nonReferenceReason(r.m, excludedSet) == null).length
+    const days = rows.map((r) => r.day).sort()
+    return { total: rows.length, reference, from: days[0] ?? null, to: days[days.length - 1] ?? null }
+  }, [measurements, periodo, excludedSet])
 
   const presetBtn = (active: boolean) =>
     `px-2.5 py-1 rounded-lg text-xs font-medium border whitespace-nowrap transition-colors ${
@@ -392,303 +352,109 @@ export function AdvancedTrendChart({
     }`
 
   const chartW = width ?? TREND_PRINT_WIDTH
-  const chart = (
-    <LineChart
-      key={brushKey}
-      data={filtered}
-      {...(print ? { width: chartW, height } : {})}
-      margin={{ top: 8, right: hasRightAxis ? 8 : 16, left: hasLeftAxis ? -8 : 0, bottom: 0 }}
-    >
-      <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" vertical={false} />
-      <XAxis
-        dataKey="date"
-        stroke="#6B7280"
-        fontSize={11}
-        tickLine={false}
-        axisLine={false}
-        tickFormatter={fmtTick}
-      />
-      {hasLeftAxis && (
-        <YAxis
-          yAxisId="left"
-          orientation="left"
-          domain={[0, 100]}
-          stroke="#6B7280"
-          fontSize={11}
-          tickLine={false}
-          axisLine={false}
-          width={36}
-        />
-      )}
-      {hasRightAxis && (
-        <YAxis
-          yAxisId="right"
-          orientation="right"
-          domain={['auto', 'auto']}
-          stroke="#6B7280"
-          fontSize={11}
-          tickLine={false}
-          axisLine={false}
-          width={48}
-          tickFormatter={(v) => num(v, 0, locale)}
-        />
-      )}
-      {/* se non c'è left, usa right come default per le linee left (fallback non dovrebbe servire) */}
-      {!print && (
-        <Tooltip
-          content={<CustomTooltip locale={locale} fullDate={fullDate} tMetrics={tMetrics} />}
-          cursor={{ stroke: '#94A3B8', strokeDasharray: '3 3' }}
-        />
-      )}
-      {renderedMetrics.map((m) => (
-        <Line
-          key={m.key}
-          yAxisId={m.axis === 'left' ? (hasLeftAxis ? 'left' : 'right') : 'right'}
-          type="monotone"
-          dataKey={m.key}
-          stroke={m.color}
-          strokeWidth={2}
-          dot={print ? { r: 2 } : false}
-          activeDot={print ? false : { r: 4 }}
-          connectNulls
-          isAnimationActive={false}
-        />
-      ))}
-      {/* Media (piena) e mediana (più chiara) del periodo visibile, etichetta a destra. */}
-      {renderedMetrics.map((m) => {
-        const r = stats.get(m.key)?.stats
-        if (!r) return null
-        const yAxisId = m.axis === 'left' ? (hasLeftAxis ? 'left' : 'right') : 'right'
-        return [
-          <ReferenceLine
-            key={`${m.key}-mean`}
-            yAxisId={yAxisId}
-            y={r.media}
-            stroke={m.color}
-            strokeDasharray="6 4"
-            strokeWidth={1.5}
-            ifOverflow="extendDomain"
-            label={{ value: t('trend.meanLabel', { value: fmtStat(r.media, m) }), position: 'insideTopRight', fill: m.color, fontSize: 10 }}
-          />,
-          <ReferenceLine
-            key={`${m.key}-median`}
-            yAxisId={yAxisId}
-            y={r.mediana}
-            stroke={m.color}
-            strokeOpacity={0.5}
-            strokeDasharray="2 4"
-            strokeWidth={1.5}
-            ifOverflow="extendDomain"
-            label={{ value: t('trend.medianLabel', { value: fmtStat(r.mediana, m) }), position: 'insideBottomRight', fill: m.color, fillOpacity: 0.7, fontSize: 10 }}
-          />,
-        ]
-      })}
-      {!print && showBrush && filtered.length > 8 && (
-        <Brush
-          dataKey="date"
-          height={28}
-          stroke="#4FA39A"
-          travellerWidth={8}
-          tickFormatter={fmtTick}
-          className="hidden md:block"
-          onChange={(w) => {
-            const start = typeof w?.startIndex === 'number' ? w.startIndex : 0
-            const end = typeof w?.endIndex === 'number' ? w.endIndex : filtered.length - 1
-            setBrushWindow(start === 0 && end === filtered.length - 1 ? null : { start, end })
-          }}
-        />
-      )}
-    </LineChart>
-  )
+  const panels = renderedKeys.map((k) => (
+    <MetricPanel
+      key={k}
+      metric={METRIC_MAP[k]}
+      measurements={measurements}
+      daily={daily}
+      periodo={periodo}
+      courseStart={courseStart}
+      excluded={excludedSet}
+      annotations={annotations}
+      compare={compare}
+      fullScale={fullScale}
+      showPoints={showPoints}
+      clientMode={clientMode}
+      print={print}
+      width={print ? chartW : undefined}
+      height={height}
+      renderHeader={renderHeader}
+    />
+  ))
 
   if (print) {
     return (
-      <div className="break-inside-avoid">
-        {filtered.length === 0 ? (
-          <div className="py-6 text-center text-sm text-anthracite-lighter">{t('trend.noDataInPeriod')}</div>
-        ) : renderedMetrics.length === 0 ? (
+      <div className="space-y-4">
+        {renderedKeys.length === 0 ? (
           <div className="py-6 text-center text-sm text-anthracite-lighter">
             {t.rich('trend.noMetricSelected', { em: (c) => <em>{c}</em> })}
           </div>
-        ) : (
-          <>
-            <div style={{ width: chartW, height }}>{chart}</div>
-            {/* LEGENDA STATICA */}
-            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
-              {renderedMetrics.map((m) => (
-                <span key={m.key} className="inline-flex items-center gap-1.5 text-[11px] text-anthracite">
-                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: m.color }} />
-                  {metricLabel(m, tMetrics)}
-                  {m.unit && <span className="text-anthracite-lighter">({m.unit})</span>}
-                </span>
-              ))}
-            </div>
-          </>
-        )}
+        ) : panels}
       </div>
     )
   }
 
   return (
     <div>
-      {/* TOOLBAR */}
-      <div className="flex flex-wrap items-center gap-1.5 mb-4">
-        {presetList.map((p) => (
-          <button key={p.key} type="button" onClick={() => setRange(p.key)} className={presetBtn(activeKey === p.key)}>
-            {t(`presets.${p.labelKey}`)}
+      {!clientMode && (
+        <div className="flex flex-wrap items-center gap-1.5 mb-3">
+          {presetList.map((p) => (
+            <button key={p.key} type="button" onClick={() => setRange(p.key)} className={presetBtn(activeKey === p.key)}>
+              {t(`presets.${p.labelKey}`)}
+            </button>
+          ))}
+          <button type="button" onClick={() => setRange('custom')} className={`flex items-center gap-1.5 ${presetBtn(activeKey === 'custom')}`}>
+            <Calendar size={12} /> {t('presets.custom')}
           </button>
-        ))}
-        <button
-          type="button"
-          onClick={() => setRange('custom')}
-          className={`flex items-center gap-1.5 ${presetBtn(activeKey === 'custom')}`}
-        >
-          <Calendar size={12} /> {t('presets.custom')}
-        </button>
-        {activeKey === 'custom' && (
-          <div className="flex flex-wrap items-center gap-1.5 ml-2">
-            <input
-              type="date"
-              value={customFrom}
-              max={customTo}
-              onChange={(e) => setCustomRange(e.target.value, customTo)}
-              className="text-xs px-2 py-1 border border-surface-border rounded-lg bg-white text-anthracite"
-            />
-            <span className="text-xs text-anthracite-lighter">→</span>
-            <input
-              type="date"
-              value={customTo}
-              min={customFrom}
-              max={isoDay(new Date())}
-              onChange={(e) => setCustomRange(customFrom, e.target.value)}
-              className="text-xs px-2 py-1 border border-surface-border rounded-lg bg-white text-anthracite"
-            />
+          {activeKey === 'custom' && (
+            <div className="flex flex-wrap items-center gap-1.5 ml-2">
+              <input type="date" value={customFrom} max={customTo} onChange={(e) => setCustomFrom(e.target.value)} className="text-xs px-2 py-1 border border-surface-border rounded-lg bg-white text-anthracite" />
+              <span className="text-xs text-anthracite-lighter">→</span>
+              <input type="date" value={customTo} min={customFrom} max={oggiIta()} onChange={(e) => setCustomTo(e.target.value)} className="text-xs px-2 py-1 border border-surface-border rounded-lg bg-white text-anthracite" />
+            </div>
+          )}
+
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            {measurements && (
+              <button type="button" onClick={togglePoints} aria-pressed={showPoints} className={presetBtn(showPoints)} title={t('panel.showPointsTitle')}>
+                {t('panel.showPoints')}
+              </button>
+            )}
+            <button type="button" onClick={toggleScale} aria-pressed={fullScale} className={presetBtn(fullScale)} title={fullScale ? t('panel.fitScale') : t('panel.fullScale')}>
+              {t('panel.fullScale')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPanelOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-anthracite text-white hover:bg-anthracite-lighter whitespace-nowrap transition-colors"
+            >
+              <SlidersHorizontal size={13} /> {t('trend.selectMetrics')}
+              <span className="ml-1 px-1.5 py-0.5 rounded-md bg-white/15 text-[10px]">{selected.length}</span>
+            </button>
           </div>
-        )}
-
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={resetZoom}
-            className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border bg-white border-surface-border text-anthracite-lighter hover:bg-surface hover:text-anthracite whitespace-nowrap transition-colors"
-            title={t('trend.resetZoom')}
-          >
-            <RotateCcw size={12} /> {t('trend.resetZoom')}
-          </button>
-          <button
-            type="button"
-            onClick={toggleStats}
-            aria-pressed={showStats}
-            className={`flex items-center gap-1.5 ${presetBtn(showStats)}`}
-            title={t('trend.showStats')}
-          >
-            <Sigma size={12} /> {t('trend.showStats')}
-          </button>
-          <button
-            type="button"
-            onClick={() => setPanelOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-anthracite text-white hover:bg-anthracite-lighter whitespace-nowrap transition-colors"
-          >
-            <SlidersHorizontal size={13} /> {t('trend.selectMetrics')}
-            <span className="ml-1 px-1.5 py-0.5 rounded-md bg-white/15 text-[10px]">{selected.size}</span>
-          </button>
         </div>
-      </div>
-
-      {/* Didascalia: quante misurazioni e quali giorni copre davvero il grafico.
-          Così un cambio di periodo si vede anche quando i punti disegnati sono
-          gli stessi (tutte le misurazioni negli ultimi N giorni). */}
-      {estremiVisibili && (
-        <p className="text-xs text-anthracite-lighter mb-2" aria-live="polite">
-          {estremiVisibili.from === estremiVisibili.to
-            ? t('trend.pointsCaptionOne', { count: visibili.length, from: fullDate.format(parseISO(estremiVisibili.from)) })
-            : t('trend.pointsCaption', { count: visibili.length, from: fullDate.format(parseISO(estremiVisibili.from)), to: fullDate.format(parseISO(estremiVisibili.to)) })}
-        </p>
       )}
 
-      {/* CHART */}
-      {filtered.length === 0 ? (
-        <div className="py-10 text-center text-sm text-anthracite-lighter">{t('trend.noDataInPeriod')}</div>
-      ) : renderedMetrics.length === 0 ? (
+      {/* Didascalia: quante misurazioni di riferimento su quante nel periodo. */}
+      {counts && counts.from && counts.to && (
+        <p className="text-xs text-anthracite-lighter mb-3" aria-live="polite">
+          {t(periodo ? 'panel.countsCaption' : 'panel.countsCaptionAll', {
+            reference: counts.reference,
+            total: counts.total,
+            from: formatDate(counts.from, undefined, locale),
+            to: formatDate(counts.to, undefined, locale),
+          })}
+        </p>
+      )}
+      {daily && !clientMode && <p className="text-xs text-anthracite-lighter mb-3">{t('panel.homeCaption')}</p>}
+      {renderedKeys.length > MANY_PANELS && (
+        <p className="text-xs text-amber-700 mb-3">{t('panel.manyPanels', { count: renderedKeys.length })}</p>
+      )}
+
+      {renderedKeys.length === 0 ? (
         <div className="py-10 text-center text-sm text-anthracite-lighter">
           {t.rich('trend.noMetricSelected', { em: (c) => <em>{c}</em> })}
         </div>
       ) : (
-        <>
-          <ResponsiveContainer width="100%" height={height}>{chart}</ResponsiveContainer>
-
-          {/* LEGENDA INTERATTIVA */}
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {Array.from(selected).map((k) => {
-              const m = METRIC_MAP[k]
-              if (!m) return null
-              const isHidden = hidden.has(k)
-              return (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => toggleHidden(k)}
-                  className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border max-w-full transition-colors ${
-                    isHidden
-                      ? 'bg-surface border-surface-border text-anthracite-lighter line-through'
-                      : 'bg-white border-surface-border text-anthracite hover:bg-surface'
-                  }`}
-                  title={isHidden ? t('trend.show') : t('trend.hideTemporarily')}
-                >
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: m.color, opacity: isHidden ? 0.4 : 1 }} />
-                  <span className="truncate">{metricLabel(m, tMetrics)}</span>
-                </button>
-              )
-            })}
-          </div>
-
-          {/* RIEPILOGO DEL PERIODO: ultimo · media · mediana · scostamenti */}
-          {showStats && (
-            <div className="mt-4 rounded-xl border border-surface-border bg-surface/50 px-3 py-2">
-              <div className="text-[10px] uppercase tracking-wide text-anthracite-lighter mb-1">{t('trend.statsTitle')}</div>
-              <ul className="divide-y divide-surface-border">
-                {renderedMetrics.map((m) => {
-                  const r = stats.get(m.key)
-                  return (
-                    <li key={m.key} className="py-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xs">
-                      <span className="inline-flex items-center gap-1.5 font-medium text-anthracite min-w-[7rem]">
-                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: m.color }} />
-                        {metricLabel(m, tMetrics)}
-                      </span>
-                      {!r?.stats ? (
-                        <span className="text-anthracite-lighter">{t('trend.statsInsufficient')}</span>
-                      ) : (
-                        <>
-                          <StatCell label={t('trend.statsLast')} value={fmtStat(r.stats.ultimo, m)} />
-                          <StatCell label={t('trend.statsMean')} value={fmtStat(r.stats.media, m)} />
-                          <StatCell label={t('trend.statsMedian')} value={fmtStat(r.stats.mediana, m)} />
-                          <DeltaCell label={t('trend.statsVsMean')} pct={r.ultimoVsMedia} verdetto={r.verdettoUltimo} locale={locale} />
-                          <DeltaCell
-                            label={t('trend.statsVsPrevious')}
-                            pct={brushWindow ? null : r.mediaVsPrecedente}
-                            verdetto={brushWindow ? 'unknown' : r.verdettoPeriodo}
-                            locale={locale}
-                            na={t('trend.statsNoPrevious')}
-                            naTitle={effectiveKey === 'all' ? t('trend.statsAllTitle') : t('trend.statsNoPreviousTitle')}
-                          />
-                        </>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          )}
-        </>
+        <div className="space-y-5">{panels}</div>
       )}
 
-      {/* PANNELLO SELEZIONE METRICHE — drawer destro / fullscreen su mobile */}
       {panelOpen && (
         <MetricsPanel
           onClose={() => setPanelOpen(false)}
           search={search}
           setSearch={setSearch}
-          filteredMetrics={filteredMetrics}
           selected={selected}
           toggleMetric={toggleMetric}
           expandedGroups={expandedGroups}
@@ -701,57 +467,335 @@ export function AdvancedTrendChart({
   )
 }
 
+function giornoFa(n: number): string {
+  const d = new Date(Date.now() - n * 86_400_000)
+  return oggiIta(d)
+}
+
+function inPeriodo(day: string, periodo: Periodo): boolean {
+  return !periodo || (day >= periodo.from && day <= periodo.to)
+}
+
 // ============================================================================
-// PANNELLO METRICHE
+// PANNELLO DI UNA METRICA
 // ============================================================================
 
-// ── Celle della riga riassuntiva ─────────────────────────────────────────────
+const BAND_FILL = '#CBD5E1'
+const BAND_STROKE = '#94A3B8'
 
-function StatCell({ label, value }: { label: string; value: string }) {
+function MetricPanel({
+  metric,
+  measurements,
+  daily,
+  periodo,
+  courseStart,
+  excluded,
+  annotations,
+  compare,
+  fullScale,
+  showPoints,
+  clientMode,
+  print,
+  width,
+  height,
+  renderHeader,
+}: {
+  metric: MetricDef
+  measurements?: TrendMeasurement[]
+  daily?: DailyTrendRow[]
+  periodo: Periodo
+  courseStart: string | null
+  excluded: ReadonlySet<string>
+  annotations: TrendAnnotation[]
+  compare: CompareKind
+  fullScale: boolean
+  showPoints: boolean
+  clientMode: boolean
+  print: boolean
+  width?: number
+  height: number
+  renderHeader?: (p: PanelSummary) => ReactNode
+}) {
+  const locale = useLocale()
+  const t = useTranslations('charts')
+  const tMetrics = useTranslations('charts.metrics')
+  const tTypes = useTranslations('measurement.types')
+  const isScore = metric.group === 'score'
+  const today = oggiIta()
+
+  // Valori giornalieri di riferimento su tutta la storia (i conti non seguono il periodo).
+  const dailyValues: DailyValue[] = useMemo(() => {
+    if (measurements) return dailyReferenceValues(measurements, metric.key, { excluded })
+    if (daily) {
+      return daily
+        .map((r) => {
+          const raw = r[metric.key]
+          const v = typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : NaN
+          return Number.isFinite(v) ? { day: r.date, value: toCalc(metric.key, v), n: 1 } : null
+        })
+        .filter((d): d is DailyValue => d != null && Number.isFinite(d.value))
+        .sort((a, b) => (a.day < b.day ? -1 : 1))
+    }
+    return []
+  }, [measurements, daily, metric.key, excluded])
+
+  const allPoints = useMemo(
+    () => (measurements && showPoints ? pointRows(measurements, metric.key, excluded) : []),
+    [measurements, showPoints, metric.key, excluded],
+  )
+  const rolling = useMemo(() => rollingMean7(dailyValues), [dailyValues])
+  const { rows: dayRows, segments } = useMemo(() => rollingSegments(rolling, metric.key), [rolling, metric.key])
+
+  // Confronto: solo con le misurazioni (sulla home non c'è un percorso).
+  const asOf = periodo?.to ?? null
+  const lastDayShown = useMemo(() => {
+    let last: string | null = null
+    for (const d of dailyValues) { if (!asOf || d.day <= asOf) last = d.day }
+    return last
+  }, [dailyValues, asOf])
+  const longHistory = hasLongHistory(dailyValues)
+  const effectiveCompare: CompareKind = !measurements ? 'course'
+    : compare === 'last60' && !longHistory ? 'course'
+    : (compare === 'periodStart' || compare === 'previous') && !periodo ? 'course'
+    : compare
+  const reference: Reference | null = useMemo(() => {
+    if (!measurements) return null
+    switch (effectiveCompare) {
+      case 'periodStart': return periodo ? periodStartReference(dailyValues, periodo.from) : null
+      case 'previous': return periodo ? previousPeriodReference(dailyValues, periodo.from, periodo.to) : null
+      case 'last60': return lastDayShown ? last60Reference(dailyValues, lastDayShown) : null
+      default: return courseBaseline(dailyValues, courseStart)
+    }
+  }, [measurements, effectiveCompare, dailyValues, periodo, courseStart, lastDayShown])
+  const summary = useMemo(
+    () => changeSummary(metric.key, dailyValues, reference, { asOf, period: periodo ?? undefined }),
+    [metric.key, dailyValues, reference, asOf, periodo],
+  )
+  // Fascia dinamica: una fascia per giorno, sui 60 giorni precedenti.
+  const dynamicBand = useMemo(() => {
+    if (effectiveCompare !== 'last60') return null
+    const byDay = new Map(rollingBand60(dailyValues).map((b) => [b.day, b.reference]))
+    return byDay
+  }, [effectiveCompare, dailyValues])
+
+  // Righe del grafico dentro il periodo: puntini + giorni della media mobile.
+  const rows: TrendRow[] = useMemo(() => {
+    const pts = allPoints.filter((p) => inPeriodo(p.day, periodo))
+    const days = dayRows
+      .filter((d) => inPeriodo(d.day, periodo))
+      .map((d) => {
+        if (!dynamicBand) return d
+        const r = dynamicBand.get(d.day)
+        return r?.band ? { ...d, band: [toDisplay(metric.key, r.band.low), toDisplay(metric.key, r.band.high)] } : d
+      })
+    return [...pts, ...days].sort((a, b) => a.x - b.x)
+  }, [allPoints, dayRows, periodo, dynamicBand, metric.key])
+
+  const band = effectiveCompare === 'last60' ? null : summary.band
+  const yDomain = useMemo(() => niceDomain([
+    ...rows.map((r) => (r.kind === 'point' ? r.value : r.rolling)),
+    ...rows.flatMap((r) => ('band' in r && Array.isArray(r.band) ? (r.band as number[]) : [])),
+    band?.low, band?.high,
+  ], { score: isScore, full: fullScale }), [rows, band, isScore, fullScale])
+  const xdom = useMemo(() => xDomain(periodo, rows, today), [periodo, rows, today])
+  const ticks = useMemo(() => xTicks(xdom), [xdom])
+
+  const tickDate = useMemo(() => new Intl.DateTimeFormat(intlTag(locale), { day: 'numeric', month: 'short', timeZone: FUSO }), [locale])
+  const fmtTick = (v: unknown) => tickDate.format(new Date(Number(v)))
+  const fmtY = (v: unknown) => num(Number(v), metric.decimals && metric.decimals > 1 ? metric.decimals : 0, locale)
+
+  const lastDayRow = [...rows].reverse().find((r): r is TrendDayRow => r.kind === 'day') ?? null
+  const referenceInPeriod = dailyValues.some((d) => inPeriodo(d.day, periodo))
+  const baselineOutside = !!reference && !!periodo && effectiveCompare === 'course' && reference.lastDay < periodo.from
+  const bandLabelKey = effectiveCompare === 'course' ? (clientMode ? 'panel.bandCourseClient' : 'panel.bandCourse')
+    : effectiveCompare === 'periodStart' ? 'panel.bandPeriodStart'
+    : effectiveCompare === 'previous' ? 'panel.bandPrevious' : 'panel.band60'
+  const better = summary.higherIsBetter ? t('panel.betterHigher') : t('panel.betterLower')
+  const name = panelName(metric.key, t, tMetrics)
+  const pctText = summary.pct == null ? null : `${summary.pct > 0 ? '+' : ''}${num(summary.pct, 0, locale)}%`
+
+  const chart = (
+    <ComposedChart data={rows} {...(print && width ? { width, height } : {})} margin={{ top: 10, right: 64, left: 0, bottom: 0 }}>
+      <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" vertical={false} />
+      <XAxis type="number" dataKey="x" domain={xdom} ticks={ticks} tickFormatter={fmtTick} stroke="#6B7280" fontSize={11} tickLine={false} axisLine={false} allowDataOverflow />
+      <YAxis domain={yDomain} tickFormatter={fmtY} stroke="#6B7280" fontSize={11} tickLine={false} axisLine={false} width={40} allowDataOverflow />
+      {!print && (
+        <Tooltip
+          content={<PanelTooltip locale={locale} metric={metric} t={t} tTypes={tTypes} />}
+          cursor={{ stroke: '#94A3B8', strokeDasharray: '3 3' }}
+          isAnimationActive={false}
+        />
+      )}
+      {band && (
+        <ReferenceArea
+          y1={band.low}
+          y2={band.high}
+          fill={BAND_FILL}
+          fillOpacity={0.35}
+          stroke={band.provisional ? BAND_STROKE : 'none'}
+          strokeDasharray="4 3"
+          ifOverflow="visible"
+          label={{ value: t(bandLabelKey), position: 'insideTopLeft', fill: '#64748B', fontSize: 10 }}
+        />
+      )}
+      {dynamicBand && (
+        <Area dataKey="band" stroke="none" fill={BAND_FILL} fillOpacity={0.35} connectNulls isAnimationActive={false} activeDot={false} />
+      )}
+      {annotations.filter((a) => inPeriodo(a.day, periodo)).map((a) => (
+        <ReferenceLine key={`${a.day}-${a.text}`} x={dayNoonMs(a.day)} stroke="#64748B" strokeDasharray="3 3" label={{ value: a.text, position: 'top', fill: '#475569', fontSize: 10 }} />
+      ))}
+      {showPoints && measurements && (
+        <Line dataKey="value" stroke="none" dot={<PointDot color={metric.color} />} activeDot={{ r: 5, fill: metric.color }} isAnimationActive={false} connectNulls={false} legendType="none" />
+      )}
+      {daily && (
+        <Line dataKey="rolling" stroke={metric.color} strokeOpacity={0.25} strokeWidth={1} dot={false} activeDot={false} connectNulls isAnimationActive={false} />
+      )}
+      {segments.map((s) => (
+        <Line
+          key={s.key}
+          dataKey={s.key}
+          stroke={metric.color}
+          strokeWidth={2.5}
+          strokeDasharray={s.dashed ? '6 4' : undefined}
+          dot={false}
+          activeDot={{ r: 4, fill: metric.color }}
+          connectNulls
+          isAnimationActive={false}
+        />
+      ))}
+      {lastDayRow && (
+        <ReferenceDot
+          x={lastDayRow.x}
+          y={lastDayRow.rolling}
+          r={4}
+          fill={metric.color}
+          stroke="#fff"
+          ifOverflow="visible"
+          label={<EndLabel text={formatValue(lastDayRow.rolling, metric, locale, false)} sub={measurements ? pctText : null} color={metric.color} />}
+        />
+      )}
+    </ComposedChart>
+  )
+
   return (
-    <span className="text-anthracite-lighter whitespace-nowrap">
-      {label} <span className="font-medium text-anthracite tabular-nums">{value}</span>
-    </span>
+    <section className={print ? 'break-inside-avoid' : ''} aria-label={name}>
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-1">
+        <span className="inline-flex items-center gap-1.5 font-medium text-anthracite text-sm">
+          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: metric.color }} />
+          {name}
+          {metric.unit && metric.unit !== '/100' && <span className="text-anthracite-lighter font-normal">({metric.unit})</span>}
+        </span>
+        <span className="text-xs text-anthracite-lighter">{summary.higherIsBetter ? '↑' : '↓'} {better}</span>
+      </div>
+      {renderHeader && measurements && renderHeader({ metric, summary, reference })}
+
+      {measurements && dailyValues.length === 0 && (
+        <p className="text-xs text-amber-700 mb-2">{t('panel.noReference', { count: allPoints.length || measurements.length })}</p>
+      )}
+      {measurements && dailyValues.length > 0 && !referenceInPeriod && (
+        <p className="text-xs text-amber-700 mb-2">{t('panel.noReferenceInPeriod')}</p>
+      )}
+
+      {rows.length === 0 ? (
+        <div className="py-8 text-center text-sm text-anthracite-lighter">{t('trend.noDataInPeriod')}</div>
+      ) : print && width ? (
+        <div style={{ width, height }}>{chart}</div>
+      ) : (
+        <ResponsiveContainer width="100%" height={height}>{chart}</ResponsiveContainer>
+      )}
+
+      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[11px] text-anthracite-lighter">
+        {measurements && showPoints && (
+          <>
+            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: metric.color }} /> {t('panel.referencePoint')}</span>
+            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full border bg-white" style={{ borderColor: metric.color }} /> {t('panel.otherPoint')}</span>
+          </>
+        )}
+        <span className="inline-flex items-center gap-1"><span className="w-4 h-0.5" style={{ backgroundColor: metric.color }} /> {t('panel.rolling')}</span>
+        {band && (
+          <span className="inline-flex items-center gap-1">
+            <span className="w-3 h-2 rounded-sm" style={{ backgroundColor: BAND_FILL }} /> {t(bandLabelKey)}
+            {band.provisional && <span>· {t('panel.bandProvisional', { n: summary.startN })}</span>}
+          </span>
+        )}
+        {measurements && reference && !band && effectiveCompare !== 'last60' && <span>{t('panel.bandNone')}</span>}
+        {baselineOutside && reference && (
+          <span>{t('panel.baselineOutside', { from: formatDate(reference.firstDay, undefined, locale), to: formatDate(reference.lastDay, undefined, locale) })}</span>
+        )}
+      </div>
+    </section>
   )
 }
 
-const VERDETTO_CLASS: Record<Verdetto, string> = {
-  improved: 'text-emerald-700',
-  declined: 'text-rose-700',
-  stable: 'text-anthracite',
-  unknown: 'text-anthracite-lighter',
-}
-
-/** Scostamento percentuale con segno: verde se migliora, rosso se peggiora
- *  (per l'Indice di Stress un calo è un miglioramento, vedi trend-stats). */
-function DeltaCell({ label, pct, verdetto, locale, na = '—', naTitle }: {
-  label: string
-  pct: number | null
-  verdetto: Verdetto
-  locale: string
-  na?: string
-  naTitle?: string
-}) {
-  if (pct == null) {
+/** Puntino di una misurazione: pieno se di riferimento, vuoto se fuori dai conti, barrato se esclusa. */
+function PointDot(props: { cx?: number; cy?: number; payload?: TrendRow; color: string }) {
+  const { cx, cy, payload, color } = props
+  if (cx == null || cy == null || !payload || payload.kind !== 'point') return null
+  if (payload.reason === 'excluded') {
     return (
-      <span className="text-anthracite-lighter whitespace-nowrap" title={naTitle}>
-        {label} <span className="font-medium">{na}</span>
-      </span>
+      <g>
+        <circle cx={cx} cy={cy} r={3.5} fill="#fff" stroke={color} strokeWidth={1.5} />
+        <line x1={cx - 5} y1={cy + 5} x2={cx + 5} y2={cy - 5} stroke={color} strokeWidth={1.5} />
+      </g>
     )
   }
-  const sign = pct > 0 ? '+' : ''
+  if (payload.reason) return <circle cx={cx} cy={cy} r={3} fill="#fff" stroke={color} strokeWidth={1.5} />
+  return <circle cx={cx} cy={cy} r={3.5} fill={color} stroke="#fff" strokeWidth={1} />
+}
+
+/** Etichetta a destra dell'ultimo punto della media mobile: valore e variazione. */
+function EndLabel(props: { viewBox?: { x?: number; y?: number }; text: string; sub: string | null; color: string }) {
+  const x = (props.viewBox?.x ?? 0) + 8
+  const y = props.viewBox?.y ?? 0
   return (
-    <span className="text-anthracite-lighter whitespace-nowrap">
-      {label} <span className={`font-medium tabular-nums ${VERDETTO_CLASS[verdetto]}`}>{sign}{num(pct, 1, locale)}%</span>
-    </span>
+    <g>
+      <text x={x} y={y + 4} fill={props.color} fontSize={12} fontWeight={600}>{props.text}</text>
+      {props.sub && <text x={x} y={y + 17} fill="#64748B" fontSize={10}>{props.sub}</text>}
+    </g>
   )
 }
+
+type TooltipEntry = { payload?: TrendRow }
+
+function PanelTooltip(props: { active?: boolean; payload?: TooltipEntry[]; locale: string; metric: MetricDef; t: Tr; tTypes: Tr }) {
+  const { active, payload, locale, metric, t, tTypes } = props
+  const row = payload?.[0]?.payload
+  if (!active || !row) return null
+  if (row.kind === 'point') {
+    const p = row as TrendPointRow
+    const reason = p.reason === 'type'
+      ? t('panel.outType', { type: tTypes(`${p.typeKey}.short`) })
+      : p.reason === 'hour' ? t('panel.outHour')
+      : p.reason === 'excluded' ? t('panel.outExcluded') : null
+    return (
+      <div className="bg-white rounded-xl border border-surface-border shadow-elevated px-3 py-2 text-[11px] max-w-[260px]">
+        <div className="font-medium text-anthracite">{formatIstante(new Date(p.x), undefined, locale)}</div>
+        <div className="text-anthracite-lighter">{tTypes(`${p.typeKey}.short`)}</div>
+        <div className="mt-1"><b className="text-anthracite">{formatValue(p.value, metric, locale)}</b></div>
+        {reason ? <div className="mt-1 text-amber-700">{reason}</div> : <div className="mt-1 text-anthracite-lighter">{t('panel.referencePoint')}</div>}
+      </div>
+    )
+  }
+  const d = row as TrendDayRow
+  return (
+    <div className="bg-white rounded-xl border border-surface-border shadow-elevated px-3 py-2 text-[11px] max-w-[260px]">
+      <div className="font-medium text-anthracite">{formatDate(d.day, undefined, locale)}</div>
+      <div className="mt-1"><b className="text-anthracite">{t('panel.rollingValue', { value: formatValue(d.rolling, metric, locale) })}</b></div>
+      <div className={d.provisional ? 'text-amber-700' : 'text-anthracite-lighter'}>
+        {d.provisional ? t('panel.rollingProvisional', { n: d.n }) : t('panel.rollingN', { n: d.n })}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// PANNELLO DI SELEZIONE DELLE METRICHE (drawer destro / schermo intero su mobile)
+// ============================================================================
 
 function MetricsPanel({
   onClose,
   search,
   setSearch,
-  filteredMetrics,
   selected,
   toggleMetric,
   expandedGroups,
@@ -762,8 +806,7 @@ function MetricsPanel({
   onClose: () => void
   search: string
   setSearch: (s: string) => void
-  filteredMetrics: MetricDef[]
-  selected: Set<string>
+  selected: string[]
   toggleMetric: (k: string) => void
   expandedGroups: Set<Group>
   toggleGroupExpanded: (g: Group) => void
@@ -780,8 +823,12 @@ function MetricsPanel({
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  const filteredMetrics = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return TREND_METRICS
+    return TREND_METRICS.filter((m) => metricLabel(m, tMetrics).toLowerCase().includes(q) || m.key.toLowerCase().includes(q))
+  }, [search, tMetrics])
   const isSearching = search.trim().length > 0
-  // raggruppa metriche filtrate per gruppo, preservando l'ordine dei gruppi
   const grouped = useMemo(() => {
     const map = new Map<Group, MetricDef[]>()
     for (const m of filteredMetrics) {
@@ -799,7 +846,7 @@ function MetricsPanel({
         <div className="px-5 py-4 border-b border-surface-border flex items-center justify-between gap-3">
           <div className="min-w-0">
             <h3 className="font-serif text-base text-anthracite">{t('trend.panelTitle')}</h3>
-            <p className="text-xs text-anthracite-lighter mt-0.5">{t('trend.panelCount', { selected: selected.size, total: TREND_METRICS.length })}</p>
+            <p className="text-xs text-anthracite-lighter mt-0.5">{t('trend.panelCount', { selected: selected.length, total: TREND_METRICS.length })}</p>
           </div>
           <button type="button" aria-label={tCommon('close')} onClick={onClose} className="w-8 h-8 flex-shrink-0 rounded-lg hover:bg-surface flex items-center justify-center">
             <X size={18} />
@@ -818,63 +865,39 @@ function MetricsPanel({
             />
           </div>
           <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={() => bulkSelectGroup('score')}
-              className="px-2 py-1 text-[11px] rounded-md border border-surface-border bg-white hover:bg-surface text-anthracite"
-            >{t('trend.allScores')}</button>
-            <button
-              type="button"
-              onClick={() => bulkSelectGroup('time')}
-              className="px-2 py-1 text-[11px] rounded-md border border-surface-border bg-white hover:bg-surface text-anthracite"
-            >{t('trend.allTimeDomain')}</button>
-            <button
-              type="button"
-              onClick={resetSelection}
-              className="px-2 py-1 text-[11px] rounded-md border border-surface-border bg-white hover:bg-surface text-anthracite-lighter ml-auto"
-            >{tCommon('reset')}</button>
+            <button type="button" onClick={() => bulkSelectGroup('score')} className="px-2 py-1 text-[11px] rounded-md border border-surface-border bg-white hover:bg-surface text-anthracite">{t('trend.allScores')}</button>
+            <button type="button" onClick={() => bulkSelectGroup('time')} className="px-2 py-1 text-[11px] rounded-md border border-surface-border bg-white hover:bg-surface text-anthracite">{t('trend.allTimeDomain')}</button>
+            <button type="button" onClick={resetSelection} className="px-2 py-1 text-[11px] rounded-md border border-surface-border bg-white hover:bg-surface text-anthracite-lighter ml-auto">{tCommon('reset')}</button>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-2 py-2">
           {GROUP_ORDER.map((g) => {
-            const metrics = grouped.get(g) ?? []
-            if (!metrics.length) return null
+            const list = grouped.get(g) ?? []
+            if (!list.length) return null
             const isOpen = isSearching || expandedGroups.has(g)
-            const selectedInGroup = metrics.filter((m) => selected.has(m.key)).length
+            const selectedInGroup = list.filter((m) => selected.includes(m.key)).length
             return (
               <div key={g} className="mb-1">
-                <button
-                  type="button"
-                  onClick={() => toggleGroupExpanded(g)}
-                  className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg hover:bg-surface text-left"
-                >
+                <button type="button" onClick={() => toggleGroupExpanded(g)} className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg hover:bg-surface text-left">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-sm font-medium text-anthracite truncate">{t(`groups.${g}`)}</span>
-                    <span className="text-[10px] text-anthracite-lighter px-1.5 py-0.5 rounded bg-surface flex-shrink-0">{selectedInGroup}/{metrics.length}</span>
+                    <span className="text-[10px] text-anthracite-lighter px-1.5 py-0.5 rounded bg-surface flex-shrink-0">{selectedInGroup}/{list.length}</span>
                   </div>
                   {isOpen ? <ChevronUp size={14} className="text-anthracite-lighter flex-shrink-0" /> : <ChevronDown size={14} className="text-anthracite-lighter flex-shrink-0" />}
                 </button>
                 {isOpen && (
                   <ul className="px-1 pb-1">
-                    {metrics.map((m) => {
-                      const isSel = selected.has(m.key)
-                      return (
-                        <li key={m.key}>
-                          <label className="flex items-center gap-2.5 px-3 py-1.5 rounded-md hover:bg-surface cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={isSel}
-                              onChange={() => toggleMetric(m.key)}
-                              className="w-4 h-4 rounded border-surface-border accent-teal-dark"
-                            />
-                            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: m.color }} />
-                            <span className="text-sm text-anthracite flex-1 min-w-0 truncate">{metricLabel(m, tMetrics)}</span>
-                            {m.unit && <span className="text-[10px] text-anthracite-lighter flex-shrink-0">{m.unit}</span>}
-                          </label>
-                        </li>
-                      )
-                    })}
+                    {list.map((m) => (
+                      <li key={m.key}>
+                        <label className="flex items-center gap-2.5 px-3 py-1.5 rounded-md hover:bg-surface cursor-pointer">
+                          <input type="checkbox" checked={selected.includes(m.key)} onChange={() => toggleMetric(m.key)} className="w-4 h-4 rounded border-surface-border accent-teal-dark" />
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: m.color }} />
+                          <span className="text-sm text-anthracite flex-1 min-w-0 truncate">{metricLabel(m, tMetrics)}</span>
+                          {m.unit && <span className="text-[10px] text-anthracite-lighter flex-shrink-0">{m.unit}</span>}
+                        </label>
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>
@@ -886,53 +909,11 @@ function MetricsPanel({
         </div>
 
         <div className="px-5 py-3 border-t border-surface-border bg-surface/50">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full px-3 py-2 rounded-lg bg-teal-dark text-white text-sm font-medium hover:bg-teal transition-colors"
-          >
-            {t('trend.apply', { count: selected.size })}
+          <button type="button" onClick={onClose} className="w-full px-3 py-2 rounded-lg bg-teal-dark text-white text-sm font-medium hover:bg-teal transition-colors">
+            {t('trend.apply', { count: selected.length })}
           </button>
         </div>
       </div>
-    </div>
-  )
-}
-
-// ============================================================================
-// TOOLTIP CUSTOM
-// ============================================================================
-
-type TooltipEntry = { dataKey?: string | number; value?: number | null; color?: string }
-
-function CustomTooltip(props: {
-  active?: boolean
-  payload?: TooltipEntry[]
-  label?: string | number
-  locale: string
-  fullDate: Intl.DateTimeFormat
-  tMetrics: Tr
-}) {
-  const { active, payload, label, locale, fullDate, tMetrics } = props
-  if (!active || !payload || !payload.length) return null
-  let dateLabel = String(label ?? '')
-  try { dateLabel = fullDate.format(parseISO(dateLabel)) } catch {}
-
-  return (
-    <div className="bg-white rounded-xl border border-surface-border shadow-elevated px-3 py-2 text-[11px] max-w-[260px]">
-      <div className="font-medium text-anthracite mb-1">{dateLabel}</div>
-      {payload.map((p) => {
-        const key = String(p.dataKey ?? '')
-        const m = METRIC_MAP[key]
-        const v = p.value
-        return (
-          <div key={key} className="flex items-center gap-1.5 mb-0.5 last:mb-0">
-            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
-            <span className="text-anthracite-lighter flex-1 min-w-0 truncate">{m ? metricLabel(m, tMetrics) : key}</span>
-            <b className="text-anthracite ml-2 whitespace-nowrap">{v == null ? '—' : formatMetricValue(Number(v), m, locale)}</b>
-          </div>
-        )
-      })}
     </div>
   )
 }

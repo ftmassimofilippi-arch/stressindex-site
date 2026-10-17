@@ -31,7 +31,7 @@
   "overview": {
     "lastUpdate": "Last update: {date}",
     "trendTitle": "Trend",
-    "trendSubtitle": "Multi-metric with dual Y axis: pick indicators and period",
+    "trendSubtitle": "One panel per index: measurement dots, 7-day moving average and starting range. Only standard morning measurements count.",
     "noData": "No data available",
     "filterActive": "Filter: {label}",
     "filterRemove": "Remove filter",
@@ -90,7 +90,6 @@
     "periodB": "Period B (comparison)",
     "vsB": "{value} vs B",
     "mean": "Mean",
-    "median": "Med.",
     "min": "Min",
     "max": "Max",
     "std": "SD",

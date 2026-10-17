@@ -1,0 +1,38 @@
+{
+  "panel": {
+    "betterLower": "più basso è meglio",
+    "betterHigher": "più alto è meglio",
+    "referencePoint": "misurazione di riferimento",
+    "otherPoint": "fuori dai conti",
+    "outType": "Fuori dai conti: {type}, non è una misurazione standard",
+    "outHour": "Fuori dai conti: non è del mattino (dalle 4 alle 12)",
+    "outExcluded": "Esclusa dai conti dal professionista",
+    "rolling": "media 7 giorni",
+    "rollingValue": "media 7 giorni: {value}",
+    "rollingN": "su {n, plural, one {# misurazione} other {# misurazioni}}",
+    "rollingProvisional": "provvisoria, su {n, plural, one {# misurazione} other {# misurazioni}}",
+    "bandCourse": "fascia di partenza",
+    "bandCourseClient": "dove eri all'inizio",
+    "bandPeriodStart": "prima settimana del periodo",
+    "bandPrevious": "periodo precedente",
+    "band60": "ultimi 60 giorni",
+    "bandProvisional": "fascia provvisoria, su {n} misurazioni",
+    "bandNone": "Nessuna fascia: servono almeno 3 misurazioni di riferimento.",
+    "baselineOutside": "La partenza del percorso ({from} - {to}) è fuori dal periodo mostrato: la fascia resta quella.",
+    "fullScale": "Scala completa",
+    "fitScale": "Scala adattata ai dati",
+    "showPoints": "Punti",
+    "showPointsTitle": "Mostra o nascondi i puntini delle singole misurazioni",
+    "noReference": "Nessuna misurazione di riferimento: l'andamento si calcola sulle misurazioni standard del mattino (dalle 4 alle 12). Le {count, plural, one {# misurazione} other {# misurazioni}} di altro tipo o orario restano visibili come punti vuoti.",
+    "noReferenceInPeriod": "Nessuna misurazione di riferimento nel periodo scelto.",
+    "countsCaption": "{reference, plural, one {# misurazione di riferimento} other {# misurazioni di riferimento}} su {total} nel periodo · dal {from} al {to}",
+    "countsCaptionAll": "{reference, plural, one {# misurazione di riferimento} other {# misurazioni di riferimento}} su {total} · dal {from} al {to}",
+    "manyPanels": "Stai mostrando {count} pannelli: oltre 6 la pagina si allunga parecchio.",
+    "homeCaption": "Media del giorno delle misurazioni del mattino dei tuoi clienti e media mobile a 7 giorni. Nessuna partenza né fascia: i clienti sono diversi.",
+    "names": {
+      "rmssd": "Variabilità cardiaca (RMSSD)",
+      "sdnn": "Variabilità complessiva (SDNN)",
+      "mean_hr": "Frequenza cardiaca media"
+    }
+  }
+}

@@ -359,12 +359,11 @@ export default async function DashboardHome() {
             </div>
             {trend.ok ? (
               <AdvancedTrendChart
-                data={trend.data}
-                defaultSelected={['score_stress', 'score_recupero']}
+                daily={trend.data}
+                defaultSelected={['score_stress', 'score_recupero', 'rmssd']}
                 defaultPreset="30"
-                height={220}
+                height={170}
                 storageKey="sx-home-trend"
-                showBrush={false}
                 presets={['7', '30', '90', '180', '365']}
               />
             ) : (

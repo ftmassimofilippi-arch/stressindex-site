@@ -30,6 +30,20 @@ dei clienti con account, responsabile per i dati dei clienti dei professionisti)
   select e insert per l'utente; `gdpr_consents` (1.0, una riga per utente,
   scritta dall'app) non cambia, perde solo i grant ad `anon`. Finché non è applicata la
   riaccettazione non blocca nessuno.
+## 2026-10-17 — grafici del percorso: fasi 0, 1 e 2
+
+Analisi in `docs/ANALISI_GRAFICI_2026-10-17.md`. Nuovo modulo puro
+`src/lib/reference-trend.ts` (misurazione di riferimento = standard del mattino,
+un valore al giorno, media mobile a 7 giorni, partenza del percorso e fascia
+± 0,5 DS, verdetto, RMSSD in logaritmo) e `src/lib/trend-panel.ts`, con test e
+fixture che riproduce la scheda di Sara (Stress 49,3 → 40,1, -19%).
+`AdvancedTrendChart` riscritto: un pannello per indice, puntini delle
+misurazioni (pieni se di riferimento), media mobile tratteggiata dove
+provvisoria, fascia grigia, asse Y adattato con "Scala completa", etichetta
+finale con valore e variazione. Mediana e zoom tolti. Panoramica e testata
+della scheda mostrano l'ultima misurazione di riferimento e segnalano l'ultima
+di altro tipo; la home media solo le misurazioni del mattino.
+`scripts/check-grafici.mjs` per la verifica visiva locale.
 
 ## 2026-10-15 — chiusura delle tabelle di backup leggibili da anon
 

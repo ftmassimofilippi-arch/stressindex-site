@@ -3,20 +3,20 @@
 import { Fragment, useMemo, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { DateRangePicker, defaultRange, type DateRange } from '@/components/dashboard/DateRangePicker'
-import { AdvancedTrendChart, TREND_METRICS } from '@/components/dashboard/AdvancedTrendChart'
-import { formatMeasuredAt, intervalloGiorniIta, intlTag, measuredDayKey, measuredHour, measuredInstant, measuredWeekday, num } from '@/lib/format'
+import { AdvancedTrendChart } from '@/components/dashboard/AdvancedTrendChart'
+import { formatMeasuredAt, intervalloGiorniIta, intlTag, measuredHour, measuredInstant, measuredWeekday, num } from '@/lib/format'
 import type { MeasurementAnalytics } from '@/lib/types'
 
+// Media, minimo, massimo e DS del periodo (niente mediana: tolta il 17/10).
 function stats(values: number[]) {
-  if (!values.length) return { mean: null, median: null, min: null, max: null, std: null }
+  if (!values.length) return { mean: null, min: null, max: null, std: null }
   const sorted = [...values].sort((a, b) => a - b)
   const mean = values.reduce((a, b) => a + b, 0) / values.length
-  const median = sorted[Math.floor(sorted.length / 2)]
   const min = sorted[0]
   const max = sorted[sorted.length - 1]
   const variance = values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length
   const std = Math.sqrt(variance)
-  return { mean, median, min, max, std }
+  return { mean, min, max, std }
 }
 
 // Colonna DB → chiave del nome in scores.names.*.
@@ -27,9 +27,9 @@ const METRICS = [
   { key: 'score_energia', nameKey: 'energy', color: '#F59E0B' },
 ] as const
 
-const STAT_KEYS = ['mean', 'median', 'min', 'max', 'std'] as const
+const STAT_KEYS = ['mean', 'min', 'max', 'std'] as const
 
-export function AdvancedAnalyticsTab({ measurements }: { measurements: MeasurementAnalytics[] }) {
+export function AdvancedAnalyticsTab({ measurements, courseStart = null }: { measurements: MeasurementAnalytics[]; courseStart?: string | null }) {
   const t = useTranslations('clients.analytics')
   const tScores = useTranslations('scores')
   const locale = useLocale()
@@ -38,16 +38,6 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
 
   const inA = useMemo(() => filterRange(measurements, rangeA), [measurements, rangeA])
   const inB = useMemo(() => filterRange(measurements, rangeB), [measurements, rangeB])
-
-  // Punti trend su tutto lo storico: il chart filtra internamente con i propri controlli.
-  // Mappa tutte le metriche supportate (24+ parametri HRV) dal record di measurement_analytics.
-  const allTrendData = useMemo(() => measurements.slice().reverse().map((m) => {
-    const point = { date: measuredDayKey(m) ?? '' } as { date: string } & Record<string, number | string | null>
-    for (const def of TREND_METRICS) {
-      point[def.key] = (m as unknown as Record<string, number | null>)[def.key] ?? null
-    }
-    return point
-  }), [measurements])
 
   const topByStress = useMemo(() => [...inA].filter((m) => m.score_stress != null).sort((a, b) => (a.score_stress ?? 0) - (b.score_stress ?? 0)).slice(0, 5), [inA])
   const bottomByStress = useMemo(() => [...inA].filter((m) => m.score_stress != null).sort((a, b) => (b.score_stress ?? 0) - (a.score_stress ?? 0)).slice(0, 5), [inA])
@@ -83,7 +73,7 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
                   {variation != null ? t('vsB', { value: `${variation > 0 ? '+' : ''}${num(variation, 1, locale)}%` }) : '—'}
                 </span>
               </div>
-              <div className="grid grid-cols-5 gap-2 mt-3 text-xs">
+              <div className="grid grid-cols-4 gap-2 mt-3 text-xs">
                 {STAT_KEYS.map((k) => (
                   <div key={k} className="text-center">
                     <div className="text-[10px] uppercase tracking-wide text-anthracite-lighter">{t(k)}</div>
@@ -102,15 +92,16 @@ export function AdvancedAnalyticsTab({ measurements }: { measurements: Measureme
           <span className="text-xs text-anthracite-lighter">{t('trendHint')}</span>
         </div>
         <p className="text-xs text-anthracite-lighter mb-4">{t('trendSubtitle')}</p>
-        {allTrendData.length === 0 ? (
+        {measurements.length === 0 ? (
           <p className="text-sm text-anthracite-lighter">{t('noData')}</p>
         ) : (
           <AdvancedTrendChart
-            data={allTrendData}
-            defaultSelected={['score_stress', 'score_recupero']}
+            measurements={measurements}
+            defaultSelected={['score_stress', 'score_recupero', 'rmssd']}
             defaultPreset="30"
-            height={320}
+            height={220}
             storageKey="sx-client-trend"
+            courseStart={courseStart}
           />
         )}
       </section>

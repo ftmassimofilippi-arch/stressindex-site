@@ -1,0 +1,10 @@
+{
+  "overview": {
+    "lastReference": "Letzte Referenzmessung: {date}",
+    "lastOther": "Letzte Messung: {type}, {date}",
+    "noReferenceYet": "Noch keine Referenzmessung (Standard, am Morgen): die Anzeigen bleiben leer."
+  },
+  "profile": {
+    "ofDate": "vom {date}"
+  }
+}

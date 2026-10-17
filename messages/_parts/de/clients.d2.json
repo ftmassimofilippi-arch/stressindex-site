@@ -31,7 +31,7 @@
   "overview": {
     "lastUpdate": "Letzte Aktualisierung: {date}",
     "trendTitle": "Verlauf",
-    "trendSubtitle": "Mehrere Kennzahlen mit doppelter Y-Achse: Indikatoren und Zeitraum wählen",
+    "trendSubtitle": "Ein Diagramm pro Index: Messpunkte, 7-Tage-Mittel und Ausgangsbereich. Gezählt werden nur Standardmessungen am Morgen.",
     "noData": "Keine Daten verfügbar",
     "filterActive": "Filter: {label}",
     "filterRemove": "Filter entfernen",
@@ -90,7 +90,6 @@
     "periodB": "Zeitraum B (Vergleich)",
     "vsB": "{value} vs. B",
     "mean": "Mittel",
-    "median": "Med.",
     "min": "Min",
     "max": "Max",
     "std": "SD",

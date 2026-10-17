@@ -8,6 +8,7 @@ import { SUPERADMIN_VEDE_DATI_CLIENTI } from './superadmin-scope'
 import { selectWithMissingColumnFallback } from './safe-select'
 import { dataLoadError, reportDataError } from './data-error'
 import { trendMensileDaGiorni, type TrendMensile } from './home-metrics'
+import { isReferenceMeasurement } from './reference-trend.ts'
 import {
   conIstanteSessione,
   giornoItaFa,
@@ -801,12 +802,12 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
   // lo decide comunque `measuredDayKey` sotto.
   const daIso = new Date(new Date(inizioGiornoItaFa(daysBack - 1)).getTime() - 3 * 3_600_000).toISOString()
 
-  type Row = { session_id: string | null; user_id: string | null; measured_at: string; measured_at_utc: string | null } & { [K in TrendColumn]: number | null }
+  type Row = { session_id: string | null; user_id: string | null; measured_at: string; measured_at_utc: string | null; test_type: string | null } & { [K in TrendColumn]: number | null }
 
   // Resiliente alle colonne mancanti: già successo con lf_nu_ls/hf_nu_ls, che
   // facevano fallire tutto il grafico di andamento invece di una sola metrica.
   const { data, error } = await selectWithMissingColumnFallback<Row>(
-    ['session_id', 'user_id', 'measured_at', 'measured_at_utc', ...TREND_COLUMNS],
+    ['session_id', 'user_id', 'measured_at', 'measured_at_utc', 'test_type', ...TREND_COLUMNS],
     (cols) =>
       perBlocchiDiUtenti<Row, PostgrestError>(perimetro, (utenti) =>
         supabase
@@ -824,7 +825,11 @@ export async function aggregatedDailyAverages(daysBack = 30): Promise<DailyAvera
   // Un grafico vuoto direbbe "nessuna misurazione": non è la stessa cosa.
   if (error) throw dataLoadError('aggregatedDailyAverages', error)
   const mie = ((data ?? []) as unknown as Row[]).filter((r) => nelPerimetro(r, perimetro))
-  const righe = await conIstantiDiSessione(supabase, mie)
+  // Nella media del giorno entrano solo le misurazioni di riferimento
+  // (standard, 04:00-11:59 italiane), come nei grafici della scheda. Qui
+  // `coherence_data` non si legge (è un blob): le coerenze delle build vecchie
+  // etichettate "standard" restano dentro, sono poche e di mesi fa.
+  const righe = (await conIstantiDiSessione(supabase, mie)).filter((r) => isReferenceMeasurement(r))
   const buckets = new Map<string, Map<TrendColumn, number[]>>()
   for (const row of righe) {
     const day = measuredDayKey(row) ?? ''

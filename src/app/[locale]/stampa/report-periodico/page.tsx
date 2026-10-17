@@ -6,7 +6,7 @@ import { MeasurementTypeBadge } from '@/components/dashboard/MeasurementTypeBadg
 import { resolvePrintAccess, assertOwnerOrSuperadmin } from '@/lib/print-access'
 import { loadClient, loadPeriodicReportData, previousPeriod } from '@/lib/report-data'
 import { SCORE_COLORS, SCORE_KEYS, SCORE_NAME_KEYS, commentFor, computeReportAggregates, meanOf } from '@/lib/report-aggregates'
-import { age, formatDate, formatMeasuredAt, formatMeasuredDate, fullName, intervalloGiorniIta, measuredDayKey, measuredInstant, num, todayLong } from '@/lib/format'
+import { age, formatDate, formatMeasuredAt, formatMeasuredDate, fullName, intervalloGiorniIta, num, todayLong } from '@/lib/format'
 import { formatDurationHuman } from '@/lib/measurement-type'
 import { hasModule, getMyAccountAccess } from '@/lib/account-access'
 import type { Client, MeasurementAnalytics, ProfessionalProfile } from '@/lib/types'
@@ -101,19 +101,6 @@ export default async function PrintPeriodicReportPage({
   const clientAge = age(client.data_nascita)
   const pro = professionalLine(professional)
 
-  const trendData = measurements
-    .slice()
-    // Ordine cronologico per ISTANTE: il confronto di stringhe su `measured_at`
-    // ordinava la forma legacy, che mescola le due convenzioni.
-    .sort((a, b) => (measuredInstant(a)?.getTime() ?? 0) - (measuredInstant(b)?.getTime() ?? 0))
-    .map((m) => {
-      // Solo i 5 score: TREND_METRICS vive in un modulo client e non si può
-      // iterare da un server component.
-      const point = { date: measuredDayKey(m) ?? '' } as { date: string } & Record<string, number | string | null>
-      for (const k of SCORE_KEYS) point[k] = m[k] ?? null
-      return point
-    })
-
   const comments = SCORE_KEYS.map((k) => ({ key: k, c: commentFor(k, aggregates.stats[k].deltaPct, tPdf, tScores, locale) })).filter((x) => x.c)
   const toneClass = { positive: 'border-emerald-200 bg-emerald-50 text-emerald-800', warning: 'border-amber-200 bg-amber-50 text-amber-800', neutral: 'border-surface-border bg-surface text-anthracite-light' }
 
@@ -147,10 +134,18 @@ export default async function PrintPeriodicReportPage({
         </PrintSection>
       ) : (
         <>
-          {/* Trend dei 5 score: lo stesso AdvancedTrendChart della dashboard, statico */}
+          {/* Pannelli di Stress, Recupero e RMSSD: lo stesso AdvancedTrendChart della dashboard, statico */}
           <PrintSection title={t('report.trendTitle')} subtitle={t('report.trendSubtitle')}>
-            <div className="print-card p-4 print-avoid">
-              <AdvancedTrendChart data={trendData} print width={640} height={260} range={{ from, to }} metrics={[...SCORE_KEYS]} showBrush={false} />
+            <div className="print-card p-4">
+              <AdvancedTrendChart
+                measurements={measurements}
+                print
+                width={600}
+                height={170}
+                range={{ from, to }}
+                metrics={['score_stress', 'score_recupero', 'rmssd']}
+                courseStart={client.data_inizio_percorso ?? null}
+              />
             </div>
           </PrintSection>
 
