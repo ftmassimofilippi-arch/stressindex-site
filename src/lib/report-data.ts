@@ -347,6 +347,67 @@ export async function loadPeriodicReportData(supabase: SupabaseClient, client: C
   return { client, professional, measurements }
 }
 
+// ── Storia di riferimento per la partenza del percorso ───────────────────────
+
+const HISTORY_SESSION_COLUMNS = ['id', 'client_id', 'professionista_id', 'started_at_utc', 'started_at', 'created_at', 'duration_seconds', 'test_type', 'tags']
+const HISTORY_MA_COLUMNS = 'session_id, measured_at, measured_at_utc, tz_offset_minutes, test_type, duration_seconds, tags, score_stress, score_recupero, score_equilibrio, score_energia, score_modulazione_infiammatoria, score_composito, rmssd, mean_hr'
+const CHUNK = 150
+
+/**
+ * Tutta la storia del cliente fino a `upToDay` (compreso), in forma leggera:
+ * niente `hrv_data`, niente `rr_intervals`, niente blob. Serve al report per
+ * la partenza del percorso (primi 7 giorni di riferimento) e alla media
+ * mobile, che non seguono il periodo stampato. `coherence_data` e
+ * `orthostatic_data` tornano come segnaposto `{}` quando ci sono (basta per
+ * `isReferenceMeasurement`), `null` altrimenti.
+ */
+export async function loadReferenceHistory(supabase: SupabaseClient, client: Client, upToDay: string): Promise<MeasurementAnalytics[]> {
+  const { toIso } = intervalloGiorniIta(upToDay, upToDay)
+  const toMs = new Date(toIso).getTime()
+  const [{ data: direct, error }, remote] = await Promise.all([
+    selectWithMissingColumnFallback<SessionRow>(
+      HISTORY_SESSION_COLUMNS,
+      (cols) => supabase.from('sessions').select(cols).eq('client_id', client.id).lte('started_at_utc', toIso).order('started_at_utc', { ascending: true, nullsFirst: false }) as never,
+      { label: 'sessions (storia di riferimento)', required: ['id'] },
+    ),
+    remoteSessions(supabase, client.id, client.professionista_id),
+  ])
+  if (error) throw dataLoadError('loadReferenceHistory', error)
+  const seen = new Set(((direct ?? []) as SessionRow[]).map((s) => s.id))
+  const all: SessionRow[] = [
+    ...((direct ?? []) as SessionRow[]),
+    ...remote.filter((s) => !seen.has(s.id)),
+  ].filter((s) => Number.isFinite(startedMs(s)) && startedMs(s) <= toMs).sort((a, b) => startedMs(a) - startedMs(b))
+  if (all.length === 0) return []
+
+  const bySession = new Map<string, Partial<MeasurementAnalytics>>()
+  const withCoherence = new Set<string>()
+  const withOrthostatic = new Set<string>()
+  for (let i = 0; i < all.length; i += CHUNK) {
+    const ids = all.slice(i, i + CHUNK).map((s) => s.id)
+    const [ma, coh, orto] = await Promise.all([
+      supabase.from('measurement_analytics').select(HISTORY_MA_COLUMNS).in('session_id', ids),
+      supabase.from('measurement_analytics').select('session_id').in('session_id', ids).not('coherence_data', 'is', null),
+      supabase.from('measurement_analytics').select('session_id').in('session_id', ids).not('orthostatic_data', 'is', null),
+    ])
+    if (ma.error) throw dataLoadError('loadReferenceHistory.analytics', ma.error)
+    for (const row of (ma.data ?? []) as Partial<MeasurementAnalytics>[]) if (row.session_id) bySession.set(row.session_id, row)
+    for (const r of (coh.data ?? []) as Array<{ session_id: string }>) withCoherence.add(r.session_id)
+    for (const r of (orto.data ?? []) as Array<{ session_id: string }>) withOrthostatic.add(r.session_id)
+  }
+  return all.map((s) => {
+    const base = sessionToMeasurement({ ...s, hrv_data: null })
+    const ma = bySession.get(s.id)
+    const row: MeasurementAnalytics = ma ? conIstanteSessione({ ...base, ...ma }, s) : base
+    return {
+      ...row,
+      id: row.id ?? s.id,
+      coherence_data: withCoherence.has(s.id) ? ({} as MeasurementAnalytics['coherence_data']) : null,
+      orthostatic_data: withOrthostatic.has(s.id) ? ({} as MeasurementAnalytics['orthostatic_data']) : null,
+    }
+  })
+}
+
 /** Misurazioni del periodo precedente di pari durata (confronto nel report). */
 export function previousPeriod(dateFrom: string, dateTo: string): { from: string; to: string } {
   const from = new Date(`${dateFrom}T00:00:00.000Z`)

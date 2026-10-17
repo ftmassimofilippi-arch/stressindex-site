@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase-server'
 import { reportDataError } from '@/lib/data-error'
 import { parseChartView, type ChartPrefs, type MeasurementExclusion } from '@/lib/chart-view.ts'
@@ -15,10 +16,13 @@ export { EMPTY_CHART_PREFS } from '@/lib/chart-view.ts'
 // (42703): si torna vuoto con `ready: false` e la scheda funziona lo stesso,
 // con la parte "Prepara la vista" spenta.
 
-const MISSING = new Set(['42P01', '42703'])
+// Tabella assente: Postgres dice 42P01, PostgREST (schema cache) PGRST205.
+// Colonna assente: 42703 da Postgres, PGRST204 da PostgREST.
+const MISSING = new Set(['42P01', '42703', 'PGRST205', 'PGRST204'])
 
-export async function loadChartPrefs(clientId: string, knownMetrics: ReadonlySet<string>): Promise<ChartPrefs> {
-  const supabase = await createClient()
+/** `client` esplicito per le pagine di stampa (sessione o service_role via token); altrimenti quello dell'utente. */
+export async function loadChartPrefs(clientId: string, knownMetrics: ReadonlySet<string>, client?: SupabaseClient): Promise<ChartPrefs> {
+  const supabase = client ?? (await createClient())
   const [viewRes, annRes, exclRes] = await Promise.all([
     supabase.from('client_settings').select('chart_view').eq('client_id', clientId).maybeSingle<{ chart_view: unknown }>(),
     supabase.from('client_chart_annotations').select('id, giorno, testo').eq('client_id', clientId).is('rimossa_at', null).order('giorno'),

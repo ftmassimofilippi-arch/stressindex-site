@@ -4,7 +4,7 @@
 // errori di console (idratazione compresa) e il testo dei pannelli.
 import puppeteer from 'puppeteer-core'
 import { createClient } from '@supabase/supabase-js'
-import { readFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, mkdirSync, writeFileSync } from 'node:fs'
 
 const base = process.env.BASE ?? 'http://localhost:3778'
 const out = process.env.OUT ?? '.'
@@ -68,4 +68,14 @@ await shot('seduta', `/area-professionisti/clienti/${clientId}?tab=prima-dopo`, 
 await shot('home-1280', `/area-professionisti`, 1280)
 await shot('analytics-1280', `/area-professionisti/clienti/${clientId}?tab=analytics`, 1280)
 await shot('stampa', `/stampa/report-periodico?clientId=${clientId}&from=2026-09-18&to=2026-10-17`, 1000)
+await shot('stampa-cliente', `/stampa/report-periodico?clientId=${clientId}&from=2026-09-18&to=2026-10-17&variant=client`, 1000)
+await shot('stampa-fixture', `/stampa/report-periodico?fixture=report&from=2026-08-31&to=2026-09-30`, 1000)
+// I due PDF veri dalla route (Chrome headless lato server), con il cookie di sessione.
+for (const variant of ['pro', 'client']) {
+  const t0 = Date.now()
+  const res = await fetch(`${base}/api/pdf/report-periodico?clientId=${clientId}&from=2026-09-18&to=2026-10-17&locale=it&variant=${variant}`, { headers: { cookie: `sb-${ref}-auth-token=${cookieValue}` } })
+  const buf = Buffer.from(await res.arrayBuffer())
+  if (res.ok) writeFileSync(`${out}/report-${variant}.pdf`, buf)
+  console.log(`\n== pdf ${variant} ${res.status} ${buf.length} bytes ${Date.now() - t0} ms count=${res.headers.get('x-measurement-count')}`)
+}
 await browser.close()

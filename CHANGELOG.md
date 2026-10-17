@@ -30,6 +30,19 @@ dei clienti con account, responsabile per i dati dei clienti dei professionisti)
   select e insert per l'utente; `gdpr_consents` (1.0, una riga per utente,
   scritta dall'app) non cambia, perde solo i grant ad `anon`. Finché non è applicata la
   riaccettazione non blocca nessuno.
+## 2026-10-17 — grafici del percorso: fase 5, report PDF
+
+Il report periodico (`/stampa/report-periodico`, PDF da
+`/api/pdf/report-periodico`) usa gli stessi blocchi della scheda: pannelli con
+frase di sintesi e i quattro numeri, con la partenza calcolata su tutta la
+storia (`loadReferenceHistory`, lettura leggera senza blob), regolarità, nota
+delle misurazioni escluse, commento automatico sulla variazione partenza →
+adesso. Versione cliente: frase, pannelli di Stress e Recupero, commento.
+Versione professionista: anche RMSSD, tabella "Inizio e adesso" con
+coefficiente di variazione, effetto delle sedute (pre/post e mattino →
+coerenza), elenco (le escluse barrate) e sport. Tolte medie del periodo e
+giorni notevoli, che contraddicevano i nuovi numeri.
+
 ## 2026-10-17 — grafici del percorso: fase 4, Prima e dopo
 
 La scheda ha due viste. "Inizio e adesso" (default, da mostrare al cliente):
