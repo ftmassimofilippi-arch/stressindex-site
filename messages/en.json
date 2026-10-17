@@ -3559,8 +3559,8 @@
           "title": "How this list works"
         },
         "s02Supabase": {
-          "body": "Location: United States.\nService: database, authentication, file storage, server functions.\nData: all platform data, including data concerning health.\nData location: European Union, Frankfurt (Germany).\nSafeguards: provider DPA with standard contractual clauses.",
-          "title": "Supabase Inc."
+          "body": "Location: Singapore (Supabase group).\nService: database, authentication, file storage, server functions.\nData: all platform data, including data concerning health.\nData location: European Union, Frankfurt (Germany).\nSafeguards: provider DPA, forming part of its terms, with standard contractual clauses.",
+          "title": "Supabase Pte. Ltd."
         },
         "s03Vercel": {
           "body": "Location: United States.\nService: hosting of the website and the professional area, server functions.\nData: browsing data; professional area data in transit.\nLocation: functions run in the Frankfurt region (Germany); static content on a global delivery network.\nSafeguards: provider DPA with standard contractual clauses.",

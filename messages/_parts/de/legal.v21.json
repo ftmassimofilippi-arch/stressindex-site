@@ -115,8 +115,8 @@
         "body": "Die Daten der Plattform werden in der Europäischen Union gespeichert. Jeder Dienstleister ist durch einen Vertrag zur Datenverarbeitung gebunden, mit Pflichten, die unserem Auftragsverarbeitungsvertrag gleichwertig sind. Bei Dienstleistern mit Sitz in den USA stützen sich Übermittlungen auf das EU-US Data Privacy Framework und zusätzlich auf die Standardvertragsklauseln der Europäischen Kommission.\n\nJede Ergänzung oder Ersetzung wird den Fachkräften 30 Tage im Voraus per E-Mail angekündigt, mit der Möglichkeit zu widersprechen."
       },
       "s02Supabase": {
-        "title": "Supabase Inc.",
-        "body": "Sitz: USA.\nLeistung: Datenbank, Authentifizierung, Dateispeicher, Serverfunktionen.\nDaten: alle Daten der Plattform, einschließlich Gesundheitsdaten.\nSpeicherort: Europäische Union, Frankfurt (Deutschland).\nGarantien: AVV des Dienstleisters mit Standardvertragsklauseln."
+        "title": "Supabase Pte. Ltd.",
+        "body": "Sitz: Singapur (Supabase-Gruppe).\nLeistung: Datenbank, Authentifizierung, Dateispeicher, Serverfunktionen.\nDaten: alle Daten der Plattform, einschließlich Gesundheitsdaten.\nSpeicherort: Europäische Union, Frankfurt (Deutschland).\nGarantien: AVV des Dienstleisters als Bestandteil seiner Bedingungen, mit Standardvertragsklauseln."
       },
       "s03Vercel": {
         "title": "Vercel Inc.",

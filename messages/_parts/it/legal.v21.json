@@ -115,8 +115,8 @@
         "body": "I dati della piattaforma sono conservati nell'Unione europea. Ogni fornitore è vincolato da un contratto sul trattamento dei dati con obblighi equivalenti al nostro Accordo sul trattamento dei dati. Per i fornitori con sede negli Stati Uniti i trasferimenti si basano sull'EU-US Data Privacy Framework e, in aggiunta, sulle clausole contrattuali standard della Commissione europea.\n\nOgni aggiunta o sostituzione viene comunicata via email ai professionisti con 30 giorni di anticipo, con la possibilità di opporsi."
       },
       "s02Supabase": {
-        "title": "Supabase Inc.",
-        "body": "Sede: Stati Uniti.\nServizio: database, autenticazione, archiviazione dei file, funzioni server.\nDati: tutti i dati della piattaforma, compresi i dati relativi alla salute.\nUbicazione dei dati: Unione europea, Francoforte (Germania).\nGaranzie: DPA del fornitore con clausole contrattuali standard."
+        "title": "Supabase Pte. Ltd.",
+        "body": "Sede: Singapore (gruppo Supabase).\nServizio: database, autenticazione, archiviazione dei file, funzioni server.\nDati: tutti i dati della piattaforma, compresi i dati relativi alla salute.\nUbicazione dei dati: Unione europea, Francoforte (Germania).\nGaranzie: DPA del fornitore, parte integrante dei suoi termini, con clausole contrattuali standard."
       },
       "s03Vercel": {
         "title": "Vercel Inc.",

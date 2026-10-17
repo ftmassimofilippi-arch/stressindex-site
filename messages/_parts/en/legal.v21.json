@@ -115,8 +115,8 @@
         "body": "The platform data are stored in the European Union. Every provider is bound by a data processing contract with obligations equivalent to our Data Processing Agreement. For providers based in the United States, transfers rely on the EU-US Data Privacy Framework and, in addition, on the European Commission's standard contractual clauses.\n\nAny addition or replacement is announced by email to professionals 30 days in advance, with the possibility to object."
       },
       "s02Supabase": {
-        "title": "Supabase Inc.",
-        "body": "Location: United States.\nService: database, authentication, file storage, server functions.\nData: all platform data, including data concerning health.\nData location: European Union, Frankfurt (Germany).\nSafeguards: provider DPA with standard contractual clauses."
+        "title": "Supabase Pte. Ltd.",
+        "body": "Location: Singapore (Supabase group).\nService: database, authentication, file storage, server functions.\nData: all platform data, including data concerning health.\nData location: European Union, Frankfurt (Germany).\nSafeguards: provider DPA, forming part of its terms, with standard contractual clauses."
       },
       "s03Vercel": {
         "title": "Vercel Inc.",

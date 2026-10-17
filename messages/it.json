@@ -3559,8 +3559,8 @@
           "title": "Come funziona questo elenco"
         },
         "s02Supabase": {
-          "body": "Sede: Stati Uniti.\nServizio: database, autenticazione, archiviazione dei file, funzioni server.\nDati: tutti i dati della piattaforma, compresi i dati relativi alla salute.\nUbicazione dei dati: Unione europea, Francoforte (Germania).\nGaranzie: DPA del fornitore con clausole contrattuali standard.",
-          "title": "Supabase Inc."
+          "body": "Sede: Singapore (gruppo Supabase).\nServizio: database, autenticazione, archiviazione dei file, funzioni server.\nDati: tutti i dati della piattaforma, compresi i dati relativi alla salute.\nUbicazione dei dati: Unione europea, Francoforte (Germania).\nGaranzie: DPA del fornitore, parte integrante dei suoi termini, con clausole contrattuali standard.",
+          "title": "Supabase Pte. Ltd."
         },
         "s03Vercel": {
           "body": "Sede: Stati Uniti.\nServizio: hosting del sito e dell'area professionisti, funzioni server.\nDati: dati di navigazione; dati dell'area professionisti in transito.\nUbicazione: funzioni eseguite nella regione di Francoforte (Germania); contenuti statici su rete di distribuzione globale.\nGaranzie: DPA del fornitore con clausole contrattuali standard.",
