@@ -33,6 +33,46 @@
       "rmssd": "Herzratenvariabilität (RMSSD)",
       "sdnn": "Gesamtvariabilität (SDNN)",
       "mean_hr": "Mittlere Herzfrequenz"
+    },
+    "summary": {
+      "up": "{name} um {pct}% gestiegen, von {start} auf {now}.",
+      "down": "{name} um {pct}% gesunken, von {start} auf {now}.",
+      "flat": "{name} unverändert: {now}.",
+      "realGood": "Die Veränderung ist echt und geht in die richtige Richtung: das 7-Tage-Mittel liegt außerhalb des {band}.",
+      "realBad": "Die Veränderung ist echt, geht aber in die entgegengesetzte Richtung: das 7-Tage-Mittel liegt außerhalb des {band}.",
+      "stable": "Stabil, innerhalb des {band}.",
+      "provisional": "Vorläufig, aus {n, plural, one {# Messung} other {# Messungen}}.",
+      "none": "Noch nicht genug Referenzmessungen für einen Vergleich."
+    },
+    "numbers": {
+      "start": "Ausgangswert",
+      "startClient": "Am Anfang",
+      "now": "Jetzt",
+      "change": "Veränderung",
+      "regularity": "Regelmäßigkeit",
+      "regularityValue": "{days, plural, one {# Tag} other {# Tage}} von {total}",
+      "startRange": "{from} - {to}",
+      "startProvisional": "vorläufig, aus {n, plural, one {# Messung} other {# Messungen}}",
+      "nowDay": "7-Tage-Mittel am {date}",
+      "improved": "um {pct}% verbessert",
+      "declined": "um {pct}% verschlechtert",
+      "stable": "stabil",
+      "unknown": "k. A."
+    },
+    "compare": {
+      "label": "Vergleichen mit",
+      "course": "Ausgangspunkt",
+      "periodStart": "Beginn des Zeitraums",
+      "previous": "Vorzeitraum",
+      "last60": "letzte 60 Tage",
+      "last60Hint": "verfügbar ab 60 Tagen Verlauf",
+      "needsPeriod": "bei \"Alle\" nicht verfügbar"
+    },
+    "bandOf": {
+      "course": "Ausgangsbereichs",
+      "periodStart": "Bereichs der ersten Woche des Zeitraums",
+      "previous": "Bereichs des Vorzeitraums",
+      "last60": "Bereichs der letzten 60 Tage"
     }
   }
 }

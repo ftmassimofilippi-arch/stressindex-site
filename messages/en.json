@@ -930,12 +930,27 @@
       "bandCourse": "starting range",
       "bandCourseClient": "where you started",
       "bandNone": "No range yet: at least 3 reference measurements are needed.",
+      "bandOf": {
+        "course": "starting range",
+        "last60": "range of the last 60 days",
+        "periodStart": "range of the first week of the period",
+        "previous": "range of the previous period"
+      },
       "bandPeriodStart": "first week of the period",
       "bandPrevious": "previous period",
       "bandProvisional": "provisional range, over {n} measurements",
       "baselineOutside": "The starting point ({from} - {to}) is outside the period shown: the range stays the same.",
       "betterHigher": "higher is better",
       "betterLower": "lower is better",
+      "compare": {
+        "course": "start of the journey",
+        "label": "Compare with",
+        "last60": "last 60 days",
+        "last60Hint": "available with at least 60 days of history",
+        "needsPeriod": "not available with \"All\"",
+        "periodStart": "start of the period",
+        "previous": "previous period"
+      },
       "countsCaption": "{reference, plural, one {# reference measurement} other {# reference measurements}} out of {total} in the period · {from} to {to}",
       "countsCaptionAll": "{reference, plural, one {# reference measurement} other {# reference measurements}} out of {total} · {from} to {to}",
       "fitScale": "Scale fitted to the data",
@@ -949,6 +964,21 @@
       },
       "noReference": "No reference measurement: the trend is calculated on standard morning measurements (4 am to 12 pm). The {count, plural, one {# measurement} other {# measurements}} of another type or time stay visible as hollow dots.",
       "noReferenceInPeriod": "No reference measurement in the selected period.",
+      "numbers": {
+        "change": "Change",
+        "declined": "worsened by {pct}%",
+        "improved": "improved by {pct}%",
+        "now": "Now",
+        "nowDay": "7-day average as of {date}",
+        "regularity": "Regularity",
+        "regularityValue": "{days, plural, one {# day} other {# days}} out of {total}",
+        "stable": "stable",
+        "start": "Start",
+        "startClient": "At the start",
+        "startProvisional": "provisional, over {n, plural, one {# measurement} other {# measurements}}",
+        "startRange": "{from} - {to}",
+        "unknown": "n/a"
+      },
       "otherPoint": "not counted",
       "outExcluded": "Excluded from the calculations by the professional",
       "outHour": "Not counted: not a morning measurement (4 am to 12 pm)",
@@ -959,7 +989,17 @@
       "rollingProvisional": "provisional, over {n, plural, one {# measurement} other {# measurements}}",
       "rollingValue": "7-day average: {value}",
       "showPoints": "Points",
-      "showPointsTitle": "Show or hide the dots of the single measurements"
+      "showPointsTitle": "Show or hide the dots of the single measurements",
+      "summary": {
+        "down": "{name} down {pct}%, from {start} to {now}.",
+        "flat": "{name} unchanged: {now}.",
+        "none": "Not enough reference measurements yet for a comparison.",
+        "provisional": "Indicative, over {n, plural, one {# measurement} other {# measurements}}.",
+        "realBad": "The change is real, but goes against the direction you are aiming for: the 7-day average is outside the {band}.",
+        "realGood": "The change is real and goes in the right direction: the 7-day average is outside the {band}.",
+        "stable": "Stable, within the {band}.",
+        "up": "{name} up {pct}%, from {start} to {now}."
+      }
     },
     "poincare": {
       "balanced": "Balanced",

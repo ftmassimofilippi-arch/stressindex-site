@@ -193,6 +193,7 @@ type Props = {
   /** `session_id` esclusi dai conti dal professionista. */
   excluded?: Iterable<string> | null
   annotations?: TrendAnnotation[]
+  /** Confronto iniziale; il professionista lo cambia dal selettore (salvato in localStorage). */
   compare?: CompareKind
   /** Puntini delle singole misurazioni (default sì). */
   showPoints?: boolean
@@ -224,7 +225,7 @@ export function AdvancedTrendChart({
   courseStart = null,
   excluded = null,
   annotations = [],
-  compare = 'course',
+  compare: compareProp = 'course',
   showPoints: showPointsProp,
   clientMode = false,
   renderHeader,
@@ -244,6 +245,7 @@ export function AdvancedTrendChart({
   // selezione metriche, scala, punti
   const [selected, setSelected] = useState<string[]>(() => defaultSelected.filter((k) => METRIC_MAP[k]))
   const [fullScale, setFullScale] = useState(false)
+  const [compare, setCompare] = useState<CompareKind>(compareProp)
   const [showPoints, setShowPoints] = useState(showPointsProp ?? !clientMode)
   const [panelOpen, setPanelOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -252,6 +254,7 @@ export function AdvancedTrendChart({
   useEffect(() => {
     if (showPointsProp != null) setShowPoints(showPointsProp)
   }, [showPointsProp])
+  useEffect(() => { setCompare(compareProp) }, [compareProp])
 
   // hydration da localStorage (mai in stampa: contano solo le prop)
   useEffect(() => {
@@ -260,6 +263,8 @@ export function AdvancedTrendChart({
     const savedMetrics = window.localStorage.getItem(`${storageKey}:metrics`)
     const savedScale = window.localStorage.getItem(`${storageKey}:scale`)
     const savedPoints = window.localStorage.getItem(`${storageKey}:points`)
+    const savedCompare = window.localStorage.getItem(`${storageKey}:compare`)
+    if (savedCompare && (COMPARE_KINDS as string[]).includes(savedCompare)) setCompare(savedCompare as CompareKind)
     if (savedPreset && PRESET_KEYS.has(savedPreset) && (!presets || presets.includes(savedPreset as PresetKey) || savedPreset === 'custom')) {
       setActiveKey(savedPreset as PresetKey)
     }
@@ -286,6 +291,10 @@ export function AdvancedTrendChart({
   }
   function togglePoints() {
     setShowPoints((v) => { persist('points', v ? '0' : '1'); return !v })
+  }
+  function chooseCompare(k: CompareKind) {
+    setCompare(k)
+    persist('compare', k)
   }
   function toggleMetric(key: string) {
     setSelected((prev) => {
@@ -331,6 +340,13 @@ export function AdvancedTrendChart({
   const renderedKeys = useMemo(
     () => (print ? (metrics ?? defaultSelected) : selected).filter((k) => METRIC_MAP[k]),
     [print, metrics, defaultSelected, selected],
+  )
+
+  // "Ultimi 60 giorni" solo con 60 giorni di storia di riferimento (su una
+  // metrica qualsiasi: la storia è la stessa per tutte).
+  const longHistory = useMemo(
+    () => !!measurements && hasLongHistory(dailyReferenceValues(measurements, 'score_stress', { excluded: excludedSet })),
+    [measurements, excludedSet],
   )
 
   // Quante misurazioni cadono nel periodo e quante sono di riferimento (didascalia).
@@ -426,16 +442,35 @@ export function AdvancedTrendChart({
         </div>
       )}
 
-      {/* Didascalia: quante misurazioni di riferimento su quante nel periodo. */}
-      {counts && counts.from && counts.to && (
-        <p className="text-xs text-anthracite-lighter mb-3" aria-live="polite">
-          {t(periodo ? 'panel.countsCaption' : 'panel.countsCaptionAll', {
-            reference: counts.reference,
-            total: counts.total,
-            from: formatDate(counts.from, undefined, locale),
-            to: formatDate(counts.to, undefined, locale),
-          })}
-        </p>
+      {/* Didascalia (quante misurazioni di riferimento su quante nel periodo) e confronto. */}
+      {counts && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3 text-xs text-anthracite-lighter">
+          {counts.from && counts.to && (
+            <span aria-live="polite">
+              {t(periodo ? 'panel.countsCaption' : 'panel.countsCaptionAll', {
+                reference: counts.reference,
+                total: counts.total,
+                from: formatDate(counts.from, undefined, locale),
+                to: formatDate(counts.to, undefined, locale),
+              })}
+            </span>
+          )}
+          {!clientMode && (
+            <label className="inline-flex items-center gap-1.5">
+              {t('panel.compare.label')}
+              <select
+                value={compare}
+                onChange={(e) => chooseCompare(e.target.value as CompareKind)}
+                className="text-xs px-2 py-1 border border-surface-border rounded-lg bg-white text-anthracite"
+              >
+                <option value="course">{t('panel.compare.course')}</option>
+                <option value="periodStart" disabled={!periodo} title={!periodo ? t('panel.compare.needsPeriod') : undefined}>{t('panel.compare.periodStart')}</option>
+                <option value="previous" disabled={!periodo} title={!periodo ? t('panel.compare.needsPeriod') : undefined}>{t('panel.compare.previous')}</option>
+                <option value="last60" disabled={!longHistory} title={!longHistory ? t('panel.compare.last60Hint') : undefined}>{t('panel.compare.last60')}</option>
+              </select>
+            </label>
+          )}
+        </div>
       )}
       {daily && !clientMode && <p className="text-xs text-anthracite-lighter mb-3">{t('panel.homeCaption')}</p>}
       {renderedKeys.length > MANY_PANELS && (
@@ -687,7 +722,9 @@ function MetricPanel({
         </span>
         <span className="text-xs text-anthracite-lighter">{summary.higherIsBetter ? '↑' : '↓'} {better}</span>
       </div>
-      {renderHeader && measurements && renderHeader({ metric, summary, reference })}
+      {measurements && (renderHeader
+        ? renderHeader({ metric, summary, reference })
+        : <PanelHeader metric={metric} name={name} summary={summary} reference={reference} compare={effectiveCompare} clientMode={clientMode} print={print} />)}
 
       {measurements && dailyValues.length === 0 && (
         <p className="text-xs text-amber-700 mb-2">{t('panel.noReference', { count: allPoints.length || measurements.length })}</p>
@@ -724,6 +761,115 @@ function MetricPanel({
         )}
       </div>
     </section>
+  )
+}
+
+// ── Frase di sintesi e i quattro numeri ──────────────────────────────────────
+
+const VERDICT_CLASS: Record<ChangeSummary['verdict'], string> = {
+  improved: 'text-emerald-700',
+  declined: 'text-rose-700',
+  stable: 'text-anthracite',
+  unknown: 'text-anthracite-lighter',
+}
+
+/** Valore "umano": score senza decimali, il resto con i decimali della metrica. */
+function fmtHuman(v: number | null | undefined, metric: MetricDef, locale: string): string {
+  if (v == null || !Number.isFinite(v)) return '—'
+  if (metric.group === 'score') return num(v, 0, locale)
+  return formatValue(v, metric, locale)
+}
+
+/**
+ * Sopra ogni pannello: la frase generata dai numeri e i quattro numeri
+ * (partenza, adesso, variazione, regolarità). La freccia segue il verso del
+ * numero, il colore il significato: per lo Stress un calo è verde.
+ */
+export function PanelHeader({ metric, name, summary, reference, compare, clientMode, print }: {
+  metric: MetricDef
+  name: string
+  summary: ChangeSummary
+  reference: Reference | null
+  compare: CompareKind
+  clientMode: boolean
+  print: boolean
+}) {
+  const t = useTranslations('charts')
+  const locale = useLocale()
+  const s = summary
+  const bandOf = t(`panel.bandOf.${compare}`)
+  const pctAbs = s.pct == null ? null : num(Math.abs(s.pct), 0, locale)
+
+  let main: string | null = null
+  let detail: string | null = null
+  if (s.start != null && s.now != null && pctAbs != null) {
+    const start = fmtHuman(s.start, metric, locale)
+    const now = fmtHuman(s.now, metric, locale)
+    main = Math.abs(s.pct!) < 0.5
+      ? t('panel.summary.flat', { name, now })
+      : t(s.pct! > 0 ? 'panel.summary.up' : 'panel.summary.down', { name, pct: pctAbs, start, now })
+    if (s.provisional) {
+      detail = t('panel.summary.provisional', { n: s.startProvisional || s.band == null ? s.startN : s.nowN })
+    } else if (s.verdict === 'stable') detail = t('panel.summary.stable', { band: bandOf })
+    else if (s.verdict === 'improved') detail = t('panel.summary.realGood', { band: bandOf })
+    else if (s.verdict === 'declined') detail = t('panel.summary.realBad', { band: bandOf })
+  }
+
+  const changeText = s.pct == null || pctAbs == null ? t('panel.numbers.unknown')
+    : s.verdict === 'stable' ? t('panel.numbers.stable')
+    : s.verdict === 'improved' ? t('panel.numbers.improved', { pct: pctAbs })
+    : s.verdict === 'declined' ? t('panel.numbers.declined', { pct: pctAbs })
+    : `${s.pct > 0 ? '+' : ''}${num(s.pct, 0, locale)}%`
+  const arrow = s.pct == null ? '' : Math.abs(s.pct) < 0.5 ? '→' : s.pct > 0 ? '↑' : '↓'
+  const big = clientMode
+  const cell = `rounded-xl border border-surface-border bg-surface/60 px-3 ${big ? 'py-3' : 'py-2'} min-w-0`
+  const label = `text-[10px] uppercase tracking-wide text-anthracite-lighter truncate`
+  const value = `font-serif ${big ? 'text-3xl' : 'text-xl'} text-anthracite mt-0.5 tabular-nums`
+  const sub = 'text-[10px] text-anthracite-lighter truncate'
+
+  return (
+    <div className={print ? 'mb-2' : 'mb-3'}>
+      {main ? (
+        <p className={`${big ? 'text-lg' : 'text-sm'} text-anthracite leading-snug`}>
+          <b>{main}</b>{' '}
+          {detail && <span className={s.provisional ? 'text-amber-700' : VERDICT_CLASS[s.verdict]}>{detail}</span>}
+        </p>
+      ) : (
+        <p className="text-sm text-anthracite-lighter">{t('panel.summary.none')}</p>
+      )}
+      {s.start != null && s.now != null && (
+        <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2 ${big ? 'mt-3' : 'mt-2'}`}>
+          <div className={cell}>
+            <div className={label}>{t(clientMode ? 'panel.numbers.startClient' : 'panel.numbers.start')}</div>
+            <div className={value}>{fmtHuman(s.start, metric, locale)}</div>
+            <div className={sub}>
+              {s.startProvisional
+                ? t('panel.numbers.startProvisional', { n: s.startN })
+                : reference ? t('panel.numbers.startRange', { from: formatDate(reference.firstDay, undefined, locale), to: formatDate(reference.lastDay, undefined, locale) }) : ''}
+            </div>
+          </div>
+          <div className={cell}>
+            <div className={label}>{t('panel.numbers.now')}</div>
+            <div className={value}>{fmtHuman(s.now, metric, locale)}</div>
+            <div className={sub}>{s.nowDay ? t('panel.numbers.nowDay', { date: formatDate(s.nowDay, undefined, locale) }) : ''}</div>
+          </div>
+          <div className={cell}>
+            <div className={label}>{t('panel.numbers.change')}</div>
+            <div className={`${value} ${VERDICT_CLASS[s.verdict]} flex items-baseline gap-1`}>
+              <span className={big ? 'text-4xl leading-none' : ''}>{arrow}</span>
+              <span className={big ? 'text-xl font-sans' : 'text-base font-sans'}>{changeText}</span>
+            </div>
+          </div>
+          {!clientMode && (
+            <div className={cell}>
+              <div className={label}>{t('panel.numbers.regularity')}</div>
+              <div className={value}>{s.regularity ? num(s.regularity.days, 0, locale) : '—'}</div>
+              <div className={sub}>{s.regularity ? t('panel.numbers.regularityValue', { days: s.regularity.days, total: s.regularity.total }) : ''}</div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 

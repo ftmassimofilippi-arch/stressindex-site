@@ -33,6 +33,46 @@
       "rmssd": "Heart rate variability (RMSSD)",
       "sdnn": "Overall variability (SDNN)",
       "mean_hr": "Average heart rate"
+    },
+    "summary": {
+      "up": "{name} up {pct}%, from {start} to {now}.",
+      "down": "{name} down {pct}%, from {start} to {now}.",
+      "flat": "{name} unchanged: {now}.",
+      "realGood": "The change is real and goes in the right direction: the 7-day average is outside the {band}.",
+      "realBad": "The change is real, but goes against the direction you are aiming for: the 7-day average is outside the {band}.",
+      "stable": "Stable, within the {band}.",
+      "provisional": "Indicative, over {n, plural, one {# measurement} other {# measurements}}.",
+      "none": "Not enough reference measurements yet for a comparison."
+    },
+    "numbers": {
+      "start": "Start",
+      "startClient": "At the start",
+      "now": "Now",
+      "change": "Change",
+      "regularity": "Regularity",
+      "regularityValue": "{days, plural, one {# day} other {# days}} out of {total}",
+      "startRange": "{from} - {to}",
+      "startProvisional": "provisional, over {n, plural, one {# measurement} other {# measurements}}",
+      "nowDay": "7-day average as of {date}",
+      "improved": "improved by {pct}%",
+      "declined": "worsened by {pct}%",
+      "stable": "stable",
+      "unknown": "n/a"
+    },
+    "compare": {
+      "label": "Compare with",
+      "course": "start of the journey",
+      "periodStart": "start of the period",
+      "previous": "previous period",
+      "last60": "last 60 days",
+      "last60Hint": "available with at least 60 days of history",
+      "needsPeriod": "not available with \"All\""
+    },
+    "bandOf": {
+      "course": "starting range",
+      "periodStart": "range of the first week of the period",
+      "previous": "range of the previous period",
+      "last60": "range of the last 60 days"
     }
   }
 }

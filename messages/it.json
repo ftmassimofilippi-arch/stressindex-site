@@ -930,12 +930,27 @@
       "bandCourse": "fascia di partenza",
       "bandCourseClient": "dove eri all'inizio",
       "bandNone": "Nessuna fascia: servono almeno 3 misurazioni di riferimento.",
+      "bandOf": {
+        "course": "fascia di partenza",
+        "last60": "fascia degli ultimi 60 giorni",
+        "periodStart": "fascia della prima settimana del periodo",
+        "previous": "fascia del periodo precedente"
+      },
       "bandPeriodStart": "prima settimana del periodo",
       "bandPrevious": "periodo precedente",
       "bandProvisional": "fascia provvisoria, su {n} misurazioni",
       "baselineOutside": "La partenza del percorso ({from} - {to}) è fuori dal periodo mostrato: la fascia resta quella.",
       "betterHigher": "più alto è meglio",
       "betterLower": "più basso è meglio",
+      "compare": {
+        "course": "partenza del percorso",
+        "label": "Confronta con",
+        "last60": "ultimi 60 giorni",
+        "last60Hint": "disponibile con almeno 60 giorni di storia",
+        "needsPeriod": "non disponibile con \"Tutto\"",
+        "periodStart": "inizio del periodo",
+        "previous": "periodo precedente"
+      },
       "countsCaption": "{reference, plural, one {# misurazione di riferimento} other {# misurazioni di riferimento}} su {total} nel periodo · dal {from} al {to}",
       "countsCaptionAll": "{reference, plural, one {# misurazione di riferimento} other {# misurazioni di riferimento}} su {total} · dal {from} al {to}",
       "fitScale": "Scala adattata ai dati",
@@ -949,6 +964,21 @@
       },
       "noReference": "Nessuna misurazione di riferimento: l'andamento si calcola sulle misurazioni standard del mattino (dalle 4 alle 12). Le {count, plural, one {# misurazione} other {# misurazioni}} di altro tipo o orario restano visibili come punti vuoti.",
       "noReferenceInPeriod": "Nessuna misurazione di riferimento nel periodo scelto.",
+      "numbers": {
+        "change": "Variazione",
+        "declined": "peggiorato del {pct}%",
+        "improved": "migliorato del {pct}%",
+        "now": "Adesso",
+        "nowDay": "media 7 giorni al {date}",
+        "regularity": "Regolarità",
+        "regularityValue": "{days, plural, one {# giorno} other {# giorni}} su {total}",
+        "stable": "stabile",
+        "start": "Partenza",
+        "startClient": "All'inizio",
+        "startProvisional": "provvisoria, su {n, plural, one {# misurazione} other {# misurazioni}}",
+        "startRange": "{from} - {to}",
+        "unknown": "n.d."
+      },
       "otherPoint": "fuori dai conti",
       "outExcluded": "Esclusa dai conti dal professionista",
       "outHour": "Fuori dai conti: non è del mattino (dalle 4 alle 12)",
@@ -959,7 +989,17 @@
       "rollingProvisional": "provvisoria, su {n, plural, one {# misurazione} other {# misurazioni}}",
       "rollingValue": "media 7 giorni: {value}",
       "showPoints": "Punti",
-      "showPointsTitle": "Mostra o nascondi i puntini delle singole misurazioni"
+      "showPointsTitle": "Mostra o nascondi i puntini delle singole misurazioni",
+      "summary": {
+        "down": "{name} sceso del {pct}%, da {start} a {now}.",
+        "flat": "{name} invariato: {now}.",
+        "none": "Non ci sono ancora abbastanza misurazioni di riferimento per un confronto.",
+        "provisional": "Indicativo, su {n, plural, one {# misurazione} other {# misurazioni}}.",
+        "realBad": "Il cambiamento è reale, ma va nella direzione opposta a quella cercata: la media degli ultimi 7 giorni è fuori dalla {band}.",
+        "realGood": "Il cambiamento è reale e va nella direzione giusta: la media degli ultimi 7 giorni è fuori dalla {band}.",
+        "stable": "Stabile, dentro la sua {band}.",
+        "up": "{name} salito del {pct}%, da {start} a {now}."
+      }
     },
     "poincare": {
       "balanced": "Bilanciato",

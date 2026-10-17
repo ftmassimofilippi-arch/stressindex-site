@@ -930,12 +930,27 @@
       "bandCourse": "Ausgangsbereich",
       "bandCourseClient": "wo Sie angefangen haben",
       "bandNone": "Noch kein Bereich: es braucht mindestens 3 Referenzmessungen.",
+      "bandOf": {
+        "course": "Ausgangsbereichs",
+        "last60": "Bereichs der letzten 60 Tage",
+        "periodStart": "Bereichs der ersten Woche des Zeitraums",
+        "previous": "Bereichs des Vorzeitraums"
+      },
       "bandPeriodStart": "erste Woche des Zeitraums",
       "bandPrevious": "Vorzeitraum",
       "bandProvisional": "vorläufiger Bereich, aus {n} Messungen",
       "baselineOutside": "Der Ausgangspunkt ({from} - {to}) liegt außerhalb des gezeigten Zeitraums: der Bereich bleibt derselbe.",
       "betterHigher": "höher ist besser",
       "betterLower": "niedriger ist besser",
+      "compare": {
+        "course": "Ausgangspunkt",
+        "label": "Vergleichen mit",
+        "last60": "letzte 60 Tage",
+        "last60Hint": "verfügbar ab 60 Tagen Verlauf",
+        "needsPeriod": "bei \"Alle\" nicht verfügbar",
+        "periodStart": "Beginn des Zeitraums",
+        "previous": "Vorzeitraum"
+      },
       "countsCaption": "{reference, plural, one {# Referenzmessung} other {# Referenzmessungen}} von {total} im Zeitraum · {from} bis {to}",
       "countsCaptionAll": "{reference, plural, one {# Referenzmessung} other {# Referenzmessungen}} von {total} · {from} bis {to}",
       "fitScale": "An die Daten angepasste Skala",
@@ -949,6 +964,21 @@
       },
       "noReference": "Keine Referenzmessung: der Verlauf wird aus Standardmessungen am Morgen (4 bis 12 Uhr) berechnet. {count, plural, one {# Messung} other {# Messungen}} anderer Art oder Uhrzeit bleiben als leere Punkte sichtbar.",
       "noReferenceInPeriod": "Keine Referenzmessung im gewählten Zeitraum.",
+      "numbers": {
+        "change": "Veränderung",
+        "declined": "um {pct}% verschlechtert",
+        "improved": "um {pct}% verbessert",
+        "now": "Jetzt",
+        "nowDay": "7-Tage-Mittel am {date}",
+        "regularity": "Regelmäßigkeit",
+        "regularityValue": "{days, plural, one {# Tag} other {# Tage}} von {total}",
+        "stable": "stabil",
+        "start": "Ausgangswert",
+        "startClient": "Am Anfang",
+        "startProvisional": "vorläufig, aus {n, plural, one {# Messung} other {# Messungen}}",
+        "startRange": "{from} - {to}",
+        "unknown": "k. A."
+      },
       "otherPoint": "nicht gezählt",
       "outExcluded": "Von der Fachperson aus der Berechnung ausgeschlossen",
       "outHour": "Nicht gezählt: keine Morgenmessung (4 bis 12 Uhr)",
@@ -959,7 +989,17 @@
       "rollingProvisional": "vorläufig, aus {n, plural, one {# Messung} other {# Messungen}}",
       "rollingValue": "7-Tage-Mittel: {value}",
       "showPoints": "Punkte",
-      "showPointsTitle": "Punkte der einzelnen Messungen ein- oder ausblenden"
+      "showPointsTitle": "Punkte der einzelnen Messungen ein- oder ausblenden",
+      "summary": {
+        "down": "{name} um {pct}% gesunken, von {start} auf {now}.",
+        "flat": "{name} unverändert: {now}.",
+        "none": "Noch nicht genug Referenzmessungen für einen Vergleich.",
+        "provisional": "Vorläufig, aus {n, plural, one {# Messung} other {# Messungen}}.",
+        "realBad": "Die Veränderung ist echt, geht aber in die entgegengesetzte Richtung: das 7-Tage-Mittel liegt außerhalb des {band}.",
+        "realGood": "Die Veränderung ist echt und geht in die richtige Richtung: das 7-Tage-Mittel liegt außerhalb des {band}.",
+        "stable": "Stabil, innerhalb des {band}.",
+        "up": "{name} um {pct}% gestiegen, von {start} auf {now}."
+      }
     },
     "poincare": {
       "balanced": "Ausgewogen",

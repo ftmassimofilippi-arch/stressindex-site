@@ -33,6 +33,46 @@
       "rmssd": "Variabilità cardiaca (RMSSD)",
       "sdnn": "Variabilità complessiva (SDNN)",
       "mean_hr": "Frequenza cardiaca media"
+    },
+    "summary": {
+      "up": "{name} salito del {pct}%, da {start} a {now}.",
+      "down": "{name} sceso del {pct}%, da {start} a {now}.",
+      "flat": "{name} invariato: {now}.",
+      "realGood": "Il cambiamento è reale e va nella direzione giusta: la media degli ultimi 7 giorni è fuori dalla {band}.",
+      "realBad": "Il cambiamento è reale, ma va nella direzione opposta a quella cercata: la media degli ultimi 7 giorni è fuori dalla {band}.",
+      "stable": "Stabile, dentro la sua {band}.",
+      "provisional": "Indicativo, su {n, plural, one {# misurazione} other {# misurazioni}}.",
+      "none": "Non ci sono ancora abbastanza misurazioni di riferimento per un confronto."
+    },
+    "numbers": {
+      "start": "Partenza",
+      "startClient": "All'inizio",
+      "now": "Adesso",
+      "change": "Variazione",
+      "regularity": "Regolarità",
+      "regularityValue": "{days, plural, one {# giorno} other {# giorni}} su {total}",
+      "startRange": "{from} - {to}",
+      "startProvisional": "provvisoria, su {n, plural, one {# misurazione} other {# misurazioni}}",
+      "nowDay": "media 7 giorni al {date}",
+      "improved": "migliorato del {pct}%",
+      "declined": "peggiorato del {pct}%",
+      "stable": "stabile",
+      "unknown": "n.d."
+    },
+    "compare": {
+      "label": "Confronta con",
+      "course": "partenza del percorso",
+      "periodStart": "inizio del periodo",
+      "previous": "periodo precedente",
+      "last60": "ultimi 60 giorni",
+      "last60Hint": "disponibile con almeno 60 giorni di storia",
+      "needsPeriod": "non disponibile con \"Tutto\""
+    },
+    "bandOf": {
+      "course": "fascia di partenza",
+      "periodStart": "fascia della prima settimana del periodo",
+      "previous": "fascia del periodo precedente",
+      "last60": "fascia degli ultimi 60 giorni"
     }
   }
 }

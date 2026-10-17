@@ -30,6 +30,17 @@ dei clienti con account, responsabile per i dati dei clienti dei professionisti)
   select e insert per l'utente; `gdpr_consents` (1.0, una riga per utente,
   scritta dall'app) non cambia, perde solo i grant ad `anon`. Finché non è applicata la
   riaccettazione non blocca nessuno.
+## 2026-10-17 — grafici del percorso: fase 3, i numeri
+
+Sopra ogni pannello la frase di sintesi generata dai numeri nelle tre lingue
+("Indice di Stress sceso del 19%, da 49 a 40. Il cambiamento è reale...",
+"Stabile, dentro la sua fascia", "Indicativo, su N misurazioni") e i quattro
+numeri: Partenza (con le date dei 7 giorni), Adesso (media 7 giorni alla
+data), Variazione (freccia nel verso del numero, colore nel significato:
+"migliorato del 19%"), Regolarità ("20 giorni su 30"). Selettore "Confronta
+con": partenza del percorso, inizio del periodo, periodo precedente, ultimi
+60 giorni (solo con 60 giorni di storia), salvato in localStorage.
+
 ## 2026-10-17 — grafici del percorso: fasi 0, 1 e 2
 
 Analisi in `docs/ANALISI_GRAFICI_2026-10-17.md`. Nuovo modulo puro

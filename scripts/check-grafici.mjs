@@ -32,6 +32,7 @@ async function shot(name, path, width, opts = {}) {
   await page.setCookie({ name: `sb-${ref}-auth-token`, value: cookieValue, domain: host, path: '/' })
   const errors = []
   page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(`${m.type()}: ${m.text().slice(0, 300)}`) })
+  page.on('response', (r) => { if (r.status() >= 400) errors.push(`http ${r.status()} ${r.url().slice(0, 160)}`) })
   page.on('pageerror', (e) => errors.push(`pageerror: ${String(e).slice(0, 300)}`))
   const t0 = Date.now()
   const res = await page.goto(`${base}${path}`, { waitUntil: 'networkidle0', timeout: 90000 })
