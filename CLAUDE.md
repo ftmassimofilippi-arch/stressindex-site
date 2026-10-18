@@ -1,7 +1,9 @@
 # CLAUDE.md — Stress Index, sito e dashboard (Next.js)
 
 Istruzioni per le sessioni Claude Code in questo repo. Aggiornate al
-30 settembre 2026 (tag `site-2026-09-30`).
+18 ottobre 2026. Le regole comuni ad app e sito sono le stesse del
+`CLAUDE.md` di `../hrv_app` (e del suo `docs/00_REGOLE_SVILUPPO_STRESS_INDEX.md`);
+se cambiano, si cambiano in tutti e due.
 
 ## Da leggere per primi
 
@@ -13,16 +15,40 @@ Istruzioni per le sessioni Claude Code in questo repo. Aggiornate al
    `docs/NOTIFICHE.md`, `docs/COLLEGAMENTI_AUDIT.md`,
    `docs/MONITORAGGIO_SITO_ANALISI.md`.
 4. `CHANGELOG.md`.
+5. `../hrv_app/docs/PIANO_SOLIDITA.md` se il lavoro tocca calcoli, dati
+   condivisi o un blocco del piano.
+
+## Processo
+
+- **Prima analisi, poi codice.** Se il lavoro tocca un bug o codice
+  esistente, la prima sessione è SOLO ANALISI e si ferma con un riepilogo.
+- **Un ramo per funzione**, da `main` aggiornato; mai lavoro diretto su
+  `main`, mai funzioni diverse sullo stesso ramo, mai due sessioni sullo
+  stesso repo nello stesso momento.
+- **Commit piccoli**, messaggi in italiano, test verdi dopo ognuno.
+- **Bug trovati per caso** non si correggono al volo: si scrivono in
+  `docs/BUG_CONGELATI.md` (crearlo se manca) e si decidono a parte.
+- A fine sessione: push del ramo e riepilogo breve (massimo 15 righe) da
+  incollare in chat.
 
 ## Regole fisse
 
-- **Segreti mai nei file committati**: `.env*` (solo `.env.example` con
-  segnaposto), service key, `ANTHROPIC_API_KEY`, `SMTP_*`, `NOTIFY_SECRET`.
+- **Segreti mai nei file committati, nei documenti o nei prompt**: `.env*`
+  (solo `.env.example` con segnaposto), service key, `ANTHROPIC_API_KEY`,
+  `SMTP_*`, `NOTIFY_SECRET`. Stanno nel password manager o nelle variabili
+  d'ambiente di Vercel e Supabase.
   Nei documenti si scrive "nel password manager". Nella 026 il segreto si
   sostituisce a mano al momento di applicarla.
 - **`service_role` solo lato server** (`createAdminClient()` nelle route
   `/api/admin/*`, `/api/clienti*`, ponte monitoraggi); mai in un componente
   client, mai con prefisso `NEXT_PUBLIC_`.
+- **Un'unica implementazione per ogni calcolo HRV e score, in Dart
+  nell'app.** Mai duplicarla nel sito né in SQL: il database salva il
+  risultato e il sito lo legge. Fasce degli score solo da
+  `score_zones.dart` dell'app, SWC solo da `ln_rmssd_swc.dart` (il sito si
+  allinea con `../hrv_app/docs/SWC_SITO_TODO.md`). Debito esistente da non
+  allargare: `calc_score_*` (`sito-005`, `sito-014`) e le statistiche sport
+  calcolate in `SportCharts.tsx`, `sport-data.ts`, `AdvancedAnalyticsTab.tsx`.
 - **Il sito non ricalcola**: score, soglie VT1/VT2, coppie prima/dopo e
   alert vengono dall'app o dal database. I porting in `src/lib`
   (`alert-rules.ts`, `before-after.ts`, `chart-scales.ts`,
@@ -43,10 +69,15 @@ Istruzioni per le sessioni Claude Code in questo repo. Aggiornate al
 - **Collegamenti**: ogni scrittura passa da `link_client_to_professional`
   (route admin comprese).
 - **Migrazioni** in `supabase-migrations/`, nome `sito-NNN_descrizione.sql`,
-  idempotenti, a mano nel SQL Editor. Vedi "Migrazioni: nomi fra i due repo"
+  numerate, idempotenti, **in transazione** (`begin; ... commit;`),
+  **collaudate su Postgres locale** prima, a mano nel SQL Editor e **mai
+  applicate in produzione senza conferma esplicita di Massi**. Vedi "Migrazioni: nomi fra i due repo"
   qui sotto. Lettura del DB di produzione con `supabase db query --linked`
-  (solo SELECT senza via libera). Lo stato reale è nel README, sezione
-  Migrazioni.
+  (solo SELECT senza via libera), senza dati personali nell'output; quando
+  bastano, le viste pseudonimizzate `debug.*` (`app-043`). Lo stato reale è
+  nel README, sezione Migrazioni.
+- **RLS**: ogni tabella nuova nasce con RLS attiva e le sue policy nella
+  stessa migrazione.
 - **Tabelle di backup e di log**: si creano con RLS attiva e senza grant ad
   `anon` e `authenticated`, **nella stessa transazione** del `create table`:
   ```sql
@@ -65,8 +96,11 @@ Istruzioni per le sessioni Claude Code in questo repo. Aggiornate al
   dai client component non devono importarlo (per questo esistono
   `alert-rules.ts` e `alert-rules-server.ts` separati).
 - Linguaggio wellness: mai diagnosi, paziente, clinico, medico, terapia,
-  biomarcatore; "Adattamento" in UI per `score_modulazione_infiammatoria`.
-- **i18n**: sito IT/EN/DE con next-intl, pagine in `src/app/[locale]/`,
+  referto, cartella clinica, biomarcatore; "Adattamento" in UI per
+  `score_modulazione_infiammatoria`, **colonna che non si rinomina mai**.
+- **Il rapporto LF/HF non si usa** in testi, grafici o PDF nuovi. Le pagine
+  che lo mostrano oggi sono debito: non si allarga.
+- **i18n**: **ogni testo nuovo nasce in IT, EN e DE dall'inizio**. Sito IT/EN/DE con next-intl, pagine in `src/app/[locale]/`,
   slug italiani in tutte le lingue. Nessuna stringa visibile hardcoded: le
   stringhe vanno nei frammenti `messages/_parts/<lingua>/<ns>.<pacchetto>.json`
   e si rigenerano i file finali con `node scripts/i18n-merge.mjs`; prima di
