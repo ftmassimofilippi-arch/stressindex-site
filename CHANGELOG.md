@@ -3,6 +3,27 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-18 — SWC solo sulle misurazioni a riposo
+
+Ramo `fix/swc-misurazioni-a-riposo`. Allinea il sito alla definizione unica
+dello SWC dell'app (`hrv_app/lib/utils/ln_rmssd_swc.dart`,
+`hrv_app/docs/SWC_SITO_TODO.md`), dopo la chiusura di BC-20 (`app-054`,
+`app-055`: le sessioni di coerenza non sono più etichettate standard).
+
+- Nuovo modulo puro `src/lib/ln-rmssd-swc.ts` con test: baseline mobile 7
+  giorni, deviazione standard **campionaria** (n − 1) sugli ultimi 30 punti,
+  banda ±0,5 × SD **solo da 5 punti**. Verificato sui valori di riferimento
+  dell'app (SD 0,14487, semibanda 0,07243, baseline 3,52743).
+- Pagina atleta: il grafico ln(RMSSD) con baseline e banda legge le
+  **misurazioni HRV a riposo** (`isRestingMeasurement`: test standard, non
+  sessioni lunghe a durata libera, RMSSD > 0), non più `sport_sessions.rmssd_avg`.
+- Nuova sezione "RMSSD medio in allenamento": serie semplice, senza baseline
+  né banda SWC.
+- Card atleta: la freccia resta sull'RMSSD di allenamento ma l'etichetta lo
+  dice ("RMSSD in allenamento in salita/in calo/stabile").
+- Testi IT/EN/DE aggiornati (`athletePage.lnTrendTitle`, `swcNote`, chiavi
+  nuove `trainingRmssdTitle`, `trainingRmssdNote`, `charts.needTwoResting`).
+
 ## 2026-10-17 — pacchetto legale 2.1
 
 Ramo `legal/v2.1`. Pagine legali riscritte dal pacchetto legale del 17/10/2026
