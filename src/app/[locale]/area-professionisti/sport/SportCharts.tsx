@@ -20,6 +20,7 @@ import {
 import { intlTag, num } from '@/lib/format'
 import { DFA_ZONES, dfaZoneLabel, formatClock, zoneForAlpha1 } from '@/lib/sport-format'
 import type { DfaWindow, SportTag } from '@/lib/sport-data'
+import type { LnRmssdSwc } from '@/lib/ln-rmssd-swc'
 
 const TOOLTIP_STYLE = {
   background: '#fff',
@@ -296,46 +297,34 @@ export function RmssdChart({ windows }: { windows: DfaWindow[] }) {
 }
 
 // ============================================================================
-// ln(RMSSD) 60 giorni — punti + baseline rolling 7gg + banda SWC
+// ln(RMSSD) 60 giorni, SOLO misurazioni a riposo: punti + baseline 7 giorni +
+// banda SWC. Il calcolo è in src/lib/ln-rmssd-swc.ts (porting identico di
+// hrv_app/lib/utils/ln_rmssd_swc.dart): qui si disegna e basta.
 // ============================================================================
 
-export function LnRmssdChart({ points }: { points: Array<{ date: string; ln: number }> }) {
+export function LnRmssdChart({ swc }: { swc: LnRmssdSwc }) {
   const t = useTranslations('sport')
   const locale = useLocale()
   const fmtDay = dayFormatter(locale)
-  if (points.length < 2) {
-    return <Placeholder text={t('charts.needTwoSessions')} />
+  if (swc.points.length < 2) {
+    return <Placeholder text={t('charts.needTwoResting')} />
   }
-  // Baseline: media mobile 7 giorni (centrata sui punti precedenti).
-  const sorted = [...points].sort((a, b) => a.date.localeCompare(b.date))
-  const DAY = 86_400_000
-  const baseline = sorted.map((p, i) => {
-    const ts = new Date(p.date).getTime()
-    const window = sorted.slice(0, i + 1).filter((q) => ts - new Date(q.date).getTime() <= 7 * DAY)
-    const mean = window.reduce((a, q) => a + q.ln, 0) / window.length
-    return mean
-  })
+  const half = swc.band
 
-  // Banda SWC: ±0.5 × CV × |mean| sugli ultimi 30 punti.
-  const last30 = sorted.slice(-30).map((p) => p.ln)
-  const mean30 = last30.reduce((a, b) => a + b, 0) / last30.length
-  const sd30 = Math.sqrt(last30.reduce((a, b) => a + (b - mean30) ** 2, 0) / last30.length)
-  const cv30 = mean30 !== 0 ? sd30 / Math.abs(mean30) : 0
-  const swcHalf = 0.5 * cv30 * Math.abs(mean30) // = 0.5 * sd30
-
-  const data = sorted.map((p, i) => {
-    const base = baseline[i]
-    const upper = base + swcHalf
-    const lower = base - swcHalf
+  const data = swc.points.map((p) => {
+    const base = p.baseline
+    // Senza banda (meno di 5 punti) il punto è "dentro": si vede solo la baseline.
+    const upper = half == null ? null : base + half
+    const lower = half == null ? null : base - half
     let status: 'up' | 'in' | 'down' = 'in'
-    if (p.ln > upper) status = 'up'
-    else if (p.ln < lower) status = 'down'
+    if (upper != null && p.ln > upper) status = 'up'
+    else if (lower != null && p.ln < lower) status = 'down'
     return {
       date: p.date,
       ln: p.ln,
       baseline: +base.toFixed(4),
-      bandLow: +lower.toFixed(4),
-      bandSpan: +(upper - lower).toFixed(4),
+      bandLow: lower == null ? null : +lower.toFixed(4),
+      bandSpan: upper == null || lower == null ? null : +(upper - lower).toFixed(4),
       up: status === 'up' ? p.ln : null,
       in: status === 'in' ? p.ln : null,
       down: status === 'down' ? p.ln : null,
@@ -356,9 +345,13 @@ export function LnRmssdChart({ points }: { points: Array<{ date: string; ln: num
         <YAxis stroke="#6B7280" fontSize={10} width={36} domain={['auto', 'auto']}
           tickFormatter={(v) => num(v, 1, locale)}
           label={{ value: 'ln(RMSSD)', angle: -90, position: 'insideLeft', offset: 16, fontSize: 11, fill: '#6B7280' }} />
-        {/* banda SWC come area impilata trasparente + colorata */}
-        <Area dataKey="bandLow" stackId="band" stroke="none" fill="none" isAnimationActive={false} />
-        <Area dataKey="bandSpan" stackId="band" stroke="none" fill="#4FA39A" fillOpacity={0.14} isAnimationActive={false} />
+        {/* banda SWC come area impilata trasparente + colorata (assente sotto i 5 punti) */}
+        {half != null && (
+          <Area dataKey="bandLow" stackId="band" stroke="none" fill="none" isAnimationActive={false} />
+        )}
+        {half != null && (
+          <Area dataKey="bandSpan" stackId="band" stroke="none" fill="#4FA39A" fillOpacity={0.14} isAnimationActive={false} />
+        )}
         <Line type="monotone" dataKey="baseline" stroke="#2E746C" strokeWidth={1.6} strokeDasharray="5 4" dot={false} isAnimationActive={false} name={t('charts.baseline7d')} />
         <Line type="monotone" dataKey="ln" stroke="#94A3B8" strokeWidth={1} dot={false} isAnimationActive={false} legendType="none" />
         <Scatter dataKey="up" fill="#10B981" isAnimationActive={false} />
@@ -371,6 +364,40 @@ export function LnRmssdChart({ points }: { points: Array<{ date: string; ln: num
             if (value == null) return [] as unknown as [string, string]
             const label = name === 'baseline' ? t('charts.baseline7d') : t('charts.lnRmssd')
             return [num(value, 3, locale), label]
+          }}
+        />
+      </ComposedChart>
+    </ResponsiveContainer>
+  )
+}
+
+// ============================================================================
+// RMSSD medio IN ALLENAMENTO (sport_sessions.rmssd_avg): serie semplice nel
+// tempo, senza baseline né banda SWC. Sotto sforzo l'RMSSD segue l'intensità,
+// non il recupero: per questo non si confronta con una banda.
+// ============================================================================
+
+export function TrainingRmssdChart({ points }: { points: Array<{ date: string; rmssd: number; trimp: number | null }> }) {
+  const t = useTranslations('sport')
+  const locale = useLocale()
+  const fmtDay = dayFormatter(locale)
+  if (points.length < 2) {
+    return <Placeholder text={t('charts.needTwoSessions')} height={220} />
+  }
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <ComposedChart data={points} margin={{ top: 8, right: 16, bottom: 24, left: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EA" vertical={false} />
+        <XAxis dataKey="date" stroke="#6B7280" fontSize={10} tickFormatter={(v) => fmtDay(String(v))} minTickGap={28} />
+        <YAxis stroke="#6B7280" fontSize={10} width={34} domain={['auto', 'auto']}
+          label={{ value: t('charts.rmssdAxis'), angle: -90, position: 'insideLeft', offset: 18, fontSize: 11, fill: '#6B7280' }} />
+        <Line type="monotone" dataKey="rmssd" stroke="#4FA39A" strokeWidth={1.6} dot={{ r: 3, fill: '#4FA39A', strokeWidth: 0 }} isAnimationActive={false} />
+        <Tooltip
+          contentStyle={TOOLTIP_STYLE}
+          labelFormatter={(v) => fmtDay(String(v))}
+          formatter={(value, name) => {
+            if (value == null) return [] as unknown as [string, string]
+            return name === 'trimp' ? [num(value, 0, locale), 'TRIMP'] : [`${num(value, 1, locale)} ms`, 'RMSSD']
           }}
         />
       </ComposedChart>

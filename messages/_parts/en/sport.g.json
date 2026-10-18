@@ -82,9 +82,9 @@
       "up": "rising",
       "down": "falling",
       "stable": "stable",
-      "upTitle": "ln(RMSSD) rising",
-      "downTitle": "ln(RMSSD) falling",
-      "stableTitle": "ln(RMSSD) stable"
+      "upTitle": "Training RMSSD rising",
+      "downTitle": "Training RMSSD falling",
+      "stableTitle": "Training RMSSD stable"
     }
   },
   "charts": {
@@ -107,7 +107,8 @@
     "atl": "ATL (fatigue)",
     "tsb": "TSB (form)",
     "zoneTooltip": "{label}: {minutes} min ({pct}%)",
-    "min": "min"
+    "min": "min",
+    "needTwoResting": "At least 2 resting measurements (standard test) in the last 60 days are needed"
   },
   "dfaZones": {
     "recovery": "Recovery",
@@ -147,12 +148,14 @@
   "athletePage": {
     "hrMax": "Max HR {value} bpm",
     "ftp": "FTP {value} W",
-    "lnTrendTitle": "ln(RMSSD) trend · 60 days",
+    "lnTrendTitle": "Resting ln(RMSSD) trend · 60 days",
     "legendBaseline": "7-day baseline",
     "legendAbove": "Above the band",
     "legendIn": "Within the band",
     "legendBelow": "Below the band",
-    "swcNote": "The SWC band (Smallest Worthwhile Change) represents normal variability. Points above indicate good recovery, points below indicate fatigue or stress.",
+    "swcNote": "Resting HRV measurements only (standard test): orthostatic, coherence, long sessions and workouts are excluded. The SWC band (Smallest Worthwhile Change) represents normal variability and appears from 5 measurements. Points above indicate good recovery, points below indicate fatigue or stress.",
+    "trainingRmssdTitle": "Average RMSSD during training · 60 days",
+    "trainingRmssdNote": "Average RMSSD during training sessions. Under effort RMSSD follows intensity, not recovery: that is why there is no SWC band here.",
     "trimpWeekly": "Weekly TRIMP",
     "vsPrevWeek": "vs previous week",
     "trimpMonthly": "Monthly TRIMP",

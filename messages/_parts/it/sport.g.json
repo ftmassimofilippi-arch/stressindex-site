@@ -82,9 +82,9 @@
       "up": "in salita",
       "down": "in calo",
       "stable": "stabile",
-      "upTitle": "ln(RMSSD) in salita",
-      "downTitle": "ln(RMSSD) in calo",
-      "stableTitle": "ln(RMSSD) stabile"
+      "upTitle": "RMSSD in allenamento in salita",
+      "downTitle": "RMSSD in allenamento in calo",
+      "stableTitle": "RMSSD in allenamento stabile"
     }
   },
   "charts": {
@@ -107,7 +107,8 @@
     "atl": "ATL (Fatica)",
     "tsb": "TSB (Forma)",
     "zoneTooltip": "{label}: {minutes} min ({pct}%)",
-    "min": "min"
+    "min": "min",
+    "needTwoResting": "Servono almeno 2 misurazioni a riposo (test standard) negli ultimi 60 giorni"
   },
   "dfaZones": {
     "recovery": "Recupero",
@@ -147,12 +148,14 @@
   "athletePage": {
     "hrMax": "HR max {value} bpm",
     "ftp": "FTP {value} W",
-    "lnTrendTitle": "Trend ln(RMSSD) · 60 giorni",
+    "lnTrendTitle": "Trend ln(RMSSD) a riposo · 60 giorni",
     "legendBaseline": "Baseline 7 giorni",
     "legendAbove": "Sopra la banda",
     "legendIn": "In banda",
     "legendBelow": "Sotto la banda",
-    "swcNote": "La banda SWC (Smallest Worthwhile Change) rappresenta la variabilità normale. I punti sopra indicano buon recupero, quelli sotto affaticamento o stress.",
+    "swcNote": "Solo misurazioni HRV a riposo (test standard): sono esclusi ortostatico, coerenza, sessioni lunghe e allenamenti. La banda SWC (Smallest Worthwhile Change) rappresenta la variabilità normale e compare da 5 misurazioni. I punti sopra indicano buon recupero, quelli sotto affaticamento o stress.",
+    "trainingRmssdTitle": "RMSSD medio in allenamento · 60 giorni",
+    "trainingRmssdNote": "Media dell'RMSSD durante le sessioni di allenamento. Sotto sforzo l'RMSSD segue l'intensità, non il recupero: per questo qui non c'è la banda SWC.",
     "trimpWeekly": "TRIMP settimanale",
     "vsPrevWeek": "vs settimana precedente",
     "trimpMonthly": "TRIMP mensile",

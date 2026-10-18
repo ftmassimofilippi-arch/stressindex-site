@@ -578,7 +578,10 @@ export async function listSportAthletes(professionalId: string | null): Promise<
   })
 }
 
-// Confronta la media di ln(RMSSD) dell'ultima settimana con quella precedente.
+// Tendenza dell'RMSSD medio IN ALLENAMENTO (sport_sessions.rmssd_avg): media di
+// ln dell'ultima settimana contro la precedente. Non è lo SWC a riposo della
+// pagina atleta, che parte dalle misurazioni HRV standard: per questo
+// l'etichetta nella card dice "in allenamento" (athletes.trend.*).
 function lnRmssdTrend(sessions: Array<{ start_time: string; start_time_utc?: string | null; rmssd_avg: number | null }>): TrendDirection {
   const now = Date.now()
   const DAY = 86_400_000

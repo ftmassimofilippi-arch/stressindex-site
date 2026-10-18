@@ -8,7 +8,8 @@ import { ArrowLeft, Info } from 'lucide-react'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { EmptyState } from '@/components/dashboard/EmptyState'
-import { getProfessionalProfile } from '@/lib/dashboard-data'
+import { getProfessionalProfile, listMeasurementsForClient } from '@/lib/dashboard-data'
+import { computeLnRmssdSwc, isRestingMeasurement, LN_RMSSD_SWC } from '@/lib/ln-rmssd-swc'
 import {
   getAthleteThresholds,
   getSportAthleteProfile,
@@ -22,7 +23,7 @@ import { caricaOErrore } from '@/lib/data-error'
 import { DataLoadNotice } from '@/components/dashboard/DataLoadNotice'
 import { formatMeasuredDate, measuredInstant, num } from '@/lib/format'
 import { competitiveLevelLabel, formatDuration } from '@/lib/sport-format'
-import { LnRmssdChart, PmcChart } from '../../SportCharts'
+import { LnRmssdChart, PmcChart, TrainingRmssdChart } from '../../SportCharts'
 import { isSportSessionValida } from '@/lib/sport-rules'
 import { SportTooShortBadge } from '@/components/dashboard/SportTooShortBadge'
 
@@ -52,11 +53,17 @@ export default async function SportAthletePage({
   ])
   if (!athlete) notFound()
 
-  const [sessions, load, thresholds, thresholdTests] = await Promise.all([
+  const DAY_MS = 86_400_000
+  const [sessions, load, thresholds, thresholdTests, misure] = await Promise.all([
     listSportSessions(professionalId, { athleteId: params.id, period: 90 }),
     getTrainingLoad(params.id, 120),
     caricaOErrore(getAthleteThresholds(params.id)),
     caricaOErrore(listThresholdTests(params.id)),
+    // Misurazioni HRV dell'atleta (in studio e da collegato): la base dello SWC.
+    listMeasurementsForClient(params.id, {
+      from: new Date(Date.now() - LN_RMSSD_SWC.lookbackDays * DAY_MS).toISOString(),
+      professionistaId: professionalId ?? undefined,
+    }),
   ])
 
   const baseQuery = viewing ? `?professionista=${viewing.user_id}` : ''
@@ -72,9 +79,20 @@ export default async function SportAthletePage({
   // Statistiche e grafici solo sulle sessioni di almeno 5 minuti; lo storico
   // qui sotto le mostra tutte, le brevi con il badge (sport-rules.ts).
   const valide = sessions.filter(isSportSessionValida)
-  const lnPoints = valide
+  // SWC solo sulle misurazioni A RIPOSO: test standard, non sessioni lunghe a
+  // durata libera, mai l'allenamento. Definizione unica con l'app:
+  // hrv_app/lib/utils/ln_rmssd_swc.dart (restingMeasurements).
+  const swc = computeLnRmssdSwc(
+    misure
+      .filter(isRestingMeasurement)
+      .map((m) => ({ date: measuredInstant(m)?.toISOString() ?? m.measured_at, rmssd: m.rmssd as number })),
+    now,
+  )
+
+  // RMSSD medio IN ALLENAMENTO: grafico a parte, senza baseline né banda.
+  const trainingPoints = valide
     .filter((s) => s.rmssd_avg != null && s.rmssd_avg > 0 && now - ist(s) <= 60 * DAY)
-    .map((s) => ({ date: measuredInstant(s)?.toISOString() ?? s.start_time, ln: Math.log(s.rmssd_avg as number) }))
+    .map((s) => ({ date: measuredInstant(s)?.toISOString() ?? s.start_time, rmssd: s.rmssd_avg as number, trimp: s.trimp ?? null }))
     .sort((a, b) => a.date.localeCompare(b.date))
 
   // ── Carico di allenamento (dalle sessioni) ──────────────────────────────────
@@ -128,8 +146,15 @@ export default async function SportAthletePage({
             <Legend color="#EF4444" label={t('athletePage.legendBelow')} />
           </div>
         </div>
-        <LnRmssdChart points={lnPoints} />
+        <LnRmssdChart swc={swc} />
         <p className="mt-3 text-xs text-anthracite-lighter">{t('athletePage.swcNote')}</p>
+      </section>
+
+      {/* SEZIONE 1b — RMSSD medio in allenamento (senza banda SWC) */}
+      <section className="card p-5 mb-6">
+        <h2 className="font-serif text-lg text-anthracite mb-4">{t('athletePage.trainingRmssdTitle')}</h2>
+        <TrainingRmssdChart points={trainingPoints} />
+        <p className="mt-3 text-xs text-anthracite-lighter">{t('athletePage.trainingRmssdNote')}</p>
       </section>
 
       {/* SEZIONE 2 — Carico di allenamento */}

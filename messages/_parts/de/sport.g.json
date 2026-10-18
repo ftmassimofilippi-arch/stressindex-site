@@ -82,9 +82,9 @@
       "up": "steigend",
       "down": "fallend",
       "stable": "stabil",
-      "upTitle": "ln(RMSSD) steigend",
-      "downTitle": "ln(RMSSD) fallend",
-      "stableTitle": "ln(RMSSD) stabil"
+      "upTitle": "RMSSD im Training steigend",
+      "downTitle": "RMSSD im Training fallend",
+      "stableTitle": "RMSSD im Training stabil"
     }
   },
   "charts": {
@@ -107,7 +107,8 @@
     "atl": "ATL (Ermüdung)",
     "tsb": "TSB (Form)",
     "zoneTooltip": "{label}: {minutes} min ({pct}%)",
-    "min": "min"
+    "min": "min",
+    "needTwoResting": "Mindestens 2 Messungen in Ruhe (Standardtest) in den letzten 60 Tagen sind nötig"
   },
   "dfaZones": {
     "recovery": "Erholung",
@@ -147,12 +148,14 @@
   "athletePage": {
     "hrMax": "Max. HF {value} bpm",
     "ftp": "FTP {value} W",
-    "lnTrendTitle": "ln(RMSSD)-Verlauf · 60 Tage",
+    "lnTrendTitle": "ln(RMSSD)-Verlauf in Ruhe · 60 Tage",
     "legendBaseline": "7-Tage-Baseline",
     "legendAbove": "Über dem Band",
     "legendIn": "Im Band",
     "legendBelow": "Unter dem Band",
-    "swcNote": "Das SWC-Band (Smallest Worthwhile Change) stellt die normale Variabilität dar. Punkte darüber deuten auf gute Erholung hin, Punkte darunter auf Ermüdung oder Stress.",
+    "swcNote": "Nur HRV-Messungen in Ruhe (Standardtest): Orthostase, Kohärenz, lange Sitzungen und Trainings sind ausgeschlossen. Das SWC-Band (Smallest Worthwhile Change) stellt die normale Variabilität dar und erscheint ab 5 Messungen. Punkte darüber deuten auf gute Erholung hin, Punkte darunter auf Ermüdung oder Stress.",
+    "trainingRmssdTitle": "Durchschnittlicher RMSSD im Training · 60 Tage",
+    "trainingRmssdNote": "Durchschnittlicher RMSSD während der Trainingseinheiten. Unter Belastung folgt der RMSSD der Intensität, nicht der Erholung: deshalb gibt es hier kein SWC-Band.",
     "trimpWeekly": "TRIMP pro Woche",
     "vsPrevWeek": "vs. Vorwoche",
     "trimpMonthly": "TRIMP pro Monat",

@@ -5304,13 +5304,15 @@
       "legendCtl": "CTL · Fitness",
       "legendIn": "In banda",
       "legendTsb": "TSB · Forma",
-      "lnTrendTitle": "Trend ln(RMSSD) · 60 giorni",
+      "lnTrendTitle": "Trend ln(RMSSD) a riposo · 60 giorni",
       "pmcAvailable": "Attualmente {count, plural, one {è disponibile # giorno} other {sono disponibili # giorni}}.",
       "pmcNeed": "Servono almeno 4 settimane di dati per il Performance Management Chart.",
       "pmcNote": "Zona gara ottimale: TSB tra +5 e +25 (area verde). CTL = fitness (media 42 giorni), ATL = fatica (media 7 giorni), TSB = forma (CTL meno ATL).",
       "pmcTitle": "Performance Management Chart",
       "sessions": "Sessioni",
-      "swcNote": "La banda SWC (Smallest Worthwhile Change) rappresenta la variabilità normale. I punti sopra indicano buon recupero, quelli sotto affaticamento o stress.",
+      "swcNote": "Solo misurazioni HRV a riposo (test standard): sono esclusi ortostatico, coerenza, sessioni lunghe e allenamenti. La banda SWC (Smallest Worthwhile Change) rappresenta la variabilità normale e compare da 5 misurazioni. I punti sopra indicano buon recupero, quelli sotto affaticamento o stress.",
+      "trainingRmssdNote": "Media dell'RMSSD durante le sessioni di allenamento. Sotto sforzo l'RMSSD segue l'intensità, non il recupero: per questo qui non c'è la banda SWC.",
+      "trainingRmssdTitle": "RMSSD medio in allenamento · 60 giorni",
       "trimpMonthly": "TRIMP mensile",
       "trimpWeekly": "TRIMP settimanale",
       "vsPrevWeek": "vs settimana precedente"
@@ -5325,11 +5327,11 @@
       "sessions30d": "Sessioni 30 giorni",
       "trend": {
         "down": "in calo",
-        "downTitle": "ln(RMSSD) in calo",
+        "downTitle": "RMSSD in allenamento in calo",
         "stable": "stabile",
-        "stableTitle": "ln(RMSSD) stabile",
+        "stableTitle": "RMSSD in allenamento stabile",
         "up": "in salita",
-        "upTitle": "ln(RMSSD) in salita"
+        "upTitle": "RMSSD in allenamento in salita"
       },
       "trimp7d": "TRIMP 7 giorni"
     },
@@ -5341,6 +5343,7 @@
       "hrAxis": "HR (bpm)",
       "lnRmssd": "ln(RMSSD)",
       "min": "min",
+      "needTwoResting": "Servono almeno 2 misurazioni a riposo (test standard) negli ultimi 60 giorni",
       "needTwoSessions": "Servono almeno 2 sessioni con RMSSD per il trend",
       "noDfa": "Dati DFA Alpha1 non disponibili",
       "noHr": "Dati HR non disponibili",

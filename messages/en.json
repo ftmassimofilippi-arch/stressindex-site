@@ -5304,13 +5304,15 @@
       "legendCtl": "CTL · Fitness",
       "legendIn": "Within the band",
       "legendTsb": "TSB · Form",
-      "lnTrendTitle": "ln(RMSSD) trend · 60 days",
+      "lnTrendTitle": "Resting ln(RMSSD) trend · 60 days",
       "pmcAvailable": "Currently {count, plural, one {# day is} other {# days are}} available.",
       "pmcNeed": "At least 4 weeks of data are needed for the Performance Management Chart.",
       "pmcNote": "Peak race zone: TSB between +5 and +25 (green area). CTL = fitness (42-day average), ATL = fatigue (7-day average), TSB = form (CTL minus ATL).",
       "pmcTitle": "Performance Management Chart",
       "sessions": "Sessions",
-      "swcNote": "The SWC band (Smallest Worthwhile Change) represents normal variability. Points above indicate good recovery, points below indicate fatigue or stress.",
+      "swcNote": "Resting HRV measurements only (standard test): orthostatic, coherence, long sessions and workouts are excluded. The SWC band (Smallest Worthwhile Change) represents normal variability and appears from 5 measurements. Points above indicate good recovery, points below indicate fatigue or stress.",
+      "trainingRmssdNote": "Average RMSSD during training sessions. Under effort RMSSD follows intensity, not recovery: that is why there is no SWC band here.",
+      "trainingRmssdTitle": "Average RMSSD during training · 60 days",
       "trimpMonthly": "Monthly TRIMP",
       "trimpWeekly": "Weekly TRIMP",
       "vsPrevWeek": "vs previous week"
@@ -5325,11 +5327,11 @@
       "sessions30d": "Sessions, 30 days",
       "trend": {
         "down": "falling",
-        "downTitle": "ln(RMSSD) falling",
+        "downTitle": "Training RMSSD falling",
         "stable": "stable",
-        "stableTitle": "ln(RMSSD) stable",
+        "stableTitle": "Training RMSSD stable",
         "up": "rising",
-        "upTitle": "ln(RMSSD) rising"
+        "upTitle": "Training RMSSD rising"
       },
       "trimp7d": "TRIMP, 7 days"
     },
@@ -5341,6 +5343,7 @@
       "hrAxis": "HR (bpm)",
       "lnRmssd": "ln(RMSSD)",
       "min": "min",
+      "needTwoResting": "At least 2 resting measurements (standard test) in the last 60 days are needed",
       "needTwoSessions": "At least 2 sessions with RMSSD are needed for the trend",
       "noDfa": "DFA Alpha1 data not available",
       "noHr": "HR data not available",
