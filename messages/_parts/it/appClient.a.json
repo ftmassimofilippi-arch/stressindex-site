@@ -1,0 +1,19 @@
+{
+  "page": {
+    "eyebrow": "Account pronto",
+    "title": "Il tuo account è pronto",
+    "intro": "Stress Index per chi si misura vive nell'app sul telefono. Sul sito non c'è un'area per te: misurazioni, andamento nel tempo e collegamento con il tuo professionista sono tutti nell'app.",
+    "step1Title": "Scarica l'app Stress Index",
+    "step1Body": "Installala sul tuo smartphone dallo store.",
+    "step2Title": "Accedi con le tue credenziali",
+    "step2Body": "Usa la tua email e la password che hai scelto.",
+    "step3Title": "Fai la prima misurazione",
+    "step3Body": "Collega il sensore e segui le indicazioni dell'app. Il tuo professionista vede le misurazioni che condividi con lui.",
+    "help": "Hai bisogno di aiuto? <link>Scrivici</link>"
+  },
+  "stores": {
+    "appStore": "App Store",
+    "googlePlay": "Google Play",
+    "iphoneAsk": "Su iPhone chiedi al tuo professionista il link di accesso."
+  }
+}

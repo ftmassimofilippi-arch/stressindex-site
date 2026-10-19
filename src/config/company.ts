@@ -22,3 +22,13 @@ export type Company = typeof COMPANY
 // Versione del pacchetto legale in vigore: la riaccettazione scatta per chi non
 // ha consensi con questa versione (`src/lib/consents.ts`).
 export const LEGAL_VERSION = '2.1'
+
+// Link agli store dell'app: UNICA fonte per i bottoni "App Store" / "Google
+// Play" (`src/components/AppStoreButtons.tsx`, pagine /app-cliente e
+// /registrazione/conferma). Finché `ios` è null il bottone App Store non
+// compare e al suo posto c'è la riga "su iPhone chiedi al tuo professionista".
+// Android è lo stesso URL di `app_config.android_store_url` (app-034).
+export const APP_STORES = {
+  ios: null as string | null,
+  android: 'https://play.google.com/store/apps/details?id=com.stressindex.app' as string | null,
+} as const

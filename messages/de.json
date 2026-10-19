@@ -746,6 +746,25 @@
       "undertraining": "Belastung zu niedrig"
     }
   },
+  "appClient": {
+    "page": {
+      "eyebrow": "Konto bereit",
+      "help": "Brauchen Sie Hilfe? <link>Schreiben Sie uns</link>",
+      "intro": "Stress Index für alle, die sich selbst messen, lebt in der App auf dem Telefon. Auf der Website gibt es keinen Bereich für Sie: Messungen, Verlauf über die Zeit und die Verbindung zu Ihrer Fachkraft sind alle in der App.",
+      "step1Body": "Installieren Sie sie aus dem Store auf Ihrem Smartphone.",
+      "step1Title": "Laden Sie die Stress-Index-App herunter",
+      "step2Body": "Verwenden Sie Ihre E-Mail-Adresse und das gewählte Passwort.",
+      "step2Title": "Melden Sie sich mit Ihren Zugangsdaten an",
+      "step3Body": "Verbinden Sie den Sensor und folgen Sie den Anweisungen der App. Ihre Fachkraft sieht die Messungen, die Sie mit ihr teilen.",
+      "step3Title": "Machen Sie die erste Messung",
+      "title": "Ihr Konto ist bereit"
+    },
+    "stores": {
+      "appStore": "App Store",
+      "googlePlay": "Google Play",
+      "iphoneAsk": "Auf dem iPhone fragen Sie Ihre Fachkraft nach dem Zugangslink."
+    }
+  },
   "auth": {
     "confirm": {
       "backLogin": "Zurück zur Anmeldung",
@@ -4007,6 +4026,9 @@
   "meta": {
     "analytics": {
       "title": "Analytics"
+    },
+    "appClient": {
+      "title": "Ihr Konto ist bereit"
     },
     "authConfirm": {
       "title": "Link bestätigen"

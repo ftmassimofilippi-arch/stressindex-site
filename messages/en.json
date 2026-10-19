@@ -746,6 +746,25 @@
       "undertraining": "Workload too low"
     }
   },
+  "appClient": {
+    "page": {
+      "eyebrow": "Account ready",
+      "help": "Need help? <link>Write to us</link>",
+      "intro": "Stress Index for people who measure themselves lives in the app on your phone. There is no area for you on the website: measurements, your trend over time and the link with your professional are all in the app.",
+      "step1Body": "Install it on your smartphone from the store.",
+      "step1Title": "Download the Stress Index app",
+      "step2Body": "Use your email and the password you chose.",
+      "step2Title": "Sign in with your credentials",
+      "step3Body": "Connect the sensor and follow the app's instructions. Your professional sees the measurements you share with them.",
+      "step3Title": "Take your first measurement",
+      "title": "Your account is ready"
+    },
+    "stores": {
+      "appStore": "App Store",
+      "googlePlay": "Google Play",
+      "iphoneAsk": "On iPhone, ask your professional for the access link."
+    }
+  },
   "auth": {
     "confirm": {
       "backLogin": "Back to login",
@@ -4007,6 +4026,9 @@
   "meta": {
     "analytics": {
       "title": "Analytics"
+    },
+    "appClient": {
+      "title": "Your account is ready"
     },
     "authConfirm": {
       "title": "Link confirmation"
