@@ -87,8 +87,11 @@ Convenzioni in `docs/i18n-convenzioni.md`, glossario dall'app in
 `/` home, `/funzionalita`, `/sport` (landing Piano Pro), `/supporto`,
 `/privacy` (informativa di app e sito, testi in `privacy.a.json`),
 `/guide` (guide + assistente Claude via `/api/guide-chat`), `/registrazione`
-(+ `/conferma`, trial 60 giorni), `/imposta-password` (atterraggio dei link
-Supabase, fuori dal middleware), `robots`, `sitemap`, immagine OpenGraph.
+(scelta cliente / professionista; + `/conferma`, trial 60 giorni),
+`/imposta-password` (atterraggio dei link Supabase, fuori dal middleware),
+`/app-cliente` (atterraggio dei clienti: account pronto, usa l'app, link
+store da `APP_STORES` in `src/config/company.ts`; noindex), `robots`,
+`sitemap`, immagine OpenGraph.
 
 ### Area professionisti (`/area-professionisti`, `src/app/[locale]/area-professionisti/`)
 Middleware: senza sessione → login; con sessione chiama `my_account_access`:

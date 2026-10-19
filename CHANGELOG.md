@@ -3,6 +3,34 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-19 — i clienti restano fuori dall'area professionisti
+
+Ramo `fix/clienti-fuori-area-professionisti`. Un cliente invitato dal
+professionista (`inviteUserByEmail` con ruolo `client`) finiva, dopo
+`/imposta-password`, nella dashboard vuota con il saluto "Professionista":
+né il middleware né il layout guardavano `profiles.role`.
+
+- Nuova pagina pubblica `/app-cliente` (IT/EN/DE, noindex): account pronto,
+  scarica l'app, accedi, prima misurazione. Link store in `APP_STORES`
+  (`src/config/company.ts`), unica fonte: senza link App Store resta Google
+  Play e la riga "su iPhone chiedi al tuo professionista". In
+  `/registrazione/conferma` i bottoni store erano `href="#"`.
+- `/imposta-password`, step finale: il ruolo si legge da `profiles.role`
+  (fallback sul metadata dell'invito); un cliente vede il testo per l'app e
+  il bottone verso `/app-cliente`, mai il link all'area.
+- Layout di `/area-professionisti`: `role` entra in `getMyAccountAccess`
+  (stessa riga di `profiles` già letta, cache per richiesta); se è `client`
+  redirect a `/app-cliente` prima del gate consensi e dello stato
+  commerciale. `role` null resta professionista.
+- `/registrazione`: scelta iniziale "Sono un professionista" / "Sono un
+  cliente". Il ramo cliente non crea account: invito dal professionista come
+  prima opzione, registrazione dall'app come seconda.
+- Verificato in produzione (19/10): su `auth.users` non c'è nessun trigger
+  di creazione profilo; il `signUp` del sito non passa `role` e il profilo
+  nasce dall'upsert client-side di `RegistrationForm` con il default di
+  colonna `'professional'` (conferme email spente). 80 iscritti dal sito,
+  tutti `professional`.
+
 ## 2026-10-18 — SWC solo sulle misurazioni a riposo
 
 Ramo `fix/swc-misurazioni-a-riposo`. Allinea il sito alla definizione unica
