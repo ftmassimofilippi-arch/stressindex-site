@@ -5,6 +5,8 @@ import { Footer } from '@/components/Footer'
 import { pageMetadata } from '@/lib/seo'
 import type { Locale } from '@/i18n/routing'
 import { RegistrationForm } from './RegistrationForm'
+import { RegistrationChoice } from './RegistrationChoice'
+import { ClientBranch } from './ClientBranch'
 
 type Params = { params: { locale: string } }
 
@@ -43,19 +45,26 @@ export default async function RegistrazionePage({ params }: Params) {
               <p className="text-anthracite-light text-lg leading-relaxed">{t('intro')}</p>
             </div>
 
-            {/* Callout: cosa ottieni */}
-            <div className="callout-teal mb-8">
-              <span aria-hidden="true" className="text-lg leading-none mt-0.5">💡</span>
-              <div className="text-[14.5px] text-anthracite leading-relaxed">
-                <p className="font-semibold text-teal-dark mb-1">{t('calloutTitle')}</p>
-                <p>{t('calloutBody')}</p>
-              </div>
-            </div>
-
-            {/* Form card */}
-            <div className="card p-6 sm:p-8">
-              <RegistrationForm />
-            </div>
+            {/* Scelta cliente / professionista. Il form (e il callout, che
+                parla di CRM e report) compare solo nel ramo professionista;
+                il ramo cliente non crea account. */}
+            <RegistrationChoice
+              professional={
+                <>
+                  <div className="callout-teal mb-8">
+                    <span aria-hidden="true" className="text-lg leading-none mt-0.5">💡</span>
+                    <div className="text-[14.5px] text-anthracite leading-relaxed">
+                      <p className="font-semibold text-teal-dark mb-1">{t('calloutTitle')}</p>
+                      <p>{t('calloutBody')}</p>
+                    </div>
+                  </div>
+                  <div className="card p-6 sm:p-8">
+                    <RegistrationForm />
+                  </div>
+                </>
+              }
+              client={<ClientBranch />}
+            />
 
             {/* Trust signals */}
             <div className="mt-8 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-6 text-sm text-anthracite-lighter">

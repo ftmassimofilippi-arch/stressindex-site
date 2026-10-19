@@ -5052,6 +5052,20 @@
     "updated": "Ultimo aggiornamento: 17 ottobre 2026 · versione 2.1"
   },
   "registration": {
+    "choice": {
+      "back": "← Cambia scelta",
+      "clientBody": "Mi misuro con l'app, da solo o seguito da un professionista.",
+      "clientHeading": "Per te non serve un account sul sito",
+      "clientIntro": "Stress Index per chi si misura vive nell'app sul telefono. Ci sono due modi per iniziare.",
+      "clientOption1Body": "Ti crea l'accesso dalla sua area e ricevi una email per scegliere la password. Le tue misurazioni sono subito collegate a chi ti segue.",
+      "clientOption1Title": "Fatti invitare dal tuo professionista",
+      "clientOption2Body": "Scarica Stress Index e crea l'account direttamente dall'app, come cliente. Potrai collegarti a un professionista anche in un secondo momento.",
+      "clientOption2Title": "Oppure registrati dall'app",
+      "clientTitle": "Sono un cliente",
+      "professionalBody": "Seguo le persone che si misurano e voglio la dashboard, il CRM e i report.",
+      "professionalTitle": "Sono un professionista",
+      "question": "Chi sei?"
+    },
     "confirm": {
       "help": "Hai bisogno di aiuto? <link>Contattaci</link>",
       "intro": "Il tuo account è stato creato. Hai 60 giorni di accesso completo a tutte le funzionalità.",

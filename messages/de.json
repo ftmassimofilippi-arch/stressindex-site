@@ -5052,6 +5052,20 @@
     "updated": "Letzte Aktualisierung: 17. Oktober 2026 · Version 2.1"
   },
   "registration": {
+    "choice": {
+      "back": "← Auswahl ändern",
+      "clientBody": "Ich messe mich mit der App, allein oder begleitet von einer Fachkraft.",
+      "clientHeading": "Sie brauchen kein Konto auf der Website",
+      "clientIntro": "Stress Index für alle, die sich selbst messen, lebt in der App auf dem Telefon. Es gibt zwei Wege, um zu starten.",
+      "clientOption1Body": "Sie legt Ihren Zugang in ihrem Bereich an, und Sie erhalten eine E-Mail, um ein Passwort zu wählen. Ihre Messungen sind sofort mit der Person verbunden, die Sie begleitet.",
+      "clientOption1Title": "Lassen Sie sich von Ihrer Fachkraft einladen",
+      "clientOption2Body": "Laden Sie Stress Index herunter und erstellen Sie Ihr Konto direkt in der App, als Klient. Eine Fachkraft können Sie auch später verbinden.",
+      "clientOption2Title": "Oder registrieren Sie sich in der App",
+      "clientTitle": "Ich bin Klient",
+      "professionalBody": "Ich begleite Menschen, die sich messen, und möchte Dashboard, CRM und Berichte.",
+      "professionalTitle": "Ich bin Fachkraft",
+      "question": "Wer sind Sie?"
+    },
     "confirm": {
       "help": "Brauchen Sie Hilfe? <link>Kontaktieren Sie uns</link>",
       "intro": "Ihr Konto wurde erstellt. Sie haben 60 Tage lang vollen Zugriff auf alle Funktionen.",

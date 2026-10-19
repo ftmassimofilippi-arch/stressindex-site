@@ -1,0 +1,16 @@
+{
+  "choice": {
+    "question": "Who are you?",
+    "professionalTitle": "I'm a professional",
+    "professionalBody": "I follow people who measure themselves and I want the dashboard, the CRM and the reports.",
+    "clientTitle": "I'm a client",
+    "clientBody": "I measure myself with the app, on my own or followed by a professional.",
+    "back": "← Change choice",
+    "clientHeading": "You don't need an account on the website",
+    "clientIntro": "Stress Index for people who measure themselves lives in the app on your phone. There are two ways to start.",
+    "clientOption1Title": "Get invited by your professional",
+    "clientOption1Body": "They create your access from their area and you receive an email to choose a password. Your measurements are linked right away to whoever follows you.",
+    "clientOption2Title": "Or sign up from the app",
+    "clientOption2Body": "Download Stress Index and create your account directly in the app, as a client. You can link to a professional later on."
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "choice": {
+    "question": "Wer sind Sie?",
+    "professionalTitle": "Ich bin Fachkraft",
+    "professionalBody": "Ich begleite Menschen, die sich messen, und möchte Dashboard, CRM und Berichte.",
+    "clientTitle": "Ich bin Klient",
+    "clientBody": "Ich messe mich mit der App, allein oder begleitet von einer Fachkraft.",
+    "back": "← Auswahl ändern",
+    "clientHeading": "Sie brauchen kein Konto auf der Website",
+    "clientIntro": "Stress Index für alle, die sich selbst messen, lebt in der App auf dem Telefon. Es gibt zwei Wege, um zu starten.",
+    "clientOption1Title": "Lassen Sie sich von Ihrer Fachkraft einladen",
+    "clientOption1Body": "Sie legt Ihren Zugang in ihrem Bereich an, und Sie erhalten eine E-Mail, um ein Passwort zu wählen. Ihre Messungen sind sofort mit der Person verbunden, die Sie begleitet.",
+    "clientOption2Title": "Oder registrieren Sie sich in der App",
+    "clientOption2Body": "Laden Sie Stress Index herunter und erstellen Sie Ihr Konto direkt in der App, als Klient. Eine Fachkraft können Sie auch später verbinden."
+  }
+}
