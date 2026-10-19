@@ -24,8 +24,17 @@ export async function generateMetadata({ params }: { params: { locale: string } 
 //   • sospeso  → la schermata "account sospeso" al posto di qualsiasi pagina.
 // Login e recupero password passano anch'essi da questo layout, ma per chi non
 // è loggato `userId` è nullo e non succede niente.
+//
+// Un CLIENTE loggato (profiles.role = 'client', invitato dal professionista)
+// non ha niente qui: va a /app-cliente, PRIMA del gate consensi, altrimenti
+// vedrebbe la dashboard vuota con il saluto "Professionista" o, peggio,
+// firmerebbe i consensi da professionista. `role` null resta professionista.
+// Nessuna query in più: `getMyAccountAccess` legge già la riga di profiles.
 export default async function AreaProfessionistiLayout({ children, params }: { children: React.ReactNode; params: { locale: string } }) {
   const access = await getMyAccountAccess()
+  if (access.userId && access.role === 'client') {
+    redirect({ href: '/app-cliente', locale: params.locale })
+  }
   if (access.userId && access.stato === 'bloccato') {
     redirect({ href: { pathname: '/area-professionisti/login', query: { stato: 'bloccato' } }, locale: params.locale })
   }

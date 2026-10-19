@@ -26,6 +26,9 @@ export interface AccountAccess {
   moduli: Record<string, boolean>
   isSuperadmin: boolean
   plan: string | null // profiles.plan (copia legacy)
+  // profiles.role: 'professional' | 'client' | null (nullable in produzione).
+  // Solo 'client' esclude dall'area professionisti; null vale professionista.
+  role: string | null
 }
 
 type RpcResult = {
@@ -68,17 +71,18 @@ export const getMyAccountAccess = cache(async (): Promise<AccountAccess> => {
   const { data: { user } } = await supabase.auth.getUser()
   const empty: AccountAccess = {
     userId: null, available: false, stato: 'attivo', piano: null, dataScadenza: null, giorniAllaScadenza: null,
-    moduli: {}, isSuperadmin: false, plan: null,
+    moduli: {}, isSuperadmin: false, plan: null, role: null,
   }
   if (!user) return empty
 
   const [{ data: prof }, rpc] = await Promise.all([
-    supabase.from('profiles').select('plan, is_superadmin').eq('id', user.id).maybeSingle(),
+    supabase.from('profiles').select('plan, is_superadmin, role').eq('id', user.id).maybeSingle(),
     supabase.rpc('my_account_access'),
   ])
-  const p = prof as { plan?: string | null; is_superadmin?: boolean } | null
+  const p = prof as { plan?: string | null; is_superadmin?: boolean; role?: string | null } | null
   const isSuperadmin = !!p?.is_superadmin
   const plan = p?.plan ?? null
+  const role = p?.role ?? null
 
   if (rpc.error || !(rpc.data as RpcResult | null)?.ok) {
     if (rpc.error && !isMissingRpc(rpc.error)) console.error('[account-access] my_account_access', rpc.error)
@@ -87,6 +91,7 @@ export const getMyAccountAccess = cache(async (): Promise<AccountAccess> => {
       userId: user.id,
       isSuperadmin,
       plan,
+      role,
       moduli: { sport: plan === 'pro' || isSuperadmin, monitoring: true, sleep: true },
     }
   }
@@ -101,6 +106,7 @@ export const getMyAccountAccess = cache(async (): Promise<AccountAccess> => {
     moduli: r.moduli ?? {},
     isSuperadmin,
     plan,
+    role,
   }
 })
 
