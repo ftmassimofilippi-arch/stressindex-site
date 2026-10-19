@@ -38,12 +38,28 @@ import { PASSWORD_MIN_LENGTH, supabaseAuthErrorKey } from '@/lib/validation'
 // valido", l'eventuale `error_description` grezza di Supabase come testo.
 
 type Mode = 'recovery' | 'invite'
+// Chi è l'utente: un CLIENTE (invitato dal professionista, profiles.role =
+// 'client') non ha un'area sul sito e allo step finale va mandato all'app
+// (/app-cliente), non a /area-professionisti.
+type AccountKind = 'client' | 'professional'
 type ErrorKind = 'sameBrowser' | 'expired' | 'expiredExchange' | 'invalid' | 'session' | 'tokenInvalid' | 'missing' | 'unexpected'
 type State =
   | { step: 'loading' }
-  | { step: 'ready'; mode: Mode; email: string | null }
-  | { step: 'done'; mode: Mode }
+  | { step: 'ready'; mode: Mode; email: string | null; kind: AccountKind }
+  | { step: 'done'; mode: Mode; kind: AccountKind }
   | { step: 'error'; kind: ErrorKind; detailText?: string; canRetry: boolean }
+
+// Ruolo dell'account: prima `profiles.role` (la policy profiles_own_read lo
+// permette), poi il metadata `role` scritto da inviteUserByEmail. Il profilo
+// vince sul metadata: in produzione esistono account invitati come client che
+// hanno profilo professional. Null o assente vale professionista.
+async function readAccountKind(supabase: ReturnType<typeof createClient>, user: { id: string; user_metadata?: Record<string, unknown> } | null): Promise<AccountKind> {
+  if (!user) return 'professional'
+  const { data } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+  const fromDb = (data as { role?: string | null } | null)?.role ?? null
+  const fromMeta = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role : null
+  return (fromDb ?? fromMeta) === 'client' ? 'client' : 'professional'
+}
 
 export function SetPasswordForm() {
   const t = useTranslations('auth.setPassword')
@@ -57,7 +73,8 @@ export function SetPasswordForm() {
   const finish = useCallback(async (mode: Mode) => {
     const supabase = createClient()
     const { data } = await supabase.auth.getUser()
-    setState({ step: 'ready', mode, email: data.user?.email ?? null })
+    const kind = await readAccountKind(supabase, data.user)
+    setState({ step: 'ready', mode, email: data.user?.email ?? null, kind })
     // Ripulisce l'URL: i token non devono restare nella barra degli indirizzi
     // (né finire nella cronologia o in un eventuale screenshot).
     window.history.replaceState(null, '', window.location.pathname)
@@ -227,7 +244,7 @@ export function SetPasswordForm() {
       setFormError(key === 'sessionMissing' ? t('sessionExpired') : tSupabase(key))
       return
     }
-    setState({ step: 'done', mode: state.mode })
+    setState({ step: 'done', mode: state.mode, kind: state.kind })
   }
 
   if (state.step === 'loading') {
@@ -270,10 +287,21 @@ export function SetPasswordForm() {
           <span>{t('doneEyebrow')}</span>
         </div>
         <h1 className="font-serif text-3xl text-anthracite tracking-tight">{t('doneTitle')}</h1>
-        <p className="mt-3 text-anthracite-light">{t(`${state.mode}.done`)}</p>
-        <Link href="/area-professionisti" prefetch={false} className="btn-primary w-full mt-8 inline-block text-center">
-          {t('goToArea')}
-        </Link>
+        {state.kind === 'client' ? (
+          <>
+            <p className="mt-3 text-anthracite-light">{t('doneClient')}</p>
+            <Link href="/app-cliente" prefetch={false} className="btn-primary w-full mt-8 inline-block text-center">
+              {t('goToApp')}
+            </Link>
+          </>
+        ) : (
+          <>
+            <p className="mt-3 text-anthracite-light">{t(`${state.mode}.done`)}</p>
+            <Link href="/area-professionisti" prefetch={false} className="btn-primary w-full mt-8 inline-block text-center">
+              {t('goToArea')}
+            </Link>
+          </>
+        )}
       </div>
     )
   }

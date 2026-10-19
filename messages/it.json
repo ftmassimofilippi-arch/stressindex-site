@@ -827,6 +827,7 @@
       "checking": "Verifica del link in corso...",
       "confirmPassword": "Conferma password",
       "confirmPasswordPlaceholder": "Ripeti la password",
+      "doneClient": "Password salvata. Da adesso usi l'app Stress Index sul telefono: accedi con la tua email e la password appena scelta.",
       "doneEyebrow": "Fatto",
       "doneTitle": "Tutto a posto",
       "errors": {
@@ -847,6 +848,7 @@
         "unexpectedDetail": "Non è stato possibile validare il link. Riprova a richiedere il recupero password.",
         "unexpectedTitle": "Qualcosa è andato storto"
       },
+      "goToApp": "Scarica l'app",
       "goToArea": "Vai alla tua area",
       "invite": {
         "cta": "Attiva account",

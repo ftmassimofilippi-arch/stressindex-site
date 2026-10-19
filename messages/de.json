@@ -827,6 +827,7 @@
       "checking": "Link wird geprüft...",
       "confirmPassword": "Passwort bestätigen",
       "confirmPasswordPlaceholder": "Passwort wiederholen",
+      "doneClient": "Passwort gespeichert. Ab jetzt nutzen Sie die Stress-Index-App auf dem Telefon: Melden Sie sich mit Ihrer E-Mail-Adresse und dem soeben gewählten Passwort an.",
       "doneEyebrow": "Erledigt",
       "doneTitle": "Alles bereit",
       "errors": {
@@ -847,6 +848,7 @@
         "unexpectedDetail": "Der Link konnte nicht überprüft werden. Fordern Sie das Zurücksetzen des Passworts erneut an.",
         "unexpectedTitle": "Etwas ist schiefgelaufen"
       },
+      "goToApp": "App herunterladen",
       "goToArea": "Zu Ihrem Bereich",
       "invite": {
         "cta": "Konto aktivieren",

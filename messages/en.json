@@ -827,6 +827,7 @@
       "checking": "Checking the link...",
       "confirmPassword": "Confirm password",
       "confirmPasswordPlaceholder": "Repeat the password",
+      "doneClient": "Password saved. From now on you use the Stress Index app on your phone: sign in with your email and the password you just chose.",
       "doneEyebrow": "Done",
       "doneTitle": "All set",
       "errors": {
@@ -847,6 +848,7 @@
         "unexpectedDetail": "The link could not be validated. Try requesting a password reset again.",
         "unexpectedTitle": "Something went wrong"
       },
+      "goToApp": "Get the app",
       "goToArea": "Go to your area",
       "invite": {
         "cta": "Activate account",
