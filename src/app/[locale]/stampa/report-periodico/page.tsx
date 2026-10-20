@@ -205,7 +205,13 @@ export default async function PrintPeriodicReportPage({
             </div>
           </PrintSection>
 
-          {/* Inizio e adesso (solo professionista: per il cliente bastano frase e pannelli) */}
+          {/* Inizio e adesso (solo professionista: per il cliente bastano frase e pannelli).
+              Senza misurazioni di riferimento la tabella si salta, ma si dice perché. */}
+          {!clientVariant && !anyReference && (
+            <PrintSection title={t('report.startNowTitle')} avoid>
+              <div className="print-card p-4 text-[10.5px] text-anthracite-lighter">{t('report.startNowSkipped')}</div>
+            </PrintSection>
+          )}
           {!clientVariant && anyReference && (
             <PrintSection title={t('report.startNowTitle')} subtitle={t('report.startNowSubtitle')} avoid>
               <div className="print-card overflow-hidden">
