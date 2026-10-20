@@ -5,6 +5,8 @@ produzione è nel `README.md`.
 
 ## 2026-10-20 — misurazioni senza riferimento restano visibili
 
+Rilasciato in produzione il 20/10/2026 (PR #5, merge su `main`).
+
 Ramo `fix/misurazioni-senza-riferimento`. Dal rilascio del 18/10 un cliente
 con sole misurazioni fuori dalla fascia del mattino (per esempio una sola,
 standard, delle 16:33) aveva testata e lancette a "—": la misurazione sembrava
