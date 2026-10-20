@@ -71,7 +71,8 @@
     "allScores": "All scores",
     "allTimeDomain": "All time domain",
     "noMatch": "No metric matches \"{query}\"",
-    "apply": "Apply · {count, plural, one {# metric} other {# metrics}}"
+    "apply": "Apply · {count, plural, one {# metric} other {# metrics}}",
+    "noDataInPeriodOutside": "No measurements in the selected period: {count, plural, one {# measurement is} other {# measurements are}} outside the period. Widen the period to see them."
   },
   "scale": {
     "zoom": "Zoom",

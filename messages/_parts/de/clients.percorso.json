@@ -2,10 +2,11 @@
   "overview": {
     "lastReference": "Letzte Referenzmessung: {date}",
     "lastOther": "Letzte Messung: {type}, {date}",
-    "noReferenceYet": "Noch keine Referenzmessung (Standard, am Morgen): die Anzeigen bleiben leer."
+    "shownNotReference": "Messung außerhalb des Morgenfensters oder keine Standardmessung ({date}): sie wird angezeigt, geht aber nicht in die Vergleiche ein."
   },
   "profile": {
-    "ofDate": "vom {date}"
+    "ofDate": "vom {date}",
+    "shownNotReference": "Messung außerhalb des Morgenfensters oder keine Standardmessung: sie wird angezeigt, geht aber nicht in die Vergleiche ein."
   },
   "prepare": {
     "title": "Ansicht vorbereiten",

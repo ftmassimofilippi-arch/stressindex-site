@@ -2,10 +2,11 @@
   "overview": {
     "lastReference": "Last reference measurement: {date}",
     "lastOther": "Last measurement: {type}, {date}",
-    "noReferenceYet": "No reference measurement yet (standard, in the morning): the indicators stay empty."
+    "shownNotReference": "Measurement outside the morning window or not standard ({date}): it is shown, but it does not enter the comparisons."
   },
   "profile": {
-    "ofDate": "on {date}"
+    "ofDate": "on {date}",
+    "shownNotReference": "Measurement outside the morning window or not standard: it is shown, but it does not enter the comparisons."
   },
   "prepare": {
     "title": "Prepare the view",
