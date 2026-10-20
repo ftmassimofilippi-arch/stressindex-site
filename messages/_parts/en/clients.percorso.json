@@ -5,8 +5,7 @@
     "shownNotReference": "Measurement outside the morning window or not standard ({date}): it is shown, but it does not enter the comparisons."
   },
   "profile": {
-    "ofDate": "on {date}",
-    "shownNotReference": "Measurement outside the morning window or not standard: it is shown, but it does not enter the comparisons."
+    "ofDate": "on {date}"
   },
   "prepare": {
     "title": "Prepare the view",
