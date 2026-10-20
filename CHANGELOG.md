@@ -3,6 +3,32 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-20 — misurazioni senza riferimento restano visibili
+
+Ramo `fix/misurazioni-senza-riferimento`. Dal rilascio del 18/10 un cliente
+con sole misurazioni fuori dalla fascia del mattino (per esempio una sola,
+standard, delle 16:33) aveva testata e lancette a "—": la misurazione sembrava
+sparita, mentre elenco, database e app erano corretti. La regola dei conti non
+cambia: medie, media mobile, partenza e percentuali restano solo sulle
+misurazioni di riferimento (standard, 04:00-11:59).
+
+- `src/lib/reference-trend.ts`: `misurazioneDaMostrare` sceglie la misurazione
+  di riferimento più recente o, se non ce n'è, l'ultima in assoluto con il flag
+  `nonDiRiferimento`. `src/lib/trend-panel.ts`: `pointsVisible` accende i
+  puntini quando non ci sono giorni di riferimento.
+- Scheda cliente: testata e lancette usano l'helper; sotto compare la nota
+  ambra "Misurazione fuori dalla fascia del mattino o non standard: è
+  mostrata, ma non entra nei confronti".
+- Grafici: con zero giorni di riferimento i puntini restano accesi anche con
+  "Punti" spento, in "Mostra al cliente" e nel report versione cliente. Lo
+  stato vuoto dice quante misurazioni ci sono fuori dal periodo.
+- Report periodico: senza misurazioni di riferimento "Inizio e adesso" resta
+  saltato, con una riga che spiega perché.
+- Test `src/lib/misurazione-pomeridiana.test.ts`: il caso vero del 14/10,
+  helper (solo pomeridiane, mista, vuota, esclusioni) e puntini.
+- Testi IT/EN/DE: `clients.overview/profile.shownNotReference`,
+  `charts.trend.noDataInPeriodOutside`, `print.report.startNowSkipped`.
+
 ## 2026-10-18 — SWC solo sulle misurazioni a riposo
 
 Ramo `fix/swc-misurazioni-a-riposo`. Allinea il sito alla definizione unica
