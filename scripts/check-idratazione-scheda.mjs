@@ -14,10 +14,10 @@
 //
 // USO (contro una build, come la fa Vercel):
 //   npm run build && PDF_TOKEN_SECRET=solo-test npx next start -p 3778 &
-//   EMAIL=info@massimofilippi.it CLIENT=1781087319397,1791988302283 node scripts/check-idratazione-scheda.mjs
+//   EMAIL=info@massimofilippi.it CLIENT=1781087319397 node scripts/check-idratazione-scheda.mjs
 //
 // Variabili: BASE (default http://localhost:3778), EMAIL (obbligatoria),
-// CLIENT (id separati da virgola; default: i due clienti del caso del 20/10),
+// CLIENT (id separati da virgola; default: la scheda del caso del 20/10),
 // OUT (cartella per gli screenshot, facoltativa), CHROME (eseguibile).
 // Esce con 1 se almeno un controllo fallisce.
 import puppeteer from 'puppeteer-core'
@@ -27,7 +27,10 @@ import { readFileSync, mkdirSync } from 'node:fs'
 const base = process.env.BASE ?? 'http://localhost:3778'
 const out = process.env.OUT
 const email = process.env.EMAIL
-const clients = (process.env.CLIENT ?? '1781087319397,1791988302283').split(',').map((s) => s.trim()).filter(Boolean)
+// Default: la scheda del caso del 20/10 (due misurazioni, nessuna di
+// riferimento), che appartiene al titolare. Una scheda di un altro
+// professionista risponde 404 per via del perimetro.
+const clients = (process.env.CLIENT ?? '1781087319397').split(',').map((s) => s.trim()).filter(Boolean)
 const chrome = process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 if (!email) {
   console.error('EMAIL mancante: serve l\'email del professionista che possiede le schede.')
