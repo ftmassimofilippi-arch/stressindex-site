@@ -18,6 +18,7 @@
     "noSessions": "Nessuna coppia nel periodo.",
     "colPair": "Coppia",
     "kindCoherence": "mattino → coerenza",
-    "noReference": "Nessuna misurazione di riferimento nel periodo: l'andamento si calcola sulle misurazioni standard del mattino (dalle 4 alle 12)."
+    "noReference": "Nessuna misurazione di riferimento nel periodo: l'andamento si calcola sulle misurazioni standard del mattino (dalle 4 alle 12).",
+    "startNowSkipped": "Inizio e adesso non compare: partenza, media mobile e variazione si calcolano solo sulle misurazioni standard del mattino (dalle 4 alle 12), e per questo cliente non ce ne sono ancora. Le altre misurazioni restano nell'elenco e nei grafici."
   }
 }

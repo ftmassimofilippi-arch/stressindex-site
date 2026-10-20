@@ -117,4 +117,8 @@ supabase functions deploy notify-measurement --project-ref ivwmjwukpeldbqkxgvvf 
 supabase functions deploy notify-digest      --project-ref ivwmjwukpeldbqkxgvvf --no-verify-jwt
 supabase functions deploy create-client-access --project-ref ivwmjwukpeldbqkxgvvf
 node scripts/e2e-accesso-cliente.js   # lascia righe nel registro accessi di produzione: leggere la coda dell'output
+# Idratazione della scheda cliente su una build (login locale con magic link, nessuna email):
+npm run build && PDF_TOKEN_SECRET=solo-test npx next start -p 3778 &
+EMAIL=info@massimofilippi.it node scripts/check-idratazione-scheda.mjs   # esce con 1 se in console c'è un #418/#423 o i pulsanti del periodo non rispondono
+# Lo stesso sull'anteprima Vercel: BASE=<url anteprima> SHARE_URL=<link con _vercel_share> davanti al comando
 ```

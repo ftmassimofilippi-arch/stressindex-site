@@ -2,7 +2,7 @@
   "overview": {
     "lastReference": "Ultima misurazione di riferimento: {date}",
     "lastOther": "Ultima misurazione: {type}, {date}",
-    "noReferenceYet": "Nessuna misurazione di riferimento (standard, del mattino): gli indicatori restano vuoti."
+    "shownNotReference": "Misurazione fuori dalla fascia del mattino o non standard ({date}): è mostrata, ma non entra nei confronti."
   },
   "profile": {
     "ofDate": "del {date}"

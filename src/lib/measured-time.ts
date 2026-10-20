@@ -203,6 +203,17 @@ export function fineGiornoIta(day: string): string {
   return new Date(i.getTime() + 999).toISOString()
 }
 
+/**
+ * Istante del mezzogiorno italiano del giorno `YYYY-MM-DD`: il modo sicuro di
+ * trasformare una chiave di giornata in una `Date` da formattare. Non dipende
+ * dal fuso di chi esegue (server in UTC, browser ovunque): `new Date('2026-06-10')`
+ * o `parseISO` danno la mezzanotte locale, che a est di Roma è il giorno prima.
+ */
+export function mezzogiornoIta(day: string): Date {
+  const [y, mo, d] = day.split('-').map(Number)
+  return daOraItaliana(Date.UTC(y, (mo ?? 1) - 1, d ?? 1, 12, 0, 0))
+}
+
 /** Estremi ISO di un intervallo di giorni italiani, estremi inclusi. */
 export function intervalloGiorniIta(from: string, to: string): { fromIso: string; toIso: string } {
   return { fromIso: inizioGiornoIta(from), toIso: fineGiornoIta(to) }

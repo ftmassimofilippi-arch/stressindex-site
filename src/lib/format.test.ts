@@ -11,6 +11,7 @@ import {
   intervalloGiorniIta,
   measuredDayKey,
   measuredInstant,
+  mezzogiornoIta,
   type ConIstante,
 } from './measured-time.ts'
 import { capitalizeFirst, displayName } from './text-case.ts'
@@ -97,6 +98,27 @@ test('una riga senza timestamp non produce un istante', () => {
   assert.equal(measuredInstant(null), null)
   assert.equal(measuredInstant({}), null)
   assert.equal(measuredDayKey(undefined), null)
+})
+
+// Caso del 20/10/2026 (idratazione): una chiave di giornata formattata con la
+// mezzanotte LOCALE cade nel giorno prima in un browser a est di Roma, mentre
+// il server di Vercel (UTC) scrive il giorno giusto. `mezzogiornoIta` dà lo
+// stesso giorno italiano qualunque sia il fuso di chi esegue.
+test('mezzogiornoIta: lo stesso giorno italiano da Bangkok, Los Angeles e UTC', () => {
+  const giorno = (d: Date) => new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: 'short', year: 'numeric' }).format(d)
+  const tzPrima = process.env.TZ
+  try {
+    for (const tz of ['Asia/Bangkok', 'America/Los_Angeles', 'UTC', 'Europe/Rome']) {
+      process.env.TZ = tz
+      assert.equal(giorno(mezzogiornoIta('2026-06-10')), '10 giu 2026', tz)
+      assert.equal(giorno(mezzogiornoIta('2026-01-01')), '01 gen 2026', tz)
+      // Il vecchio modo (mezzanotte locale) sbagliava davvero a est di Roma.
+      if (tz === 'Asia/Bangkok') assert.equal(giorno(new Date(2026, 5, 10)), '09 giu 2026')
+    }
+  } finally {
+    if (tzPrima === undefined) delete process.env.TZ
+    else process.env.TZ = tzPrima
+  }
 })
 
 // ── Normalizzazioni di testo (src/lib/text-case.ts) ─────────────────────────

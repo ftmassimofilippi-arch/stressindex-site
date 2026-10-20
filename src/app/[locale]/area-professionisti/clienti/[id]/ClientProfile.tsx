@@ -22,7 +22,7 @@ import { PdfExportModal } from './PdfExportModal'
 import { MessageComposer } from './MessageComposer'
 import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
 import { formatDate, formatMeasuredDate } from '@/lib/format'
-import { isReferenceMeasurement } from '@/lib/reference-trend.ts'
+import { misurazioneDaMostrare } from '@/lib/reference-trend.ts'
 import { EMPTY_CHART_PREFS, type ChartPrefs } from '@/lib/chart-view.ts'
 import type { AlertRule } from '@/lib/alert-rules'
 import { parseMeasurementFilter, type MeasurementFilter } from '@/lib/measurement-filter'
@@ -116,8 +116,11 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, a
     : '/area-professionisti/clienti'
   const [pdfOpen, setPdfOpen] = useState(false)
   const [msgOpen, setMsgOpen] = useState(false)
-  // Testata: l'ultima misurazione DI RIFERIMENTO (standard, del mattino), con la data.
-  const latest = useMemo(() => measurements.find((m) => isReferenceMeasurement(m)) ?? null, [measurements])
+  // Testata: l'ultima misurazione DI RIFERIMENTO (standard, del mattino), con
+  // la data; se non ce n'è nessuna, l'ultima in assoluto (la regola dei conti
+  // non cambia, cambia solo che cosa si vede). La nota ambra sta una volta
+  // sola, sotto le lancette della Panoramica, con data e ora.
+  const latest = useMemo(() => misurazioneDaMostrare(measurements)?.m ?? null, [measurements])
   const latestDate = latest ? t('ofDate', { date: formatMeasuredDate(latest, undefined, locale) }) : null
 
   const totalMeasurements = measurements.length

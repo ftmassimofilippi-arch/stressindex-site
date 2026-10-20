@@ -71,7 +71,8 @@
     "allScores": "Tutti gli score",
     "allTimeDomain": "Tutto il Time Domain",
     "noMatch": "Nessuna metrica corrisponde a \"{query}\"",
-    "apply": "Applica · {count, plural, one {# metrica} other {# metriche}}"
+    "apply": "Applica · {count, plural, one {# metrica} other {# metriche}}",
+    "noDataInPeriodOutside": "Nessuna misurazione nel periodo selezionato: {count, plural, one {ce n'è # fuori dal periodo} other {ce ne sono # fuori dal periodo}}. Allarga il periodo per vederla."
   },
   "scale": {
     "zoom": "Zoom",

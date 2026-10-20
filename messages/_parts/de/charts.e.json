@@ -71,7 +71,8 @@
     "allScores": "Alle Scores",
     "allTimeDomain": "Gesamter Zeitbereich",
     "noMatch": "Keine Metrik entspricht \"{query}\"",
-    "apply": "Übernehmen · {count, plural, one {# Metrik} other {# Metriken}}"
+    "apply": "Übernehmen · {count, plural, one {# Metrik} other {# Metriken}}",
+    "noDataInPeriodOutside": "Keine Messungen im gewählten Zeitraum: {count, plural, one {# Messung liegt} other {# Messungen liegen}} außerhalb des Zeitraums. Erweitern Sie den Zeitraum, um sie zu sehen."
   },
   "scale": {
     "zoom": "Zoom",

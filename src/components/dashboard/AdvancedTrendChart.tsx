@@ -44,6 +44,7 @@ import {
   dayNoonMs,
   niceDomain,
   pointRows,
+  pointsVisible,
   rollingSegments,
   xDomain,
   xTicks,
@@ -540,9 +541,13 @@ function MetricPanel({
     return []
   }, [measurements, daily, metric.key, excluded])
 
+  // Senza giorni di riferimento i puntini restano accesi anche se spenti dal
+  // professionista, in "Mostra al cliente" e nel report versione cliente:
+  // una misurazione che esiste non deve sparire dal grafico.
+  const pointsOn = pointsVisible(showPoints, dailyValues.length)
   const allPoints = useMemo(
-    () => (measurements && showPoints ? pointRows(measurements, metric.key, excluded) : []),
-    [measurements, showPoints, metric.key, excluded],
+    () => (measurements && pointsOn ? pointRows(measurements, metric.key, excluded) : []),
+    [measurements, pointsOn, metric.key, excluded],
   )
   const rolling = useMemo(() => rollingMean7(dailyValues), [dailyValues])
   const { rows: dayRows, segments } = useMemo(() => rollingSegments(rolling, metric.key), [rolling, metric.key])
@@ -645,7 +650,7 @@ function MetricPanel({
       {annotations.filter((a) => inPeriodo(a.day, periodo)).map((a) => (
         <ReferenceLine key={`${a.day}-${a.text}`} x={dayNoonMs(a.day)} stroke="#64748B" strokeDasharray="3 3" label={{ value: a.text, position: 'top', fill: '#475569', fontSize: 10 }} />
       ))}
-      {showPoints && measurements && (
+      {pointsOn && measurements && (
         <Line dataKey="value" stroke="none" dot={<PointDot color={metric.color} />} activeDot={{ r: 5, fill: metric.color }} isAnimationActive={false} connectNulls={false} legendType="none" />
       )}
       {daily && (
@@ -702,7 +707,11 @@ function MetricPanel({
       )}
 
       {rows.length === 0 ? (
-        <div className="py-8 text-center text-sm text-anthracite-lighter">{t('trend.noDataInPeriod')}</div>
+        // Con misurazioni fuori dal periodo si dice che esistono: "nessun dato"
+        // da solo faceva pensare a una scheda vuota.
+        <div className="py-8 text-center text-sm text-anthracite-lighter">
+          {measurements && measurements.length > 0 ? t('trend.noDataInPeriodOutside', { count: measurements.length }) : t('trend.noDataInPeriod')}
+        </div>
       ) : print && width ? (
         <div style={{ width, height }}>{chart}</div>
       ) : (
@@ -710,7 +719,7 @@ function MetricPanel({
       )}
 
       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[11px] text-anthracite-lighter">
-        {measurements && showPoints && (
+        {measurements && pointsOn && (
           <>
             <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: metric.color }} /> {t('panel.referencePoint')}</span>
             <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full border bg-white" style={{ borderColor: metric.color }} /> {t('panel.otherPoint')}</span>

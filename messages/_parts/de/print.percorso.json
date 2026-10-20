@@ -18,6 +18,7 @@
     "noSessions": "Kein Paar im Zeitraum.",
     "colPair": "Paar",
     "kindCoherence": "Morgen → Kohärenz",
-    "noReference": "Keine Referenzmessung im Zeitraum: der Verlauf wird aus Standardmessungen am Morgen (4 bis 12 Uhr) berechnet."
+    "noReference": "Keine Referenzmessung im Zeitraum: der Verlauf wird aus Standardmessungen am Morgen (4 bis 12 Uhr) berechnet.",
+    "startNowSkipped": "Anfang und jetzt wird nicht angezeigt: Ausgangswert, gleitender Durchschnitt und Veränderung werden nur aus Standardmessungen am Morgen (4 bis 12 Uhr) berechnet, und davon gibt es für diese Person noch keine. Die übrigen Messungen bleiben in der Liste und in den Diagrammen."
   }
 }

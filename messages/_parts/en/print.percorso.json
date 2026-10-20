@@ -18,6 +18,7 @@
     "noSessions": "No pair in the period.",
     "colPair": "Pair",
     "kindCoherence": "morning → coherence",
-    "noReference": "No reference measurement in the period: the trend is calculated on standard morning measurements (4 am to 12 pm)."
+    "noReference": "No reference measurement in the period: the trend is calculated on standard morning measurements (4 am to 12 pm).",
+    "startNowSkipped": "Start and now is not shown: start, moving average and change are calculated only on standard morning measurements (4 am to 12 pm), and this client has none yet. The other measurements remain in the list and in the charts."
   }
 }

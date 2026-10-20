@@ -3,6 +3,53 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-20 — misurazioni senza riferimento restano visibili
+
+Rilasciato in produzione il 20/10/2026 (PR #5, merge su `main`).
+
+Ramo `fix/misurazioni-senza-riferimento`. Dal rilascio del 18/10 un cliente
+con sole misurazioni fuori dalla fascia del mattino (per esempio una sola,
+standard, delle 16:33) aveva testata e lancette a "—": la misurazione sembrava
+sparita, mentre elenco, database e app erano corretti. La regola dei conti non
+cambia: medie, media mobile, partenza e percentuali restano solo sulle
+misurazioni di riferimento (standard, 04:00-11:59).
+
+- `src/lib/reference-trend.ts`: `misurazioneDaMostrare` sceglie la misurazione
+  di riferimento più recente o, se non ce n'è, l'ultima in assoluto con il flag
+  `nonDiRiferimento`. `src/lib/trend-panel.ts`: `pointsVisible` accende i
+  puntini quando non ci sono giorni di riferimento.
+- Scheda cliente: testata e lancette usano l'helper; sotto compare la nota
+  ambra "Misurazione fuori dalla fascia del mattino o non standard: è
+  mostrata, ma non entra nei confronti".
+- Grafici: con zero giorni di riferimento i puntini restano accesi anche con
+  "Punti" spento, in "Mostra al cliente" e nel report versione cliente. Lo
+  stato vuoto dice quante misurazioni ci sono fuori dal periodo.
+- Report periodico: senza misurazioni di riferimento "Inizio e adesso" resta
+  saltato, con una riga che spiega perché.
+- Test `src/lib/misurazione-pomeridiana.test.ts`: il caso vero del 14/10,
+  helper (solo pomeridiane, mista, vuota, esclusioni) e puntini.
+- Testi IT/EN/DE: `clients.overview.shownNotReference`,
+  `charts.trend.noDataInPeriodOutside`, `print.report.startNowSkipped`.
+
+Seconda passata, dopo la prova sull'anteprima (errori React #418/#423 e
+pulsanti del periodo fermi su 30 giorni, non riprodotti in Chrome headless
+né in locale né sull'anteprima stessa):
+
+- La nota ambra compare una volta sola, sotto le lancette della Panoramica,
+  con data e ora; tolta quella sotto la testata (`clients.profile.shownNotReference`).
+- `src/lib/format.ts`: data e ora si formattano separate e si uniscono con
+  ", " (con le opzioni insieme Safari scrive "Jun 10, 2026 at 01:01 PM", Node
+  e Chrome "Jun 10, 2026, 01:01 PM": testo diverso fra server e browser). Un
+  giorno `YYYY-MM-DD` si formatta dal mezzogiorno italiano
+  (`mezzogiornoIta` in `measured-time.ts`) e non dalla mezzanotte locale, che
+  in un browser a est di Roma cadeva nel giorno prima. Test in
+  `format.test.ts` con TZ Bangkok, Los Angeles, UTC e Roma.
+- `scripts/check-idratazione-scheda.mjs`: apre la scheda in Chrome headless
+  (login locale con magic link), fallisce se in console c'è un errore di
+  idratazione o se i pulsanti del periodo non cambiano il periodo attivo;
+  funziona anche contro un'anteprima Vercel (`BASE`, `SHARE_URL`). Comando in
+  `CLAUDE.md`.
+
 ## 2026-10-18 — SWC solo sulle misurazioni a riposo
 
 Ramo `fix/swc-misurazioni-a-riposo`. Allinea il sito alla definizione unica
