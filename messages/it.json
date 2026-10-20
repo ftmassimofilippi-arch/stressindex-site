@@ -1173,6 +1173,106 @@
       "viewSession": "Effetto della seduta",
       "viewStartNow": "Inizio e adesso"
     },
+    "biofeedback": {
+      "adherence": {
+        "done": "fatte",
+        "expected": "attese",
+        "free": "Pratica libera: nessun calendario da rispettare.",
+        "title": "Aderenza per settimana",
+        "tooltip": "{fatte} su {attese} sessioni",
+        "week": "Sett. {n}"
+      },
+      "calendar": {
+        "cell": "{date}: {sessioni} sessioni, {minuti} min, {sintonia} min in sintonia",
+        "legend": "Una cella per giorno, otto settimane: più scuro, più minuti in sintonia.",
+        "title": "Calendario"
+      },
+      "empty": "Nessuna sessione di biofeedback per questo cliente.",
+      "pace": {
+        "assessmentRow": "{date} · suggerito {rate} · {voti} criteri su {totale}",
+        "assessmentsTitle": "Valutazioni Trova il ritmo",
+        "assigned": "Ritmo assegnato",
+        "confirmed": "confermato {rate}",
+        "final": "Ritmo finale della guida",
+        "noSuggestion": "nessun ritmo valutabile",
+        "none": "Nessuna valutazione.",
+        "title": "Ritmo nel tempo",
+        "unit": "respiri al minuto"
+      },
+      "path": {
+        "active": "{nome} · ritmo {rate} · dal {date} · {stato}",
+        "names": {
+          "fondamenti": "Fondamenti",
+          "pratica_libera": "Pratica libera",
+          "ripresa_veloce": "Ripresa veloce"
+        },
+        "none": "Nessun percorso assegnato.",
+        "states": {
+          "attivo": "attivo",
+          "chiuso": "chiuso",
+          "completato": "completato",
+          "sospeso": "sospeso"
+        },
+        "title": "Percorso"
+      },
+      "perimeter": "Sessioni di respiro guidato della persona misurata: il cliente collegato a questa scheda, o le sessioni fatte in studio sulla scheda. Sola lettura.",
+      "sessions": {
+        "artifacts": "Battiti corretti: {pct}%",
+        "challenge": "Sfida {n}",
+        "change": "{s} s: da {da} a {a} ({motivo})",
+        "changes": "Cambi di ritmo",
+        "close": "Chiudi",
+        "curve": "Livello e score ogni 5 secondi",
+        "detail": "Dettaglio",
+        "incomplete": "chiusa prima della fine",
+        "level": "Livello",
+        "levels": {
+          "1": "Cerca il ritmo",
+          "2": "Ci sei quasi",
+          "3": "In sintonia"
+        },
+        "mood": "Come si sentiva: {umore}",
+        "moods": {
+          "1": "Agitato",
+          "2": "Un po' teso",
+          "3": "Così così",
+          "4": "Tranquillo",
+          "5": "Sereno"
+        },
+        "noChanges": "Nessun cambio di ritmo.",
+        "paused": "Segnale in pausa",
+        "reasons": {
+          "aumentaGuida": "segui la sfera",
+          "esploraRitorno": "ritorno al ritmo di partenza",
+          "esploraScelta": "ritmo scelto",
+          "esploraSopra": "prova sopra",
+          "esploraSotto": "prova sotto",
+          "esplorazioneInterrotta": "esplorazione interrotta",
+          "rampa": "rampa iniziale"
+        },
+        "row": "{date} · {sintonia} min in sintonia su {totale}",
+        "score": "Score",
+        "title": "Sessioni"
+      },
+      "tablesMissing": "Le tabelle del Biofeedback non sono ancora in produzione (migrazione app-060): la sezione si riempie dopo.",
+      "title": "Biofeedback",
+      "tune": {
+        "compare": "Ultime due settimane rispetto alle due prima: {delta}",
+        "compareNA": "Ultime due settimane rispetto alle due prima: non confrontabile",
+        "counts": "{n} sessioni recenti, {m} prima",
+        "lock": "Tempo di aggancio (min)",
+        "minutes": "Minuti in sintonia",
+        "movingAverage": "Media mobile (5 sessioni)",
+        "notLocked": "non agganciata",
+        "session": "Sessione",
+        "title": "Minuti in sintonia e tempo di aggancio"
+      },
+      "warning": {
+        "down": "in basso",
+        "limit": "Nelle ultime sessioni la guida è rimasta {verso} contro il limite del ritmo assegnato: conviene rifare Trova il ritmo.",
+        "up": "in alto"
+      }
+    },
     "clientMode": {
       "close": "Esci (Esc)",
       "counter": "{i} di {n}",
@@ -1552,6 +1652,7 @@
     "tabs": {
       "analytics": "Analytics avanzati",
       "beforeAfter": "Prima e dopo",
+      "biofeedback": "Biofeedback",
       "measurements": "Misurazioni",
       "messages": "Messaggi",
       "monitoring": "Monitoraggio",

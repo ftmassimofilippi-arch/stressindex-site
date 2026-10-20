@@ -26,7 +26,8 @@
     "report": "Report",
     "notes": "Notes",
     "messages": "Messages",
-    "settings": "Settings"
+    "settings": "Settings",
+    "biofeedback": "Biofeedback"
   },
   "overview": {
     "lastUpdate": "Last update: {date}",

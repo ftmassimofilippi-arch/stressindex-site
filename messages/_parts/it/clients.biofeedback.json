@@ -1,0 +1,102 @@
+{
+  "biofeedback": {
+    "title": "Biofeedback",
+    "perimeter": "Sessioni di respiro guidato della persona misurata: il cliente collegato a questa scheda, o le sessioni fatte in studio sulla scheda. Sola lettura.",
+    "tablesMissing": "Le tabelle del Biofeedback non sono ancora in produzione (migrazione app-060): la sezione si riempie dopo.",
+    "empty": "Nessuna sessione di biofeedback per questo cliente.",
+    "path": {
+      "title": "Percorso",
+      "none": "Nessun percorso assegnato.",
+      "active": "{nome} · ritmo {rate} · dal {date} · {stato}",
+      "names": {
+        "fondamenti": "Fondamenti",
+        "ripresa_veloce": "Ripresa veloce",
+        "pratica_libera": "Pratica libera"
+      },
+      "states": {
+        "attivo": "attivo",
+        "sospeso": "sospeso",
+        "completato": "completato",
+        "chiuso": "chiuso"
+      }
+    },
+    "adherence": {
+      "title": "Aderenza per settimana",
+      "week": "Sett. {n}",
+      "tooltip": "{fatte} su {attese} sessioni",
+      "free": "Pratica libera: nessun calendario da rispettare.",
+      "done": "fatte",
+      "expected": "attese"
+    },
+    "calendar": {
+      "title": "Calendario",
+      "legend": "Una cella per giorno, otto settimane: più scuro, più minuti in sintonia.",
+      "cell": "{date}: {sessioni} sessioni, {minuti} min, {sintonia} min in sintonia"
+    },
+    "tune": {
+      "title": "Minuti in sintonia e tempo di aggancio",
+      "minutes": "Minuti in sintonia",
+      "lock": "Tempo di aggancio (min)",
+      "movingAverage": "Media mobile (5 sessioni)",
+      "compare": "Ultime due settimane rispetto alle due prima: {delta}",
+      "compareNA": "Ultime due settimane rispetto alle due prima: non confrontabile",
+      "counts": "{n} sessioni recenti, {m} prima",
+      "notLocked": "non agganciata",
+      "session": "Sessione"
+    },
+    "pace": {
+      "title": "Ritmo nel tempo",
+      "final": "Ritmo finale della guida",
+      "assigned": "Ritmo assegnato",
+      "assessmentsTitle": "Valutazioni Trova il ritmo",
+      "assessmentRow": "{date} · suggerito {rate} · {voti} criteri su {totale}",
+      "confirmed": "confermato {rate}",
+      "noSuggestion": "nessun ritmo valutabile",
+      "none": "Nessuna valutazione.",
+      "unit": "respiri al minuto"
+    },
+    "warning": {
+      "limit": "Nelle ultime sessioni la guida è rimasta {verso} contro il limite del ritmo assegnato: conviene rifare Trova il ritmo.",
+      "up": "in alto",
+      "down": "in basso"
+    },
+    "sessions": {
+      "title": "Sessioni",
+      "row": "{date} · {sintonia} min in sintonia su {totale}",
+      "incomplete": "chiusa prima della fine",
+      "mood": "Come si sentiva: {umore}",
+      "detail": "Dettaglio",
+      "close": "Chiudi",
+      "curve": "Livello e score ogni 5 secondi",
+      "level": "Livello",
+      "score": "Score",
+      "changes": "Cambi di ritmo",
+      "change": "{s} s: da {da} a {a} ({motivo})",
+      "noChanges": "Nessun cambio di ritmo.",
+      "artifacts": "Battiti corretti: {pct}%",
+      "challenge": "Sfida {n}",
+      "paused": "Segnale in pausa",
+      "levels": {
+        "1": "Cerca il ritmo",
+        "2": "Ci sei quasi",
+        "3": "In sintonia"
+      },
+      "moods": {
+        "1": "Agitato",
+        "2": "Un po' teso",
+        "3": "Così così",
+        "4": "Tranquillo",
+        "5": "Sereno"
+      },
+      "reasons": {
+        "rampa": "rampa iniziale",
+        "esploraSopra": "prova sopra",
+        "esploraSotto": "prova sotto",
+        "esploraRitorno": "ritorno al ritmo di partenza",
+        "esploraScelta": "ritmo scelto",
+        "esplorazioneInterrotta": "esplorazione interrotta",
+        "aumentaGuida": "segui la sfera"
+      }
+    }
+  }
+}

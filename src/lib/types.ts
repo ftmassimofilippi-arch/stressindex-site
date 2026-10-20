@@ -42,6 +42,8 @@ export interface Client {
   note?: string | null
   /** Inizio del percorso (date): da qui parte la "partenza" dei grafici. L'app non la sincronizza. */
   data_inizio_percorso?: string | null
+  /** Account app dietro la scheda (uid), se il cliente ha l'accesso. */
+  client_user_id?: string | null
 }
 
 // Tabella sessions: solo record raw della misurazione.

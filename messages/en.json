@@ -1173,6 +1173,106 @@
       "viewSession": "Effect of the session",
       "viewStartNow": "Start and now"
     },
+    "biofeedback": {
+      "adherence": {
+        "done": "done",
+        "expected": "expected",
+        "free": "Free practice: no schedule to follow.",
+        "title": "Adherence by week",
+        "tooltip": "{fatte} of {attese} sessions",
+        "week": "Wk {n}"
+      },
+      "calendar": {
+        "cell": "{date}: {sessioni} sessions, {minuti} min, {sintonia} min in tune",
+        "legend": "One cell per day, eight weeks: the darker, the more minutes in tune.",
+        "title": "Calendar"
+      },
+      "empty": "No biofeedback sessions for this client.",
+      "pace": {
+        "assessmentRow": "{date} · suggested {rate} · {voti} of {totale} criteria",
+        "assessmentsTitle": "Find the rhythm assessments",
+        "assigned": "Assigned pace",
+        "confirmed": "confirmed {rate}",
+        "final": "Final guide pace",
+        "noSuggestion": "no pace could be assessed",
+        "none": "No assessments.",
+        "title": "Pace over time",
+        "unit": "breaths per minute"
+      },
+      "path": {
+        "active": "{nome} · pace {rate} · since {date} · {stato}",
+        "names": {
+          "fondamenti": "Foundations",
+          "pratica_libera": "Free practice",
+          "ripresa_veloce": "Quick recovery"
+        },
+        "none": "No path assigned.",
+        "states": {
+          "attivo": "active",
+          "chiuso": "closed",
+          "completato": "completed",
+          "sospeso": "paused"
+        },
+        "title": "Path"
+      },
+      "perimeter": "Guided breathing sessions of the person measured: the client linked to this card, or sessions done in the studio on the card. Read only.",
+      "sessions": {
+        "artifacts": "Corrected beats: {pct}%",
+        "challenge": "Challenge {n}",
+        "change": "{s} s: from {da} to {a} ({motivo})",
+        "changes": "Pace changes",
+        "close": "Close",
+        "curve": "Level and score every 5 seconds",
+        "detail": "Detail",
+        "incomplete": "closed before the end",
+        "level": "Level",
+        "levels": {
+          "1": "Find the rhythm",
+          "2": "Almost there",
+          "3": "In tune"
+        },
+        "mood": "How they felt: {umore}",
+        "moods": {
+          "1": "Restless",
+          "2": "A bit tense",
+          "3": "So-so",
+          "4": "Calm",
+          "5": "Serene"
+        },
+        "noChanges": "No pace changes.",
+        "paused": "Signal paused",
+        "reasons": {
+          "aumentaGuida": "follow the sphere",
+          "esploraRitorno": "back to the starting pace",
+          "esploraScelta": "chosen pace",
+          "esploraSopra": "trial above",
+          "esploraSotto": "trial below",
+          "esplorazioneInterrotta": "exploration stopped",
+          "rampa": "initial ramp"
+        },
+        "row": "{date} · {sintonia} min in tune out of {totale}",
+        "score": "Score",
+        "title": "Sessions"
+      },
+      "tablesMissing": "The Biofeedback tables are not in production yet (migration app-060): this section fills up later.",
+      "title": "Biofeedback",
+      "tune": {
+        "compare": "Last two weeks versus the two before: {delta}",
+        "compareNA": "Last two weeks versus the two before: not comparable",
+        "counts": "{n} recent sessions, {m} before",
+        "lock": "Time to lock in (min)",
+        "minutes": "Minutes in tune",
+        "movingAverage": "Moving average (5 sessions)",
+        "notLocked": "not locked in",
+        "session": "Session",
+        "title": "Minutes in tune and time to lock in"
+      },
+      "warning": {
+        "down": "low",
+        "limit": "In the latest sessions the guide stayed {verso} against the limit of the assigned pace: worth repeating Find the rhythm.",
+        "up": "high"
+      }
+    },
     "clientMode": {
       "close": "Exit (Esc)",
       "counter": "{i} of {n}",
@@ -1552,6 +1652,7 @@
     "tabs": {
       "analytics": "Advanced analytics",
       "beforeAfter": "Before and after",
+      "biofeedback": "Biofeedback",
       "measurements": "Measurements",
       "messages": "Messages",
       "monitoring": "Monitoring",

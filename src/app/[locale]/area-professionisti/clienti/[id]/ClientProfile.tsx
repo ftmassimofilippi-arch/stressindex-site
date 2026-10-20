@@ -12,6 +12,8 @@ import { OverviewTab } from './tabs/OverviewTab'
 import { MeasurementsTab } from './tabs/MeasurementsTab'
 import { BeforeAfterTab } from './tabs/BeforeAfterTab'
 import { MonitoringTab } from './tabs/MonitoringTab'
+import { BiofeedbackTab } from './tabs/BiofeedbackTab'
+import { BIOFEEDBACK_VUOTO, type BiofeedbackScheda } from '@/lib/biofeedback'
 import type { MonitoringSession } from '@/lib/monitoring-types'
 import { AdvancedAnalyticsTab } from './tabs/AdvancedAnalyticsTab'
 import { NotesTab, noteCategoryLabel, noteTagLabel } from './tabs/NotesTab'
@@ -34,6 +36,7 @@ const ALL_TABS = [
   { id: 'misurazioni', key: 'measurements' },
   { id: 'prima-dopo', key: 'beforeAfter' },
   { id: 'monitoraggi', key: 'monitoring' },
+  { id: 'biofeedback', key: 'biofeedback' },
   { id: 'analytics', key: 'analytics' },
   { id: 'report', key: 'report' },
   { id: 'note', key: 'notes' },
@@ -68,9 +71,11 @@ type Props = {
   currentUserId?: string
   /** Vista salvata, annotazioni ed esclusioni dei grafici (sito-049). */
   chartPrefs?: ChartPrefs
+  /** Biofeedback (app-060): sessioni, percorso, valutazioni; sola lettura. */
+  biofeedback?: BiofeedbackScheda
 }
 
-export function ClientProfile({ client, measurements, monitoring = [], alerts, appEvents = [], notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId, superadminAccess, adminId, alertRules = [], currentUserId, chartPrefs = EMPTY_CHART_PREFS }: Props) {
+export function ClientProfile({ client, measurements, monitoring = [], alerts, appEvents = [], notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId, superadminAccess, adminId, alertRules = [], currentUserId, chartPrefs = EMPTY_CHART_PREFS, biofeedback = BIOFEEDBACK_VUOTO }: Props) {
   const t = useTranslations('clients.profile')
   const tTabs = useTranslations('clients.tabs')
   const tScores = useTranslations('scores')
@@ -237,6 +242,7 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, a
       {tab === 'misurazioni' && <MeasurementsTab client={client} measurements={measurements} filter={filter} onFilterChange={setFilter} detailQs={detailQs} />}
       {tab === 'prima-dopo' && <BeforeAfterTab client={client} measurements={measurements} professionistaId={professionistaId} excluded={chartPrefs.exclusions.map((e) => e.session_id)} />}
       {tab === 'monitoraggi' && <MonitoringTab sessions={monitoring} professionistaId={professionistaId} />}
+      {tab === 'biofeedback' && <BiofeedbackTab dati={biofeedback} />}
       {tab === 'analytics' && <AdvancedAnalyticsTab measurements={measurements} courseStart={client.data_inizio_percorso ?? null} excluded={chartPrefs.exclusions.map((e) => e.session_id)} annotations={chartPrefs.annotations} />}
       {tab === 'report' && <ReportTab client={client} />}
       {!readOnly && tab === 'note' && <NotesTab client={client} initialNotes={notes} />}

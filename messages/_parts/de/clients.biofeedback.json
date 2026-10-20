@@ -1,0 +1,102 @@
+{
+  "biofeedback": {
+    "title": "Biofeedback",
+    "perimeter": "Sitzungen des geführten Atmens der gemessenen Person: der mit dieser Karte verbundene Kunde oder die in der Praxis auf der Karte gemachten Sitzungen. Nur lesen.",
+    "tablesMissing": "Die Biofeedback-Tabellen sind noch nicht in Produktion (Migration app-060): dieser Bereich füllt sich später.",
+    "empty": "Keine Biofeedback-Sitzungen für diesen Kunden.",
+    "path": {
+      "title": "Programm",
+      "none": "Kein Programm zugewiesen.",
+      "active": "{nome} · Tempo {rate} · seit {date} · {stato}",
+      "names": {
+        "fondamenti": "Grundlagen",
+        "ripresa_veloce": "Schnelle Erholung",
+        "pratica_libera": "Freies Üben"
+      },
+      "states": {
+        "attivo": "aktiv",
+        "sospeso": "pausiert",
+        "completato": "abgeschlossen",
+        "chiuso": "beendet"
+      }
+    },
+    "adherence": {
+      "title": "Einhaltung pro Woche",
+      "week": "Wo. {n}",
+      "tooltip": "{fatte} von {attese} Sitzungen",
+      "free": "Freies Üben: kein Kalender einzuhalten.",
+      "done": "gemacht",
+      "expected": "erwartet"
+    },
+    "calendar": {
+      "title": "Kalender",
+      "legend": "Eine Zelle pro Tag, acht Wochen: je dunkler, desto mehr Minuten im Einklang.",
+      "cell": "{date}: {sessioni} Sitzungen, {minuti} Min, {sintonia} Min im Einklang"
+    },
+    "tune": {
+      "title": "Minuten im Einklang und Zeit bis zum Einrasten",
+      "minutes": "Minuten im Einklang",
+      "lock": "Zeit bis zum Einrasten (Min)",
+      "movingAverage": "Gleitender Mittelwert (5 Sitzungen)",
+      "compare": "Letzte zwei Wochen gegenüber den zwei davor: {delta}",
+      "compareNA": "Letzte zwei Wochen gegenüber den zwei davor: nicht vergleichbar",
+      "counts": "{n} Sitzungen zuletzt, {m} davor",
+      "notLocked": "nicht eingerastet",
+      "session": "Sitzung"
+    },
+    "pace": {
+      "title": "Tempo im Zeitverlauf",
+      "final": "Endtempo der Führung",
+      "assigned": "Zugewiesenes Tempo",
+      "assessmentsTitle": "Bewertungen Finde den Rhythmus",
+      "assessmentRow": "{date} · empfohlen {rate} · {voti} von {totale} Kriterien",
+      "confirmed": "bestätigt {rate}",
+      "noSuggestion": "kein Tempo auswertbar",
+      "none": "Keine Bewertungen.",
+      "unit": "Atemzüge pro Minute"
+    },
+    "warning": {
+      "limit": "In den letzten Sitzungen blieb die Führung {verso} an der Grenze des zugewiesenen Tempos: Finde den Rhythmus sollte wiederholt werden.",
+      "up": "oben",
+      "down": "unten"
+    },
+    "sessions": {
+      "title": "Sitzungen",
+      "row": "{date} · {sintonia} Min im Einklang von {totale}",
+      "incomplete": "vor dem Ende beendet",
+      "mood": "So fühlte sich die Person: {umore}",
+      "detail": "Details",
+      "close": "Schließen",
+      "curve": "Stufe und Score alle 5 Sekunden",
+      "level": "Stufe",
+      "score": "Score",
+      "changes": "Tempowechsel",
+      "change": "{s} s: von {da} auf {a} ({motivo})",
+      "noChanges": "Keine Tempowechsel.",
+      "artifacts": "Korrigierte Schläge: {pct}%",
+      "challenge": "Stufe {n}",
+      "paused": "Signal pausiert",
+      "levels": {
+        "1": "Such den Rhythmus",
+        "2": "Fast geschafft",
+        "3": "Im Einklang"
+      },
+      "moods": {
+        "1": "Unruhig",
+        "2": "Etwas angespannt",
+        "3": "So-so",
+        "4": "Ruhig",
+        "5": "Gelassen"
+      },
+      "reasons": {
+        "rampa": "Anfangsrampe",
+        "esploraSopra": "Versuch darüber",
+        "esploraSotto": "Versuch darunter",
+        "esploraRitorno": "zurück zum Starttempo",
+        "esploraScelta": "gewähltes Tempo",
+        "esplorazioneInterrotta": "Erkundung abgebrochen",
+        "aumentaGuida": "der Kugel folgen"
+      }
+    }
+  }
+}
