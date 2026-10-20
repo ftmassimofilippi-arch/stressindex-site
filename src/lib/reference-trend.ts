@@ -24,7 +24,7 @@
 // Il sito non ricalcola nessuno score: qui ci sono solo medie, deviazioni e
 // percentuali sui valori salvati.
 
-import { measuredDayKey, measuredHour, type ConIstante } from './measured-time.ts'
+import { measuredDayKey, measuredHour, measuredInstant, type ConIstante } from './measured-time.ts'
 import { normalizeTestType } from './measurement-type.ts'
 import { periodoPrecedente, piuAltoEMeglio } from './trend-stats.ts'
 
@@ -61,6 +61,33 @@ export function nonReferenceReason(m: ReferenceRow, excluded?: ReadonlySet<strin
 
 export function isReferenceMeasurement(m: ReferenceRow, excluded?: ReadonlySet<string> | null): boolean {
   return nonReferenceReason(m, excluded) == null
+}
+
+/** La misurazione da mettere in testata e sulle lancette della scheda. */
+export type MisurazioneDaMostrare<T> = {
+  m: T
+  /** Non è di riferimento (tipo o ora): si mostra, ma non entra nei confronti. */
+  nonDiRiferimento: boolean
+  reason: NonReferenceReason | null
+}
+
+/**
+ * Testata e lancette: la misurazione di riferimento più recente; se non ce
+ * n'è nessuna, la più recente in assoluto (così un cliente con una sola
+ * misurazione del pomeriggio la vede comunque); `null` senza misurazioni.
+ * Regola del 20/10/2026: la fascia del mattino decide che cosa entra nei
+ * CONTI, non che cosa si VEDE. Nessun conto qui: solo una scelta.
+ */
+export function misurazioneDaMostrare<T extends ReferenceRow>(rows: T[], excluded?: ReadonlySet<string> | null): MisurazioneDaMostrare<T> | null {
+  if (rows.length === 0) return null
+  const ms = (m: T) => measuredInstant(m)?.getTime() ?? Number.NEGATIVE_INFINITY
+  // Ordine per istante (la lista della scheda è già dalla più recente, ma non
+  // si dà per scontato); a parità vince chi viene prima nella lista.
+  const ordinate = rows.map((m, i) => ({ m, i })).sort((a, b) => ms(b.m) - ms(a.m) || a.i - b.i).map((x) => x.m)
+  const riferimento = ordinate.find((m) => isReferenceMeasurement(m, excluded))
+  if (riferimento) return { m: riferimento, nonDiRiferimento: false, reason: null }
+  const ultima = ordinate[0]
+  return { m: ultima, nonDiRiferimento: true, reason: nonReferenceReason(ultima, excluded) }
 }
 
 // ── Spazio dei conti: RMSSD in logaritmo ─────────────────────────────────────

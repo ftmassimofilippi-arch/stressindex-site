@@ -81,6 +81,16 @@ export function pointRows<T extends ReferenceRow & { id?: string }>(
   return out
 }
 
+/**
+ * I puntini si vedono quando il professionista li vuole, e COMUNQUE quando
+ * non c'è nessun giorno di riferimento: senza media mobile i puntini sono
+ * l'unica cosa che resta, e una misurazione che esiste non deve sparire
+ * (nemmeno in "Mostra al cliente" o nel report versione cliente).
+ */
+export function pointsVisible(showPoints: boolean, referenceDays: number): boolean {
+  return showPoints || referenceDays === 0
+}
+
 export type RollingSegment = { key: `r${number}`; dashed: boolean }
 
 /**
