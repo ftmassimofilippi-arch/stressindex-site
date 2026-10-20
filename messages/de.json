@@ -1173,6 +1173,106 @@
       "viewSession": "Wirkung der Sitzung",
       "viewStartNow": "Anfang und jetzt"
     },
+    "biofeedback": {
+      "adherence": {
+        "done": "gemacht",
+        "expected": "erwartet",
+        "free": "Freies Üben: kein Kalender einzuhalten.",
+        "title": "Einhaltung pro Woche",
+        "tooltip": "{fatte} von {attese} Sitzungen",
+        "week": "Wo. {n}"
+      },
+      "calendar": {
+        "cell": "{date}: {sessioni} Sitzungen, {minuti} Min, {sintonia} Min im Einklang",
+        "legend": "Eine Zelle pro Tag, acht Wochen: je dunkler, desto mehr Minuten im Einklang.",
+        "title": "Kalender"
+      },
+      "empty": "Keine Biofeedback-Sitzungen für diesen Kunden.",
+      "pace": {
+        "assessmentRow": "{date} · empfohlen {rate} · {voti} von {totale} Kriterien",
+        "assessmentsTitle": "Bewertungen Finde den Rhythmus",
+        "assigned": "Zugewiesenes Tempo",
+        "confirmed": "bestätigt {rate}",
+        "final": "Endtempo der Führung",
+        "noSuggestion": "kein Tempo auswertbar",
+        "none": "Keine Bewertungen.",
+        "title": "Tempo im Zeitverlauf",
+        "unit": "Atemzüge pro Minute"
+      },
+      "path": {
+        "active": "{nome} · Tempo {rate} · seit {date} · {stato}",
+        "names": {
+          "fondamenti": "Grundlagen",
+          "pratica_libera": "Freies Üben",
+          "ripresa_veloce": "Schnelle Erholung"
+        },
+        "none": "Kein Programm zugewiesen.",
+        "states": {
+          "attivo": "aktiv",
+          "chiuso": "beendet",
+          "completato": "abgeschlossen",
+          "sospeso": "pausiert"
+        },
+        "title": "Programm"
+      },
+      "perimeter": "Sitzungen des geführten Atmens der gemessenen Person: der mit dieser Karte verbundene Kunde oder die in der Praxis auf der Karte gemachten Sitzungen. Nur lesen.",
+      "sessions": {
+        "artifacts": "Korrigierte Schläge: {pct}%",
+        "challenge": "Stufe {n}",
+        "change": "{s} s: von {da} auf {a} ({motivo})",
+        "changes": "Tempowechsel",
+        "close": "Schließen",
+        "curve": "Stufe und Score alle 5 Sekunden",
+        "detail": "Details",
+        "incomplete": "vor dem Ende beendet",
+        "level": "Stufe",
+        "levels": {
+          "1": "Such den Rhythmus",
+          "2": "Fast geschafft",
+          "3": "Im Einklang"
+        },
+        "mood": "So fühlte sich die Person: {umore}",
+        "moods": {
+          "1": "Unruhig",
+          "2": "Etwas angespannt",
+          "3": "So-so",
+          "4": "Ruhig",
+          "5": "Gelassen"
+        },
+        "noChanges": "Keine Tempowechsel.",
+        "paused": "Signal pausiert",
+        "reasons": {
+          "aumentaGuida": "der Kugel folgen",
+          "esploraRitorno": "zurück zum Starttempo",
+          "esploraScelta": "gewähltes Tempo",
+          "esploraSopra": "Versuch darüber",
+          "esploraSotto": "Versuch darunter",
+          "esplorazioneInterrotta": "Erkundung abgebrochen",
+          "rampa": "Anfangsrampe"
+        },
+        "row": "{date} · {sintonia} Min im Einklang von {totale}",
+        "score": "Score",
+        "title": "Sitzungen"
+      },
+      "tablesMissing": "Die Biofeedback-Tabellen sind noch nicht in Produktion (Migration app-060): dieser Bereich füllt sich später.",
+      "title": "Biofeedback",
+      "tune": {
+        "compare": "Letzte zwei Wochen gegenüber den zwei davor: {delta}",
+        "compareNA": "Letzte zwei Wochen gegenüber den zwei davor: nicht vergleichbar",
+        "counts": "{n} Sitzungen zuletzt, {m} davor",
+        "lock": "Zeit bis zum Einrasten (Min)",
+        "minutes": "Minuten im Einklang",
+        "movingAverage": "Gleitender Mittelwert (5 Sitzungen)",
+        "notLocked": "nicht eingerastet",
+        "session": "Sitzung",
+        "title": "Minuten im Einklang und Zeit bis zum Einrasten"
+      },
+      "warning": {
+        "down": "unten",
+        "limit": "In den letzten Sitzungen blieb die Führung {verso} an der Grenze des zugewiesenen Tempos: Finde den Rhythmus sollte wiederholt werden.",
+        "up": "oben"
+      }
+    },
     "clientMode": {
       "close": "Beenden (Esc)",
       "counter": "{i} von {n}",
@@ -1552,6 +1652,7 @@
     "tabs": {
       "analytics": "Erweiterte Analysen",
       "beforeAfter": "Vorher und Nachher",
+      "biofeedback": "Biofeedback",
       "measurements": "Messungen",
       "messages": "Nachrichten",
       "monitoring": "Monitoring",

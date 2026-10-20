@@ -14,6 +14,7 @@ import {
   resolveViewingProfessional,
 } from '@/lib/dashboard-data'
 import { listMonitoringSessionsForClient } from '@/lib/monitoring-data'
+import { BIOFEEDBACK_VUOTO, loadBiofeedbackForClient } from '@/lib/biofeedback-data'
 import { raggruppaAlert } from '@/lib/alert-group'
 import { listAlertEvents, listAlertRules } from '@/lib/alert-rules-server'
 import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
@@ -64,6 +65,12 @@ export default async function ClientPage({
     loadChartPrefs(params.id, METRIC_KEYS),
   ])
   const monitoring = filterMonitoringByModules(allMonitoring, access)
+  // Biofeedback (app 3.1.0, app-060): sessioni, percorso e valutazioni della
+  // persona misurata, nel perimetro del professionista; vuoto finché le
+  // tabelle non ci sono.
+  const biofeedback = client && professionalId
+    ? await loadBiofeedbackForClient(professionalId, client.id, client.client_user_id ?? null)
+    : BIOFEEDBACK_VUOTO
   // Gli eventi dell'app non letti restano visibili nella scheda, ma in una
   // lista a parte ("Segnalazioni dall'app"): non entrano nel conteggio degli
   // alert attivi, che deve coincidere con la lista clienti. I doppioni si
@@ -93,6 +100,7 @@ export default async function ClientPage({
         alertRules={alertRules}
         currentUserId={currentUserId ?? undefined}
         chartPrefs={chartPrefs}
+        biofeedback={biofeedback}
       />
     </DashboardLayout>
   )

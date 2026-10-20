@@ -1,0 +1,102 @@
+{
+  "biofeedback": {
+    "title": "Biofeedback",
+    "perimeter": "Guided breathing sessions of the person measured: the client linked to this card, or sessions done in the studio on the card. Read only.",
+    "tablesMissing": "The Biofeedback tables are not in production yet (migration app-060): this section fills up later.",
+    "empty": "No biofeedback sessions for this client.",
+    "path": {
+      "title": "Path",
+      "none": "No path assigned.",
+      "active": "{nome} · pace {rate} · since {date} · {stato}",
+      "names": {
+        "fondamenti": "Foundations",
+        "ripresa_veloce": "Quick recovery",
+        "pratica_libera": "Free practice"
+      },
+      "states": {
+        "attivo": "active",
+        "sospeso": "paused",
+        "completato": "completed",
+        "chiuso": "closed"
+      }
+    },
+    "adherence": {
+      "title": "Adherence by week",
+      "week": "Wk {n}",
+      "tooltip": "{fatte} of {attese} sessions",
+      "free": "Free practice: no schedule to follow.",
+      "done": "done",
+      "expected": "expected"
+    },
+    "calendar": {
+      "title": "Calendar",
+      "legend": "One cell per day, eight weeks: the darker, the more minutes in tune.",
+      "cell": "{date}: {sessioni} sessions, {minuti} min, {sintonia} min in tune"
+    },
+    "tune": {
+      "title": "Minutes in tune and time to lock in",
+      "minutes": "Minutes in tune",
+      "lock": "Time to lock in (min)",
+      "movingAverage": "Moving average (5 sessions)",
+      "compare": "Last two weeks versus the two before: {delta}",
+      "compareNA": "Last two weeks versus the two before: not comparable",
+      "counts": "{n} recent sessions, {m} before",
+      "notLocked": "not locked in",
+      "session": "Session"
+    },
+    "pace": {
+      "title": "Pace over time",
+      "final": "Final guide pace",
+      "assigned": "Assigned pace",
+      "assessmentsTitle": "Find the rhythm assessments",
+      "assessmentRow": "{date} · suggested {rate} · {voti} of {totale} criteria",
+      "confirmed": "confirmed {rate}",
+      "noSuggestion": "no pace could be assessed",
+      "none": "No assessments.",
+      "unit": "breaths per minute"
+    },
+    "warning": {
+      "limit": "In the latest sessions the guide stayed {verso} against the limit of the assigned pace: worth repeating Find the rhythm.",
+      "up": "high",
+      "down": "low"
+    },
+    "sessions": {
+      "title": "Sessions",
+      "row": "{date} · {sintonia} min in tune out of {totale}",
+      "incomplete": "closed before the end",
+      "mood": "How they felt: {umore}",
+      "detail": "Detail",
+      "close": "Close",
+      "curve": "Level and score every 5 seconds",
+      "level": "Level",
+      "score": "Score",
+      "changes": "Pace changes",
+      "change": "{s} s: from {da} to {a} ({motivo})",
+      "noChanges": "No pace changes.",
+      "artifacts": "Corrected beats: {pct}%",
+      "challenge": "Challenge {n}",
+      "paused": "Signal paused",
+      "levels": {
+        "1": "Find the rhythm",
+        "2": "Almost there",
+        "3": "In tune"
+      },
+      "moods": {
+        "1": "Restless",
+        "2": "A bit tense",
+        "3": "So-so",
+        "4": "Calm",
+        "5": "Serene"
+      },
+      "reasons": {
+        "rampa": "initial ramp",
+        "esploraSopra": "trial above",
+        "esploraSotto": "trial below",
+        "esploraRitorno": "back to the starting pace",
+        "esploraScelta": "chosen pace",
+        "esplorazioneInterrotta": "exploration stopped",
+        "aumentaGuida": "follow the sphere"
+      }
+    }
+  }
+}

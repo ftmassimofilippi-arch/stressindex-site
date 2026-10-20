@@ -3,6 +3,33 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-20 — tab Biofeedback nella scheda cliente (ramo `feat/report-biofeedback`, PR aperta, NON unita)
+
+Report del modulo Biofeedback dell'app 3.1.0 (`docs/BIOFEEDBACK_AVANZAMENTO.md`
+nel repo dell'app, fase F). Sola lettura, perimetro esplicito: le righe
+arrivano con la sessione dell'utente (RLS della `app-060`) e passano da
+`nelPerimetro` su `user_id`; le assegnazioni solo quelle del professionista
+loggato. Finché la `app-060` non è applicata la tab mostra l'avviso e basta.
+
+- `src/lib/biofeedback.ts` (puro, test `node --test`): tipi delle tre tabelle
+  con coercizione al confine, calendario dei percorsi `percorsi-1.0.0`
+  identico al Dart (`lib/features/biofeedback/domain/percorsi.dart`: se
+  cambia uno cambia l'altro), aderenza per settimana, celle del calendario,
+  media mobile, confronto fra periodi in percentuale (niente mediana), asse
+  adattivo, avviso "guida contro un limite".
+- `src/lib/biofeedback-data.ts`: caricamento per scheda (per `client_id` o
+  per `user_id` dell'account collegato), tabelle assenti → vuoto.
+- Tab `BiofeedbackTab.tsx` e componenti in `src/components/biofeedback/`:
+  percorso con aderenza per settimana, calendario a celle di otto
+  settimane, minuti in sintonia per sessione con media mobile e tempo di
+  aggancio, confronto fra le ultime due settimane e le due prima, ritmo
+  della guida nel tempo con le valutazioni Trova il ritmo, elenco delle
+  sessioni con dettaglio (curva ogni 5 s, cambi di ritmo con il motivo,
+  umore), avviso quando in quattro delle ultime cinque sessioni la guida ha
+  chiuso contro lo stesso limite ("conviene rifare Trova il ritmo").
+- i18n: `clients.biofeedback` in it/en/de, voce della tab; `i18n-check`
+  pulito. Nessuna migrazione del sito.
+
 ## 2026-10-20 — misurazioni senza riferimento restano visibili
 
 Rilasciato in produzione il 20/10/2026 (PR #5, merge su `main`).
