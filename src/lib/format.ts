@@ -10,7 +10,7 @@ import { it, enUS, de } from 'date-fns/locale'
 import type { Locale as DateFnsLocale } from 'date-fns'
 import type { Tr } from '@/i18n/types'
 import { defaultLocale, intlLocale, isLocale, type Locale } from '@/i18n/routing'
-import { FUSO, measuredInstant, oraDaParete, type ConIstante } from './measured-time'
+import { FUSO, measuredInstant, mezzogiornoIta, oraDaParete, type ConIstante } from './measured-time'
 import { capitalizeFirst, displayName } from './text-case'
 
 function loc(locale?: string): Locale {
@@ -40,15 +40,36 @@ const OPT_DATETIME: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short
 const OPT_TIME: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' }
 
 /** Data breve (es. "29 set 2026" / "Sep 29, 2026" / "29. Sept. 2026"). Con `fmt` usa un pattern date-fns. */
+// Data e ora si formattano SEPARATE e si uniscono con ", ": con le opzioni
+// data+ora in un'unica chiamata i motori divergono (Safari scrive
+// "Jun 10, 2026 at 01:01 PM", Node e Chrome "Jun 10, 2026, 01:01 PM") e il
+// testo del server non coincide con quello del browser (mismatch di
+// idratazione). Per IT e DE il risultato è identico a prima.
+function intlDateTime(d: Date, locale: string | undefined, tz: string = FUSO): string {
+  return `${intlDate(d, locale, OPT_DATE, tz)}, ${intlDate(d, locale, OPT_TIME, tz)}`
+}
+
+const SOLO_GIORNO = /^\d{4}-\d{2}-\d{2}$/
+
+// Un giorno "YYYY-MM-DD" (chiavi di giornata, data di inizio percorso,
+// annotazioni) è un giorno del calendario italiano: si prende il mezzogiorno
+// italiano di quel giorno. `parseISO` lo leggeva come mezzanotte LOCALE, che
+// in un browser a est di Roma cade nel giorno prima (altro mismatch di
+// idratazione: il server di Vercel è in UTC).
+function parseDate(date: string | Date): Date {
+  if (typeof date !== 'string') return date
+  return SOLO_GIORNO.test(date) ? mezzogiornoIta(date) : parseISO(date)
+}
+
 export function formatDate(date: string | Date, fmt?: string, locale?: string): string {
-  const d = typeof date === 'string' ? parseISO(date) : date
-  if (fmt) return format(d, fmt, { locale: dateFnsLocale(locale) })
+  const d = parseDate(date)
+  if (fmt) return format(typeof date === 'string' && SOLO_GIORNO.test(date) ? oraDaParete(d) : d, fmt, { locale: dateFnsLocale(locale) })
   return intlDate(d, locale, OPT_DATE)
 }
 
 export function formatDateTime(date: string | Date, locale?: string): string {
   const d = typeof date === 'string' ? parseISO(date) : date
-  return intlDate(d, locale, OPT_DATETIME)
+  return intlDateTime(d, locale)
 }
 
 export function formatTime(date: string | Date, locale?: string): string {
@@ -74,6 +95,7 @@ export {
   measuredHour,
   measuredInstant,
   measuredWeekday,
+  mezzogiornoIta,
   oggiIta,
   type ConIstante,
   type ConIstanteSessione,
@@ -81,7 +103,7 @@ export {
 
 export function formatMeasuredAt(row: ConIstante | null | undefined, locale?: string): string {
   const i = measuredInstant(row)
-  return i ? intlDate(i, locale, OPT_DATETIME, FUSO) : '—'
+  return i ? intlDateTime(i, locale, FUSO) : '—'
 }
 
 export function formatMeasuredDate(row: ConIstante | null | undefined, fmt?: string, locale?: string): string {
