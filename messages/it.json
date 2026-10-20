@@ -963,7 +963,9 @@
         "sdnn": "Variabilità complessiva (SDNN)"
       },
       "noReference": "Nessuna misurazione di riferimento: l'andamento si calcola sulle misurazioni standard del mattino (dalle 4 alle 12). Le {count, plural, one {# misurazione} other {# misurazioni}} di altro tipo o orario restano visibili come punti vuoti.",
+      "noReferenceClient": "Servono misurazioni al mattino per vedere l'andamento.",
       "noReferenceInPeriod": "Nessuna misurazione di riferimento nel periodo scelto.",
+      "noReferenceInPeriodClient": "In questo periodo non ci sono misurazioni al mattino.",
       "numbers": {
         "change": "Variazione",
         "declined": "peggiorato del {pct}%",
@@ -4848,6 +4850,7 @@
       "indicationsTitle": "Indicazioni del tuo professionista",
       "measurementSubtitle": "Come sta il tuo sistema nervoso oggi",
       "measurementTitle": "Il tuo report HRV",
+      "noReference": "Servono misurazioni al mattino per vedere l'andamento.",
       "readingTitle": "In sintesi",
       "reportSubtitle": "Come sono cambiati i tuoi score nel periodo",
       "reportTitle": "Il tuo andamento",

@@ -73,6 +73,8 @@
       "periodStart": "fascia della prima settimana del periodo",
       "previous": "fascia del periodo precedente",
       "last60": "fascia degli ultimi 60 giorni"
-    }
+    },
+    "noReferenceClient": "Servono misurazioni al mattino per vedere l'andamento.",
+    "noReferenceInPeriodClient": "In questo periodo non ci sono misurazioni al mattino."
   }
 }

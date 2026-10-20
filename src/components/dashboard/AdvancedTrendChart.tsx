@@ -699,11 +699,17 @@ function MetricPanel({
         ? renderHeader({ metric, summary, reference })
         : <PanelHeader metric={metric} name={name} summary={summary} reference={reference} compare={effectiveCompare} clientMode={clientMode} print={print} />)}
 
+      {/* Al cliente ("Mostra al cliente", report versione cliente) una frase
+          semplice; al professionista l'avviso con la regola delle 4-12. */}
       {measurements && dailyValues.length === 0 && (
-        <p className="text-xs text-amber-700 mb-2">{t('panel.noReference', { count: allPoints.length || measurements.length })}</p>
+        <p className={`${clientMode ? 'text-sm' : 'text-xs'} text-amber-700 mb-2`}>
+          {clientMode ? t('panel.noReferenceClient') : t('panel.noReference', { count: allPoints.length || measurements.length })}
+        </p>
       )}
       {measurements && dailyValues.length > 0 && !referenceInPeriod && (
-        <p className="text-xs text-amber-700 mb-2">{t('panel.noReferenceInPeriod')}</p>
+        <p className={`${clientMode ? 'text-sm' : 'text-xs'} text-amber-700 mb-2`}>
+          {clientMode ? t('panel.noReferenceInPeriodClient') : t('panel.noReferenceInPeriod')}
+        </p>
       )}
 
       {rows.length === 0 ? (

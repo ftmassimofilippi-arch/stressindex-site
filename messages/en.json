@@ -963,7 +963,9 @@
         "sdnn": "Overall variability (SDNN)"
       },
       "noReference": "No reference measurement: the trend is calculated on standard morning measurements (4 am to 12 pm). The {count, plural, one {# measurement} other {# measurements}} of another type or time stay visible as hollow dots.",
+      "noReferenceClient": "Morning measurements are needed to see the trend.",
       "noReferenceInPeriod": "No reference measurement in the selected period.",
+      "noReferenceInPeriodClient": "There are no morning measurements in this period.",
       "numbers": {
         "change": "Change",
         "declined": "worsened by {pct}%",
@@ -4848,6 +4850,7 @@
       "indicationsTitle": "Guidance from your professional",
       "measurementSubtitle": "How your nervous system is doing today",
       "measurementTitle": "Your HRV report",
+      "noReference": "Morning measurements are needed to see the trend.",
       "readingTitle": "In short",
       "reportSubtitle": "How your scores changed over the period",
       "reportTitle": "Your progress",

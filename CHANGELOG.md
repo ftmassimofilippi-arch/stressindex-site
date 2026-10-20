@@ -3,6 +3,21 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-20 — frase semplice per il cliente senza misurazioni del mattino
+
+Ramo `fix/frase-cliente-senza-mattino`. In "Mostra al cliente" e nel report
+versione cliente l'avviso tecnico "Nessuna misurazione di riferimento: l'andamento
+si calcola sulle misurazioni standard del mattino (dalle 4 alle 12)…" diventa
+"Servono misurazioni al mattino per vedere l'andamento." (e, con riferimento
+fuori dal periodo scelto, "In questo periodo non ci sono misurazioni al
+mattino."). Il professionista continua a vedere l'avviso con la regola.
+
+- `AdvancedTrendChart.tsx`: con `clientMode` usa `charts.panel.noReferenceClient`
+  e `noReferenceInPeriodClient`.
+- `stampa/report-periodico/page.tsx`: con `variant=client` usa
+  `print.client.noReference`.
+- Testi IT/EN/DE nei frammenti `charts.percorso.json` e `print.client.json`.
+
 ## 2026-10-20 — misurazioni senza riferimento restano visibili
 
 Rilasciato in produzione il 20/10/2026 (PR #5, merge su `main`).
