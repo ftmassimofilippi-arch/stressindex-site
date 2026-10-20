@@ -11,6 +11,7 @@
     "reportTitle": "Ihr Verlauf",
     "reportSubtitle": "Wie sich Ihre Scores im Zeitraum verändert haben",
     "indicationsTitle": "Hinweise Ihrer Fachkraft",
-    "fileType": "Klient"
+    "fileType": "Klient",
+    "noReference": "Für den Verlauf braucht es Messungen am Morgen."
   }
 }

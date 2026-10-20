@@ -73,6 +73,8 @@
       "periodStart": "range of the first week of the period",
       "previous": "range of the previous period",
       "last60": "range of the last 60 days"
-    }
+    },
+    "noReferenceClient": "Morning measurements are needed to see the trend.",
+    "noReferenceInPeriodClient": "There are no morning measurements in this period."
   }
 }

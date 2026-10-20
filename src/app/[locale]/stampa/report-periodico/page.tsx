@@ -185,7 +185,8 @@ export default async function PrintPeriodicReportPage({
           {/* Pannelli con frase di sintesi e i quattro numeri: la partenza viene dalla storia intera. */}
           <PrintSection title={t('report.panelsTitle')} subtitle={t('report.panelsSubtitle')}>
             <div>
-              {!anyReference && <p className="text-[11px] text-amber-700 mb-2">{t('report.noReference')}</p>}
+              {/* Versione cliente: frase semplice, senza la regola delle 4-12. */}
+              {!anyReference && <p className="text-[11px] text-amber-700 mb-2">{t(clientVariant ? 'client.noReference' : 'report.noReference')}</p>}
               <AdvancedTrendChart
                 measurements={history}
                 print

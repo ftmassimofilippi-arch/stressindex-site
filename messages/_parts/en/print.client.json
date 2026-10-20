@@ -11,6 +11,7 @@
     "reportTitle": "Your progress",
     "reportSubtitle": "How your scores changed over the period",
     "indicationsTitle": "Guidance from your professional",
-    "fileType": "Client"
+    "fileType": "Client",
+    "noReference": "Morning measurements are needed to see the trend."
   }
 }

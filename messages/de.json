@@ -963,7 +963,9 @@
         "sdnn": "Gesamtvariabilität (SDNN)"
       },
       "noReference": "Keine Referenzmessung: der Verlauf wird aus Standardmessungen am Morgen (4 bis 12 Uhr) berechnet. {count, plural, one {# Messung} other {# Messungen}} anderer Art oder Uhrzeit bleiben als leere Punkte sichtbar.",
+      "noReferenceClient": "Für den Verlauf braucht es Messungen am Morgen.",
       "noReferenceInPeriod": "Keine Referenzmessung im gewählten Zeitraum.",
+      "noReferenceInPeriodClient": "In diesem Zeitraum gibt es keine Messungen am Morgen.",
       "numbers": {
         "change": "Veränderung",
         "declined": "um {pct}% verschlechtert",
@@ -4848,6 +4850,7 @@
       "indicationsTitle": "Hinweise Ihrer Fachkraft",
       "measurementSubtitle": "Wie es Ihrem Nervensystem heute geht",
       "measurementTitle": "Ihr HRV-Bericht",
+      "noReference": "Für den Verlauf braucht es Messungen am Morgen.",
       "readingTitle": "Kurz gesagt",
       "reportSubtitle": "Wie sich Ihre Scores im Zeitraum verändert haben",
       "reportTitle": "Ihr Verlauf",

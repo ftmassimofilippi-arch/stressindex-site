@@ -73,6 +73,8 @@
       "periodStart": "Bereichs der ersten Woche des Zeitraums",
       "previous": "Bereichs des Vorzeitraums",
       "last60": "Bereichs der letzten 60 Tage"
-    }
+    },
+    "noReferenceClient": "Für den Verlauf braucht es Messungen am Morgen.",
+    "noReferenceInPeriodClient": "In diesem Zeitraum gibt es keine Messungen am Morgen."
   }
 }

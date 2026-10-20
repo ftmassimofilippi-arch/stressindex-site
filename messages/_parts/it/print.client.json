@@ -11,6 +11,7 @@
     "reportTitle": "Il tuo andamento",
     "reportSubtitle": "Come sono cambiati i tuoi score nel periodo",
     "indicationsTitle": "Indicazioni del tuo professionista",
-    "fileType": "Cliente"
+    "fileType": "Cliente",
+    "noReference": "Servono misurazioni al mattino per vedere l'andamento."
   }
 }
