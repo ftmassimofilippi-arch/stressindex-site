@@ -16,7 +16,7 @@ import { alertMessage, alertTypeLabel, alertValueDecimals } from '@/lib/alert-ru
 import { formatDate, formatDateTime, formatMeasuredAt, num } from '@/lib/format'
 import { tagLabel } from '@/lib/before-after'
 import { measurementTypeLabel, normalizeTestType } from '@/lib/measurement-type'
-import { isReferenceMeasurement } from '@/lib/reference-trend.ts'
+import { misurazioneDaMostrare } from '@/lib/reference-trend.ts'
 import { DEFAULT_CHART_VIEW, EMPTY_CHART_PREFS, sameChartView, type ChartPrefs, type ChartView } from '@/lib/chart-view.ts'
 import { PrepareViewPanel } from '../PrepareViewPanel'
 import { ClientModeView } from '../ClientModeView'
@@ -50,9 +50,12 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, app
   // Lancette e testata seguono l'ultima misurazione DI RIFERIMENTO (standard,
   // del mattino): una coerenza delle 10:39 non deve sembrare "lo stress di
   // oggi". L'ultima in assoluto, se è di altro tipo, si dice in una riga.
+  // Senza nessuna di riferimento si mostra l'ultima in assoluto con una nota
+  // ambra: una scheda con una sola misurazione del pomeriggio non è vuota.
   const latestAny = measurements[0]
-  const latest = measurements.find((m) => isReferenceMeasurement(m)) ?? null
-  const latestOtherType = latestAny && latest && latestAny.session_id !== latest.session_id
+  const shown = useMemo(() => misurazioneDaMostrare(measurements), [measurements])
+  const latest = shown?.m ?? null
+  const latestOtherType = latestAny && latest && !shown?.nonDiRiferimento && latestAny.session_id !== latest.session_id
     ? (latestAny.coherence_data ? 'coherence' : latestAny.orthostatic_data ? 'orthostatic' : normalizeTestType(latestAny.test_type))
     : null
   const qs = professionistaId ? `?professionista=${professionistaId}` : ''
@@ -106,10 +109,10 @@ export function OverviewTab({ client, measurements, monitoring = [], alerts, app
             ),
           )}
         </div>
-        {latest ? (
+        {latest && shown?.nonDiRiferimento ? (
+          <p className="mt-3 text-xs text-amber-700">{t('shownNotReference', { date: formatMeasuredAt(latest, locale) })}</p>
+        ) : latest ? (
           <p className="mt-3 text-xs text-anthracite-lighter">{t('lastReference', { date: formatMeasuredAt(latest, locale) })}</p>
-        ) : latestAny ? (
-          <p className="mt-3 text-xs text-amber-700">{t('noReferenceYet')}</p>
         ) : null}
         {latestOtherType && latestAny && (
           <p className="mt-1 text-xs text-anthracite-lighter">

@@ -22,7 +22,7 @@ import { PdfExportModal } from './PdfExportModal'
 import { MessageComposer } from './MessageComposer'
 import { SuperadminAccessLog } from '@/components/dashboard/SuperadminAccessLog'
 import { formatDate, formatMeasuredDate } from '@/lib/format'
-import { isReferenceMeasurement } from '@/lib/reference-trend.ts'
+import { misurazioneDaMostrare } from '@/lib/reference-trend.ts'
 import { EMPTY_CHART_PREFS, type ChartPrefs } from '@/lib/chart-view.ts'
 import type { AlertRule } from '@/lib/alert-rules'
 import { parseMeasurementFilter, type MeasurementFilter } from '@/lib/measurement-filter'
@@ -116,8 +116,11 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, a
     : '/area-professionisti/clienti'
   const [pdfOpen, setPdfOpen] = useState(false)
   const [msgOpen, setMsgOpen] = useState(false)
-  // Testata: l'ultima misurazione DI RIFERIMENTO (standard, del mattino), con la data.
-  const latest = useMemo(() => measurements.find((m) => isReferenceMeasurement(m)) ?? null, [measurements])
+  // Testata: l'ultima misurazione DI RIFERIMENTO (standard, del mattino), con
+  // la data; se non ce n'è nessuna, l'ultima in assoluto con una nota (la
+  // regola dei conti non cambia, cambia solo che cosa si vede).
+  const shown = useMemo(() => misurazioneDaMostrare(measurements), [measurements])
+  const latest = shown?.m ?? null
   const latestDate = latest ? t('ofDate', { date: formatMeasuredDate(latest, undefined, locale) }) : null
 
   const totalMeasurements = measurements.length
@@ -213,6 +216,9 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, a
             )}
           </div>
         </div>
+        {shown?.nonDiRiferimento && (
+          <p className="mt-3 text-xs text-amber-700">{t('shownNotReference')}</p>
+        )}
       </section>
 
       <div className="flex gap-1 border-b border-surface-border mb-6 overflow-x-auto">
