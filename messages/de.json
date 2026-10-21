@@ -1273,6 +1273,40 @@
         "up": "oben"
       }
     },
+    "breathwork": {
+      "biofeedbackTitle": "Biofeedback",
+      "perimeter": "Programm, Atemübungen und Biofeedback-Sitzungen der gemessenen Person: der mit dieser Karte verbundene Kunde oder die im Studio auf der Karte gemachten Sitzungen. Nur lesen.",
+      "program": {
+        "adherence4": "letzte 4 Wochen: {fatte} von {previste}",
+        "adherenceByWeek": "Einhaltung pro Woche, älteste zuerst",
+        "adherenceWeek": "Woche: {fatte} von {previste}",
+        "byPath": "nach dem Programm",
+        "calendar": "{giorni}, {volte} pro Tag",
+        "daysPerWeek": "{n} Tage pro Woche",
+        "everyDay": "jeden Tag",
+        "none": "Keine Aktivität zugewiesen.",
+        "since": "seit {date}",
+        "title": "Programm",
+        "weeks": "{n} Wochen"
+      },
+      "sessions": {
+        "hr": "Mittlere HF {bpm} bpm",
+        "hrStartEnd": "Herzfrequenz: Anfang {a} bpm, Ende {b} bpm",
+        "none": "Keine Übungssitzung.",
+        "open": "ohne festes Ende",
+        "rmssd": "RMSSD {ms} ms",
+        "rmssdStartEnd": "RMSSD: Anfang {a} ms, Ende {b} ms",
+        "row": "{date} · {nome} · {minuti} Min. · {cicli} Zyklen",
+        "title": "Übungssitzungen"
+      },
+      "tablesMissing": "Die Breathwork-Tabellen sind noch nicht in Produktion (Migrationen app-062, app-063, app-064): der Abschnitt füllt sich später.",
+      "title": "Breathwork",
+      "types": {
+        "biofeedback_percorso": "Biofeedback-Programm",
+        "esercizio_respiro": "Atemübung",
+        "test_hrv": "Geplanter HRV-Test"
+      }
+    },
     "clientMode": {
       "close": "Beenden (Esc)",
       "counter": "{i} von {n}",
@@ -1652,7 +1686,7 @@
     "tabs": {
       "analytics": "Erweiterte Analysen",
       "beforeAfter": "Vorher und Nachher",
-      "biofeedback": "Biofeedback",
+      "biofeedback": "Breathwork",
       "measurements": "Messungen",
       "messages": "Nachrichten",
       "monitoring": "Monitoring",

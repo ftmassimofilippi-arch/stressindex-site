@@ -1273,6 +1273,40 @@
         "up": "high"
       }
     },
+    "breathwork": {
+      "biofeedbackTitle": "Biofeedback",
+      "perimeter": "Programme, breathing exercises and Biofeedback sessions of the measured person: the client linked to this record, or sessions done in the studio on the record. Read only.",
+      "program": {
+        "adherence4": "last 4 weeks: {fatte} of {previste}",
+        "adherenceByWeek": "Adherence by week, oldest first",
+        "adherenceWeek": "Week: {fatte} of {previste}",
+        "byPath": "as the path says",
+        "calendar": "{giorni}, {volte} a day",
+        "daysPerWeek": "{n} days a week",
+        "everyDay": "every day",
+        "none": "No activity assigned.",
+        "since": "since {date}",
+        "title": "Programme",
+        "weeks": "{n} weeks"
+      },
+      "sessions": {
+        "hr": "Average HR {bpm} bpm",
+        "hrStartEnd": "Heart rate: start {a} bpm, end {b} bpm",
+        "none": "No exercise session.",
+        "open": "open-ended",
+        "rmssd": "RMSSD {ms} ms",
+        "rmssdStartEnd": "RMSSD: start {a} ms, end {b} ms",
+        "row": "{date} · {nome} · {minuti} min · {cicli} cycles",
+        "title": "Exercise sessions"
+      },
+      "tablesMissing": "The Breathwork tables are not in production yet (migrations app-062, app-063, app-064): the section fills in later.",
+      "title": "Breathwork",
+      "types": {
+        "biofeedback_percorso": "Biofeedback path",
+        "esercizio_respiro": "Breathing exercise",
+        "test_hrv": "Scheduled HRV test"
+      }
+    },
     "clientMode": {
       "close": "Exit (Esc)",
       "counter": "{i} of {n}",
@@ -1652,7 +1686,7 @@
     "tabs": {
       "analytics": "Advanced analytics",
       "beforeAfter": "Before and after",
-      "biofeedback": "Biofeedback",
+      "biofeedback": "Breathwork",
       "measurements": "Measurements",
       "messages": "Messages",
       "monitoring": "Monitoring",

@@ -3,6 +3,41 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
+## 2026-10-21 — tab Breathwork nella scheda cliente (ramo `feat/breathwork`, PR aperta, NON unita)
+
+Il modulo Biofeedback dell'app diventa il contenitore Breathwork
+(`docs/BREATHWORK_PROGETTO.md` nel repo dell'app). La tab "Biofeedback" della
+scheda cliente si chiama "Breathwork" (stesso id `biofeedback` nei deep link)
+e mostra, in sola lettura e nel perimetro del professionista: il programma
+attivo (attività del tipo percorso Biofeedback, esercizio di respiro, test HRV
+programmato) con calendario, orari, nota per il cliente e aderenza
+fatte/previste della settimana, delle ultime quattro e per settimana; le
+sessioni degli esercizi (durata, cicli, durata aperta, FC media e RMSSD se
+c'era la fascia, inizio/fine nel dettaglio, umore); poi il Biofeedback com'era.
+
+- `src/lib/breathwork.ts` (puro, test `node --test`): tipi delle quattro
+  tabelle della `app-062` con coercizione al confine; calendario delle
+  attività identico al Dart (`lib/features/breathwork/domain/calendario_attivita.dart`:
+  occorrenze previste, periodo dalle settimane, aderenza con le previste
+  contate solo fino a oggi, fuori calendario che conta, mai oltre il previsto
+  del giorno; percorso Biofeedback con le volte dal percorso); nome
+  dell'esercizio per lingua.
+- `src/lib/breathwork-data.ts`: caricamento per scheda (attività del
+  professionista per l'account collegato, completamenti di quell'account solo
+  delle attività caricate, sessioni per `client_id` o `user_id`, esercizi
+  leggibili); tabelle assenti → avviso, nessun errore.
+- `src/lib/biofeedback.ts`: `parseBiofeedbackAssignment` legge la riga di
+  `programma_attivita` (`app-064`: `riferimento`, `parametri`, `calendario`) e
+  ancora la vecchia; `biofeedback-data.ts` legge le assegnazioni da
+  `programma_attivita` con `tipo = biofeedback_percorso`.
+- `tabs/BreathworkTab.tsx` (contiene `BiofeedbackTab`), `ClientProfile`,
+  `page.tsx`; frammenti `clients.breathwork` it/en/de e voce della tab.
+- Verifiche: `npm test`, `npm run lint`, `node scripts/i18n-check.mjs` puliti;
+  `npm run build` compila e passa il controllo dei tipi, poi si ferma nel
+  prerender di `/login`, `/404`, `/500` con `useContext of null` come già sul
+  checkout di `main` (Node 25, vedi la voce del 20/10): da verificare
+  sull'anteprima Vercel.
+
 ## 2026-10-20 — tab Biofeedback nella scheda cliente (ramo `feat/report-biofeedback`, PR aperta, NON unita)
 
 Report del modulo Biofeedback dell'app 3.1.0 (`docs/BIOFEEDBACK_AVANZAMENTO.md`

@@ -1,5 +1,5 @@
-// Biofeedback: lettura delle tre tabelle della app-060 per la scheda
-// cliente, con la sessione dell'utente (RLS) e il perimetro esplicito.
+// Biofeedback: lettura di sessioni e valutazioni (app-060) e delle
+// assegnazioni (programma_attivita, app-064) per la scheda cliente, con la sessione dell'utente (RLS) e il perimetro esplicito.
 //
 // Le sessioni e le valutazioni seguono la persona misurata (`user_id`): per
 // una scheda si prendono le righe con `client_id` = scheda, oppure
@@ -55,10 +55,13 @@ export async function loadBiofeedbackForClient(
     supabase.from('resonance_assessments').select('*').or(filtro).order('iniziata_il', { ascending: false }).limit(50) as unknown as PromiseLike<Risposta>,
     clientUserId
       ? (supabase
-          .from('biofeedback_assignments')
+          // Dalla app-064 le assegnazioni vivono in programma_attivita
+          // (tipo biofeedback_percorso, stesso id delle vecchie righe).
+          .from('programma_attivita')
           .select('*')
           .eq('professional_id', professionistaId)
           .eq('client_user_id', clientUserId)
+          .eq('tipo', 'biofeedback_percorso')
           .order('created_at', { ascending: false })
           .limit(50) as unknown as PromiseLike<Risposta>)
       : Promise.resolve<Risposta>({ data: [], error: null }),
@@ -69,7 +72,7 @@ export async function loadBiofeedbackForClient(
   }
   if (s.error) reportDataError('biofeedback_sessions', s.error)
   if (v.error) reportDataError('resonance_assessments', v.error)
-  if (a.error) reportDataError('biofeedback_assignments', a.error)
+  if (a.error) reportDataError('programma_attivita', a.error)
 
   const sessioni = (s.data ?? [])
     .map(parseBiofeedbackSession)
