@@ -15,6 +15,7 @@ import {
 } from '@/lib/dashboard-data'
 import { listMonitoringSessionsForClient } from '@/lib/monitoring-data'
 import { BIOFEEDBACK_VUOTO, loadBiofeedbackForClient } from '@/lib/biofeedback-data'
+import { BREATHWORK_VUOTO, loadBreathworkForClient } from '@/lib/breathwork-data'
 import { raggruppaAlert } from '@/lib/alert-group'
 import { listAlertEvents, listAlertRules } from '@/lib/alert-rules-server'
 import { filterMonitoringByModules, getMyAccountAccess } from '@/lib/account-access'
@@ -71,6 +72,11 @@ export default async function ClientPage({
   const biofeedback = client && professionalId
     ? await loadBiofeedbackForClient(professionalId, client.id, client.client_user_id ?? null)
     : BIOFEEDBACK_VUOTO
+  // Breathwork (app-062…064): programma, completamenti, sessioni degli
+  // esercizi, esercizi; vuoto finché le tabelle non ci sono.
+  const breathwork = client && professionalId
+    ? await loadBreathworkForClient(professionalId, client.id, client.client_user_id ?? null)
+    : BREATHWORK_VUOTO
   // Gli eventi dell'app non letti restano visibili nella scheda, ma in una
   // lista a parte ("Segnalazioni dall'app"): non entrano nel conteggio degli
   // alert attivi, che deve coincidere con la lista clienti. I doppioni si
@@ -101,6 +107,7 @@ export default async function ClientPage({
         currentUserId={currentUserId ?? undefined}
         chartPrefs={chartPrefs}
         biofeedback={biofeedback}
+        breathwork={breathwork}
       />
     </DashboardLayout>
   )

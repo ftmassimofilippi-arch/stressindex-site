@@ -1,0 +1,36 @@
+{
+  "breathwork": {
+    "title": "Breathwork",
+    "perimeter": "Programma, esercizi di respiro e sessioni di Biofeedback della persona misurata: il cliente collegato a questa scheda, o le sessioni fatte in studio sulla scheda. Sola lettura.",
+    "tablesMissing": "Le tabelle del Breathwork non sono ancora in produzione (migrazioni app-062, app-063, app-064): la sezione si riempie dopo.",
+    "biofeedbackTitle": "Biofeedback",
+    "types": {
+      "biofeedback_percorso": "Percorso Biofeedback",
+      "esercizio_respiro": "Esercizio di respiro",
+      "test_hrv": "Test HRV programmato"
+    },
+    "program": {
+      "title": "Programma",
+      "none": "Nessuna attività assegnata.",
+      "byPath": "secondo il percorso",
+      "everyDay": "ogni giorno",
+      "daysPerWeek": "{n} giorni a settimana",
+      "calendar": "{giorni}, {volte} al giorno",
+      "since": "dal {date}",
+      "weeks": "{n} settimane",
+      "adherenceWeek": "Settimana: {fatte} su {previste}",
+      "adherence4": "ultime 4 settimane: {fatte} su {previste}",
+      "adherenceByWeek": "Aderenza per settimana, dalla più vecchia"
+    },
+    "sessions": {
+      "title": "Sessioni degli esercizi",
+      "none": "Nessuna sessione di esercizio.",
+      "row": "{date} · {nome} · {minuti} min · {cicli} cicli",
+      "open": "durata aperta",
+      "hr": "FC media {bpm} bpm",
+      "rmssd": "RMSSD {ms} ms",
+      "hrStartEnd": "Frequenza cardiaca: inizio {a} bpm, fine {b} bpm",
+      "rmssdStartEnd": "RMSSD: inizio {a} ms, fine {b} ms"
+    }
+  }
+}

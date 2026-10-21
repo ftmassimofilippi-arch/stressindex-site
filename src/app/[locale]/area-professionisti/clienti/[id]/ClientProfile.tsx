@@ -12,8 +12,9 @@ import { OverviewTab } from './tabs/OverviewTab'
 import { MeasurementsTab } from './tabs/MeasurementsTab'
 import { BeforeAfterTab } from './tabs/BeforeAfterTab'
 import { MonitoringTab } from './tabs/MonitoringTab'
-import { BiofeedbackTab } from './tabs/BiofeedbackTab'
+import { BreathworkTab } from './tabs/BreathworkTab'
 import { BIOFEEDBACK_VUOTO, type BiofeedbackScheda } from '@/lib/biofeedback'
+import { BREATHWORK_VUOTO, type BreathworkScheda } from '@/lib/breathwork'
 import type { MonitoringSession } from '@/lib/monitoring-types'
 import { AdvancedAnalyticsTab } from './tabs/AdvancedAnalyticsTab'
 import { NotesTab, noteCategoryLabel, noteTagLabel } from './tabs/NotesTab'
@@ -73,9 +74,10 @@ type Props = {
   chartPrefs?: ChartPrefs
   /** Biofeedback (app-060): sessioni, percorso, valutazioni; sola lettura. */
   biofeedback?: BiofeedbackScheda
+  breathwork?: BreathworkScheda
 }
 
-export function ClientProfile({ client, measurements, monitoring = [], alerts, appEvents = [], notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId, superadminAccess, adminId, alertRules = [], currentUserId, chartPrefs = EMPTY_CHART_PREFS, biofeedback = BIOFEEDBACK_VUOTO }: Props) {
+export function ClientProfile({ client, measurements, monitoring = [], alerts, appEvents = [], notes, settings, messages, professional, readOnly, viewingMemberName, professionistaId, superadminAccess, adminId, alertRules = [], currentUserId, chartPrefs = EMPTY_CHART_PREFS, biofeedback = BIOFEEDBACK_VUOTO, breathwork = BREATHWORK_VUOTO }: Props) {
   const t = useTranslations('clients.profile')
   const tTabs = useTranslations('clients.tabs')
   const tScores = useTranslations('scores')
@@ -242,7 +244,7 @@ export function ClientProfile({ client, measurements, monitoring = [], alerts, a
       {tab === 'misurazioni' && <MeasurementsTab client={client} measurements={measurements} filter={filter} onFilterChange={setFilter} detailQs={detailQs} />}
       {tab === 'prima-dopo' && <BeforeAfterTab client={client} measurements={measurements} professionistaId={professionistaId} excluded={chartPrefs.exclusions.map((e) => e.session_id)} />}
       {tab === 'monitoraggi' && <MonitoringTab sessions={monitoring} professionistaId={professionistaId} />}
-      {tab === 'biofeedback' && <BiofeedbackTab dati={biofeedback} />}
+      {tab === 'biofeedback' && <BreathworkTab dati={breathwork} biofeedback={biofeedback} />}
       {tab === 'analytics' && <AdvancedAnalyticsTab measurements={measurements} courseStart={client.data_inizio_percorso ?? null} excluded={chartPrefs.exclusions.map((e) => e.session_id)} annotations={chartPrefs.annotations} />}
       {tab === 'report' && <ReportTab client={client} />}
       {!readOnly && tab === 'note' && <NotesTab client={client} initialNotes={notes} />}

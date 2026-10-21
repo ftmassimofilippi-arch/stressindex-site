@@ -1,0 +1,36 @@
+{
+  "breathwork": {
+    "title": "Breathwork",
+    "perimeter": "Programme, breathing exercises and Biofeedback sessions of the measured person: the client linked to this record, or sessions done in the studio on the record. Read only.",
+    "tablesMissing": "The Breathwork tables are not in production yet (migrations app-062, app-063, app-064): the section fills in later.",
+    "biofeedbackTitle": "Biofeedback",
+    "types": {
+      "biofeedback_percorso": "Biofeedback path",
+      "esercizio_respiro": "Breathing exercise",
+      "test_hrv": "Scheduled HRV test"
+    },
+    "program": {
+      "title": "Programme",
+      "none": "No activity assigned.",
+      "byPath": "as the path says",
+      "everyDay": "every day",
+      "daysPerWeek": "{n} days a week",
+      "calendar": "{giorni}, {volte} a day",
+      "since": "since {date}",
+      "weeks": "{n} weeks",
+      "adherenceWeek": "Week: {fatte} of {previste}",
+      "adherence4": "last 4 weeks: {fatte} of {previste}",
+      "adherenceByWeek": "Adherence by week, oldest first"
+    },
+    "sessions": {
+      "title": "Exercise sessions",
+      "none": "No exercise session.",
+      "row": "{date} · {nome} · {minuti} min · {cicli} cycles",
+      "open": "open-ended",
+      "hr": "Average HR {bpm} bpm",
+      "rmssd": "RMSSD {ms} ms",
+      "hrStartEnd": "Heart rate: start {a} bpm, end {b} bpm",
+      "rmssdStartEnd": "RMSSD: start {a} ms, end {b} ms"
+    }
+  }
+}

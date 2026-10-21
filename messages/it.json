@@ -1273,6 +1273,40 @@
         "up": "in alto"
       }
     },
+    "breathwork": {
+      "biofeedbackTitle": "Biofeedback",
+      "perimeter": "Programma, esercizi di respiro e sessioni di Biofeedback della persona misurata: il cliente collegato a questa scheda, o le sessioni fatte in studio sulla scheda. Sola lettura.",
+      "program": {
+        "adherence4": "ultime 4 settimane: {fatte} su {previste}",
+        "adherenceByWeek": "Aderenza per settimana, dalla più vecchia",
+        "adherenceWeek": "Settimana: {fatte} su {previste}",
+        "byPath": "secondo il percorso",
+        "calendar": "{giorni}, {volte} al giorno",
+        "daysPerWeek": "{n} giorni a settimana",
+        "everyDay": "ogni giorno",
+        "none": "Nessuna attività assegnata.",
+        "since": "dal {date}",
+        "title": "Programma",
+        "weeks": "{n} settimane"
+      },
+      "sessions": {
+        "hr": "FC media {bpm} bpm",
+        "hrStartEnd": "Frequenza cardiaca: inizio {a} bpm, fine {b} bpm",
+        "none": "Nessuna sessione di esercizio.",
+        "open": "durata aperta",
+        "rmssd": "RMSSD {ms} ms",
+        "rmssdStartEnd": "RMSSD: inizio {a} ms, fine {b} ms",
+        "row": "{date} · {nome} · {minuti} min · {cicli} cicli",
+        "title": "Sessioni degli esercizi"
+      },
+      "tablesMissing": "Le tabelle del Breathwork non sono ancora in produzione (migrazioni app-062, app-063, app-064): la sezione si riempie dopo.",
+      "title": "Breathwork",
+      "types": {
+        "biofeedback_percorso": "Percorso Biofeedback",
+        "esercizio_respiro": "Esercizio di respiro",
+        "test_hrv": "Test HRV programmato"
+      }
+    },
     "clientMode": {
       "close": "Esci (Esc)",
       "counter": "{i} di {n}",
@@ -1652,7 +1686,7 @@
     "tabs": {
       "analytics": "Analytics avanzati",
       "beforeAfter": "Prima e dopo",
-      "biofeedback": "Biofeedback",
+      "biofeedback": "Breathwork",
       "measurements": "Misurazioni",
       "messages": "Messaggi",
       "monitoring": "Monitoraggio",

@@ -164,26 +164,38 @@ export function parseBiofeedbackSession(r: Raw): BiofeedbackSession | null {
   }
 }
 
+/**
+ * Un'assegnazione dalla riga di `programma_attivita` (tipo
+ * `biofeedback_percorso`, app-064: `riferimento`, `parametri.ritmo`,
+ * `calendario.orari[0]`) o, per compatibilità, dalla vecchia riga di
+ * `biofeedback_assignments` (`percorso`, `ritmo`, `promemoria_ora`).
+ */
 export function parseBiofeedbackAssignment(r: Raw): BiofeedbackAssignment | null {
   const id = toStr(r.id)
   const pro = toStr(r.professional_id)
   const cli = toStr(r.client_user_id)
   const inizio = toStr(r.inizio)
   if (!id || !pro || !cli || !inizio) return null
-  const percorso = toStr(r.percorso)
+  const tipo = toStr(r.tipo)
+  if (tipo != null && tipo !== 'biofeedback_percorso') return null
+  const parametri = (r.parametri ?? {}) as Raw
+  const calendario = (r.calendario ?? {}) as Raw
+  const orari = Array.isArray(calendario.orari) ? calendario.orari : []
+  const percorso = toStr(r.riferimento) ?? toStr(r.percorso)
   const stato = toStr(r.stato)
+  const promemoria = 'promemoria_ora' in r ? toStr(r.promemoria_ora) : (orari.length > 0 ? toStr(orari[0]) : null)
   return {
     id,
     professional_id: pro,
     client_user_id: cli,
     client_id: toStr(r.client_id),
     percorso: (percorso === 'fondamenti' || percorso === 'ripresa_veloce' ? percorso : 'pratica_libera') as TipoPercorso,
-    ritmo: n0(r.ritmo),
-    inspira_frazione: toNum(r.inspira_frazione) ?? 0.5,
-    promemoria_ora: toStr(r.promemoria_ora),
+    ritmo: toNum(r.ritmo) ?? n0(parametri.ritmo),
+    inspira_frazione: toNum(r.inspira_frazione) ?? toNum(parametri.inspira_frazione) ?? 0.5,
+    promemoria_ora: promemoria,
     inizio: inizio.slice(0, 10),
     stato: (stato === 'sospeso' || stato === 'completato' || stato === 'chiuso' ? stato : 'attivo') as BiofeedbackAssignment['stato'],
-    versione_percorsi: toStr(r.versione_percorsi) ?? '',
+    versione_percorsi: toStr(r.versione_percorsi) ?? toStr(parametri.versione_percorsi) ?? '',
     created_at: toStr(r.created_at),
   }
 }
