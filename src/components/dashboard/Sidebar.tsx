@@ -3,11 +3,12 @@
 import { Link } from '@/i18n/navigation'
 import { usePathname } from '@/i18n/navigation'
 import { useTranslations } from 'next-intl'
-import { Home, Users, BarChart3, Settings, LogOut, Menu, X, Building2, ShieldCheck, Dumbbell, Radio, SunMoon } from 'lucide-react'
+import { Home, Users, BarChart3, Settings, LogOut, Menu, X, Building2, ShieldCheck, Dumbbell, Radio, SunMoon, GraduationCap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from '@/i18n/navigation'
 import { initials } from '@/lib/format'
+import { TRAINER_SHARE_BANNER_ENABLED, TRAINER_SHARE_PATH } from '@/lib/trainer-share'
 
 type SidebarProps = {
   professional: {
@@ -65,6 +66,14 @@ const MONITORING_ITEM: NavItem = {
   accent: '#3D5A80',
 }
 
+// Condivisione con il formatore (Master HRV): sotto Monitoraggio, prima di
+// Impostazioni. Si spegne insieme al banner (NEXT_PUBLIC_TRAINER_SHARE_BANNER).
+const TRAINER_SHARE_ITEM: NavItem = {
+  href: TRAINER_SHARE_PATH,
+  labelKey: 'trainerShare',
+  icon: GraduationCap,
+}
+
 const SUPERADMIN_ITEM: NavItem = {
   href: '/area-professionisti/professionisti',
   labelKey: 'superadmin',
@@ -80,9 +89,10 @@ export function Sidebar({ professional, isSuperadmin, isPro, hasMonitoring = tru
   const [liveActive, setLiveActive] = useState(false)
   // Sport + Team Live vanno dopo Analytics (indice 3, prima di Impostazioni).
   const monitoringItems = hasMonitoring ? [MONITORING_ITEM] : []
+  const trainerItems = TRAINER_SHARE_BANNER_ENABLED ? [TRAINER_SHARE_ITEM] : []
   const baseItems = isPro
-    ? [...NAV_ITEMS.slice(0, 3), SPORT_ITEM, TEAM_LIVE_ITEM, ...monitoringItems, ...NAV_ITEMS.slice(3)]
-    : [...NAV_ITEMS.slice(0, 3), ...monitoringItems, ...NAV_ITEMS.slice(3)]
+    ? [...NAV_ITEMS.slice(0, 3), SPORT_ITEM, TEAM_LIVE_ITEM, ...monitoringItems, ...trainerItems, ...NAV_ITEMS.slice(3)]
+    : [...NAV_ITEMS.slice(0, 3), ...monitoringItems, ...trainerItems, ...NAV_ITEMS.slice(3)]
   const navItems = isSuperadmin ? [...baseItems, SUPERADMIN_ITEM] : baseItems
 
   // Pallino "live": conta gli atleti in sessione (connessi e aggiornati negli

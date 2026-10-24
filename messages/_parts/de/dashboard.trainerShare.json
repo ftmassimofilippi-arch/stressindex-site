@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "trainerShare": "Master HRV"
+  },
+  "breadcrumb": {
+    "condividiFormatore": "Mit dem Dozenten teilen",
+    "casiDidattici": "Lehrfälle"
+  },
+  "trainerShare": {
+    "badge": "Master HRV",
+    "title": "Mit dem Dozenten teilen",
+    "consentText": "Wählen Sie, welche Messungen Sie mit Massimo Filippi, Dozent des Master HRV, teilen möchten, damit sie im Kurs als Fallbeispiele dienen. Ihre Klienten sind nicht identifizierbar: Massimo sieht nur Initialen, Geburtsjahr, Geschlecht und die Messdaten. Er sieht keine vollständigen Namen, Kontaktdaten, Notizen oder Gesundheitsinformationen. Die Freigabe läuft nach 90 Tagen automatisch ab und kann jederzeit auf dieser Seite widerrufen werden. Mit der Freigabe der Daten eines Klienten bestätigen Sie, dass Sie ihn informiert haben und seine Einwilligung zu dieser Nutzung zu Lehrzwecken vorliegt.",
+    "chooseTitle": "Was geteilt wird",
+    "myMeasurements": "Meine Messungen",
+    "preview": "Massimo sieht: {code}",
+    "noCode": "nur die Messungen, ohne Code (Name, Geburtsjahr und Geschlecht fehlen)",
+    "measurementsCount": "{count, plural, =0 {keine Messungen} one {# Messung} other {# Messungen}}",
+    "alreadyShared": "Bereits geteilt",
+    "noClients": "Sie haben noch keine Klienten: Sie können nur Ihre eigenen Messungen teilen.",
+    "confirmLabel": "Ich bestätige, den obigen Text gelesen zu haben und die ausgewählten Klienten informiert zu haben sowie ihre Einwilligung zu dieser Nutzung zu Lehrzwecken zu besitzen.",
+    "shareButton": "Teilen",
+    "selectedCount": "{count, plural, =0 {Nichts ausgewählt} one {# ausgewählt} other {# ausgewählt}}",
+    "activeTitle": "Aktive Freigaben",
+    "activeIntro": "Jede Freigabe läuft nach {days} Tagen von selbst ab. Sie können sie jederzeit widerrufen.",
+    "noActive": "Keine aktive Freigabe.",
+    "expires": "läuft ab am {date}",
+    "revoke": "Widerrufen",
+    "footnote": "Der Dozent sieht nur den Fallcode und die Messdaten. Jeder Zugriff wird protokolliert.",
+    "loadError": "Die Freigaben können gerade nicht geladen werden. Bitte versuchen Sie es gleich noch einmal.",
+    "toast": {
+      "shared": "{count, plural, one {Freigabe aktiviert} other {# Freigaben aktiviert}}. Massimo sieht nur den Fallcode.",
+      "revoked": "Freigabe widerrufen."
+    },
+    "banner": {
+      "text": "Nehmen Sie am Master HRV teil? Sie können einige Messungen anonym als Fallbeispiele mit Massimo Filippi teilen.",
+      "cta": "Auswählen, was geteilt wird",
+      "dismiss": "Schließen"
+    }
+  }
+}

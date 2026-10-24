@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-import { ShieldCheck } from 'lucide-react'
+import { ArrowRight, GraduationCap, ShieldCheck } from 'lucide-react'
+import { Link } from '@/i18n/navigation'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { getCurrentProfileFlags, getProfessionalProfile } from '@/lib/dashboard-data'
 import { hasServiceRole } from '@/lib/supabase-admin'
@@ -39,6 +40,22 @@ export default async function SuperAdminPage({ params }: { params: { locale: str
         </h1>
         <p className="mt-1.5 text-sm text-anthracite-lighter">{t('page.intro')}</p>
       </header>
+
+      {/* Casi didattici (sito-051): l'unica finestra sulle misurazioni altrui,
+          aperta dai professionisti con consenso e pseudonimizzata. */}
+      <Link
+        href="/area-professionisti/professionisti/casi-didattici"
+        className="card p-5 mb-6 flex items-center gap-4 hover:bg-surface transition-colors"
+      >
+        <div className="w-10 h-10 rounded-xl bg-teal-light text-teal-dark flex items-center justify-center flex-shrink-0">
+          <GraduationCap size={18} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-medium text-anthracite">{t('casi.link')}</div>
+          <div className="text-sm text-anthracite-lighter">{t('casi.linkIntro')}</div>
+        </div>
+        <ArrowRight size={16} className="text-anthracite-lighter flex-shrink-0" />
+      </Link>
 
       {serviceRoleConfigured && (
         <section className="card p-5 mb-6">

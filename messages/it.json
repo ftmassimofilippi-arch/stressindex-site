@@ -1,5 +1,39 @@
 {
   "admin": {
+    "casi": {
+      "back": "Pannello Super Admin",
+      "caseLabel": "Codice caso",
+      "cases": "{count, plural, one {# caso} other {# casi}}",
+      "classroom": "Modalità aula",
+      "classroomOff": "Vista normale",
+      "colCompare": "Confronto",
+      "colDate": "Data",
+      "colDuration": "Durata",
+      "colType": "Tipo",
+      "compareHint": "Scegli una misurazione \"Prima\" e una \"Dopo\" dall'elenco per vedere il confronto.",
+      "compareTitle": "Confronto",
+      "detailTitle": "Dettaglio misurazione",
+      "empty": "Nessuna condivisione attiva. I professionisti scelgono cosa condividere dalla pagina \"Condividi con il formatore\".",
+      "expires": "fino al {date}",
+      "intro": "Misurazioni condivise con te dai professionisti del Master HRV, in forma pseudonimizzata: solo il codice caso e i dati delle misurazioni. Ogni apertura di questa pagina resta registrata.",
+      "leakedField": "Il payload conteneva un campo non previsto ({field}): la pagina non lo mostra. Controlla la funzione trainer_shared_measurements.",
+      "link": "Casi didattici",
+      "linkIntro": "Le misurazioni che i professionisti del Master HRV hanno scelto di condividere con te, con il solo codice caso.",
+      "loadError": "I casi didattici non si possono caricare in questo momento.",
+      "measurements": "{count, plural, one {# misurazione} other {# misurazioni}}",
+      "measurementsTitle": "Misurazioni",
+      "noCode": "Caso senza codice",
+      "pickA": "Prima",
+      "pickB": "Dopo",
+      "privacyNote": "Nessun dato identificativo oltre al codice caso.",
+      "professionals": "{count, plural, one {# professionista} other {# professionisti}}",
+      "self": "Sé stesso",
+      "sharedBy": "Condiviso da {name}",
+      "tableHint": "Clic su una riga per il dettaglio, Prima e Dopo per il confronto",
+      "title": "Casi <em>didattici</em>",
+      "trendTitle": "Andamento",
+      "unnamedProfessional": "Professionista senza nome"
+    },
     "clientLinkStatus": {
       "active": "Collegamento attivo",
       "none": "Nessun collegamento",
@@ -1816,7 +1850,9 @@
       "analytics": "Analytics",
       "areaProfessionisti": "Area Professionisti",
       "atleta": "Atleta",
+      "casiDidattici": "Casi didattici",
       "clienti": "Clienti",
+      "condividiFormatore": "Condividi con il formatore",
       "confronto": "Confronto",
       "impostazioni": "Impostazioni",
       "misurazione": "Misurazione",
@@ -1907,7 +1943,8 @@
       "sport": "Sport",
       "superadmin": "Super Admin",
       "teamLive": "Team Live",
-      "today": "Oggi"
+      "today": "Oggi",
+      "trainerShare": "Master HRV"
     },
     "scope": {
       "all": "Tutta la piattaforma",
@@ -1958,6 +1995,37 @@
       "notificationsReadOn": "Letta il {date}",
       "notificationsRetry": "Riprova",
       "notificationsUnread": "Non letta"
+    },
+    "trainerShare": {
+      "activeIntro": "Ogni condivisione scade da sola dopo {days} giorni. Puoi revocarla quando vuoi.",
+      "activeTitle": "Condivisioni attive",
+      "alreadyShared": "Già condiviso",
+      "badge": "Master HRV",
+      "banner": {
+        "cta": "Scegli cosa condividere",
+        "dismiss": "Chiudi",
+        "text": "Partecipi al Master HRV? Puoi condividere alcune misurazioni con Massimo Filippi come casi di studio, in forma anonima."
+      },
+      "chooseTitle": "Che cosa condividere",
+      "confirmLabel": "Confermo di aver letto il testo qui sopra e, per i clienti selezionati, di averli informati e di avere il loro consenso a questo uso didattico.",
+      "consentText": "Scegli quali misurazioni condividere con Massimo Filippi, formatore del Master HRV, per usarle come casi di studio durante il corso. I tuoi clienti non saranno identificabili: Massimo vedrà solo le iniziali, l'anno di nascita, il sesso e i dati delle misurazioni. Non vedrà nomi completi, contatti, note o informazioni sulla salute. La condivisione scade automaticamente dopo 90 giorni e puoi revocarla in qualsiasi momento da questa pagina. Condividendo i dati di un cliente confermi di averlo informato e di avere il suo consenso a questo uso didattico.",
+      "expires": "scade il {date}",
+      "footnote": "Il formatore vede solo il codice caso e i dati delle misurazioni. Ogni sua lettura resta registrata.",
+      "loadError": "Le condivisioni non si possono caricare in questo momento. Riprova tra poco.",
+      "measurementsCount": "{count, plural, =0 {nessuna misurazione} one {# misurazione} other {# misurazioni}}",
+      "myMeasurements": "Le mie misurazioni",
+      "noActive": "Nessuna condivisione attiva.",
+      "noClients": "Non hai ancora clienti: puoi condividere solo le tue misurazioni.",
+      "noCode": "solo le misurazioni, senza codice (mancano nome, anno di nascita e sesso)",
+      "preview": "Massimo vedrà: {code}",
+      "revoke": "Revoca",
+      "selectedCount": "{count, plural, =0 {Nessun soggetto selezionato} one {# soggetto selezionato} other {# soggetti selezionati}}",
+      "shareButton": "Condividi",
+      "title": "Condividi con il formatore",
+      "toast": {
+        "revoked": "Condivisione revocata.",
+        "shared": "{count, plural, one {Condivisione attivata} other {# condivisioni attivate}}. Massimo vedrà solo il codice caso."
+      }
     }
   },
   "emails": {
@@ -2127,6 +2195,9 @@
       "superadmin_non_cancellabile": "Un account superadmin non si può cancellare da qui.",
       "superadmin_non_sospendibile": "Un superadmin non può essere sospeso o bloccato.",
       "target_has_client": "Il professionista di destinazione ha già una scheda per questo cliente ({who}). Unisci o elimina il doppione prima di spostare.",
+      "trainer_share_client_not_owned": "Puoi condividere solo i tuoi clienti.",
+      "trainer_share_missing_consent": "Per condividere devi confermare il consenso.",
+      "trainer_share_not_found": "Condivisione non trovata o già revocata.",
       "unauthorized": "Accesso non autorizzato.",
       "unexpected": "Errore imprevisto durante la cancellazione.",
       "unresolvable": "Collegamento senza scheda né account: impossibile spostarlo.",
@@ -4113,6 +4184,9 @@
     "authConfirm": {
       "title": "Conferma del link"
     },
+    "casiDidattici": {
+      "title": "Casi didattici"
+    },
     "clientProfile": {
       "title": "Scheda cliente"
     },
@@ -4246,6 +4320,9 @@
       "description": "Condizioni d'uso di Stress Index: oggetto del servizio, account, prova gratuita e abbonamento, obblighi, natura wellness del servizio, responsabilità, recesso e foro.",
       "shortDescription": "Condizioni d'uso di Stress Index: servizio, account, prova gratuita e abbonamento, responsabilità e recesso.",
       "title": "Termini di Servizio | Stress Index"
+    },
+    "trainerShare": {
+      "title": "Condividi con il formatore"
     }
   },
   "monitoring": {

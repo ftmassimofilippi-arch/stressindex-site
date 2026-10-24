@@ -74,6 +74,12 @@ const nextConfig = {
   // `permanent: false` → 307, il metodo e il corpo non cambiano.
   async redirects() {
     return [
+      // Link diretto della condivisione con il formatore (Master HRV): il
+      // percorso breve porta alla pagina dell'area professionisti, nella
+      // lingua dell'URL. Il middleware manda al login chi non è loggato e lo
+      // riporta qui dopo.
+      { source: '/dashboard/condividi-formatore', destination: '/area-professionisti/condividi-formatore', permanent: false },
+      { source: '/:locale(en|de)/dashboard/condividi-formatore', destination: '/:locale/area-professionisti/condividi-formatore', permanent: false },
       {
         source: '/:resto((?!api/|api$).*)',
         has: [{ type: 'host', value: 'stressindex\\.io' }],

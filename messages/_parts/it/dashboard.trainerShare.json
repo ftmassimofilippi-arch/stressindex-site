@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "trainerShare": "Master HRV"
+  },
+  "breadcrumb": {
+    "condividiFormatore": "Condividi con il formatore",
+    "casiDidattici": "Casi didattici"
+  },
+  "trainerShare": {
+    "badge": "Master HRV",
+    "title": "Condividi con il formatore",
+    "consentText": "Scegli quali misurazioni condividere con Massimo Filippi, formatore del Master HRV, per usarle come casi di studio durante il corso. I tuoi clienti non saranno identificabili: Massimo vedrà solo le iniziali, l'anno di nascita, il sesso e i dati delle misurazioni. Non vedrà nomi completi, contatti, note o informazioni sulla salute. La condivisione scade automaticamente dopo 90 giorni e puoi revocarla in qualsiasi momento da questa pagina. Condividendo i dati di un cliente confermi di averlo informato e di avere il suo consenso a questo uso didattico.",
+    "chooseTitle": "Che cosa condividere",
+    "myMeasurements": "Le mie misurazioni",
+    "preview": "Massimo vedrà: {code}",
+    "noCode": "solo le misurazioni, senza codice (mancano nome, anno di nascita e sesso)",
+    "measurementsCount": "{count, plural, =0 {nessuna misurazione} one {# misurazione} other {# misurazioni}}",
+    "alreadyShared": "Già condiviso",
+    "noClients": "Non hai ancora clienti: puoi condividere solo le tue misurazioni.",
+    "confirmLabel": "Confermo di aver letto il testo qui sopra e, per i clienti selezionati, di averli informati e di avere il loro consenso a questo uso didattico.",
+    "shareButton": "Condividi",
+    "selectedCount": "{count, plural, =0 {Nessun soggetto selezionato} one {# soggetto selezionato} other {# soggetti selezionati}}",
+    "activeTitle": "Condivisioni attive",
+    "activeIntro": "Ogni condivisione scade da sola dopo {days} giorni. Puoi revocarla quando vuoi.",
+    "noActive": "Nessuna condivisione attiva.",
+    "expires": "scade il {date}",
+    "revoke": "Revoca",
+    "footnote": "Il formatore vede solo il codice caso e i dati delle misurazioni. Ogni sua lettura resta registrata.",
+    "loadError": "Le condivisioni non si possono caricare in questo momento. Riprova tra poco.",
+    "toast": {
+      "shared": "{count, plural, one {Condivisione attivata} other {# condivisioni attivate}}. Massimo vedrà solo il codice caso.",
+      "revoked": "Condivisione revocata."
+    },
+    "banner": {
+      "text": "Partecipi al Master HRV? Puoi condividere alcune misurazioni con Massimo Filippi come casi di studio, in forma anonima.",
+      "cta": "Scegli cosa condividere",
+      "dismiss": "Chiudi"
+    }
+  }
+}

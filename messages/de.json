@@ -1,5 +1,39 @@
 {
   "admin": {
+    "casi": {
+      "back": "Super-Admin-Bereich",
+      "caseLabel": "Fallcode",
+      "cases": "{count, plural, one {# Fall} other {# Fälle}}",
+      "classroom": "Seminarmodus",
+      "classroomOff": "Normale Ansicht",
+      "colCompare": "Vergleich",
+      "colDate": "Datum",
+      "colDuration": "Dauer",
+      "colType": "Typ",
+      "compareHint": "Wählen Sie in der Liste eine Messung \"Vorher\" und eine \"Nachher\", um den Vergleich zu sehen.",
+      "compareTitle": "Vergleich",
+      "detailTitle": "Messungsdetail",
+      "empty": "Keine aktive Freigabe. Die Fachkräfte wählen auf der Seite \"Mit dem Dozenten teilen\", was sie teilen.",
+      "expires": "bis {date}",
+      "intro": "Von Fachkräften des Master HRV mit Ihnen geteilte Messungen, pseudonymisiert: nur der Fallcode und die Messdaten. Jedes Öffnen dieser Seite wird protokolliert.",
+      "leakedField": "Die Antwort enthielt ein unerwartetes Feld ({field}): die Seite zeigt es nicht an. Prüfen Sie die Funktion trainer_shared_measurements.",
+      "link": "Lehrfälle",
+      "linkIntro": "Die Messungen, die Fachkräfte des Master HRV mit Ihnen teilen, nur mit dem Fallcode.",
+      "loadError": "Die Lehrfälle können gerade nicht geladen werden.",
+      "measurements": "{count, plural, one {# Messung} other {# Messungen}}",
+      "measurementsTitle": "Messungen",
+      "noCode": "Fall ohne Code",
+      "pickA": "Vorher",
+      "pickB": "Nachher",
+      "privacyNote": "Keine identifizierenden Daten außer dem Fallcode.",
+      "professionals": "{count, plural, one {# Fachkraft} other {# Fachkräfte}}",
+      "self": "Selbst",
+      "sharedBy": "Geteilt von {name}",
+      "tableHint": "Zeile anklicken für das Detail, Vorher und Nachher für den Vergleich",
+      "title": "<em>Lehrfälle</em>",
+      "trendTitle": "Verlauf",
+      "unnamedProfessional": "Fachkraft ohne Namen"
+    },
     "clientLinkStatus": {
       "active": "Verknüpfung aktiv",
       "none": "Keine Verknüpfung",
@@ -1816,7 +1850,9 @@
       "analytics": "Analytics",
       "areaProfessionisti": "Bereich für Fachkräfte",
       "atleta": "Sportler",
+      "casiDidattici": "Lehrfälle",
       "clienti": "Klienten",
+      "condividiFormatore": "Mit dem Dozenten teilen",
       "confronto": "Vergleich",
       "impostazioni": "Einstellungen",
       "misurazione": "Messung",
@@ -1907,7 +1943,8 @@
       "sport": "Sport",
       "superadmin": "Super Admin",
       "teamLive": "Team Live",
-      "today": "Heute"
+      "today": "Heute",
+      "trainerShare": "Master HRV"
     },
     "scope": {
       "all": "Gesamte Plattform",
@@ -1958,6 +1995,37 @@
       "notificationsReadOn": "Gelesen am {date}",
       "notificationsRetry": "Erneut versuchen",
       "notificationsUnread": "Ungelesen"
+    },
+    "trainerShare": {
+      "activeIntro": "Jede Freigabe läuft nach {days} Tagen von selbst ab. Sie können sie jederzeit widerrufen.",
+      "activeTitle": "Aktive Freigaben",
+      "alreadyShared": "Bereits geteilt",
+      "badge": "Master HRV",
+      "banner": {
+        "cta": "Auswählen, was geteilt wird",
+        "dismiss": "Schließen",
+        "text": "Nehmen Sie am Master HRV teil? Sie können einige Messungen anonym als Fallbeispiele mit Massimo Filippi teilen."
+      },
+      "chooseTitle": "Was geteilt wird",
+      "confirmLabel": "Ich bestätige, den obigen Text gelesen zu haben und die ausgewählten Klienten informiert zu haben sowie ihre Einwilligung zu dieser Nutzung zu Lehrzwecken zu besitzen.",
+      "consentText": "Wählen Sie, welche Messungen Sie mit Massimo Filippi, Dozent des Master HRV, teilen möchten, damit sie im Kurs als Fallbeispiele dienen. Ihre Klienten sind nicht identifizierbar: Massimo sieht nur Initialen, Geburtsjahr, Geschlecht und die Messdaten. Er sieht keine vollständigen Namen, Kontaktdaten, Notizen oder Gesundheitsinformationen. Die Freigabe läuft nach 90 Tagen automatisch ab und kann jederzeit auf dieser Seite widerrufen werden. Mit der Freigabe der Daten eines Klienten bestätigen Sie, dass Sie ihn informiert haben und seine Einwilligung zu dieser Nutzung zu Lehrzwecken vorliegt.",
+      "expires": "läuft ab am {date}",
+      "footnote": "Der Dozent sieht nur den Fallcode und die Messdaten. Jeder Zugriff wird protokolliert.",
+      "loadError": "Die Freigaben können gerade nicht geladen werden. Bitte versuchen Sie es gleich noch einmal.",
+      "measurementsCount": "{count, plural, =0 {keine Messungen} one {# Messung} other {# Messungen}}",
+      "myMeasurements": "Meine Messungen",
+      "noActive": "Keine aktive Freigabe.",
+      "noClients": "Sie haben noch keine Klienten: Sie können nur Ihre eigenen Messungen teilen.",
+      "noCode": "nur die Messungen, ohne Code (Name, Geburtsjahr und Geschlecht fehlen)",
+      "preview": "Massimo sieht: {code}",
+      "revoke": "Widerrufen",
+      "selectedCount": "{count, plural, =0 {Nichts ausgewählt} one {# ausgewählt} other {# ausgewählt}}",
+      "shareButton": "Teilen",
+      "title": "Mit dem Dozenten teilen",
+      "toast": {
+        "revoked": "Freigabe widerrufen.",
+        "shared": "{count, plural, one {Freigabe aktiviert} other {# Freigaben aktiviert}}. Massimo sieht nur den Fallcode."
+      }
     }
   },
   "emails": {
@@ -2127,6 +2195,9 @@
       "superadmin_non_cancellabile": "Ein Superadmin-Konto kann hier nicht gelöscht werden.",
       "superadmin_non_sospendibile": "Ein Superadmin kann nicht ausgesetzt oder gesperrt werden.",
       "target_has_client": "Die Ziel-Fachkraft hat bereits ein Profil für diesen Klienten ({who}). Führen Sie das Duplikat zusammen oder löschen Sie es vor dem Verschieben.",
+      "trainer_share_client_not_owned": "Sie können nur Ihre eigenen Klienten teilen.",
+      "trainer_share_missing_consent": "Zum Teilen müssen Sie die Einwilligung bestätigen.",
+      "trainer_share_not_found": "Freigabe nicht gefunden oder bereits widerrufen.",
       "unauthorized": "Nicht autorisiert.",
       "unexpected": "Unerwarteter Fehler beim Löschen.",
       "unresolvable": "Verknüpfung ohne Profil und ohne Konto: kann nicht verschoben werden.",
@@ -4113,6 +4184,9 @@
     "authConfirm": {
       "title": "Link bestätigen"
     },
+    "casiDidattici": {
+      "title": "Lehrfälle"
+    },
     "clientProfile": {
       "title": "Klientenprofil"
     },
@@ -4246,6 +4320,9 @@
       "description": "Nutzungsbedingungen von Stress Index: Gegenstand des Dienstes, Konto, kostenlose Testphase und Abonnement, Pflichten, Wellness-Charakter des Dienstes, Haftung, Kündigung und Gerichtsstand.",
       "shortDescription": "Nutzungsbedingungen von Stress Index: Dienst, Konto, Testphase und Abonnement, Haftung und Kündigung.",
       "title": "Nutzungsbedingungen | Stress Index"
+    },
+    "trainerShare": {
+      "title": "Mit dem Dozenten teilen"
     }
   },
   "monitoring": {

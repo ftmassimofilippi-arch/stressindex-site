@@ -27,6 +27,8 @@ const SEGMENT_KEY: Record<string, string> = {
   organizzazione: 'organizzazione',
   professionisti: 'professionisti',
   confronto: 'confronto',
+  'condividi-formatore': 'condividiFormatore',
+  'casi-didattici': 'casiDidattici',
 }
 
 // Percorsi intermedi che non hanno una pagina propria: la briciola resta

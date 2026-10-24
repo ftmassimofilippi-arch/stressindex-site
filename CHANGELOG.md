@@ -3,7 +3,45 @@
 Voci ricavate dalla storia git. Le migrazioni si applicano a mano; lo stato in
 produzione è nel `README.md`.
 
-## 2026-10-20 — tab Biofeedback nella scheda cliente (ramo `feat/report-biofeedback`, PR aperta, NON unita)
+## 2026-10-24 — condivisione con il formatore (Master HRV)
+
+Un professionista può condividere con il formatore (il superadmin
+`info@massimofilippi.it`, ricavato dal database con `trainer_user_id()`) le
+proprie misurazioni o quelle di un suo cliente, in forma pseudonimizzata e a
+scopo didattico. Il blocco privacy dell'area admin resta: il superadmin vede
+solo ciò che passa da `trainer_shared_measurements()`.
+
+- Migrazione `sito-051_condivisione_formatore.sql`, applicata il 24/10:
+  tipo di consenso `trainer_share`, tabella `trainer_shares` (90 giorni,
+  revocabile, mai cancellabile), codice caso (`trainer_case_code`: "M.R.
+  1978 F", "Sé stesso 1975"), copertura delle misurazioni con le stesse
+  regole del sito (in studio per `client_id`, dall'app del cliente per
+  `client_user_id`/collegamento attivo, proprie per `user_id` e `client_id`
+  nullo), funzioni di condivisione e revoca che scrivono condivisione e
+  consenso nella stessa transazione, funzione del formatore con elenco
+  esplicito di colonne e riga `trainer_shared_read` in `admin_audit_log`.
+  Nota: `consent_records.source` resta `'site'` (il vincolo esistente non
+  prevede `'web'`); `rr_raw`, `live_tags` e `tag_comparison` non escono.
+- Pagina `/area-professionisti/condividi-formatore` (link breve
+  `/dashboard/condividi-formatore`): testo di consenso `trainer_share_v1`
+  (sha256 calcolato dal server nella lingua della richiesta), elenco "Le mie
+  misurazioni" + clienti con anteprima del codice caso e numero di
+  misurazioni, conferma obbligatoria, "Condivisioni attive" con scadenza e
+  Revoca, toast. Route `/api/trainer-share`.
+- Banner discreto nella home (chiusura in localStorage con try/catch,
+  visibile solo a chi non ha condivisioni attive) e voce di menu "Master
+  HRV"; entrambi si spengono con `NEXT_PUBLIC_TRAINER_SHARE_BANNER=0`.
+- Area admin: sezione **Casi didattici** (`/professionisti/casi-didattici`,
+  route `/api/admin/casi-didattici` con la sessione, non la service role),
+  raggruppata per professionista e codice caso, con andamento, confronto
+  prima/dopo, gauge, Poincaré, spettro, ritmogramma e parametri riusati dalla
+  scheda cliente; "Modalità aula" per la proiezione; controllo lato route e
+  lato pagina che nel payload non ci siano chiavi identificative.
+- i18n `dashboard.trainerShare`, `admin.casi`, `meta`, `errors.api` in
+  it/en/de. Prova e2e `scripts/e2e-condivisione-formatore.mjs` (31 controlli
+  a livello database, più le route con `BASE=`).
+
+## 2026-10-20 — tab Biofeedback nella scheda cliente (PR #7, unita in `main`)
 
 Report del modulo Biofeedback dell'app 3.1.0 (`docs/BIOFEEDBACK_AVANZAMENTO.md`
 nel repo dell'app, fase F). Sola lettura, perimetro esplicito: le righe

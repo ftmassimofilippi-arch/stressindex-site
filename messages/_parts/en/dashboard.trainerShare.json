@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "trainerShare": "Master HRV"
+  },
+  "breadcrumb": {
+    "condividiFormatore": "Share with the trainer",
+    "casiDidattici": "Teaching cases"
+  },
+  "trainerShare": {
+    "badge": "Master HRV",
+    "title": "Share with the trainer",
+    "consentText": "Choose which measurements to share with Massimo Filippi, trainer of the Master HRV, to be used as case studies during the course. Your clients will not be identifiable: Massimo will only see initials, year of birth, sex and the measurement data. He will not see full names, contact details, notes or health information. Sharing expires automatically after 90 days and you can revoke it at any time from this page. By sharing a client's data you confirm that you have informed them and have their consent to this educational use.",
+    "chooseTitle": "What to share",
+    "myMeasurements": "My measurements",
+    "preview": "Massimo will see: {code}",
+    "noCode": "measurements only, no code (name, year of birth and sex are missing)",
+    "measurementsCount": "{count, plural, =0 {no measurements} one {# measurement} other {# measurements}}",
+    "alreadyShared": "Already shared",
+    "noClients": "You have no clients yet: you can only share your own measurements.",
+    "confirmLabel": "I confirm that I have read the text above and, for the selected clients, that I have informed them and have their consent to this educational use.",
+    "shareButton": "Share",
+    "selectedCount": "{count, plural, =0 {Nothing selected} one {# selected} other {# selected}}",
+    "activeTitle": "Active shares",
+    "activeIntro": "Each share expires on its own after {days} days. You can revoke it whenever you want.",
+    "noActive": "No active shares.",
+    "expires": "expires on {date}",
+    "revoke": "Revoke",
+    "footnote": "The trainer only sees the case code and the measurement data. Every read is logged.",
+    "loadError": "Shares cannot be loaded right now. Please try again shortly.",
+    "toast": {
+      "shared": "{count, plural, one {Share activated} other {# shares activated}}. Massimo will only see the case code.",
+      "revoked": "Share revoked."
+    },
+    "banner": {
+      "text": "Taking part in the Master HRV? You can share a few measurements with Massimo Filippi as anonymous case studies.",
+      "cta": "Choose what to share",
+      "dismiss": "Close"
+    }
+  }
+}

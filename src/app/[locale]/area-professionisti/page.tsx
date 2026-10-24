@@ -14,6 +14,9 @@ import { AlertBadge } from '@/components/dashboard/AlertBadge'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import { EmptyState } from '@/components/dashboard/EmptyState'
 import { InviteBanner } from '@/components/dashboard/InviteBanner'
+import { TrainerShareBanner } from '@/components/dashboard/TrainerShareBanner'
+import { TRAINER_SHARE_BANNER_ENABLED } from '@/lib/trainer-share'
+import { hasActiveTrainerShares } from '@/lib/trainer-share-server'
 import { LinkCell } from '@/components/dashboard/LinkCell'
 import {
   aggregatedDailyAverages,
@@ -57,7 +60,7 @@ export const dynamic = 'force-dynamic'
 export default async function DashboardHome() {
   // Vista globale del superadmin (data-scope.ts): conteggi di piattaforma,
   // nessuna riga dei clienti altrui.
-  const { scope } = await getDataScope()
+  const { scope, isSuperadmin } = await getDataScope()
   if (scope === 'all') {
     const tScope = await getTranslations('dashboard.scope')
     return (
@@ -135,10 +138,15 @@ export default async function DashboardHome() {
   // Il ponte dà il nome alle automisurazioni dei clienti collegati che
   // `todaysMeasurements` non ha potuto agganciare a una scheda.
   const ponte = user ? await ponteClienti(user.id) : { clientIdByUser: new Map(), profiloByUser: new Map() }
+  // Banner "Condividi con il formatore": solo con il flag acceso, a chi non ha
+  // condivisioni attive e non è il formatore stesso. La chiusura la ricorda il
+  // browser (TrainerShareBanner).
+  const showTrainerBanner = TRAINER_SHARE_BANNER_ENABLED && !!user && !isSuperadmin && !(await hasActiveTrainerShares(user.id))
 
   return (
     <DashboardLayout professional={professional}>
       <InviteBanner invites={invites} />
+      {showTrainerBanner && <TrainerShareBanner />}
       <header className="mb-8">
         <h1 className="font-serif text-3xl sm:text-4xl text-anthracite">
           {formatGreeting(tGreeting)}, <em className="italic text-teal-dark">{professional?.nome ?? tc('professional')}</em>

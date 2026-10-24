@@ -106,6 +106,7 @@ account `bloccato` → logout, `sospeso` → ogni pagina riscritta su `/sospeso`
 | `/sport`, `/sport/atleta/[id]`, `/sport/sessione/[id]`, `/sport/team-live` | Modulo Sport (gating modulo `sport`): dashboard, atleti, sessioni, Team Live |
 | `/organizzazione` | team, membri, inviti |
 | `/impostazioni` | profilo, notifiche (`?tab=notifiche`), account |
+| `/condividi-formatore` | **Condividi con il formatore** (Master HRV, sito-051): il professionista sceglie "Le mie misurazioni" e/o i suoi clienti da condividere con il superadmin in forma pseudonimizzata (codice caso "M.R. 1978 F"), per 90 giorni, con consenso registrato in `consent_records` (`trainer_share`); "Condivisioni attive" con scadenza e Revoca. Link breve `/dashboard/condividi-formatore` (redirect). Banner nella home e voce di menu "Master HRV" spegnibili con `NEXT_PUBLIC_TRAINER_SHARE_BANNER=0` |
 | `/sospeso` | pagina account sospeso |
 
 **Perimetro.** Ogni pagina mostra solo il lavoro del professionista loggato:
@@ -130,6 +131,17 @@ doppioni), **Collegamenti** (link manuali), **Monitoraggi**, **Salute
 collegamenti** (ripara, unisci, esclusioni); `/professionisti/health` report
 di integrità. Tutte le azioni passano da `/api/admin/*` con `service_role` e
 scrivono `admin_audit_log`.
+
+**Casi didattici** (`/professionisti/casi-didattici`, sito-051): l'unica
+finestra del superadmin sulle misurazioni altrui. Legge solo da
+`trainer_shared_measurements()` (RPC con la sessione dell'utente, mai le
+tabelle): condivisioni attive, codice caso al posto dell'identità, nome del
+professionista che ha condiviso, colonne di misura e di analisi in elenco
+esplicito (mai `user_id`, `client_id`, `rr_raw`, note). Ogni chiamata scrive
+`trainer_shared_read` in `admin_audit_log`. Raggruppa per professionista e
+caso, riusa andamento, confronto, gauge, Poincaré, spettro, ritmogramma e
+tabella dei parametri della scheda cliente; "Modalità aula" per la proiezione.
+Il blocco privacy delle altre sezioni non cambia.
 
 ### Viste per tipo di sessione
 `src/lib/measurement-type.ts` normalizza `test_type`:
@@ -231,6 +243,13 @@ Aggiunte il 15/10/2026 (audit QA): `POST /api/scope` (vista "I miei dati / Tutta
   rr-csv, windows-csv, email, events}`, `/api/organization*` — sessione
   cookie + RLS.
 - `/api/guide-chat` — senza autenticazione, allowlist Origin + rate limit.
+- `/api/trainer-share` (GET candidati, POST condividi, DELETE revoca) —
+  sessione cookie; chiama `trainer_share_candidates` / `trainer_share_grant` /
+  `trainer_share_revoke` (sito-051). Lo sha256 del testo di consenso lo calcola
+  il server dai messaggi della lingua della richiesta.
+- `/api/admin/casi-didattici` (GET) — `requireSuperadmin()` ma **senza**
+  `service_role`: `trainer_shared_measurements()` con la sessione; rifiuta il
+  payload se contiene una chiave vietata.
 
 ## Edge Function (`supabase/functions/`)
 `create-client-access` (v2, flusso unico via `link_client_to_professional`),
@@ -339,6 +358,7 @@ le sito-035…043 sono state applicate e verificate una per una il 15/10/2026
 | sito-047 `revoca_backup_20260620` | `revoke all` ad `anon` e `authenticated` su `measurement_analytics_backup_20260620` (RLS già attiva, restavano i grant di default) | applicata (17/10): `has_table_privilege` false per entrambi |
 | sito-049 `annotazioni_esclusioni_vista` | `client_settings.chart_view` (vista salvata), tabelle `client_chart_annotations` e `measurement_exclusions` con RLS sul perimetro, scrittura solo con account attivo, nessun grant ad `anon`, nessun delete; stesso `begin … commit` | **da applicare** (serve il via libera): finché manca, "Prepara la vista" mostra l'avviso e annotazioni, esclusioni e vista salvata restano spente |
 | sito-048 `consensi_granulari` | tabella `consent_records` (consensi 2.1 per tipo, solo select/insert), vista `consent_records_current`; su `gdpr_consents` revoca dei grant ad `anon` | applicata (17/10, SQL Editor): RLS attiva, `anon` senza select, `authenticated` senza update |
+| sito-051 `condivisione_formatore` | `consent_records.consent_type` accetta `trainer_share`; tabella `trainer_shares` (RLS: select/insert/update(`revoked_at`) proprie, select superadmin, nessun delete; unico parziale su professionista + cliente/sé stesso); funzioni `trainer_user_id`, `trainer_case_code`, `trainer_share_measurement_ids`, `trainer_share_candidates`, `trainer_share_grant`, `trainer_share_revoke` (consenso e condivisione nella stessa transazione), `trainer_shared_measurements` (solo `is_superadmin()`, elenco esplicito di colonne, riga in `admin_audit_log`); EXECUTE solo ad `authenticated`/`service_role` | applicata (24/10, MCP): `anon` senza select né execute, `authenticated` senza delete; e2e `scripts/e2e-condivisione-formatore.mjs` 31/31 |
 
 **Ordine fra i due repo** (storico: entrambe sono applicate):
 `app-035_conferma_collegamento_cliente.sql` (repo `hrv_app`) andava applicata

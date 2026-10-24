@@ -1,0 +1,7 @@
+{
+  "api": {
+    "trainer_share_client_not_owned": "You can only share your own clients.",
+    "trainer_share_not_found": "Share not found or already revoked.",
+    "trainer_share_missing_consent": "You need to confirm the consent to share."
+  }
+}

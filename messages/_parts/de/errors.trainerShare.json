@@ -1,0 +1,7 @@
+{
+  "api": {
+    "trainer_share_client_not_owned": "Sie können nur Ihre eigenen Klienten teilen.",
+    "trainer_share_not_found": "Freigabe nicht gefunden oder bereits widerrufen.",
+    "trainer_share_missing_consent": "Zum Teilen müssen Sie die Einwilligung bestätigen."
+  }
+}

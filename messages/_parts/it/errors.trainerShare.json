@@ -1,0 +1,7 @@
+{
+  "api": {
+    "trainer_share_client_not_owned": "Puoi condividere solo i tuoi clienti.",
+    "trainer_share_not_found": "Condivisione non trovata o già revocata.",
+    "trainer_share_missing_consent": "Per condividere devi confermare il consenso."
+  }
+}
