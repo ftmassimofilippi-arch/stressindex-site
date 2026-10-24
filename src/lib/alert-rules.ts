@@ -29,7 +29,12 @@ export interface AlertRule {
 }
 
 /** Le 9 regole HRV predefinite, con gli stessi id, default e limiti dell'app
- *  (lib/models/alert.dart, PredefinedAlertType). Le regole sport (ACWR, TSB)
+ *  (lib/models/alert.dart, PredefinedAlertType). I default sono quelli unici
+ *  di app e cron del sito (decisione 19 del 23/10/2026, Appendice A del
+ *  manuale): stress cronico 70, critico 85, recupero 25, SDNN 20, DFA α1 0,75,
+ *  FC 90, Adattamento 25, calo RMSSD 20 e 30. L'id `rmssd_drop_40` resta per
+ *  compatibilità con le righe già salvate, la soglia predefinita è 30%.
+ *  Le regole sport (ACWR, TSB)
  *  dipendono dal carico, non dalla singola misurazione, e non hanno override
  *  per cliente. `titleKey` e `thresholdKey` sono chiavi del namespace `alerts`
  *  (`t = useTranslations('alerts')`; `t(rule.titleKey)`). */
@@ -47,15 +52,28 @@ export interface PredefinedAlertRule {
 
 export const PREDEFINED_ALERT_RULES: PredefinedAlertRule[] = [
   { id: 'rmssd_drop_20', titleKey: 'types.rmssd_drop_20', thresholdKey: 'thresholds.dropFromBaseline', defaultThreshold: 20, suffix: '%', min: 5, max: 50, step: 1, severity: 'medium' },
-  { id: 'rmssd_drop_40', titleKey: 'types.rmssd_drop_40', thresholdKey: 'thresholds.dropFromBaseline', defaultThreshold: 40, suffix: '%', min: 20, max: 70, step: 1, severity: 'high' },
-  { id: 'stress_high_chronic', titleKey: 'types.stress_high_chronic', thresholdKey: 'thresholds.stressAbove', defaultThreshold: 75, suffix: '', min: 50, max: 95, step: 1, severity: 'medium' },
+  { id: 'rmssd_drop_40', titleKey: 'types.rmssd_drop_40', thresholdKey: 'thresholds.dropFromBaseline', defaultThreshold: 30, suffix: '%', min: 20, max: 70, step: 1, severity: 'high' },
+  { id: 'stress_high_chronic', titleKey: 'types.stress_high_chronic', thresholdKey: 'thresholds.stressAbove', defaultThreshold: 70, suffix: '', min: 50, max: 95, step: 1, severity: 'medium' },
   { id: 'stress_critical', titleKey: 'types.stress_critical', thresholdKey: 'thresholds.stressAbove', defaultThreshold: 85, suffix: '', min: 70, max: 99, step: 1, severity: 'high' },
-  { id: 'recovery_low', titleKey: 'types.recovery_low', thresholdKey: 'thresholds.recoveryBelow', defaultThreshold: 30, suffix: '', min: 10, max: 50, step: 1, severity: 'medium' },
+  { id: 'recovery_low', titleKey: 'types.recovery_low', thresholdKey: 'thresholds.recoveryBelow', defaultThreshold: 25, suffix: '', min: 10, max: 50, step: 1, severity: 'medium' },
   { id: 'sdnn_low', titleKey: 'types.sdnn_low', thresholdKey: 'thresholds.sdnnBelow', defaultThreshold: 20, suffix: ' ms', min: 5, max: 50, step: 1, severity: 'high' },
-  { id: 'dfa_alpha1_abnormal', titleKey: 'types.dfa_alpha1_abnormal', thresholdKey: 'thresholds.dfaBelow', defaultThreshold: 0.5, suffix: '', min: 0.2, max: 1.0, step: 0.05, severity: 'medium' },
+  { id: 'dfa_alpha1_abnormal', titleKey: 'types.dfa_alpha1_abnormal', thresholdKey: 'thresholds.dfaBelow', defaultThreshold: 0.75, suffix: '', min: 0.2, max: 1.0, step: 0.05, severity: 'medium' },
   { id: 'hr_rest_high', titleKey: 'types.hr_rest_high', thresholdKey: 'thresholds.hrAbove', defaultThreshold: 90, suffix: ' bpm', min: 60, max: 130, step: 1, severity: 'medium' },
-  { id: 'inflammation_drop', titleKey: 'types.inflammation_drop', thresholdKey: 'thresholds.adaptationBelow', defaultThreshold: 30, suffix: '', min: 10, max: 60, step: 1, severity: 'medium' },
+  { id: 'inflammation_drop', titleKey: 'types.inflammation_drop', thresholdKey: 'thresholds.adaptationBelow', defaultThreshold: 25, suffix: '', min: 10, max: 60, step: 1, severity: 'medium' },
 ]
+
+/** Default delle soglie del cron del sito (colonne di `client_settings`,
+ *  `sito-001`/`sito-002`), allineati alle regole dell'app qui sopra e alla
+ *  migrazione `sito-050`: Stress 70 (= stress_high_chronic), Recupero,
+ *  Equilibrio ed Energia 25 (= recovery_low). Fattore di tolleranza per le
+ *  misurazioni mancate: ×1,5 sull'intervallo atteso (come la home). */
+export const CRON_ALERT_DEFAULTS = {
+  alert_threshold_stress: 70,
+  alert_threshold_recovery: 25,
+  alert_threshold_balance: 25,
+  alert_threshold_energy: 25,
+  missedMeasurementFactor: 1.5,
+} as const
 
 export const PREDEFINED_ALERT_RULE_BY_ID: Record<string, PredefinedAlertRule> = Object.fromEntries(
   PREDEFINED_ALERT_RULES.map((r) => [r.id, r]),

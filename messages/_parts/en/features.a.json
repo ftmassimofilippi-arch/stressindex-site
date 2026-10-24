@@ -46,7 +46,7 @@
       "geometric": "Geometric"
     },
     "calloutLead": "Automatic reference ranges.",
-    "calloutBody": "Every parameter gets a color-coded traffic light based on reference ranges for the client’s age and sex (Nunan 2010, Voss 2015). No need to memorize reference values, the app does it for you."
+    "calloutBody": "Every parameter gets a color-coded traffic light based on the reference ranges of the Master HRV manual (healthy adult at rest, measured with an ECG chest strap). For RMSSD and SDNN, if the client’s profile includes age and sex, the range is the one for their group (Nunan 2010, Voss 2015). No need to memorize reference values, the app does it for you."
   },
   "tests": {
     "eyebrow": "Test types",

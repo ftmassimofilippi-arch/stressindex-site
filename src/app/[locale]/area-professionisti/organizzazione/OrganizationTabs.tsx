@@ -370,7 +370,7 @@ function PanoramicaTab({ overview }: { overview: OrgOverview | null }) {
                     <td className="px-6 py-3 text-anthracite">{r.professional_name}</td>
                     <td className="px-3 py-3 font-medium text-anthracite">{r.client_name}</td>
                     <td className="px-3 py-3 text-anthracite-lighter whitespace-nowrap">{formatMeasuredAt(r, locale)}</td>
-                    <td className="px-3 py-3 w-40"><ScoreBar value={r.score_stress} inverted /></td>
+                    <td className="px-3 py-3 w-40"><ScoreBar value={r.score_stress} scheme="stress" /></td>
                     <td className="px-3 py-3 text-right">
                       <Link
                         href={`/area-professionisti/clienti/${r.client_id}/misurazione/${r.session_id}?professionista=${r.professional_id}`}

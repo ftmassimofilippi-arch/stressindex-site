@@ -26,7 +26,8 @@
     "titleEm": "Senza laboratorio.",
     "description": "L’unico parametro che ti dice in tempo reale in quale zona metabolica si trova il tuo atleta. Senza test di laboratorio. Senza CPET. Solo una fascia toracica e il telefono.",
     "zones": [
-      { "title": "Zona aerobica pura", "body": "Recupero attivo, fondo lungo, sviluppo della base aerobica." },
+      { "title": "Recupero", "body": "Recupero attivo, intensità molto bassa, sistema nervoso in modalità di recupero." },
+      { "title": "Zona aerobica pura", "body": "Fondo lungo, sviluppo della base aerobica." },
       { "title": "Transizione (VT1 superato)", "body": "Soglia aerobica oltrepassata. Carico moderato sostenibile." },
       { "title": "Zona anaerobica (VT2 superato)", "body": "Soglia anaerobica oltrepassata. Sforzo intenso, durata limitata." },
       { "title": "Carico massimale", "body": "Massima intensità. Sostenibile solo per pochi minuti." }
@@ -41,7 +42,7 @@
     "items": [
       "HR live con grafico scorrevole",
       "RMSSD rolling per monitorare il recupero",
-      "DFA Alpha1 con le 4 zone colorate",
+      "DFA Alpha1 con le 5 zone colorate",
       "Tag durante l’attività (inizio sprint, cambio ritmo, pausa, fine warm-up)",
       "TRIMP calcolato automaticamente a fine sessione"
     ],
@@ -94,7 +95,7 @@
     "desktopOnly": "Solo desktop",
     "rows": {
       "dfa": { "feature": "DFA Alpha1 in tempo reale", "us": "Mobile" },
-      "zones": { "feature": "Zone metaboliche live", "us": "4 zone" },
+      "zones": { "feature": "Zone metaboliche live", "us": "5 zone" },
       "pain": { "feature": "Mappa dolore muscolare", "us": "12 zone" },
       "pdf": { "feature": "Report PDF sport", "kubios": "Desktop, {price}/anno", "us": "Incluso" },
       "gdpr": { "feature": "GDPR EU, server in Europa" },
@@ -108,7 +109,7 @@
     "description": "Il Modulo Sport è già in uso. Ecco cosa trovi oggi nell’app e nella dashboard web, e le due cose su cui stiamo lavorando.",
     "haveTitle": "Disponibile oggi",
     "have": [
-      "DFA Alpha1 in tempo reale con le 4 zone",
+      "DFA Alpha1 in tempo reale con le 5 zone",
       "TRIMP, ACWR e CTL/ATL/TSB con alert automatici",
       "Test soglie VT1/VT2",
       "Team Live multi-atleta",

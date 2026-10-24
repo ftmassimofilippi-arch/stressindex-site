@@ -11,6 +11,7 @@ import type { Client, ClientSettings } from '@/lib/types'
 import { ClientAccessSection } from '../ClientAccessSection'
 import { AlertRulesSection } from '@/components/dashboard/AlertRulesSection'
 import type { AlertRule } from '@/lib/alert-rules'
+import { CRON_ALERT_DEFAULTS } from '@/lib/alert-rules'
 
 type Props = { client: Client; initialSettings: ClientSettings | null; alertRules?: AlertRule[]; professionalId?: string | null }
 
@@ -47,10 +48,10 @@ export function ClientSettingsTab({ client, initialSettings, alertRules = [], pr
 
   const [settings, setSettings] = useState({
     expected_frequency_per_week: initialSettings?.expected_frequency_per_week ?? 0,
-    alert_threshold_stress: initialSettings?.alert_threshold_stress ?? 80,
-    alert_threshold_recovery: initialSettings?.alert_threshold_recovery ?? 30,
-    alert_threshold_balance: initialSettings?.alert_threshold_balance ?? 30,
-    alert_threshold_energy: initialSettings?.alert_threshold_energy ?? 30,
+    alert_threshold_stress: initialSettings?.alert_threshold_stress ?? CRON_ALERT_DEFAULTS.alert_threshold_stress,
+    alert_threshold_recovery: initialSettings?.alert_threshold_recovery ?? CRON_ALERT_DEFAULTS.alert_threshold_recovery,
+    alert_threshold_balance: initialSettings?.alert_threshold_balance ?? CRON_ALERT_DEFAULTS.alert_threshold_balance,
+    alert_threshold_energy: initialSettings?.alert_threshold_energy ?? CRON_ALERT_DEFAULTS.alert_threshold_energy,
     tags: initialSettings?.tags ?? [] as string[],
   })
 

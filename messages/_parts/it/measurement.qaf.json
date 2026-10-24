@@ -8,7 +8,9 @@
     },
     "reference": {
       "titlePersonal": "Range per età e sesso (25°-75° percentile della fascia): {from}–{to}",
-      "legendPersonal": "Verde dentro l'intervallo, giallo al limite, rosso fuori, grigio senza riferimento. Dove indicato il range è per età e sesso (25°-75° percentile della fascia); per gli altri parametri è indicativo per adulto sano, registrazione di 5-10 minuti."
+      "legendPersonal": "Verde dentro l'intervallo, giallo al limite, rosso fuori, grigio senza riferimento. Dove indicato il range è per età e sesso (25°-75° percentile della fascia); per gli altri parametri è indicativo per adulto sano, registrazione di 5-10 minuti.",
+      "indicative": "(orientativo)",
+      "titleIndicative": "Range orientativo {from}–{to}: nessun semaforo, il rapporto LF/HF si legge insieme agli altri parametri"
     },
     "norms": {
       "missingBoth": "Range generici: completa sesso e data di nascita nell'<link>anagrafica</link> per avere i range per età e sesso.",

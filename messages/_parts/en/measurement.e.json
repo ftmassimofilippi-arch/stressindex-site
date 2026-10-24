@@ -60,7 +60,7 @@
     "standing": "Standing",
     "colChange": "Change",
     "colPct": "%",
-    "note": "The change compares the standing phase with the lying-down phase, in absolute value and as a percentage. When standing up, an increase in heart rate (10–30 bpm), in the LF/HF ratio and in the Stress Index is expected, together with a reduction in vagal variability (RMSSD 30–50%, HF, pNN50). Teal: change in the expected direction; amber: opposite direction; parameters without a specific expectation stay neutral.",
+    "note": "The change compares the standing phase with the lying-down phase, in absolute value and as a percentage. When standing up, an increase in heart rate (10–30 bpm), in the LF/HF ratio and in the Stress Index is expected, together with a reduction in vagal variability (RMSSD 30–70%, HF, pNN50); an RMSSD drop above 75% is excessive. Teal: change in the expected direction; amber: opposite direction; parameters without a specific expectation stay neutral.",
     "phaseSupine": "Lying-down phase",
     "phaseStanding": "Standing phase",
     "poincare": "Poincaré diagram",

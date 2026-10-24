@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { intlTag, num, toNum, toStr } from '@/lib/format'
-import { paramsSummary, rangeStatus, withPersonalRanges, type RangeStatus, type ReferenceRange } from '@/lib/hrv-reference-ranges'
+import { isIndicativeOnly, paramsSummary, rangeStatus, withPersonalRanges, type RangeStatus, type ReferenceRange } from '@/lib/hrv-reference-ranges'
 import type { ClientNorms } from '@/lib/hrv-norms'
 import type { MeasurementAnalytics } from '@/lib/types'
 
@@ -86,6 +86,9 @@ const GROUPS: { key: GroupKey; fields: Array<{ key: keyof MeasurementAnalytics; 
 ]
 
 // Colori del semaforo (stessa palette di GaugeScore / AppColors dell'app).
+// Range e soglie: `hrv-reference.ts` (Appendice A del manuale). LF/HF ha un
+// range solo orientativo e nessun colore; LF/VLF e le colonne di Lomb nessun
+// riferimento.
 const STATUS_COLOR: Record<RangeStatus, string> = {
   in: '#2F8F6B',
   edge: '#C78A2C',
@@ -168,6 +171,7 @@ export function HrvParamsTable({
   const tMetrics = useTranslations('charts.metrics')
   const personal = norms?.kind === 'personal' ? norms.ranges : null
   const ranges = withPersonalRanges(personal)
+  const indicative = t('reference.indicative')
 
   const signalQualityLabel = (value: unknown): string => {
     const raw = toStr(value)
@@ -193,10 +197,15 @@ export function HrvParamsTable({
                 const v = measurement[f.key] as number | null | undefined
                 const range = ranges[key] ?? null
                 const isPersonal = !!personal?.[key]
-                const status = rangeStatus(v, range)
+                const status = rangeStatus(v, key, personal?.[key] ?? null)
                 const bounds = range ? rangeBounds(range, locale) : null
+                const onlyIndicative = isIndicativeOnly(key)
                 const statusLabel = t(`reference.status.${status}`)
-                const rangeTitle = bounds ? t(isPersonal ? 'reference.titlePersonal' : 'reference.title', bounds) : null
+                const rangeTitle = bounds
+                  ? onlyIndicative
+                    ? t('reference.titleIndicative', bounds)
+                    : t(isPersonal ? 'reference.titlePersonal' : 'reference.title', bounds)
+                  : null
                 const title = rangeTitle ? `${statusLabel} · ${rangeTitle}` : statusLabel
                 // Valore assente: "n.d." senza unità, con il motivo nel tooltip.
                 const missing = toNum(v) == null
@@ -210,7 +219,7 @@ export function HrvParamsTable({
                           className={`text-anthracite-lighter tabular-nums ${print ? 'text-[9px]' : 'text-[10px]'}`}
                           title={rangeTitle ?? undefined}
                         >
-                          {bounds.from}–{bounds.to}
+                          {bounds.from}–{bounds.to}{onlyIndicative ? ` ${indicative}` : ''}
                         </span>
                       )}
                       {missing ? (
@@ -256,7 +265,7 @@ export function ParamsSummaryCard({
   norms?: ClientNorms | null
 }) {
   const t = useTranslations('measurement.params.summary')
-  const s = paramsSummary(measurement, withPersonalRanges(norms?.kind === 'personal' ? norms.ranges : null))
+  const s = paramsSummary(measurement as unknown as Record<string, unknown>, norms?.kind === 'personal' ? norms.ranges : null)
   const tiles: Array<{ key: RangeStatus; count: number; label: string }> = [
     { key: 'in', count: s.inRange, label: t('inRange') },
     { key: 'edge', count: s.edge, label: t('edge') },

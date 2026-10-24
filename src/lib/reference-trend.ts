@@ -12,13 +12,16 @@
 //     riferimento del giorno;
 //   • media mobile a 7 giorni di calendario, provvisoria sotto 3 valori,
 //     interrotta dopo più di 7 giorni senza dati;
-//   • partenza = media dei primi 7 giorni di riferimento (da
-//     `data_inizio_percorso` se c'è), fascia = partenza ± 0,5 DS campionaria
-//     dei primi 7 valori giornalieri (nessuna fascia sotto 3, provvisoria
-//     sotto 7);
+//   • partenza = media dei primi giorni di riferimento (da
+//     `data_inizio_percorso` se c'è) che contengono almeno 7 misurazioni
+//     valide su almeno 4 giorni diversi (decisione 18 del 23/10/2026: non più
+//     7 giorni di calendario), provvisoria finché non ci sono; fascia =
+//     partenza ± 0,5 DS campionaria dei valori giornalieri (nessuna fascia
+//     sotto 3 giorni);
 //   • variazione = (media mobile di oggi - riferimento) / riferimento; il
 //     verdetto è "stabile" dentro la fascia, fuori decide il verso del
-//     "meglio" (`piuAltoEMeglio` di trend-stats);
+//     "meglio" (`direzioneMeglio` di trend-stats: a campana verso il centro
+//     del range per DFA α1, nessun verdetto per LF/HF);
 //   • RMSSD: tutti i conti sul logaritmo naturale, ritorno in ms per la
 //     lettura (`toDisplay`).
 // Il sito non ricalcola nessuno score: qui ci sono solo medie, deviazioni e
@@ -26,11 +29,15 @@
 
 import { measuredDayKey, measuredHour, measuredInstant, type ConIstante } from './measured-time.ts'
 import { normalizeTestType } from './measurement-type.ts'
-import { periodoPrecedente, piuAltoEMeglio } from './trend-stats.ts'
+import { centroRiferimento, direzioneMeglio, periodoPrecedente, piuAltoEMeglio, type DirezioneMeglio } from './trend-stats.ts'
 
 export const REFERENCE_HOUR_FROM = 4
 export const REFERENCE_HOUR_TO = 11
 export const ROLLING_WINDOW_DAYS = 7
+/** Partenza: almeno 7 misurazioni valide su almeno 4 giorni diversi (decisione 18). */
+export const BASELINE_MEASUREMENTS = 7
+export const BASELINE_MIN_DAYS = 4
+/** @deprecated resta per i vecchi import: la partenza non conta più i giorni di calendario. */
 export const BASELINE_DAYS = 7
 export const PROVISIONAL_BELOW = 3
 export const DYNAMIC_WINDOW_DAYS = 60
@@ -222,11 +229,33 @@ export type Reference = {
   sd: number | null
   /** `null` sotto 3 valori. */
   band: Band | null
+  /** Giorni di riferimento inclusi. */
   n: number
-  /** Meno di 7 valori: "provvisoria, su N misurazioni". */
+  /** Misurazioni di riferimento incluse (somma delle `n` giornaliere). */
+  measurements: number
+  /** Meno di 7 misurazioni o meno di 4 giorni: "provvisoria, su N misurazioni". */
   provisional: boolean
   firstDay: string
   lastDay: string
+}
+
+/** Vero quando i giorni dati bastano per una partenza definitiva (decisione 18). */
+export function baselineComplete(values: DailyValue[]): boolean {
+  const measurements = values.reduce((acc, d) => acc + d.n, 0)
+  return values.length >= BASELINE_MIN_DAYS && measurements >= BASELINE_MEASUREMENTS
+}
+
+/**
+ * I primi giorni di `daily` (in ordine) che contengono almeno 7 misurazioni
+ * su almeno 4 giorni; se non bastano, tutti quelli che ci sono.
+ */
+export function baselineDays(daily: DailyValue[]): DailyValue[] {
+  const out: DailyValue[] = []
+  for (const d of daily) {
+    out.push(d)
+    if (baselineComplete(out)) break
+  }
+  return out
 }
 
 /** Media, DS e fascia dei valori giornalieri dati. `null` se non ce ne sono. */
@@ -235,12 +264,13 @@ export function referenceFromDaily(values: DailyValue[]): Reference | null {
   const v = values.map((d) => d.value)
   const m = mean(v)
   const sd = v.length >= PROVISIONAL_BELOW ? sampleSd(v) : null
-  const provisional = v.length < BASELINE_DAYS
+  const provisional = !baselineComplete(values)
   return {
     mean: m,
     sd,
     band: sd == null ? null : { low: m - HALF_SD_BAND * sd, high: m + HALF_SD_BAND * sd, provisional },
     n: v.length,
+    measurements: values.reduce((acc, d) => acc + d.n, 0),
     provisional,
     firstDay: values[0].day,
     lastDay: values[values.length - 1].day,
@@ -248,17 +278,19 @@ export function referenceFromDaily(values: DailyValue[]): Reference | null {
 }
 
 /**
- * Partenza del percorso: i primi 7 giorni di riferimento del cliente, su
- * tutta la storia (o da `startDay`, la `data_inizio_percorso` della scheda).
+ * Partenza del percorso: i primi giorni di riferimento del cliente con almeno
+ * 7 misurazioni su almeno 4 giorni (decisione 18), su tutta la storia (o da
+ * `startDay`, la `data_inizio_percorso` della scheda). Provvisoria finché
+ * non ci sono.
  */
 export function courseBaseline(daily: DailyValue[], startDay?: string | null): Reference | null {
   const from = startDay ? daily.filter((d) => d.day >= startDay) : daily
-  return referenceFromDaily(from.slice(0, BASELINE_DAYS))
+  return referenceFromDaily(baselineDays(from))
 }
 
-/** Prima settimana di riferimento del periodo selezionato. */
+/** Partenza del periodo selezionato, con la stessa regola del percorso. */
 export function periodStartReference(daily: DailyValue[], from: string): Reference | null {
-  return referenceFromDaily(daily.filter((d) => d.day >= from).slice(0, BASELINE_DAYS))
+  return referenceFromDaily(baselineDays(daily.filter((d) => d.day >= from)))
 }
 
 /** Tutti i giorni di riferimento del periodo precedente di pari durata. */
@@ -298,7 +330,10 @@ export type Verdict = 'improved' | 'declined' | 'stable' | 'unknown'
 
 export type ChangeSummary = {
   metric: string
+  /** Compatibilità: falso solo per 'lower'. Per 'bell' e 'none' guardare `direction`. */
   higherIsBetter: boolean
+  /** Verso del "meglio" (trend-stats): per 'none' il verdetto fuori fascia resta 'unknown'. */
+  direction: DirezioneMeglio
   /** Riferimento, nello spazio di lettura (ms per RMSSD). */
   start: number | null
   startN: number
@@ -333,6 +368,7 @@ export function changeSummary(
   opts?: { asOf?: string | null; period?: { from: string; to: string } | null },
 ): ChangeSummary {
   const higherIsBetter = piuAltoEMeglio(metric)
+  const direction = direzioneMeglio(metric)
   const rolling = rollingMean7(daily)
   const asOf = opts?.asOf ?? null
   let now: RollingPoint | null = null
@@ -362,7 +398,17 @@ export function changeSummary(
     else {
       const delta = now.mean - reference.mean
       if (delta === 0) verdict = 'stable'
-      else verdict = (higherIsBetter ? delta : -delta) > 0 ? 'improved' : 'declined'
+      else if (direction === 'none') verdict = 'unknown'
+      else if (direction === 'bell') {
+        // A campana (DFA α1 verso 1,0): migliora chi si avvicina al centro del range.
+        const centro = centroRiferimento(metric)
+        if (centro == null) verdict = 'unknown'
+        else {
+          const prima = Math.abs(toDisplay(metric, reference.mean) - centro)
+          const dopo = Math.abs(toDisplay(metric, now.mean) - centro)
+          verdict = prima === dopo ? 'stable' : dopo < prima ? 'improved' : 'declined'
+        }
+      } else verdict = (higherIsBetter ? delta : -delta) > 0 ? 'improved' : 'declined'
     }
   }
 
@@ -371,6 +417,7 @@ export function changeSummary(
   return {
     metric,
     higherIsBetter,
+    direction,
     start: startDisplay,
     startN: reference?.n ?? 0,
     startProvisional: reference?.provisional ?? true,

@@ -8,7 +8,9 @@
     },
     "reference": {
       "titlePersonal": "Bereich nach Alter und Geschlecht (25.-75. Perzentil der Gruppe): {from}–{to}",
-      "legendPersonal": "Grün im Bereich, gelb an der Grenze, rot außerhalb, grau ohne Referenz. Wo angegeben, gilt der Bereich nach Alter und Geschlecht (25.-75. Perzentil der Gruppe); für die übrigen Parameter ist er ein Richtwert für gesunde Erwachsene, Aufzeichnung von 5-10 Minuten."
+      "legendPersonal": "Grün im Bereich, gelb an der Grenze, rot außerhalb, grau ohne Referenz. Wo angegeben, gilt der Bereich nach Alter und Geschlecht (25.-75. Perzentil der Gruppe); für die übrigen Parameter ist er ein Richtwert für gesunde Erwachsene, Aufzeichnung von 5-10 Minuten.",
+      "indicative": "(Richtwert)",
+      "titleIndicative": "Richtbereich {from}–{to}: keine Ampel, das LF/HF-Verhältnis wird zusammen mit den anderen Parametern gelesen"
     },
     "norms": {
       "missingBoth": "Allgemeine Bereiche: Ergänze Geschlecht und Geburtsdatum in den <link>Stammdaten</link>, um Bereiche nach Alter und Geschlecht zu erhalten.",

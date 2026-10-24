@@ -2206,7 +2206,7 @@
       "titleLead": "Everything you need to measure stress."
     },
     "params": {
-      "calloutBody": "Every parameter gets a color-coded traffic light based on reference ranges for the client’s age and sex (Nunan 2010, Voss 2015). No need to memorize reference values, the app does it for you.",
+      "calloutBody": "Every parameter gets a color-coded traffic light based on the reference ranges of the Master HRV manual (healthy adult at rest, measured with an ECG chest strap). For RMSSD and SDNN, if the client’s profile includes age and sex, the range is the one for their group (Nunan 2010, Voss 2015). No need to memorize reference values, the app does it for you.",
       "calloutLead": "Automatic reference ranges.",
       "description": "For the professional who wants to go deeper, Stress Index computes every parameter validated by the scientific literature.",
       "eyebrow": "Scientific parameters",
@@ -2405,7 +2405,7 @@
             "type": "ul",
             "items": [
               "Check that the strap was properly positioned and wet.",
-              "Check the artifact rate: if it is above 5%, the measurement may not be reliable.",
+              "Check the artifact rate: below 5% the measurement is fully valid; between 5 and 15% it is usable, but read the non-linear parameters with caution; above 15% repeat the measurement.",
               "Did the client move or talk during the measurement? Movement creates artifacts."
             ]
           }
@@ -2842,20 +2842,86 @@
               {
                 "emoji": "🔵",
                 "title": "Balance (0-100)",
-                "desc": "Balance between sympathetic and parasympathetic. It is not 'higher = better': the optimal value is in the middle zone. Being too unbalanced in either direction is a problem.",
-                "color": "blue"
+                "desc": "Balance between sympathetic and parasympathetic. The score is high when the two branches are in balance and drops when one of them prevails, in either direction.",
+                "color": "blue",
+                "ranges": [
+                  {
+                    "range": "0-25",
+                    "label": "Strong imbalance"
+                  },
+                  {
+                    "range": "25-45",
+                    "label": "Moderate imbalance"
+                  },
+                  {
+                    "range": "45-65",
+                    "label": "Sufficient"
+                  },
+                  {
+                    "range": "65-85",
+                    "label": "Good"
+                  },
+                  {
+                    "range": "85-100",
+                    "label": "Optimal"
+                  }
+                ]
               },
               {
                 "emoji": "🟠",
                 "title": "Energy (0-100)",
                 "desc": "Overall energy resources of the nervous system. Based on the total power of the HRV spectrum.",
-                "color": "orange"
+                "color": "orange",
+                "ranges": [
+                  {
+                    "range": "0-25",
+                    "label": "Depleted"
+                  },
+                  {
+                    "range": "25-45",
+                    "label": "Low"
+                  },
+                  {
+                    "range": "45-65",
+                    "label": "Moderate"
+                  },
+                  {
+                    "range": "65-85",
+                    "label": "Good"
+                  },
+                  {
+                    "range": "85-100",
+                    "label": "Full"
+                  }
+                ]
               },
               {
                 "emoji": "🟣",
                 "title": "Adaptation (0-100)",
                 "desc": "Recovery and adaptation capacity of the autonomic nervous system. The higher it is, the better the body absorbs the day's loads and the faster it returns to balance.",
-                "color": "purple"
+                "color": "purple",
+                "ranges": [
+                  {
+                    "range": "0-25",
+                    "label": "Fragile"
+                  },
+                  {
+                    "range": "25-45",
+                    "label": "To improve"
+                  },
+                  {
+                    "range": "45-65",
+                    "label": "Reduced"
+                  },
+                  {
+                    "range": "65-85",
+                    "label": "Good"
+                  },
+                  {
+                    "range": "85-100",
+                    "label": "Excellent"
+                  }
+                ]
               }
             ]
           },
@@ -2873,7 +2939,7 @@
           },
           {
             "type": "p",
-            "text": "Below the scores you find the details by domain (Time Domain, Frequency Domain, Non-linear, Geometric). Every parameter has a traffic light (green, yellow, red) based on reference ranges for the client's age and sex."
+            "text": "Below the scores you find the details by domain (Time Domain, Frequency Domain, Non-linear, Geometric). Every parameter has a traffic light (green, yellow, red) based on the reference ranges of the Master HRV manual (healthy adult at rest, measured with an ECG chest strap). For RMSSD and SDNN, if the client's profile includes age and sex, the range is the one for their group (Nunan 2010, Voss 2015)."
           },
           {
             "type": "p",
@@ -2928,7 +2994,7 @@
               },
               {
                 "term": "Why the profile matters",
-                "desc": "Age and sex are needed to normalize the parameters. Without this data the green/yellow/red traffic lights cannot be calculated correctly, so always fill it in, even when you are in a hurry."
+                "desc": "Age and sex are needed for the scores and for the RMSSD and SDNN ranges by age and sex group. Without this data the app uses the generic ranges of the manual, so always fill it in, even when you are in a hurry."
               },
               {
                 "term": "History",
@@ -3076,15 +3142,20 @@
           },
           {
             "type": "h3",
-            "text": "How to interpret"
+            "text": "How to interpret the Recovery score"
+          },
+          {
+            "type": "p",
+            "text": "In the morning the most useful score to follow is Recovery. The bands below apply to this score only: for Stress and the other scores see the section Reading the results."
           },
           {
             "type": "ul",
             "items": [
-              "**60-85**: optimal zone.",
-              "**40-60**: normal values, watch your habits.",
-              "**Below 40**: possible stress, poor sleep, illness.",
-              "**Below 25**: possible overtraining or exhaustion."
+              "**85-100**: optimal.",
+              "**65-85**: good.",
+              "**45-65**: moderate, watch your habits.",
+              "**25-45**: poor, possible stress, poor sleep, feeling unwell.",
+              "**0-25**: insufficient, possible overtraining or exhaustion."
             ]
           },
           {
@@ -3266,32 +3337,38 @@
           },
           {
             "type": "h3",
-            "text": "The 4 metabolic zones"
+            "text": "The 5 metabolic zones (DFA alpha1)"
           },
           {
             "type": "zoneCards",
             "items": [
               {
+                "emoji": "🔵",
+                "title": "Blue: recovery (alpha1 > 1.0)",
+                "desc": "Active recovery, very low intensity.",
+                "color": "blue"
+              },
+              {
                 "emoji": "🟢",
-                "title": "Green: aerobic",
+                "title": "Green: aerobic (0.75-1.0)",
                 "desc": "Very sustainable, long endurance.",
                 "color": "green"
               },
               {
                 "emoji": "🟡",
-                "title": "Yellow: transition",
+                "title": "Yellow: transition (0.50-0.75)",
                 "desc": "Medium, between the aerobic and anaerobic thresholds.",
                 "color": "yellow"
               },
               {
                 "emoji": "🟠",
-                "title": "Orange: anaerobic",
+                "title": "Orange: anaerobic (0.30-0.50)",
                 "desc": "High, sustainable only for limited periods.",
                 "color": "orange"
               },
               {
                 "emoji": "🔴",
-                "title": "Red: maximal",
+                "title": "Red: maximal (< 0.30)",
                 "desc": "Extreme, a few minutes.",
                 "color": "red"
               }
@@ -3952,7 +4029,7 @@
       "comparisonSubtitle": "lying down vs standing",
       "comparisonTitle": "Phase comparison",
       "description": "Summarizes how the autonomic nervous system adapts to the change from lying down to standing.",
-      "note": "The change compares the standing phase with the lying-down phase, in absolute value and as a percentage. When standing up, an increase in heart rate (10–30 bpm), in the LF/HF ratio and in the Stress Index is expected, together with a reduction in vagal variability (RMSSD 30–50%, HF, pNN50). Teal: change in the expected direction; amber: opposite direction; parameters without a specific expectation stay neutral.",
+      "note": "The change compares the standing phase with the lying-down phase, in absolute value and as a percentage. When standing up, an increase in heart rate (10–30 bpm), in the LF/HF ratio and in the Stress Index is expected, together with a reduction in vagal variability (RMSSD 30–70%, HF, pNN50); an RMSSD drop above 75% is excessive. Teal: change in the expected direction; amber: opposite direction; parameters without a specific expectation stay neutral.",
       "phaseStanding": "Standing phase",
       "phaseSupine": "Lying-down phase",
       "poincare": "Poincaré diagram",
@@ -4021,6 +4098,7 @@
         "poor": "Poor"
       },
       "reference": {
+        "indicative": "(indicative)",
         "legend": "Indicative reference ranges for a healthy adult, 5-10 minute recording: green within the range, yellow borderline, red outside, grey without a reference.",
         "legendPersonal": "Green inside the range, yellow at the edge, red outside, grey without reference. Where shown, the range is for age and sex (25th-75th percentile of the group); for the other parameters it is indicative for a healthy adult, 5-10 minute recording.",
         "status": {
@@ -4030,6 +4108,7 @@
           "out": "Out of range"
         },
         "title": "Indicative reference range: {from}–{to} (healthy adult, 5-10 minute recording)",
+        "titleIndicative": "Indicative range {from}–{to}: no colour, the LF/HF ratio is read together with the other parameters",
         "titlePersonal": "Range for age and sex (25th-75th percentile of the group): {from}–{to}"
       },
       "signalQuality": "Signal quality",
@@ -4866,6 +4945,7 @@
       "noNotes": "No notes attached to this measurement.",
       "notesTitle": "Measurement notes",
       "params": {
+        "approximateEntropy": "Approximate entropy (ApEn)",
         "baevsky": "Baevsky Stress Index",
         "cv": "CV of RR intervals",
         "dfaAlpha1": "DFA α1",
@@ -5280,16 +5360,7 @@
       "stress": "Stress",
       "stressLong": "Stress Index"
     },
-    "outOf100": "{n} out of 100",
-    "range": {
-      "belowAverage": "Below average",
-      "excellent": "Excellent",
-      "good": "Good",
-      "low": "Low",
-      "normal": "In range",
-      "outOfRange": "Out of range",
-      "reference": "Reference range"
-    }
+    "outOf100": "{n} out of 100"
   },
   "settings": {
     "account": {
@@ -5773,7 +5844,7 @@
         },
         "zones": {
           "feature": "Live metabolic zones",
-          "us": "4 zones"
+          "us": "5 zones"
         }
       },
       "titleEm": "In one table.",
@@ -5822,8 +5893,12 @@
       "titleLead": "Metabolic zones.",
       "zones": [
         {
+          "title": "Recovery",
+          "body": "Active recovery, very low intensity, nervous system in recovery mode."
+        },
+        {
           "title": "Pure aerobic zone",
-          "body": "Active recovery, long endurance, aerobic base building."
+          "body": "Long endurance, aerobic base building."
         },
         {
           "title": "Transition (above VT1)",
@@ -5866,7 +5941,7 @@
       "items": [
         "Live HR with scrolling chart",
         "Rolling RMSSD to monitor recovery",
-        "DFA Alpha1 with the 4 color zones",
+        "DFA Alpha1 with the 5 color zones",
         "Tags during the activity (sprint start, pace change, break, end of warm-up)",
         "TRIMP computed automatically at the end of the session"
       ],
@@ -5905,7 +5980,7 @@
       "description": "The Sport Module is already in use. Here is what you get today in the app and the web dashboard, and the two things we are working on.",
       "eyebrow": "The Sport Module today",
       "have": [
-        "Real-time DFA Alpha1 with the 4 zones",
+        "Real-time DFA Alpha1 with the 5 zones",
         "TRIMP, ACWR and CTL/ATL/TSB with automatic alerts",
         "VT1/VT2 threshold test",
         "Multi-athlete Team Live",

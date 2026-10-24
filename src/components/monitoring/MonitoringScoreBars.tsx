@@ -1,6 +1,7 @@
 import { useLocale, useTranslations } from 'next-intl'
 import { ScoreBar } from '@/components/dashboard/ScoreBar'
 import type { MonitoringScores } from '@/lib/monitoring-types'
+import type { GaugeColorScheme } from '@/lib/gauge-zones'
 import { MON } from '@/lib/monitoring-format'
 import { scoreT, type Lang } from '@/lib/monitoring-strings'
 
@@ -9,12 +10,12 @@ import { scoreT, type Lang } from '@/lib/monitoring-strings'
 export function MonitoringScoreBars({ scores, title }: { scores: MonitoringScores; title?: string }) {
   const t = useTranslations('monitoring')
   const locale = useLocale() as Lang
-  const rows: Array<{ label: string; value: number; inverted?: boolean }> = [
-    { label: scoreT('stress_score', locale), value: scores.stress, inverted: true },
-    { label: scoreT('recovery_score', locale), value: scores.recovery },
-    { label: scoreT('balance_score', locale), value: scores.balance },
-    { label: scoreT('energy_score', locale), value: scores.energy },
-    { label: scoreT('inflammatory_score', locale), value: scores.inflammation },
+  const rows: Array<{ label: string; value: number; scheme: GaugeColorScheme }> = [
+    { label: scoreT('stress_score', locale), value: scores.stress, scheme: 'stress' },
+    { label: scoreT('recovery_score', locale), value: scores.recovery, scheme: 'recovery' },
+    { label: scoreT('balance_score', locale), value: scores.balance, scheme: 'balance' },
+    { label: scoreT('energy_score', locale), value: scores.energy, scheme: 'energy' },
+    { label: scoreT('inflammatory_score', locale), value: scores.inflammation, scheme: 'adaptation' },
   ]
   return (
     <div>
@@ -27,7 +28,7 @@ export function MonitoringScoreBars({ scores, title }: { scores: MonitoringScore
         {rows.map((r) => (
           <div key={r.label} className="flex items-center gap-3">
             <span className="w-28 text-xs text-anthracite-lighter truncate" title={r.label}>{r.label}</span>
-            <div className="flex-1"><ScoreBar value={r.value} inverted={r.inverted} /></div>
+            <div className="flex-1"><ScoreBar value={r.value} scheme={r.scheme} /></div>
           </div>
         ))}
       </div>

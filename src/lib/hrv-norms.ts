@@ -4,7 +4,9 @@
 // parametri (anche nel client) e i test (`node --test`).
 //
 // Il sito NON ricalcola score: legge p25 e p75 della fascia del cliente e li
-// mostra come intervallo di riferimento. Le regole di fascia sono copie
+// mostra come intervallo di riferimento (solo RMSSD e SDNN, vedi
+// NORM_METRIC_FIELD); il semaforo applica al range personale la stessa
+// tolleranza del generico (`rangeStatus` di hrv-reference.ts). Le regole di fascia sono copie
 // esatte di quelle già esistenti; se cambiano lì, cambiano qui:
 //   - età   → `public.hrv_age_group(p_age)` (SQL) e `AgeGroup` in
 //             hrv_app/lib/utils/demographic_normalization.dart
@@ -42,13 +44,16 @@ export function normFitness(atleta: boolean | null | undefined, livello: string 
   return 'sedentary'
 }
 
-/** Metrica di `hrv_norms.metric` → colonna di `measurement_analytics`. */
+/**
+ * Metrica di `hrv_norms.metric` → colonna di `measurement_analytics`.
+ * Dal 23/10/2026 (DECISIONI.md, decisioni 1, 3, 4, 12) le norme per età e
+ * sesso valgono SOLO per RMSSD e SDNN: DFA α1 e Stress Index di Baevsky usano
+ * le soglie fisse dell'Appendice A, LF/HF non ha più semaforo. Le righe
+ * `dfa`, `si` e `lfhf` della tabella restano nel database ma si scartano.
+ */
 export const NORM_METRIC_FIELD: Record<string, string> = {
   rmssd: 'rmssd',
   sdnn: 'sdnn',
-  lfhf: 'lf_hf_ratio',
-  dfa: 'dfa_alpha1',
-  si: 'stress_index_baevsky',
 }
 
 export type NormMissing = 'sex' | 'birthDate'

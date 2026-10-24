@@ -48,14 +48,19 @@ test('profilo completo', () => {
   assert.deepEqual(r, { ok: true, profile: { sex: 'female', ageGroup: 'elderly', fitness: 'active' } })
 })
 
-test('righe hrv_norms → range per colonna', () => {
+// Dal 23/10/2026 (DECISIONI.md, decisioni 1, 3, 4, 12, Appendice A del manuale)
+// le norme personali valgono solo per RMSSD e SDNN: le righe lfhf, si e dfa
+// della tabella si scartano.
+test('righe hrv_norms → range per colonna, solo rmssd e sdnn', () => {
   const r = rangesFromNormRows([
     { metric: 'rmssd', p25: 15, p75: 40 },
+    { metric: 'sdnn', p25: '28', p75: '55' },
     { metric: 'lfhf', p25: '0.9', p75: '3' },
     { metric: 'si', p25: 72, p75: 245 },
+    { metric: 'dfa', p25: 0.9, p75: 1.36 },
     { metric: 'ignota', p25: 1, p75: 2 },
-    { metric: 'sdnn', p25: null, p75: 40 },
-    { metric: 'dfa', p25: 2, p75: 1 },
+    { metric: 'rmssd', p25: 2, p75: 1 },
   ])
-  assert.deepEqual(r, { rmssd: [15, 40], lf_hf_ratio: [0.9, 3], stress_index_baevsky: [72, 245] })
+  assert.deepEqual(r, { rmssd: [15, 40], sdnn: [28, 55] })
+  assert.deepEqual(rangesFromNormRows([{ metric: 'sdnn', p25: null, p75: 40 }]), {})
 })

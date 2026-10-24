@@ -69,7 +69,7 @@
           "type": "ul",
           "items": [
             "Verifica che la fascia fosse ben posizionata e bagnata.",
-            "Controlla l'artifact rate, se è sopra il 5% la misurazione potrebbe non essere affidabile.",
+            "Controlla la percentuale di artefatti: sotto il 5% la misurazione è pienamente valida; tra il 5 e il 15% è utilizzabile, ma leggi con cautela i parametri non lineari; sopra il 15% ripeti la misurazione.",
             "Il cliente si è mosso o ha parlato durante la misurazione? Il movimento crea artefatti."
           ]
         }
@@ -321,27 +321,48 @@
             {
               "emoji": "🔵",
               "title": "Equilibrio (0-100)",
-              "desc": "Bilanciamento tra simpatico e parasimpatico. Non è 'più alto = meglio', il valore ottimale è nella zona centrale. Troppo sbilanciato in entrambe le direzioni è problematico.",
-              "color": "blue"
+              "desc": "Bilanciamento tra simpatico e parasimpatico. Lo score è alto quando i due rami sono in equilibrio e scende quando uno dei due prevale, in qualsiasi direzione.",
+              "color": "blue",
+              "ranges": [
+                { "range": "0-25", "label": "Sbilanciamento forte" },
+                { "range": "25-45", "label": "Sbilanciamento moderato" },
+                { "range": "45-65", "label": "Sufficiente" },
+                { "range": "65-85", "label": "Buono" },
+                { "range": "85-100", "label": "Ottimale" }
+              ]
             },
             {
               "emoji": "🟠",
               "title": "Energia (0-100)",
               "desc": "Risorse energetiche complessive del sistema nervoso. Basato sulla potenza totale dello spettro HRV.",
-              "color": "orange"
+              "color": "orange",
+              "ranges": [
+                { "range": "0-25", "label": "Esaurita" },
+                { "range": "25-45", "label": "Bassa" },
+                { "range": "45-65", "label": "Moderata" },
+                { "range": "65-85", "label": "Buona" },
+                { "range": "85-100", "label": "Piena" }
+              ]
             },
             {
               "emoji": "🟣",
               "title": "Adattamento (0-100)",
               "desc": "Capacità di recupero e adattamento del sistema nervoso autonomo. Più è alto, più il corpo assorbe bene i carichi della giornata e torna rapidamente all'equilibrio.",
-              "color": "purple"
+              "color": "purple",
+              "ranges": [
+                { "range": "0-25", "label": "Fragile" },
+                { "range": "25-45", "label": "Da migliorare" },
+                { "range": "45-65", "label": "Ridotta" },
+                { "range": "65-85", "label": "Buona" },
+                { "range": "85-100", "label": "Eccellente" }
+              ]
             }
           ]
         },
         { "type": "h3", "text": "Stress Index Composito" },
         { "type": "p", "text": "Valore unico 0-100 che sintetizza Stress, Recupero, Equilibrio ed Energia. Si vede nel tachimetro in cima ai risultati. È il numero da monitorare nel tempo, soprattutto se confronti più sessioni dello stesso cliente." },
         { "type": "h3", "text": "I parametri avanzati" },
-        { "type": "p", "text": "Sotto gli score trovi i dettagli per dominio (Time Domain, Frequency Domain, Non-linear, Geometric). Ogni parametro ha un semaforo (verde, giallo, rosso) basato sui range di riferimento per età e sesso del cliente." },
+        { "type": "p", "text": "Sotto gli score trovi i dettagli per dominio (Time Domain, Frequency Domain, Non-linear, Geometric). Ogni parametro ha un semaforo (verde, giallo, rosso) basato sui range di riferimento del manuale Master HRV (adulto sano a riposo, misurazione con fascia ECG). Per RMSSD e SDNN, se nel profilo del cliente ci sono età e sesso, il range è quello della sua fascia (Nunan 2010, Voss 2015)." },
         { "type": "p", "text": "Non serve conoscerli tutti per usare l'app, gli score sono sufficienti nella pratica quotidiana. I parametri avanzati ti servono se vuoi approfondire un caso specifico o confrontare con la letteratura." }
       ]
     },
@@ -371,7 +392,7 @@
           "type": "dl",
           "items": [
             { "term": "Aggiungere un cliente", "desc": "Tappa + nella lista clienti, compila l'anagrafica (nome, cognome, data di nascita, sesso, fumatore, atleta, livello di attività)." },
-            { "term": "Perché l'anagrafica è importante", "desc": "Età e sesso servono per la normalizzazione dei parametri. Senza questi dati i semafori verde/giallo/rosso non possono essere calcolati correttamente, quindi compilala sempre, anche quando hai fretta." },
+            { "term": "Perché l'anagrafica è importante", "desc": "Età e sesso servono per gli score e per i range di RMSSD e SDNN per fascia di età e sesso. Senza questi dati l'app usa i range generici del manuale, quindi compilala sempre, anche quando hai fretta." },
             { "term": "Storico", "desc": "Ogni misurazione viene salvata e associata al cliente. Puoi rivedere qualsiasi sessione passata in qualsiasi momento." },
             { "term": "Note", "desc": "Puoi aggiungere note libere a ogni cliente. Usale per annotare contesto, eventi rilevanti, obiettivi." }
           ]
@@ -447,14 +468,16 @@
             ["Adattamento", "capacità di recupero e adattamento"]
           ]
         },
-        { "type": "h3", "text": "Come interpretare" },
+        { "type": "h3", "text": "Come interpretare lo score Recupero" },
+        { "type": "p", "text": "Al mattino lo score più utile da seguire è il Recupero. Le fasce qui sotto valgono solo per questo score: per lo Stress e gli altri score vedi la sezione Leggere i risultati." },
         {
           "type": "ul",
           "items": [
-            "**60-85**: zona ottimale.",
-            "**40-60**: valori normali, attenzione alle abitudini.",
-            "**Sotto 40**: possibile stress, sonno scarso, malattia.",
-            "**Sotto 25**: possibile sovrallenamento o esaurimento."
+            "**85-100**: ottimale.",
+            "**65-85**: buono.",
+            "**45-65**: moderato, attenzione alle abitudini.",
+            "**25-45**: scarso, possibile stress, sonno insufficiente, malessere.",
+            "**0-25**: insufficiente, possibile sovrallenamento o esaurimento."
           ]
         },
         { "type": "callout", "text": "Un singolo valore basso non è motivo di allarme. Quello che conta è il trend." },
@@ -547,14 +570,15 @@
             { "term": "Dopo", "desc": "Termina, compila il questionario RPE 1-10, energia, dolori, umore." }
           ]
         },
-        { "type": "h3", "text": "Le 4 zone metaboliche" },
+        { "type": "h3", "text": "Le 5 zone metaboliche (DFA alpha1)" },
         {
           "type": "zoneCards",
           "items": [
-            { "emoji": "🟢", "title": "Verde: aerobica", "desc": "Molto sostenibile, fondo lungo.", "color": "green" },
-            { "emoji": "🟡", "title": "Gialla: transizione", "desc": "Media, tra soglia aerobica e anaerobica.", "color": "yellow" },
-            { "emoji": "🟠", "title": "Arancione: anaerobica", "desc": "Alta, sostenibile solo per tempi limitati.", "color": "orange" },
-            { "emoji": "🔴", "title": "Rossa: massimale", "desc": "Estrema, pochi minuti.", "color": "red" }
+            { "emoji": "🔵", "title": "Blu: recupero (alpha1 > 1,0)", "desc": "Recupero attivo, intensità molto bassa.", "color": "blue" },
+            { "emoji": "🟢", "title": "Verde: aerobica (0,75-1,0)", "desc": "Molto sostenibile, fondo lungo.", "color": "green" },
+            { "emoji": "🟡", "title": "Gialla: transizione (0,50-0,75)", "desc": "Media, tra soglia aerobica e anaerobica.", "color": "yellow" },
+            { "emoji": "🟠", "title": "Arancione: anaerobica (0,30-0,50)", "desc": "Alta, sostenibile solo per tempi limitati.", "color": "orange" },
+            { "emoji": "🔴", "title": "Rossa: massimale (< 0,30)", "desc": "Estrema, pochi minuti.", "color": "red" }
           ]
         },
         { "type": "callout", "text": "Vedere in tempo reale in quale zona stai lavorando ti permette di dosare l'allenamento." },

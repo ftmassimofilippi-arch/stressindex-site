@@ -60,7 +60,7 @@
     "standing": "In piedi",
     "colChange": "Variazione",
     "colPct": "%",
-    "note": "La variazione confronta la fase in piedi con quella supina, in valore assoluto e in percentuale. Nel passaggio ortostatico è atteso l'aumento della frequenza cardiaca (10–30 bpm), del rapporto LF/HF e dello Stress Index, e la riduzione della variabilità vagale (RMSSD 30–50%, HF, pNN50). Colore teal: variazione nella direzione attesa; ambra: direzione opposta; i parametri senza un'attesa precisa restano neutri.",
+    "note": "La variazione confronta la fase in piedi con quella supina, in valore assoluto e in percentuale. Nel passaggio ortostatico è atteso l'aumento della frequenza cardiaca (10–30 bpm), del rapporto LF/HF e dello Stress Index, e la riduzione della variabilità vagale (RMSSD 30–70%, HF, pNN50); un calo di RMSSD oltre il 75% è eccessivo. Colore teal: variazione nella direzione attesa; ambra: direzione opposta; i parametri senza un'attesa precisa restano neutri.",
     "phaseSupine": "Fase supina",
     "phaseStanding": "Fase in piedi",
     "poincare": "Diagramma di Poincaré",

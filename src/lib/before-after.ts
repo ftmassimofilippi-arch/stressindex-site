@@ -21,6 +21,7 @@
 // componente traduce con next-intl.
 
 import type { Tr } from '@/i18n/types'
+import { STABLE_DELTA } from './hrv-reference.ts'
 
 export type BeforeAfterKind = 'treatment' | 'workout'
 
@@ -256,10 +257,31 @@ export const SCORE_DELTA_ROWS: Array<{ key: 'score_stress' | 'score_recupero' | 
 
 export type DeltaVerdict = 'improved' | 'declined' | 'stable' | 'unknown'
 
-export function deltaVerdict(a: number | null, b: number | null, higherIsBetter: boolean, stableBelow = 3): DeltaVerdict {
+/**
+ * Verdetto sugli SCORE: stabile sotto `STABLE_DELTA.score` punti (10,
+ * decisione 9 del 23/10/2026, Appendice A del manuale), poi il verso del
+ * "meglio". Per i parametri HRV vale `deltaVerdictPct` (10%).
+ */
+export function deltaVerdict(a: number | null, b: number | null, higherIsBetter: boolean, stableBelow: number = STABLE_DELTA.score): DeltaVerdict {
   if (a == null || b == null) return 'unknown'
   const delta = b - a
   if (Math.abs(delta) < stableBelow) return 'stable'
+  const improvement = higherIsBetter ? delta : -delta
+  return improvement > 0 ? 'improved' : 'declined'
+}
+
+/**
+ * Verdetto sui PARAMETRI HRV con verso "alto" o "basso = meglio": stabile
+ * sotto `STABLE_DELTA.paramPct` per cento del valore di partenza (10%,
+ * decisione 9). Con partenza 0 conta solo l'uguaglianza. Per i parametri a
+ * campana o senza direzione (DFA α1, LF/HF) si usa `verdettoVariazione` di
+ * trend-stats.ts.
+ */
+export function deltaVerdictPct(a: number | null, b: number | null, higherIsBetter: boolean, stablePct: number = STABLE_DELTA.paramPct): DeltaVerdict {
+  if (a == null || b == null) return 'unknown'
+  const delta = b - a
+  const stable = a === 0 ? delta === 0 : Math.abs(delta / Math.abs(a)) * 100 < stablePct
+  if (stable) return 'stable'
   const improvement = higherIsBetter ? delta : -delta
   return improvement > 0 ? 'improved' : 'declined'
 }

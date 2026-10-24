@@ -15,6 +15,7 @@ import {
 } from './monitoring-format'
 import { indexText, monT, scoreT, type IndexId, type Lang } from './monitoring-strings'
 import { pdfText as tx } from './pdf-text'
+import { scoreZoneColor, type GaugeColorScheme } from './gauge-zones'
 import type { ProfessionalProfile } from './types'
 
 const C = {
@@ -472,23 +473,24 @@ function CosinorSvg({ hours, fit, tz }: { hours: HourPattern[]; fit: NonNullable
 
 function ScoreBars({ scores, ctx, compact = false }: { scores: NonNullable<Monitoring24hSession['scores_night']>; ctx: Ctx; compact?: boolean }) {
   const { lang, tf } = ctx
-  const rows: Array<[string, number, boolean]> = [
-    [scoreT('stress_score', lang), scores.stress, false],
-    [scoreT('recovery_score', lang), scores.recovery, true],
-    [scoreT('balance_score', lang), scores.balance, true],
-    [scoreT('energy_score', lang), scores.energy, true],
-    [scoreT('inflammatory_score', lang), scores.inflammation, true],
+  const rows: Array<[string, number, GaugeColorScheme]> = [
+    [scoreT('stress_score', lang), scores.stress, 'stress'],
+    [scoreT('recovery_score', lang), scores.recovery, 'recovery'],
+    [scoreT('balance_score', lang), scores.balance, 'balance'],
+    [scoreT('energy_score', lang), scores.energy, 'energy'],
+    [scoreT('inflammatory_score', lang), scores.inflammation, 'adaptation'],
   ]
-  const colorOf = (v: number, higher: boolean) => { const good = higher ? v : 100 - v; return good >= 65 ? C.recovery : good >= 45 ? C.warning : C.stress }
+  // Colore della barra = fascia dello score (gauge-zones, Appendice A).
+  const colorOf = (v: number, scheme: GaugeColorScheme) => scoreZoneColor(scheme, v)
   return (
     <View>
-      {rows.map(([label, v, higher]) => (
+      {rows.map(([label, v, scheme]) => (
         <View key={label} style={{ flexDirection: 'row', alignItems: 'center', marginVertical: compact ? 1 : 2 }}>
           <Text style={{ width: 90, fontSize: 8, color: C.textMid }}>{tx(label)}</Text>
           <View style={{ flex: 1, height: 7, backgroundColor: C.invalid, borderRadius: 3 }}>
-            <View style={{ width: `${Math.max(0, Math.min(100, v))}%`, height: 7, backgroundColor: colorOf(v, higher), borderRadius: 3 }} />
+            <View style={{ width: `${Math.max(0, Math.min(100, v))}%`, height: 7, backgroundColor: colorOf(v, scheme), borderRadius: 3 }} />
           </View>
-          <Text style={{ width: 28, textAlign: 'right', fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: colorOf(v, higher) }}>{Math.round(v)}</Text>
+          <Text style={{ width: 28, textAlign: 'right', fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: colorOf(v, scheme) }}>{Math.round(v)}</Text>
         </View>
       ))}
       <Text style={{ textAlign: 'right', fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: C.accentDark, marginTop: 2 }}>{tx(tf('scores.compositeShort'))} {Math.round(scores.composite)}</Text>

@@ -46,7 +46,7 @@
       "geometric": "Geometrisch"
     },
     "calloutLead": "Automatische Referenzbereiche.",
-    "calloutBody": "Jeder Parameter erhält eine farbige Ampel auf Basis der Referenzbereiche für Alter und Geschlecht des Klienten (Nunan 2010, Voss 2015). Sie müssen sich keine Referenzwerte merken, das übernimmt die App."
+    "calloutBody": "Jeder Parameter erhält eine farbige Ampel auf Basis der Referenzbereiche des Master-HRV-Handbuchs (gesunder Erwachsener in Ruhe, Messung mit EKG-Brustgurt). Für RMSSD und SDNN gilt, wenn im Profil des Klienten Alter und Geschlecht hinterlegt sind, der Bereich seiner Gruppe (Nunan 2010, Voss 2015). Sie müssen sich keine Referenzwerte merken, das übernimmt die App."
   },
   "tests": {
     "eyebrow": "Testarten",

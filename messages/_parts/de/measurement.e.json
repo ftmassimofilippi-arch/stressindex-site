@@ -60,7 +60,7 @@
     "standing": "Stehend",
     "colChange": "Veränderung",
     "colPct": "%",
-    "note": "Die Veränderung vergleicht die Phase im Stehen mit der Phase im Liegen, absolut und in Prozent. Beim Aufstehen wird ein Anstieg der Herzfrequenz (10–30 bpm), des LF/HF-Verhältnisses und des Stressindex erwartet, zusammen mit einer Abnahme der vagalen Variabilität (RMSSD 30–50 %, HF, pNN50). Teal: Veränderung in der erwarteten Richtung; Bernstein: entgegengesetzte Richtung; Parameter ohne klare Erwartung bleiben neutral.",
+    "note": "Die Veränderung vergleicht die Phase im Stehen mit der Phase im Liegen, absolut und in Prozent. Beim Aufstehen wird ein Anstieg der Herzfrequenz (10–30 bpm), des LF/HF-Verhältnisses und des Stressindex erwartet, zusammen mit einer Abnahme der vagalen Variabilität (RMSSD 30–70 %, HF, pNN50); ein RMSSD-Abfall über 75 % ist übermäßig. Teal: Veränderung in der erwarteten Richtung; Bernstein: entgegengesetzte Richtung; Parameter ohne klare Erwartung bleiben neutral.",
     "phaseSupine": "Phase im Liegen",
     "phaseStanding": "Phase im Stehen",
     "poincare": "Poincaré-Diagramm",

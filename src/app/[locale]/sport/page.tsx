@@ -5,6 +5,7 @@ import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { pageMetadata } from '@/lib/seo'
 import { formatEur, num } from '@/lib/format'
+import { DFA_ZONES, type DfaZone, type DfaZoneKey } from '@/lib/sport-format'
 import { PRICING } from '@/config/pricing'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
@@ -26,13 +27,28 @@ const PRICE_BASE = PRICING.base
 const PRICE_KUBIOS_YEAR = PRICING.competitors.kubiosYear
 const PRICE_HRV4_MONTH = PRICING.competitors.hrv4TrainingMonth
 
-// Parte visiva delle 4 zone DFA Alpha1 della landing: titoli e testi in sportLanding.dfa.zones (stesso ordine).
-const ZONE_VISUALS = [
-  { emoji: '🟢', range: '> 0.75', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-  { emoji: '🟡', range: '0.50 - 0.75', bg: 'bg-amber-50', text: 'text-amber-700' },
-  { emoji: '🟠', range: '0.30 - 0.50', bg: 'bg-orange-50', text: 'text-orange-700' },
-  { emoji: '🔴', range: '< 0.30', bg: 'bg-rose-50', text: 'text-rose-700' },
-]
+// Le 5 zone DFA Alpha1 della landing vengono da DFA_ZONES (sport-format.ts, stesse
+// soglie e stessi colori della dashboard e dell'app); titoli e testi in
+// sportLanding.dfa.zones, nello stesso ordine (Z1 Recupero ... Z5 Massimale).
+const ZONE_EMOJI: Record<DfaZoneKey, string> = {
+  recovery: '🔵',
+  aerobic: '🟢',
+  transition: '🟡',
+  anaerobic: '🟠',
+  maximal: '🔴',
+}
+function zoneRangeLabel(z: DfaZone, locale: string): string {
+  const f = (v: number) => num(v, 2, locale)
+  if (!Number.isFinite(z.max)) return `> ${f(z.min)}`
+  if (z.min === 0) return `< ${f(z.max)}`
+  return `${f(z.min)} - ${f(z.max)}`
+}
+// Barra a bande con i colori delle zone, nell'ordine di DFA_ZONES
+const ZONE_GRADIENT = `linear-gradient(90deg, ${DFA_ZONES.map((z, i) => {
+  const from = (i * 100) / DFA_ZONES.length
+  const to = ((i + 1) * 100) / DFA_ZONES.length
+  return `${z.color} ${from}%, ${z.color} ${to}%`
+}).join(', ')})`
 const LIVE_ICONS = ['❤️', '📉', '🎯', '🏷️', '⚡']
 const POST_ICONS = ['💪', '🔋', '😊', '🩹', '📝']
 const BAND_COLORS = ['bg-emerald-500', 'bg-amber-500', 'bg-rose-500']
@@ -81,7 +97,12 @@ function SportContent() {
 
   const pricePro = formatEur(PRICE_PRO, locale)
   const priceBase = formatEur(PRICE_BASE, locale)
-  const zones = (t.raw('dfa.zones') as TitledItem[]).map((z, i) => ({ ...z, ...ZONE_VISUALS[i] }))
+  const zones = (t.raw('dfa.zones') as TitledItem[]).map((z, i) => ({
+    ...z,
+    zone: DFA_ZONES[i],
+    emoji: ZONE_EMOJI[DFA_ZONES[i].key],
+    range: zoneRangeLabel(DFA_ZONES[i], locale),
+  }))
   const liveFeatures = (t.raw('live.items') as string[]).map((text, i) => ({ text, icon: LIVE_ICONS[i] }))
   const postQuestions = (t.raw('post.items') as string[]).map((text, i) => ({ text, icon: POST_ICONS[i] }))
   const bands = (t.raw('dashboard.bands') as TitledItem[]).map((b, i) => ({ ...b, color: BAND_COLORS[i] }))
@@ -195,18 +216,15 @@ function SportContent() {
           <div className="mt-10 rounded-2xl overflow-hidden border border-gray-200">
             <div
               className="h-3 w-full"
-              style={{
-                background:
-                  'linear-gradient(90deg, #10B981 0%, #10B981 25%, #F59E0B 25%, #F59E0B 50%, #F97316 50%, #F97316 75%, #EF4444 75%, #EF4444 100%)',
-              }}
+              style={{ background: ZONE_GRADIENT }}
               aria-hidden="true"
             />
-            <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+            <div className="grid grid-cols-1 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-gray-100">
               {zones.map((z) => (
-                <div key={z.title} className={`p-5 ${z.bg}`}>
+                <div key={z.title} className="p-5" style={{ backgroundColor: z.zone.bg }}>
                   <div className="flex items-center gap-2">
                     <span className="text-xl" aria-hidden="true">{z.emoji}</span>
-                    <span className={`font-mono text-[13px] font-semibold ${z.text}`}>{z.range}</span>
+                    <span className="font-mono text-[13px] font-semibold" style={{ color: z.zone.color }}>{z.range}</span>
                   </div>
                   <h3 className="mt-2 font-semibold text-anthracite text-[15px] leading-tight">{z.title}</h3>
                   <p className="mt-1.5 text-[13.5px] text-anthracite-light leading-relaxed">{z.body}</p>

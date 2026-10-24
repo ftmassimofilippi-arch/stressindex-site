@@ -1,18 +1,14 @@
+import { scoreZoneColor, type GaugeColorScheme } from '@/lib/gauge-zones'
+
 type Props = {
   value?: number | null // 0–100
-  inverted?: boolean // se true: 100 = peggio
+  /** Scala di colore dello score (fasce e colori di gauge-zones). Per lo score
+   *  composito si passa `COMPOSITE_SCHEME` (scala positiva 25/45/65/85). */
+  scheme?: GaugeColorScheme
   showValue?: boolean
 }
 
-function colorFor(score: number, inverted = false): string {
-  const v = inverted ? 100 - score : score
-  if (v >= 70) return 'bg-emerald-500'
-  if (v >= 50) return 'bg-teal'
-  if (v >= 30) return 'bg-amber-500'
-  return 'bg-red-500'
-}
-
-export function ScoreBar({ value, inverted, showValue = true }: Props) {
+export function ScoreBar({ value, scheme = 'recovery', showValue = true }: Props) {
   const v = value == null ? 0 : Math.max(0, Math.min(100, value))
   const hasValue = value != null
   return (
@@ -20,8 +16,8 @@ export function ScoreBar({ value, inverted, showValue = true }: Props) {
       <div className="flex-1 h-2 bg-surface-border/60 rounded-full overflow-hidden">
         {hasValue && (
           <div
-            className={`h-full rounded-full ${colorFor(v, inverted)} transition-all duration-300`}
-            style={{ width: `${v}%` }}
+            className="h-full rounded-full transition-all duration-300"
+            style={{ width: `${v}%`, backgroundColor: scoreZoneColor(scheme, v) }}
           />
         )}
       </div>

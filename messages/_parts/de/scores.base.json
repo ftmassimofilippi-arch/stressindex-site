@@ -45,15 +45,6 @@
       "excellent": "Ausgezeichnet"
     }
   },
-  "range": {
-    "low": "Niedrig",
-    "belowAverage": "Unter dem Durchschnitt",
-    "normal": "Im Normbereich",
-    "good": "Gut",
-    "excellent": "Ausgezeichnet",
-    "outOfRange": "Außerhalb des Normbereichs",
-    "reference": "Referenzbereich"
-  },
   "outOf100": "{n} von 100",
   "disclaimer": "Allgemeine Wellness-Indikatoren. Sie ersetzen nicht den Rat eines Arztes."
 }

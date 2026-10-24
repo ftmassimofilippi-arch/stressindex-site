@@ -9,6 +9,7 @@ import { selectWithMissingColumnFallback } from './safe-select'
 import { dataLoadError, reportDataError } from './data-error'
 import { trendMensileDaGiorni, type TrendMensile } from './home-metrics'
 import { isReferenceMeasurement } from './reference-trend.ts'
+import { CRON_ALERT_DEFAULTS } from './alert-rules'
 import {
   conIstanteSessione,
   giornoItaFa,
@@ -890,7 +891,8 @@ export async function clientsToContact(): Promise<Array<{ client: Client; settin
     const cs = settingsMap.get(c.id)
     const expected = cs?.expected_frequency_per_week ?? 0
     if (expected > 0) {
-      const tolerance = (7 / expected) * 1.5
+      // Stesso fattore del cron (`generate_missed_measurement_alerts`, sito-050).
+      const tolerance = (7 / expected) * CRON_ALERT_DEFAULTS.missedMeasurementFactor
       if (days >= tolerance) out.push({ client: c, settings: cs ?? null, daysSinceLast: days })
     } else if (days >= 14) {
       out.push({ client: c, settings: cs ?? null, daysSinceLast: days })

@@ -69,7 +69,7 @@
           "type": "ul",
           "items": [
             "Check that the strap was properly positioned and wet.",
-            "Check the artifact rate: if it is above 5%, the measurement may not be reliable.",
+            "Check the artifact rate: below 5% the measurement is fully valid; between 5 and 15% it is usable, but read the non-linear parameters with caution; above 15% repeat the measurement.",
             "Did the client move or talk during the measurement? Movement creates artifacts."
           ]
         }
@@ -321,27 +321,48 @@
             {
               "emoji": "🔵",
               "title": "Balance (0-100)",
-              "desc": "Balance between sympathetic and parasympathetic. It is not 'higher = better': the optimal value is in the middle zone. Being too unbalanced in either direction is a problem.",
-              "color": "blue"
+              "desc": "Balance between sympathetic and parasympathetic. The score is high when the two branches are in balance and drops when one of them prevails, in either direction.",
+              "color": "blue",
+              "ranges": [
+                { "range": "0-25", "label": "Strong imbalance" },
+                { "range": "25-45", "label": "Moderate imbalance" },
+                { "range": "45-65", "label": "Sufficient" },
+                { "range": "65-85", "label": "Good" },
+                { "range": "85-100", "label": "Optimal" }
+              ]
             },
             {
               "emoji": "🟠",
               "title": "Energy (0-100)",
               "desc": "Overall energy resources of the nervous system. Based on the total power of the HRV spectrum.",
-              "color": "orange"
+              "color": "orange",
+              "ranges": [
+                { "range": "0-25", "label": "Depleted" },
+                { "range": "25-45", "label": "Low" },
+                { "range": "45-65", "label": "Moderate" },
+                { "range": "65-85", "label": "Good" },
+                { "range": "85-100", "label": "Full" }
+              ]
             },
             {
               "emoji": "🟣",
               "title": "Adaptation (0-100)",
               "desc": "Recovery and adaptation capacity of the autonomic nervous system. The higher it is, the better the body absorbs the day's loads and the faster it returns to balance.",
-              "color": "purple"
+              "color": "purple",
+              "ranges": [
+                { "range": "0-25", "label": "Fragile" },
+                { "range": "25-45", "label": "To improve" },
+                { "range": "45-65", "label": "Reduced" },
+                { "range": "65-85", "label": "Good" },
+                { "range": "85-100", "label": "Excellent" }
+              ]
             }
           ]
         },
         { "type": "h3", "text": "Composite Stress Index" },
         { "type": "p", "text": "A single 0-100 value that summarizes Stress, Recovery, Balance and Energy. You see it in the gauge at the top of the results. It is the number to track over time, especially when you compare several sessions of the same client." },
         { "type": "h3", "text": "The advanced parameters" },
-        { "type": "p", "text": "Below the scores you find the details by domain (Time Domain, Frequency Domain, Non-linear, Geometric). Every parameter has a traffic light (green, yellow, red) based on reference ranges for the client's age and sex." },
+        { "type": "p", "text": "Below the scores you find the details by domain (Time Domain, Frequency Domain, Non-linear, Geometric). Every parameter has a traffic light (green, yellow, red) based on the reference ranges of the Master HRV manual (healthy adult at rest, measured with an ECG chest strap). For RMSSD and SDNN, if the client's profile includes age and sex, the range is the one for their group (Nunan 2010, Voss 2015)." },
         { "type": "p", "text": "You do not need to know them all to use the app: the scores are enough in daily practice. The advanced parameters are there when you want to go deeper into a specific case or compare with the literature." }
       ]
     },
@@ -371,7 +392,7 @@
           "type": "dl",
           "items": [
             { "term": "Adding a client", "desc": "Tap + in the client list and fill in the profile (first name, last name, date of birth, sex, smoker, athlete, activity level)." },
-            { "term": "Why the profile matters", "desc": "Age and sex are needed to normalize the parameters. Without this data the green/yellow/red traffic lights cannot be calculated correctly, so always fill it in, even when you are in a hurry." },
+            { "term": "Why the profile matters", "desc": "Age and sex are needed for the scores and for the RMSSD and SDNN ranges by age and sex group. Without this data the app uses the generic ranges of the manual, so always fill it in, even when you are in a hurry." },
             { "term": "History", "desc": "Every measurement is saved and linked to the client. You can review any past session at any time." },
             { "term": "Notes", "desc": "You can add free notes to every client. Use them to record context, relevant events and goals." }
           ]
@@ -447,14 +468,16 @@
             ["Adaptation", "recovery and adaptation capacity"]
           ]
         },
-        { "type": "h3", "text": "How to interpret" },
+        { "type": "h3", "text": "How to interpret the Recovery score" },
+        { "type": "p", "text": "In the morning the most useful score to follow is Recovery. The bands below apply to this score only: for Stress and the other scores see the section Reading the results." },
         {
           "type": "ul",
           "items": [
-            "**60-85**: optimal zone.",
-            "**40-60**: normal values, watch your habits.",
-            "**Below 40**: possible stress, poor sleep, illness.",
-            "**Below 25**: possible overtraining or exhaustion."
+            "**85-100**: optimal.",
+            "**65-85**: good.",
+            "**45-65**: moderate, watch your habits.",
+            "**25-45**: poor, possible stress, poor sleep, feeling unwell.",
+            "**0-25**: insufficient, possible overtraining or exhaustion."
           ]
         },
         { "type": "callout", "text": "A single low value is no cause for alarm. What matters is the trend." },
@@ -547,14 +570,15 @@
             { "term": "After", "desc": "Finish, fill in the questionnaire: RPE 1-10, energy, aches, mood." }
           ]
         },
-        { "type": "h3", "text": "The 4 metabolic zones" },
+        { "type": "h3", "text": "The 5 metabolic zones (DFA alpha1)" },
         {
           "type": "zoneCards",
           "items": [
-            { "emoji": "🟢", "title": "Green: aerobic", "desc": "Very sustainable, long endurance.", "color": "green" },
-            { "emoji": "🟡", "title": "Yellow: transition", "desc": "Medium, between the aerobic and anaerobic thresholds.", "color": "yellow" },
-            { "emoji": "🟠", "title": "Orange: anaerobic", "desc": "High, sustainable only for limited periods.", "color": "orange" },
-            { "emoji": "🔴", "title": "Red: maximal", "desc": "Extreme, a few minutes.", "color": "red" }
+            { "emoji": "🔵", "title": "Blue: recovery (alpha1 > 1.0)", "desc": "Active recovery, very low intensity.", "color": "blue" },
+            { "emoji": "🟢", "title": "Green: aerobic (0.75-1.0)", "desc": "Very sustainable, long endurance.", "color": "green" },
+            { "emoji": "🟡", "title": "Yellow: transition (0.50-0.75)", "desc": "Medium, between the aerobic and anaerobic thresholds.", "color": "yellow" },
+            { "emoji": "🟠", "title": "Orange: anaerobic (0.30-0.50)", "desc": "High, sustainable only for limited periods.", "color": "orange" },
+            { "emoji": "🔴", "title": "Red: maximal (< 0.30)", "desc": "Extreme, a few minutes.", "color": "red" }
           ]
         },
         { "type": "callout", "text": "Seeing in real time which zone you are working in lets you dose your training." },

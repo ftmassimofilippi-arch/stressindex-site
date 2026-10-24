@@ -26,7 +26,8 @@
     "titleEm": "Ohne Labor.",
     "description": "Der einzige Parameter, der Ihnen in Echtzeit sagt, in welcher metabolischen Zone sich Ihr Sportler befindet. Ohne Labortest. Ohne Spiroergometrie. Nur ein Brustgurt und das Telefon.",
     "zones": [
-      { "title": "Rein aerobe Zone", "body": "Aktive Erholung, langer Grundlagenlauf, Aufbau der aeroben Basis." },
+      { "title": "Erholung", "body": "Aktive Erholung, sehr niedrige Intensität, Nervensystem im Erholungsmodus." },
+      { "title": "Rein aerobe Zone", "body": "Langer Grundlagenlauf, Aufbau der aeroben Basis." },
       { "title": "Übergang (VT1 überschritten)", "body": "Aerobe Schwelle überschritten. Moderate, tragbare Belastung." },
       { "title": "Anaerobe Zone (VT2 überschritten)", "body": "Anaerobe Schwelle überschritten. Intensive Belastung, begrenzte Dauer." },
       { "title": "Maximale Belastung", "body": "Höchste Intensität. Nur wenige Minuten durchhaltbar." }
@@ -41,7 +42,7 @@
     "items": [
       "HF live mit laufender Grafik",
       "Rollierende RMSSD zur Überwachung der Erholung",
-      "DFA Alpha1 mit den 4 farbigen Zonen",
+      "DFA Alpha1 mit den 5 farbigen Zonen",
       "Tags während der Aktivität (Sprintstart, Tempowechsel, Pause, Ende des Aufwärmens)",
       "TRIMP am Ende der Sitzung automatisch berechnet"
     ],
@@ -94,7 +95,7 @@
     "desktopOnly": "Nur Desktop",
     "rows": {
       "dfa": { "feature": "DFA Alpha1 in Echtzeit", "us": "Mobil" },
-      "zones": { "feature": "Metabolische Zonen live", "us": "4 Zonen" },
+      "zones": { "feature": "Metabolische Zonen live", "us": "5 Zonen" },
       "pain": { "feature": "Muskelschmerz-Karte", "us": "12 Zonen" },
       "pdf": { "feature": "Sport-PDF-Bericht", "kubios": "Desktop, {price}/Jahr", "us": "Inklusive" },
       "gdpr": { "feature": "EU-DSGVO, Server in Europa" },
@@ -108,7 +109,7 @@
     "description": "Das Sport-Modul ist bereits im Einsatz. Das finden Sie heute in der App und im Web-Dashboard, und an diesen zwei Dingen arbeiten wir gerade.",
     "haveTitle": "Heute verfügbar",
     "have": [
-      "DFA Alpha1 in Echtzeit mit den 4 Zonen",
+      "DFA Alpha1 in Echtzeit mit den 5 Zonen",
       "TRIMP, ACWR und CTL/ATL/TSB mit automatischen Alerts",
       "Schwellentest VT1/VT2",
       "Team Live für mehrere Sportler",

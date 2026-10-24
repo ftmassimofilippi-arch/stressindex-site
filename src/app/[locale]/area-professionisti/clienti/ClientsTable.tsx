@@ -145,7 +145,7 @@ export function ClientsTable({ clients, professionistaId }: Props) {
       header: tScores('names.stress'),
       accessor: (c) => c.lastMeasurement?.score_stress ?? -1,
       sortable: true,
-      render: (c) => <ScoreBar value={c.lastMeasurement?.score_stress} inverted />,
+      render: (c) => <ScoreBar value={c.lastMeasurement?.score_stress} scheme="stress" />,
     },
     {
       key: 'alerts',

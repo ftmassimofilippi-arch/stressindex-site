@@ -6,6 +6,7 @@ import { DateRangePicker, defaultRange, type DateRange } from '@/components/dash
 import { AdvancedTrendChart, type TrendAnnotation } from '@/components/dashboard/AdvancedTrendChart'
 import { formatMeasuredAt, intervalloGiorniIta, intlTag, measuredHour, measuredInstant, measuredWeekday, num } from '@/lib/format'
 import type { MeasurementAnalytics } from '@/lib/types'
+import { scoreZoneColor } from '@/lib/gauge-zones'
 
 // Media, minimo, massimo e DS del periodo (niente mediana: tolta il 17/10).
 function stats(values: number[]) {
@@ -185,13 +186,10 @@ function HourlyHeatmap({ measurements }: { measurements: MeasurementAnalytics[] 
   }
   const days = weekdayShortNames(locale)
 
+  // Colore della cella = fascia dello score Stress (30/50/70/85) di gauge-zones.
   function colorFor(avg: number | null) {
     if (avg == null) return '#F1F4F7'
-    if (avg >= 80) return '#EF4444'
-    if (avg >= 60) return '#F59E0B'
-    if (avg >= 40) return '#FACC15'
-    if (avg >= 20) return '#86EFAC'
-    return '#10B981'
+    return scoreZoneColor('stress', avg)
   }
 
   return (

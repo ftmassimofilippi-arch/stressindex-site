@@ -11,6 +11,8 @@ import type { Locale } from '@/i18n/routing'
 import { intlTag, measuredDayKey, measuredInstant, num, toNum } from './format'
 import { normalizeTestType } from './measurement-type'
 import { pdfText as tx } from './pdf-text'
+import { scoreZoneColor, type GaugeColorScheme } from './gauge-zones'
+import { rangeStatus, referenceRange, type RangeStatus } from './hrv-reference-ranges'
 import type { Client, MeasurementWithSession, ProfessionalProfile } from './types'
 
 const COLORS = {
@@ -232,46 +234,22 @@ function fmtRangeBound(v: number, locale: Locale): string {
   return new Intl.NumberFormat(intlTag(locale), { maximumFractionDigits: 2 }).format(v)
 }
 
-function scoreBarColor(value: number, inverted = false): string {
-  const v = inverted ? 100 - value : value
-  if (v >= 70) return COLORS.emerald
-  if (v >= 50) return COLORS.teal
-  if (v >= 30) return COLORS.amber
-  return COLORS.red
+// Colore della barra di uno score: fascia di gauge-zones (Appendice A).
+function scoreBarColor(value: number, scheme: GaugeColorScheme): string {
+  return scoreZoneColor(scheme, value)
 }
 
-// Semaforo basato su intervalli di riferimento (verde dentro, giallo al limite, rosso fuori).
-// Se range non disponibile → grigio.
-function statusColor(v: number | null | undefined, range?: [number, number] | null): string {
-  if (v == null || !range) return COLORS.border
-  const [lo, hi] = range
-  if (v >= lo && v <= hi) return COLORS.emerald
-  const span = hi - lo
-  const tolerance = span * 0.2
-  if (v >= lo - tolerance && v <= hi + tolerance) return COLORS.amber
-  return COLORS.red
+// Semaforo basato sui range di riferimento di hrv-reference-ranges (Appendice
+// A del manuale: verde dentro, giallo al limite, rosso fuori). Parametro
+// senza range o senza semaforo → grigio.
+const STATUS_COLORS: Record<RangeStatus, string> = {
+  in: COLORS.emerald,
+  edge: COLORS.amber,
+  out: COLORS.red,
+  none: COLORS.border,
 }
-
-// Range di riferimento indicativi (adulto sano, 5-10 min, supino/seduto).
-// Fonti: Task Force ESC/NASPE 1996 e range HRV di uso comune.
-const NORMATIVE_RANGES: Record<string, [number, number]> = {
-  rmssd: [20, 80],
-  sdnn: [30, 100],
-  mean_hr: [55, 85],
-  pnn50: [3, 40],
-  pnn20: [15, 70],
-  cv: [3, 10],
-  lf_hf_ratio: [0.5, 2.5],
-  dfa_alpha1: [0.85, 1.25],
-  dfa_alpha2: [0.6, 1.0],
-  sd1: [15, 60],
-  sd2: [40, 130],
-  sd1_sd2_ratio: [0.2, 0.6],
-  sample_entropy: [1.0, 2.5],
-  approximate_entropy: [0.8, 2.2],
-  triangular_index: [15, 50],
-  tinn: [100, 350],
-  stress_index_baevsky: [30, 150],
+function statusColor(v: number | null | undefined, rangeKey?: string): string {
+  return STATUS_COLORS[rangeKey ? rangeStatus(v, rangeKey) : 'none']
 }
 
 type FieldDef = {
@@ -283,7 +261,8 @@ type FieldDef = {
   rangeKey?: string
 }
 
-// Chiave in `pdf.measurement.groups` + campi.
+// Chiave in `pdf.measurement.groups` + campi. `rangeKey` è la chiave in
+// PARAM_REFERENCE (hrv-reference.ts): range e semaforo vengono da lì.
 const GROUPS: Array<{ titleKey: string; fields: FieldDef[] }> = [
   {
     titleKey: 'timeDomain',
@@ -295,19 +274,19 @@ const GROUPS: Array<{ titleKey: string; fields: FieldDef[] }> = [
       { key: 'pnn50', labelKey: 'pnn50', unit: '%', format: 'pct', rangeKey: 'pnn50' },
       { key: 'pnn20', labelKey: 'pnn20', unit: '%', format: 'pct', rangeKey: 'pnn20' },
       { key: 'cv', labelKey: 'cv', unit: '%', format: 'pct', rangeKey: 'cv' },
-      { key: 'rmssd_sdnn_ratio', labelKey: 'rmssdSdnn', format: 'num2' },
+      { key: 'rmssd_sdnn_ratio', labelKey: 'rmssdSdnn', format: 'num2', rangeKey: 'rmssd_sdnn_ratio' },
     ],
   },
   {
     titleKey: 'frequencyDomain',
     fields: [
-      { key: 'lf_power', labelKey: 'lfPower', unit: 'ms²', format: 'power' },
-      { key: 'hf_power', labelKey: 'hfPower', unit: 'ms²', format: 'power' },
-      { key: 'vlf_power', labelKey: 'vlfPower', unit: 'ms²', format: 'power' },
-      { key: 'total_power', labelKey: 'totalPower', unit: 'ms²', format: 'power' },
+      { key: 'lf_power', labelKey: 'lfPower', unit: 'ms²', format: 'power', rangeKey: 'lf_power' },
+      { key: 'hf_power', labelKey: 'hfPower', unit: 'ms²', format: 'power', rangeKey: 'hf_power' },
+      { key: 'vlf_power', labelKey: 'vlfPower', unit: 'ms²', format: 'power', rangeKey: 'vlf_power' },
+      { key: 'total_power', labelKey: 'totalPower', unit: 'ms²', format: 'power', rangeKey: 'total_power' },
       { key: 'lf_hf_ratio', labelKey: 'lfHf', format: 'num2', rangeKey: 'lf_hf_ratio' },
-      { key: 'lf_nu', labelKey: 'lfNorm', unit: 'n.u.', format: 'num1' },
-      { key: 'hf_nu', labelKey: 'hfNorm', unit: 'n.u.', format: 'num1' },
+      { key: 'lf_nu', labelKey: 'lfNorm', unit: 'n.u.', format: 'num1', rangeKey: 'lf_nu' },
+      { key: 'hf_nu', labelKey: 'hfNorm', unit: 'n.u.', format: 'num1', rangeKey: 'hf_nu' },
     ],
   },
   {
@@ -319,6 +298,7 @@ const GROUPS: Array<{ titleKey: string; fields: FieldDef[] }> = [
       { key: 'sd2', labelKey: 'sd2', unit: 'ms', format: 'num1', rangeKey: 'sd2' },
       { key: 'sd1_sd2_ratio', labelKey: 'sd1Sd2', format: 'num2', rangeKey: 'sd1_sd2_ratio' },
       { key: 'sample_entropy', labelKey: 'sampleEntropy', format: 'num2', rangeKey: 'sample_entropy' },
+      { key: 'approximate_entropy', labelKey: 'approximateEntropy', format: 'num2', rangeKey: 'approximate_entropy' },
     ],
   },
   {
@@ -349,16 +329,16 @@ function ScoreBar({
   value,
   color,
   outOf100,
-  inverted = false,
+  scheme,
 }: {
   label: string
   value: number | null
   color: string
   outOf100: string
-  inverted?: boolean
+  scheme: GaugeColorScheme
 }) {
   const v = value == null ? 0 : Math.max(0, Math.min(100, value))
-  const barColor = value == null ? COLORS.border : scoreBarColor(v, inverted)
+  const barColor = value == null ? COLORS.border : scoreBarColor(v, scheme)
   return (
     <View style={styles.scoreRow}>
       <View style={styles.scoreHeader}>
@@ -392,8 +372,8 @@ function ParamRow({
   t: Tr
   locale: Locale
 }) {
-  const range = field.rangeKey ? NORMATIVE_RANGES[field.rangeKey] : null
-  const status = statusColor(value ?? null, range ?? null)
+  const range = field.rangeKey ? referenceRange(field.rangeKey) : null
+  const status = statusColor(value ?? null, field.rangeKey)
   const rangeLabel = range ? `${fmtRangeBound(range[0], locale)}–${fmtRangeBound(range[1], locale)}` : ''
   return (
     <View style={styles.paramRow}>
@@ -523,11 +503,11 @@ export function MeasurementPdfDocument({
           value={measurement.score_stress}
           color={SCORE_COLORS.stress}
           outOf100={outOf100}
-          inverted
+          scheme="stress"
         />
-        <ScoreBar label={tScores('names.recovery')} value={measurement.score_recupero} color={SCORE_COLORS.recovery} outOf100={outOf100} />
-        <ScoreBar label={tScores('names.balance')} value={measurement.score_equilibrio} color={SCORE_COLORS.balance} outOf100={outOf100} />
-        <ScoreBar label={tScores('names.energy')} value={measurement.score_energia} color={SCORE_COLORS.energy} outOf100={outOf100} />
+        <ScoreBar label={tScores('names.recovery')} value={measurement.score_recupero} color={SCORE_COLORS.recovery} outOf100={outOf100} scheme="recovery" />
+        <ScoreBar label={tScores('names.balance')} value={measurement.score_equilibrio} color={SCORE_COLORS.balance} outOf100={outOf100} scheme="balance" />
+        <ScoreBar label={tScores('names.energy')} value={measurement.score_energia} color={SCORE_COLORS.energy} outOf100={outOf100} scheme="energy" />
         {/* Colonna DB: score_modulazione_infiammatoria. Etichetta mostrata:
             "Adattamento", identica all'app Flutter. */}
         <ScoreBar
@@ -535,6 +515,7 @@ export function MeasurementPdfDocument({
           value={measurement.score_modulazione_infiammatoria}
           color={SCORE_COLORS.adaptation}
           outOf100={outOf100}
+          scheme="adaptation"
         />
 
         <View style={styles.compositeBox}>

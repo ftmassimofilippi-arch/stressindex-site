@@ -26,7 +26,8 @@
     "titleEm": "No lab required.",
     "description": "The only parameter that tells you in real time which metabolic zone your athlete is in. No lab test. No CPET. Just a chest strap and a phone.",
     "zones": [
-      { "title": "Pure aerobic zone", "body": "Active recovery, long endurance, aerobic base building." },
+      { "title": "Recovery", "body": "Active recovery, very low intensity, nervous system in recovery mode." },
+      { "title": "Pure aerobic zone", "body": "Long endurance, aerobic base building." },
       { "title": "Transition (above VT1)", "body": "Aerobic threshold crossed. Sustainable moderate load." },
       { "title": "Anaerobic zone (above VT2)", "body": "Anaerobic threshold crossed. Intense effort, limited duration." },
       { "title": "Maximal load", "body": "Maximum intensity. Sustainable for a few minutes only." }
@@ -41,7 +42,7 @@
     "items": [
       "Live HR with scrolling chart",
       "Rolling RMSSD to monitor recovery",
-      "DFA Alpha1 with the 4 color zones",
+      "DFA Alpha1 with the 5 color zones",
       "Tags during the activity (sprint start, pace change, break, end of warm-up)",
       "TRIMP computed automatically at the end of the session"
     ],
@@ -94,7 +95,7 @@
     "desktopOnly": "Desktop only",
     "rows": {
       "dfa": { "feature": "Real-time DFA Alpha1", "us": "Mobile" },
-      "zones": { "feature": "Live metabolic zones", "us": "4 zones" },
+      "zones": { "feature": "Live metabolic zones", "us": "5 zones" },
       "pain": { "feature": "Muscle soreness map", "us": "12 zones" },
       "pdf": { "feature": "Sport PDF report", "kubios": "Desktop, {price}/year", "us": "Included" },
       "gdpr": { "feature": "EU GDPR, servers in Europe" },
@@ -108,7 +109,7 @@
     "description": "The Sport Module is already in use. Here is what you get today in the app and the web dashboard, and the two things we are working on.",
     "haveTitle": "Available today",
     "have": [
-      "Real-time DFA Alpha1 with the 4 zones",
+      "Real-time DFA Alpha1 with the 5 zones",
       "TRIMP, ACWR and CTL/ATL/TSB with automatic alerts",
       "VT1/VT2 threshold test",
       "Multi-athlete Team Live",

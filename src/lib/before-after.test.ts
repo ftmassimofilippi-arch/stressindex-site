@@ -2,7 +2,7 @@
 // Si esegue con `npm test` (node --test, senza dipendenze aggiuntive).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { deltaVerdict, normalizeTagKey, pairBeforeAfter, pairMorningCoherence, tagCounts, type PairableRow } from './before-after.ts'
+import { deltaVerdict, deltaVerdictPct, normalizeTagKey, pairBeforeAfter, pairMorningCoherence, tagCounts, type PairableRow } from './before-after.ts'
 
 function row(id: string, day: number, hour: number, tags: string[], clientId: string | null = 'c1', minute = 0): PairableRow {
   const d = Date.UTC(2026, 8, day, hour, minute)
@@ -82,11 +82,27 @@ test('tagCounts conta per chiave neutra, preset prima, una volta per riga', () =
   assert.deepEqual(Array.from(counts.entries()), [['morning', 1], ['pre_session', 1], ['alfa', 1], ['zeta', 1]])
 })
 
-test('deltaVerdict: per lo Stress il calo è un miglioramento', () => {
+// Soglia "stabile" = 10 punti sugli score e 10% sui parametri (decisione 9
+// del 23/10/2026, Appendice A del manuale), prima erano 3 punti e 2 unità.
+test('deltaVerdict: per lo Stress il calo è un miglioramento, stabile sotto 10 punti', () => {
   assert.equal(deltaVerdict(70, 55, false), 'improved')
   assert.equal(deltaVerdict(55, 70, false), 'declined')
   assert.equal(deltaVerdict(50, 52, true), 'stable')
+  assert.equal(deltaVerdict(50, 59, true), 'stable')
+  assert.equal(deltaVerdict(50, 60, true), 'improved')
+  assert.equal(deltaVerdict(60, 50, true), 'declined')
   assert.equal(deltaVerdict(null, 52, true), 'unknown')
+})
+
+test('deltaVerdictPct: parametri stabili sotto il 10% del valore di partenza', () => {
+  assert.equal(deltaVerdictPct(30, 32.9, true), 'stable')
+  assert.equal(deltaVerdictPct(30, 33, true), 'improved')
+  assert.equal(deltaVerdictPct(30, 27, true), 'declined')
+  assert.equal(deltaVerdictPct(70, 63, false), 'improved')
+  assert.equal(deltaVerdictPct(70, 64, false), 'stable')
+  assert.equal(deltaVerdictPct(0, 0, true), 'stable')
+  assert.equal(deltaVerdictPct(0, 1, true), 'improved')
+  assert.equal(deltaVerdictPct(null, 1, true), 'unknown')
 })
 
 // ── Mattino + coerenza (solo sito, non nel Dart) ─────────────────────────────

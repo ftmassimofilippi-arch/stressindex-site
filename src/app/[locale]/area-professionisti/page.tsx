@@ -231,8 +231,8 @@ export default async function DashboardHome() {
                           <span className="text-xs text-anthracite-lighter whitespace-nowrap">{formatMeasuredTime(m, locale)}</span>
                         </div>
                         <div className="mt-2 grid grid-cols-2 gap-3 text-xs">
-                          <div><div className="text-[10px] uppercase tracking-wide text-anthracite-lighter">{tScores('names.stress')}</div><ScoreBar value={m.score_stress} inverted /></div>
-                          <div><div className="text-[10px] uppercase tracking-wide text-anthracite-lighter">{tScores('names.recovery')}</div><ScoreBar value={m.score_recupero} /></div>
+                          <div><div className="text-[10px] uppercase tracking-wide text-anthracite-lighter">{tScores('names.stress')}</div><ScoreBar value={m.score_stress} scheme="stress" /></div>
+                          <div><div className="text-[10px] uppercase tracking-wide text-anthracite-lighter">{tScores('names.recovery')}</div><ScoreBar value={m.score_recupero} scheme="recovery" /></div>
                         </div>
                       </Link>
                     </li>
@@ -280,8 +280,8 @@ export default async function DashboardHome() {
                             )}
                           </LinkCell>
                           <LinkCell href={href} className="text-anthracite-lighter">{formatMeasuredTime(m, locale)}</LinkCell>
-                          <LinkCell href={href} className="w-40"><ScoreBar value={m.score_stress} inverted /></LinkCell>
-                          <LinkCell href={href} className="w-40"><ScoreBar value={m.score_recupero} /></LinkCell>
+                          <LinkCell href={href} className="w-40"><ScoreBar value={m.score_stress} scheme="stress" /></LinkCell>
+                          <LinkCell href={href} className="w-40"><ScoreBar value={m.score_recupero} scheme="recovery" /></LinkCell>
                           <LinkCell href={href} className="text-right">
                             <span className="text-teal-dark text-sm whitespace-nowrap">{tc('open')} →</span>
                           </LinkCell>

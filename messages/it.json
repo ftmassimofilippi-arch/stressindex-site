@@ -2206,8 +2206,8 @@
       "titleLead": "Tutto quello che ti serve per misurare lo stress."
     },
     "params": {
-      "calloutBody": "Ogni parametro ha un semaforo colorato basato sui range normativi per età e sesso del cliente (Nunan 2010, Voss 2015). Non devi ricordare i valori di riferimento, l’app lo fa per te.",
-      "calloutLead": "Range normativi automatici.",
+      "calloutBody": "Ogni parametro ha un semaforo colorato basato sui range di riferimento del manuale Master HRV (adulto sano a riposo, misurazione con fascia ECG). Per RMSSD e SDNN, se nel profilo del cliente ci sono età e sesso, il range è quello della sua fascia (Nunan 2010, Voss 2015). Non devi ricordare i valori di riferimento, l’app lo fa per te.",
+      "calloutLead": "Range di riferimento automatici.",
       "description": "Per il professionista che vuole andare in profondità, Stress Index calcola tutti i parametri validati dalla letteratura scientifica.",
       "eyebrow": "Parametri scientifici",
       "groups": {
@@ -2225,7 +2225,7 @@
       "items": [
         "Header personalizzato con nome, titolo e studio",
         "5 score proprietari con grafico a barre colorato",
-        "25+ parametri HRV con range normativi e semaforo",
+        "25+ parametri HRV con range di riferimento e semaforo",
         "Grafici HRV: Poincaré, ritmogramma RR, spettro PSD",
         "Disclaimer legale e generazione tracciata"
       ],
@@ -2405,7 +2405,7 @@
             "type": "ul",
             "items": [
               "Verifica che la fascia fosse ben posizionata e bagnata.",
-              "Controlla l'artifact rate, se è sopra il 5% la misurazione potrebbe non essere affidabile.",
+              "Controlla la percentuale di artefatti: sotto il 5% la misurazione è pienamente valida; tra il 5 e il 15% è utilizzabile, ma leggi con cautela i parametri non lineari; sopra il 15% ripeti la misurazione.",
               "Il cliente si è mosso o ha parlato durante la misurazione? Il movimento crea artefatti."
             ]
           }
@@ -2842,20 +2842,86 @@
               {
                 "emoji": "🔵",
                 "title": "Equilibrio (0-100)",
-                "desc": "Bilanciamento tra simpatico e parasimpatico. Non è 'più alto = meglio', il valore ottimale è nella zona centrale. Troppo sbilanciato in entrambe le direzioni è problematico.",
-                "color": "blue"
+                "desc": "Bilanciamento tra simpatico e parasimpatico. Lo score è alto quando i due rami sono in equilibrio e scende quando uno dei due prevale, in qualsiasi direzione.",
+                "color": "blue",
+                "ranges": [
+                  {
+                    "range": "0-25",
+                    "label": "Sbilanciamento forte"
+                  },
+                  {
+                    "range": "25-45",
+                    "label": "Sbilanciamento moderato"
+                  },
+                  {
+                    "range": "45-65",
+                    "label": "Sufficiente"
+                  },
+                  {
+                    "range": "65-85",
+                    "label": "Buono"
+                  },
+                  {
+                    "range": "85-100",
+                    "label": "Ottimale"
+                  }
+                ]
               },
               {
                 "emoji": "🟠",
                 "title": "Energia (0-100)",
                 "desc": "Risorse energetiche complessive del sistema nervoso. Basato sulla potenza totale dello spettro HRV.",
-                "color": "orange"
+                "color": "orange",
+                "ranges": [
+                  {
+                    "range": "0-25",
+                    "label": "Esaurita"
+                  },
+                  {
+                    "range": "25-45",
+                    "label": "Bassa"
+                  },
+                  {
+                    "range": "45-65",
+                    "label": "Moderata"
+                  },
+                  {
+                    "range": "65-85",
+                    "label": "Buona"
+                  },
+                  {
+                    "range": "85-100",
+                    "label": "Piena"
+                  }
+                ]
               },
               {
                 "emoji": "🟣",
                 "title": "Adattamento (0-100)",
                 "desc": "Capacità di recupero e adattamento del sistema nervoso autonomo. Più è alto, più il corpo assorbe bene i carichi della giornata e torna rapidamente all'equilibrio.",
-                "color": "purple"
+                "color": "purple",
+                "ranges": [
+                  {
+                    "range": "0-25",
+                    "label": "Fragile"
+                  },
+                  {
+                    "range": "25-45",
+                    "label": "Da migliorare"
+                  },
+                  {
+                    "range": "45-65",
+                    "label": "Ridotta"
+                  },
+                  {
+                    "range": "65-85",
+                    "label": "Buona"
+                  },
+                  {
+                    "range": "85-100",
+                    "label": "Eccellente"
+                  }
+                ]
               }
             ]
           },
@@ -2873,7 +2939,7 @@
           },
           {
             "type": "p",
-            "text": "Sotto gli score trovi i dettagli per dominio (Time Domain, Frequency Domain, Non-linear, Geometric). Ogni parametro ha un semaforo (verde, giallo, rosso) basato sui range di riferimento per età e sesso del cliente."
+            "text": "Sotto gli score trovi i dettagli per dominio (Time Domain, Frequency Domain, Non-linear, Geometric). Ogni parametro ha un semaforo (verde, giallo, rosso) basato sui range di riferimento del manuale Master HRV (adulto sano a riposo, misurazione con fascia ECG). Per RMSSD e SDNN, se nel profilo del cliente ci sono età e sesso, il range è quello della sua fascia (Nunan 2010, Voss 2015)."
           },
           {
             "type": "p",
@@ -2928,7 +2994,7 @@
               },
               {
                 "term": "Perché l'anagrafica è importante",
-                "desc": "Età e sesso servono per la normalizzazione dei parametri. Senza questi dati i semafori verde/giallo/rosso non possono essere calcolati correttamente, quindi compilala sempre, anche quando hai fretta."
+                "desc": "Età e sesso servono per gli score e per i range di RMSSD e SDNN per fascia di età e sesso. Senza questi dati l'app usa i range generici del manuale, quindi compilala sempre, anche quando hai fretta."
               },
               {
                 "term": "Storico",
@@ -3076,15 +3142,20 @@
           },
           {
             "type": "h3",
-            "text": "Come interpretare"
+            "text": "Come interpretare lo score Recupero"
+          },
+          {
+            "type": "p",
+            "text": "Al mattino lo score più utile da seguire è il Recupero. Le fasce qui sotto valgono solo per questo score: per lo Stress e gli altri score vedi la sezione Leggere i risultati."
           },
           {
             "type": "ul",
             "items": [
-              "**60-85**: zona ottimale.",
-              "**40-60**: valori normali, attenzione alle abitudini.",
-              "**Sotto 40**: possibile stress, sonno scarso, malattia.",
-              "**Sotto 25**: possibile sovrallenamento o esaurimento."
+              "**85-100**: ottimale.",
+              "**65-85**: buono.",
+              "**45-65**: moderato, attenzione alle abitudini.",
+              "**25-45**: scarso, possibile stress, sonno insufficiente, malessere.",
+              "**0-25**: insufficiente, possibile sovrallenamento o esaurimento."
             ]
           },
           {
@@ -3266,32 +3337,38 @@
           },
           {
             "type": "h3",
-            "text": "Le 4 zone metaboliche"
+            "text": "Le 5 zone metaboliche (DFA alpha1)"
           },
           {
             "type": "zoneCards",
             "items": [
               {
+                "emoji": "🔵",
+                "title": "Blu: recupero (alpha1 > 1,0)",
+                "desc": "Recupero attivo, intensità molto bassa.",
+                "color": "blue"
+              },
+              {
                 "emoji": "🟢",
-                "title": "Verde: aerobica",
+                "title": "Verde: aerobica (0,75-1,0)",
                 "desc": "Molto sostenibile, fondo lungo.",
                 "color": "green"
               },
               {
                 "emoji": "🟡",
-                "title": "Gialla: transizione",
+                "title": "Gialla: transizione (0,50-0,75)",
                 "desc": "Media, tra soglia aerobica e anaerobica.",
                 "color": "yellow"
               },
               {
                 "emoji": "🟠",
-                "title": "Arancione: anaerobica",
+                "title": "Arancione: anaerobica (0,30-0,50)",
                 "desc": "Alta, sostenibile solo per tempi limitati.",
                 "color": "orange"
               },
               {
                 "emoji": "🔴",
-                "title": "Rossa: massimale",
+                "title": "Rossa: massimale (< 0,30)",
                 "desc": "Estrema, pochi minuti.",
                 "color": "red"
               }
@@ -3952,7 +4029,7 @@
       "comparisonSubtitle": "supino vs in piedi",
       "comparisonTitle": "Confronto fasi",
       "description": "Sintetizza l'adattamento del sistema nervoso autonomo al passaggio dalla posizione supina a quella eretta.",
-      "note": "La variazione confronta la fase in piedi con quella supina, in valore assoluto e in percentuale. Nel passaggio ortostatico è atteso l'aumento della frequenza cardiaca (10–30 bpm), del rapporto LF/HF e dello Stress Index, e la riduzione della variabilità vagale (RMSSD 30–50%, HF, pNN50). Colore teal: variazione nella direzione attesa; ambra: direzione opposta; i parametri senza un'attesa precisa restano neutri.",
+      "note": "La variazione confronta la fase in piedi con quella supina, in valore assoluto e in percentuale. Nel passaggio ortostatico è atteso l'aumento della frequenza cardiaca (10–30 bpm), del rapporto LF/HF e dello Stress Index, e la riduzione della variabilità vagale (RMSSD 30–70%, HF, pNN50); un calo di RMSSD oltre il 75% è eccessivo. Colore teal: variazione nella direzione attesa; ambra: direzione opposta; i parametri senza un'attesa precisa restano neutri.",
       "phaseStanding": "Fase in piedi",
       "phaseSupine": "Fase supina",
       "poincare": "Diagramma di Poincaré",
@@ -4021,6 +4098,7 @@
         "poor": "Scarsa"
       },
       "reference": {
+        "indicative": "(orientativo)",
         "legend": "Intervalli di riferimento indicativi per adulto sano, registrazione di 5-10 minuti: verde dentro l'intervallo, giallo al limite, rosso fuori, grigio senza riferimento.",
         "legendPersonal": "Verde dentro l'intervallo, giallo al limite, rosso fuori, grigio senza riferimento. Dove indicato il range è per età e sesso (25°-75° percentile della fascia); per gli altri parametri è indicativo per adulto sano, registrazione di 5-10 minuti.",
         "status": {
@@ -4030,6 +4108,7 @@
           "out": "Fuori range"
         },
         "title": "Intervallo di riferimento indicativo: {from}–{to} (adulto sano, registrazione di 5-10 minuti)",
+        "titleIndicative": "Range orientativo {from}–{to}: nessun semaforo, il rapporto LF/HF si legge insieme agli altri parametri",
         "titlePersonal": "Range per età e sesso (25°-75° percentile della fascia): {from}–{to}"
       },
       "signalQuality": "Qualità segnale",
@@ -4866,6 +4945,7 @@
       "noNotes": "Nessuna nota associata a questa misurazione.",
       "notesTitle": "Note sulla misurazione",
       "params": {
+        "approximateEntropy": "Entropia approssimata (ApEn)",
         "baevsky": "Stress Index di Baevsky",
         "cv": "CV degli intervalli RR",
         "dfaAlpha1": "DFA α1",
@@ -5280,16 +5360,7 @@
       "stress": "Stress",
       "stressLong": "Indice di Stress"
     },
-    "outOf100": "{n} su 100",
-    "range": {
-      "belowAverage": "Sotto media",
-      "excellent": "Eccellente",
-      "good": "Buono",
-      "low": "Basso",
-      "normal": "Nella norma",
-      "outOfRange": "Fuori norma",
-      "reference": "Range di riferimento"
-    }
+    "outOf100": "{n} su 100"
   },
   "settings": {
     "account": {
@@ -5773,7 +5844,7 @@
         },
         "zones": {
           "feature": "Zone metaboliche live",
-          "us": "4 zone"
+          "us": "5 zone"
         }
       },
       "titleEm": "In una tabella.",
@@ -5822,8 +5893,12 @@
       "titleLead": "Le zone metaboliche.",
       "zones": [
         {
+          "title": "Recupero",
+          "body": "Recupero attivo, intensità molto bassa, sistema nervoso in modalità di recupero."
+        },
+        {
           "title": "Zona aerobica pura",
-          "body": "Recupero attivo, fondo lungo, sviluppo della base aerobica."
+          "body": "Fondo lungo, sviluppo della base aerobica."
         },
         {
           "title": "Transizione (VT1 superato)",
@@ -5866,7 +5941,7 @@
       "items": [
         "HR live con grafico scorrevole",
         "RMSSD rolling per monitorare il recupero",
-        "DFA Alpha1 con le 4 zone colorate",
+        "DFA Alpha1 con le 5 zone colorate",
         "Tag durante l’attività (inizio sprint, cambio ritmo, pausa, fine warm-up)",
         "TRIMP calcolato automaticamente a fine sessione"
       ],
@@ -5905,7 +5980,7 @@
       "description": "Il Modulo Sport è già in uso. Ecco cosa trovi oggi nell’app e nella dashboard web, e le due cose su cui stiamo lavorando.",
       "eyebrow": "Modulo Sport oggi",
       "have": [
-        "DFA Alpha1 in tempo reale con le 4 zone",
+        "DFA Alpha1 in tempo reale con le 5 zone",
         "TRIMP, ACWR e CTL/ATL/TSB con alert automatici",
         "Test soglie VT1/VT2",
         "Team Live multi-atleta",

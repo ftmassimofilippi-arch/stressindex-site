@@ -69,7 +69,7 @@
           "type": "ul",
           "items": [
             "Prüfen Sie, ob der Gurt richtig saß und angefeuchtet war.",
-            "Prüfen Sie die Artefaktrate: liegt sie über 5 %, ist die Messung möglicherweise nicht zuverlässig.",
+            "Prüfen Sie die Artefaktrate: unter 5 % ist die Messung voll gültig; zwischen 5 und 15 % ist sie verwendbar, die nichtlinearen Parameter lesen Sie aber mit Vorsicht; über 15 % wiederholen Sie die Messung.",
             "Hat sich der Klient während der Messung bewegt oder gesprochen? Bewegung erzeugt Artefakte."
           ]
         }
@@ -321,27 +321,48 @@
             {
               "emoji": "🔵",
               "title": "Gleichgewicht (0-100)",
-              "desc": "Verhältnis zwischen Sympathikus und Parasympathikus. Hier gilt nicht 'höher = besser': Der optimale Wert liegt im mittleren Bereich. Ein starkes Ungleichgewicht in beide Richtungen ist problematisch.",
-              "color": "blue"
+              "desc": "Verhältnis zwischen Sympathikus und Parasympathikus. Der Score ist hoch, wenn beide Zweige im Gleichgewicht sind, und sinkt, wenn einer von beiden überwiegt, in welche Richtung auch immer.",
+              "color": "blue",
+              "ranges": [
+                { "range": "0-25", "label": "Starkes Ungleichgewicht" },
+                { "range": "25-45", "label": "Mäßiges Ungleichgewicht" },
+                { "range": "45-65", "label": "Ausreichend" },
+                { "range": "65-85", "label": "Gut" },
+                { "range": "85-100", "label": "Optimal" }
+              ]
             },
             {
               "emoji": "🟠",
               "title": "Energie (0-100)",
               "desc": "Gesamte Energiereserven des Nervensystems. Basiert auf der Gesamtleistung des HRV-Spektrums.",
-              "color": "orange"
+              "color": "orange",
+              "ranges": [
+                { "range": "0-25", "label": "Erschöpft" },
+                { "range": "25-45", "label": "Niedrig" },
+                { "range": "45-65", "label": "Mäßig" },
+                { "range": "65-85", "label": "Gut" },
+                { "range": "85-100", "label": "Voll" }
+              ]
             },
             {
               "emoji": "🟣",
               "title": "Anpassung (0-100)",
               "desc": "Erholungs- und Anpassungsfähigkeit des autonomen Nervensystems. Je höher der Wert, desto besser verarbeitet der Körper die Belastungen des Tages und desto schneller kehrt er ins Gleichgewicht zurück.",
-              "color": "purple"
+              "color": "purple",
+              "ranges": [
+                { "range": "0-25", "label": "Fragil" },
+                { "range": "25-45", "label": "Zu verbessern" },
+                { "range": "45-65", "label": "Reduziert" },
+                { "range": "65-85", "label": "Gut" },
+                { "range": "85-100", "label": "Ausgezeichnet" }
+              ]
             }
           ]
         },
         { "type": "h3", "text": "Stress Index Gesamtwert" },
         { "type": "p", "text": "Ein einziger Wert von 0 bis 100, der Stress, Erholung, Gleichgewicht und Energie zusammenfasst. Sie sehen ihn in der Anzeige oben in den Ergebnissen. Er ist die Zahl, die Sie über die Zeit verfolgen sollten, vor allem wenn Sie mehrere Sitzungen desselben Klienten vergleichen." },
         { "type": "h3", "text": "Die erweiterten Parameter" },
-        { "type": "p", "text": "Unter den Scores finden Sie die Details nach Bereich (Time Domain, Frequency Domain, Non-linear, Geometric). Jeder Parameter hat eine Ampel (grün, gelb, rot) auf Basis der Referenzbereiche für Alter und Geschlecht des Klienten." },
+        { "type": "p", "text": "Unter den Scores finden Sie die Details nach Bereich (Time Domain, Frequency Domain, Non-linear, Geometric). Jeder Parameter hat eine Ampel (grün, gelb, rot) auf Basis der Referenzbereiche des Master-HRV-Handbuchs (gesunder Erwachsener in Ruhe, Messung mit EKG-Brustgurt). Für RMSSD und SDNN gilt, wenn im Profil des Klienten Alter und Geschlecht hinterlegt sind, der Bereich seiner Gruppe (Nunan 2010, Voss 2015)." },
         { "type": "p", "text": "Sie müssen nicht alle kennen, um die App zu nutzen: Im Alltag reichen die Scores. Die erweiterten Parameter brauchen Sie, wenn Sie einen bestimmten Fall vertiefen oder mit der Literatur vergleichen möchten." }
       ]
     },
@@ -371,7 +392,7 @@
           "type": "dl",
           "items": [
             { "term": "Einen Klienten anlegen", "desc": "Tippen Sie in der Klientenliste auf + und füllen Sie die Stammdaten aus (Vorname, Nachname, Geburtsdatum, Geschlecht, Raucher, Sportler, Aktivitätsniveau)." },
-            { "term": "Warum die Stammdaten wichtig sind", "desc": "Alter und Geschlecht werden für die Normalisierung der Parameter benötigt. Ohne diese Daten können die Ampeln grün/gelb/rot nicht korrekt berechnet werden. Füllen Sie sie also immer aus, auch wenn es schnell gehen muss." },
+            { "term": "Warum die Stammdaten wichtig sind", "desc": "Alter und Geschlecht werden für die Scores und für die RMSSD- und SDNN-Bereiche nach Alters- und Geschlechtsgruppe benötigt. Ohne diese Daten nutzt die App die allgemeinen Bereiche des Handbuchs. Füllen Sie sie also immer aus, auch wenn es schnell gehen muss." },
             { "term": "Verlauf", "desc": "Jede Messung wird gespeichert und dem Klienten zugeordnet. Sie können jede vergangene Sitzung jederzeit ansehen." },
             { "term": "Notizen", "desc": "Sie können zu jedem Klienten freie Notizen hinzufügen. Nutzen Sie sie für Kontext, relevante Ereignisse und Ziele." }
           ]
@@ -447,14 +468,16 @@
             ["Anpassung", "Erholungs- und Anpassungsfähigkeit"]
           ]
         },
-        { "type": "h3", "text": "Wie interpretieren" },
+        { "type": "h3", "text": "Wie Sie den Erholungs-Score interpretieren" },
+        { "type": "p", "text": "Am Morgen ist die Erholung der nützlichste Score. Die Bereiche unten gelten nur für diesen Score: für Stress und die anderen Scores siehe den Abschnitt Ergebnisse lesen." },
         {
           "type": "ul",
           "items": [
-            "**60-85**: optimaler Bereich.",
-            "**40-60**: normale Werte, achten Sie auf Ihre Gewohnheiten.",
-            "**Unter 40**: möglicher Stress, schlechter Schlaf, Krankheit.",
-            "**Unter 25**: mögliches Übertraining oder Erschöpfung."
+            "**85-100**: optimal.",
+            "**65-85**: gut.",
+            "**45-65**: mäßig, achten Sie auf Ihre Gewohnheiten.",
+            "**25-45**: schwach, möglicher Stress, schlechter Schlaf, Unwohlsein.",
+            "**0-25**: unzureichend, mögliches Übertraining oder Erschöpfung."
           ]
         },
         { "type": "callout", "text": "Ein einzelner niedriger Wert ist kein Grund zur Sorge. Entscheidend ist der Verlauf." },
@@ -547,14 +570,15 @@
             { "term": "Danach", "desc": "Beenden, Fragebogen ausfüllen: RPE 1-10, Energie, Beschwerden, Stimmung." }
           ]
         },
-        { "type": "h3", "text": "Die 4 Stoffwechselzonen" },
+        { "type": "h3", "text": "Die 5 Stoffwechselzonen (DFA Alpha1)" },
         {
           "type": "zoneCards",
           "items": [
-            { "emoji": "🟢", "title": "Grün: aerob", "desc": "Sehr gut durchhaltbar, langer Grundlagenbereich.", "color": "green" },
-            { "emoji": "🟡", "title": "Gelb: Übergang", "desc": "Mittel, zwischen aerober und anaerober Schwelle.", "color": "yellow" },
-            { "emoji": "🟠", "title": "Orange: anaerob", "desc": "Hoch, nur für begrenzte Zeit durchhaltbar.", "color": "orange" },
-            { "emoji": "🔴", "title": "Rot: maximal", "desc": "Extrem, wenige Minuten.", "color": "red" }
+            { "emoji": "🔵", "title": "Blau: Erholung (Alpha1 > 1,0)", "desc": "Aktive Erholung, sehr niedrige Intensität.", "color": "blue" },
+            { "emoji": "🟢", "title": "Grün: aerob (0,75-1,0)", "desc": "Sehr gut durchhaltbar, langer Grundlagenbereich.", "color": "green" },
+            { "emoji": "🟡", "title": "Gelb: Übergang (0,50-0,75)", "desc": "Mittel, zwischen aerober und anaerober Schwelle.", "color": "yellow" },
+            { "emoji": "🟠", "title": "Orange: anaerob (0,30-0,50)", "desc": "Hoch, nur für begrenzte Zeit durchhaltbar.", "color": "orange" },
+            { "emoji": "🔴", "title": "Rot: maximal (< 0,30)", "desc": "Extrem, wenige Minuten.", "color": "red" }
           ]
         },
         { "type": "callout", "text": "In Echtzeit zu sehen, in welcher Zone Sie arbeiten, erlaubt Ihnen, das Training zu dosieren." },

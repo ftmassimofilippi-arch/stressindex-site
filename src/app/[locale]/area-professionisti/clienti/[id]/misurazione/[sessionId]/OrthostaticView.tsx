@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl'
 import { num } from '@/lib/format'
+import { ORTHO } from '@/lib/hrv-reference'
 import type { OrthostaticData, OrthostaticPhaseMetrics } from '@/lib/types'
 import { PoincareScatter, Rhythmogram } from './HrvCharts'
 
@@ -13,8 +14,12 @@ import { PoincareScatter, Rhythmogram } from './HrvCharts'
 // la risposta è nella direzione attesa (teal), opposta (ambra) o neutra: un
 // aumento della frequenza cardiaca in piedi è normale, colorarlo di verde o di
 // rosso "per segno" raccontava il contrario. Stessa lettura della pagina
-// risultati dell'app (risposte fisiologiche normali: HR +10–30 bpm, RMSSD
-// -30–50%, rapporto LF/HF in aumento, Stress Index in aumento).
+// risultati dell'app (risposte fisiologiche attese, `ORTHO` di
+// hrv-reference.ts e decisione 10: HR +10-30 bpm, RMSSD -30-70%, eccessivo
+// oltre il 75%, rapporto LF/HF in aumento, Stress Index in aumento). La
+// direzione attesa di LF/HF resta qui anche se nella tabella parametri il
+// rapporto non ha più semaforo (decisione 12): nell'ortostatico il manuale
+// la prevede.
 // L'etichetta di ogni riga è in `measurement.orthostatic.rows.<key>`.
 type Row = { key: keyof OrthostaticPhaseMetrics; unit?: string; digits?: number; expected: -1 | 0 | 1 }
 
@@ -83,8 +88,8 @@ export function OrthostaticView({ data, print = false, width = 680 }: { data: Or
 
   const riLevel =
     ri == null ? null
-      : ri >= 70 ? { label: t('reactivityOptimal'), tone: 'text-emerald-700' }
-      : ri >= 40 ? { label: t('reactivityModerate'), tone: 'text-amber-700' }
+      : ri >= ORTHO.reactivity[1] ? { label: t('reactivityOptimal'), tone: 'text-emerald-700' }
+      : ri >= ORTHO.reactivity[0] ? { label: t('reactivityModerate'), tone: 'text-amber-700' }
       : { label: t('reactivityReduced'), tone: 'text-red-700' }
 
   return (

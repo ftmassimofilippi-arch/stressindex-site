@@ -11,6 +11,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  baselineComplete,
+  baselineDays,
   changeSummary,
   courseBaseline,
   dailyReferenceValues,
@@ -152,11 +154,15 @@ test('media mobile a 7 giorni: finestra di calendario, provvisoria sotto 3 valor
   assert.equal(diffDays('2026-10-02', '2026-10-10'), 8)
 })
 
-test('partenza del percorso: media dei primi 7 giorni di riferimento, fascia ± 0,5 DS campionaria', () => {
+// Decisione 18 del 23/10/2026: partenza = le prime 7 misurazioni valide su
+// almeno 4 giorni diversi (non più 7 giorni di calendario). Per Sara, una
+// mattina al giorno, i primi 7 giorni restano la partenza.
+test('partenza del percorso: media dei primi giorni con 7 misurazioni su almeno 4 giorni, fascia ± 0,5 DS campionaria', () => {
   const d = dailyReferenceValues(SARA, 'score_stress')
   const b = courseBaseline(d)!
   assert.ok(b)
   assert.equal(b.n, 7)
+  assert.equal(b.measurements, 7)
   assert.equal(b.provisional, false)
   assert.equal(b.firstDay, '2026-09-25')
   assert.equal(b.lastDay, '2026-10-01')
@@ -169,6 +175,35 @@ test('partenza del percorso: media dei primi 7 giorni di riferimento, fascia ± 
   assert.equal(da.firstDay, '2026-10-05')
   assert.equal(da.lastDay, '2026-10-13')
   assert.ok(vicino(da.mean, (39.7 + 42.6 + 43.1 + 32.8 + 38.9 + 34.5 + 47.8) / 7, 1e-9))
+})
+
+test('partenza: 7 misurazioni su 3 giorni restano provvisorie, su 4 giorni sono definitive; con più misurazioni al giorno bastano meno giorni', () => {
+  const g = (day: string, n: number, value = 40) => ({ day, value, n })
+  // 3 giorni con 3+3+1 = 7 misurazioni: manca il quarto giorno.
+  const treGiorni = [g('2026-10-01', 3), g('2026-10-02', 3), g('2026-10-03', 1)]
+  assert.equal(baselineComplete(treGiorni), false)
+  assert.equal(courseBaseline(treGiorni)!.provisional, true)
+  assert.equal(courseBaseline(treGiorni)!.measurements, 7)
+  // Con il quarto giorno la partenza è definitiva e si ferma lì.
+  const quattroGiorni = [...treGiorni, g('2026-10-04', 1), g('2026-10-05', 1), g('2026-10-06', 1)]
+  assert.equal(baselineDays(quattroGiorni).length, 4)
+  const b = courseBaseline(quattroGiorni)!
+  assert.equal(b.n, 4)
+  assert.equal(b.measurements, 8)
+  assert.equal(b.provisional, false)
+  assert.equal(b.lastDay, '2026-10-04')
+  // 4 giorni con una misurazione ciascuno: 4 misurazioni, ancora provvisoria.
+  const unaAlGiorno = ['01', '02', '03', '04'].map((d) => g(`2026-10-${d}`, 1))
+  assert.equal(baselineComplete(unaAlGiorno), false)
+  assert.equal(courseBaseline(unaAlGiorno)!.provisional, true)
+  // Sara, una mattina al giorno (due il 3/10): da data di inizio 1/10 bastano 6 giorni (1, 2, 3 con due, 4, 5, 6 = 7 misurazioni).
+  const d = dailyReferenceValues(SARA, 'score_stress')
+  const da = courseBaseline(d, '2026-10-01')!
+  assert.equal(da.firstDay, '2026-10-01')
+  assert.equal(da.lastDay, '2026-10-06')
+  assert.equal(da.n, 6)
+  assert.equal(da.measurements, 7)
+  assert.equal(da.provisional, false)
 })
 
 test('con 1 o 2 misurazioni: media mobile e partenza provvisorie, nessuna fascia; con 3-6 fascia provvisoria', () => {

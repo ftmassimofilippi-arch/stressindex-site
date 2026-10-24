@@ -73,6 +73,7 @@
       "sd2": "SD2 (Poincaré)",
       "sd1Sd2": "SD1/SD2",
       "sampleEntropy": "Entropia campionaria (SampEn)",
+      "approximateEntropy": "Entropia approssimata (ApEn)",
       "baevsky": "Stress Index di Baevsky",
       "triangularIndex": "Indice triangolare HRV",
       "tinn": "TINN"

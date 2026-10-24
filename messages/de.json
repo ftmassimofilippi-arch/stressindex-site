@@ -2206,7 +2206,7 @@
       "titleLead": "Alles, was Sie brauchen, um Stress zu messen."
     },
     "params": {
-      "calloutBody": "Jeder Parameter erhält eine farbige Ampel auf Basis der Referenzbereiche für Alter und Geschlecht des Klienten (Nunan 2010, Voss 2015). Sie müssen sich keine Referenzwerte merken, das übernimmt die App.",
+      "calloutBody": "Jeder Parameter erhält eine farbige Ampel auf Basis der Referenzbereiche des Master-HRV-Handbuchs (gesunder Erwachsener in Ruhe, Messung mit EKG-Brustgurt). Für RMSSD und SDNN gilt, wenn im Profil des Klienten Alter und Geschlecht hinterlegt sind, der Bereich seiner Gruppe (Nunan 2010, Voss 2015). Sie müssen sich keine Referenzwerte merken, das übernimmt die App.",
       "calloutLead": "Automatische Referenzbereiche.",
       "description": "Für Fachkräfte, die in die Tiefe gehen wollen, berechnet Stress Index alle in der wissenschaftlichen Literatur validierten Parameter.",
       "eyebrow": "Wissenschaftliche Parameter",
@@ -2405,7 +2405,7 @@
             "type": "ul",
             "items": [
               "Prüfen Sie, ob der Gurt richtig saß und angefeuchtet war.",
-              "Prüfen Sie die Artefaktrate: liegt sie über 5 %, ist die Messung möglicherweise nicht zuverlässig.",
+              "Prüfen Sie die Artefaktrate: unter 5 % ist die Messung voll gültig; zwischen 5 und 15 % ist sie verwendbar, die nichtlinearen Parameter lesen Sie aber mit Vorsicht; über 15 % wiederholen Sie die Messung.",
               "Hat sich der Klient während der Messung bewegt oder gesprochen? Bewegung erzeugt Artefakte."
             ]
           }
@@ -2842,20 +2842,86 @@
               {
                 "emoji": "🔵",
                 "title": "Gleichgewicht (0-100)",
-                "desc": "Verhältnis zwischen Sympathikus und Parasympathikus. Hier gilt nicht 'höher = besser': Der optimale Wert liegt im mittleren Bereich. Ein starkes Ungleichgewicht in beide Richtungen ist problematisch.",
-                "color": "blue"
+                "desc": "Verhältnis zwischen Sympathikus und Parasympathikus. Der Score ist hoch, wenn beide Zweige im Gleichgewicht sind, und sinkt, wenn einer von beiden überwiegt, in welche Richtung auch immer.",
+                "color": "blue",
+                "ranges": [
+                  {
+                    "range": "0-25",
+                    "label": "Starkes Ungleichgewicht"
+                  },
+                  {
+                    "range": "25-45",
+                    "label": "Mäßiges Ungleichgewicht"
+                  },
+                  {
+                    "range": "45-65",
+                    "label": "Ausreichend"
+                  },
+                  {
+                    "range": "65-85",
+                    "label": "Gut"
+                  },
+                  {
+                    "range": "85-100",
+                    "label": "Optimal"
+                  }
+                ]
               },
               {
                 "emoji": "🟠",
                 "title": "Energie (0-100)",
                 "desc": "Gesamte Energiereserven des Nervensystems. Basiert auf der Gesamtleistung des HRV-Spektrums.",
-                "color": "orange"
+                "color": "orange",
+                "ranges": [
+                  {
+                    "range": "0-25",
+                    "label": "Erschöpft"
+                  },
+                  {
+                    "range": "25-45",
+                    "label": "Niedrig"
+                  },
+                  {
+                    "range": "45-65",
+                    "label": "Mäßig"
+                  },
+                  {
+                    "range": "65-85",
+                    "label": "Gut"
+                  },
+                  {
+                    "range": "85-100",
+                    "label": "Voll"
+                  }
+                ]
               },
               {
                 "emoji": "🟣",
                 "title": "Anpassung (0-100)",
                 "desc": "Erholungs- und Anpassungsfähigkeit des autonomen Nervensystems. Je höher der Wert, desto besser verarbeitet der Körper die Belastungen des Tages und desto schneller kehrt er ins Gleichgewicht zurück.",
-                "color": "purple"
+                "color": "purple",
+                "ranges": [
+                  {
+                    "range": "0-25",
+                    "label": "Fragil"
+                  },
+                  {
+                    "range": "25-45",
+                    "label": "Zu verbessern"
+                  },
+                  {
+                    "range": "45-65",
+                    "label": "Reduziert"
+                  },
+                  {
+                    "range": "65-85",
+                    "label": "Gut"
+                  },
+                  {
+                    "range": "85-100",
+                    "label": "Ausgezeichnet"
+                  }
+                ]
               }
             ]
           },
@@ -2873,7 +2939,7 @@
           },
           {
             "type": "p",
-            "text": "Unter den Scores finden Sie die Details nach Bereich (Time Domain, Frequency Domain, Non-linear, Geometric). Jeder Parameter hat eine Ampel (grün, gelb, rot) auf Basis der Referenzbereiche für Alter und Geschlecht des Klienten."
+            "text": "Unter den Scores finden Sie die Details nach Bereich (Time Domain, Frequency Domain, Non-linear, Geometric). Jeder Parameter hat eine Ampel (grün, gelb, rot) auf Basis der Referenzbereiche des Master-HRV-Handbuchs (gesunder Erwachsener in Ruhe, Messung mit EKG-Brustgurt). Für RMSSD und SDNN gilt, wenn im Profil des Klienten Alter und Geschlecht hinterlegt sind, der Bereich seiner Gruppe (Nunan 2010, Voss 2015)."
           },
           {
             "type": "p",
@@ -2928,7 +2994,7 @@
               },
               {
                 "term": "Warum die Stammdaten wichtig sind",
-                "desc": "Alter und Geschlecht werden für die Normalisierung der Parameter benötigt. Ohne diese Daten können die Ampeln grün/gelb/rot nicht korrekt berechnet werden. Füllen Sie sie also immer aus, auch wenn es schnell gehen muss."
+                "desc": "Alter und Geschlecht werden für die Scores und für die RMSSD- und SDNN-Bereiche nach Alters- und Geschlechtsgruppe benötigt. Ohne diese Daten nutzt die App die allgemeinen Bereiche des Handbuchs. Füllen Sie sie also immer aus, auch wenn es schnell gehen muss."
               },
               {
                 "term": "Verlauf",
@@ -3076,15 +3142,20 @@
           },
           {
             "type": "h3",
-            "text": "Wie interpretieren"
+            "text": "Wie Sie den Erholungs-Score interpretieren"
+          },
+          {
+            "type": "p",
+            "text": "Am Morgen ist die Erholung der nützlichste Score. Die Bereiche unten gelten nur für diesen Score: für Stress und die anderen Scores siehe den Abschnitt Ergebnisse lesen."
           },
           {
             "type": "ul",
             "items": [
-              "**60-85**: optimaler Bereich.",
-              "**40-60**: normale Werte, achten Sie auf Ihre Gewohnheiten.",
-              "**Unter 40**: möglicher Stress, schlechter Schlaf, Krankheit.",
-              "**Unter 25**: mögliches Übertraining oder Erschöpfung."
+              "**85-100**: optimal.",
+              "**65-85**: gut.",
+              "**45-65**: mäßig, achten Sie auf Ihre Gewohnheiten.",
+              "**25-45**: schwach, möglicher Stress, schlechter Schlaf, Unwohlsein.",
+              "**0-25**: unzureichend, mögliches Übertraining oder Erschöpfung."
             ]
           },
           {
@@ -3266,32 +3337,38 @@
           },
           {
             "type": "h3",
-            "text": "Die 4 Stoffwechselzonen"
+            "text": "Die 5 Stoffwechselzonen (DFA Alpha1)"
           },
           {
             "type": "zoneCards",
             "items": [
               {
+                "emoji": "🔵",
+                "title": "Blau: Erholung (Alpha1 > 1,0)",
+                "desc": "Aktive Erholung, sehr niedrige Intensität.",
+                "color": "blue"
+              },
+              {
                 "emoji": "🟢",
-                "title": "Grün: aerob",
+                "title": "Grün: aerob (0,75-1,0)",
                 "desc": "Sehr gut durchhaltbar, langer Grundlagenbereich.",
                 "color": "green"
               },
               {
                 "emoji": "🟡",
-                "title": "Gelb: Übergang",
+                "title": "Gelb: Übergang (0,50-0,75)",
                 "desc": "Mittel, zwischen aerober und anaerober Schwelle.",
                 "color": "yellow"
               },
               {
                 "emoji": "🟠",
-                "title": "Orange: anaerob",
+                "title": "Orange: anaerob (0,30-0,50)",
                 "desc": "Hoch, nur für begrenzte Zeit durchhaltbar.",
                 "color": "orange"
               },
               {
                 "emoji": "🔴",
-                "title": "Rot: maximal",
+                "title": "Rot: maximal (< 0,30)",
                 "desc": "Extrem, wenige Minuten.",
                 "color": "red"
               }
@@ -3952,7 +4029,7 @@
       "comparisonSubtitle": "Liegen vs. Stehen",
       "comparisonTitle": "Vergleich der Phasen",
       "description": "Fasst zusammen, wie sich das autonome Nervensystem an den Wechsel vom Liegen zum Stehen anpasst.",
-      "note": "Die Veränderung vergleicht die Phase im Stehen mit der Phase im Liegen, absolut und in Prozent. Beim Aufstehen wird ein Anstieg der Herzfrequenz (10–30 bpm), des LF/HF-Verhältnisses und des Stressindex erwartet, zusammen mit einer Abnahme der vagalen Variabilität (RMSSD 30–50 %, HF, pNN50). Teal: Veränderung in der erwarteten Richtung; Bernstein: entgegengesetzte Richtung; Parameter ohne klare Erwartung bleiben neutral.",
+      "note": "Die Veränderung vergleicht die Phase im Stehen mit der Phase im Liegen, absolut und in Prozent. Beim Aufstehen wird ein Anstieg der Herzfrequenz (10–30 bpm), des LF/HF-Verhältnisses und des Stressindex erwartet, zusammen mit einer Abnahme der vagalen Variabilität (RMSSD 30–70 %, HF, pNN50); ein RMSSD-Abfall über 75 % ist übermäßig. Teal: Veränderung in der erwarteten Richtung; Bernstein: entgegengesetzte Richtung; Parameter ohne klare Erwartung bleiben neutral.",
       "phaseStanding": "Phase im Stehen",
       "phaseSupine": "Phase im Liegen",
       "poincare": "Poincaré-Diagramm",
@@ -4021,6 +4098,7 @@
         "poor": "Schwach"
       },
       "reference": {
+        "indicative": "(Richtwert)",
         "legend": "Indikative Referenzbereiche für einen gesunden Erwachsenen, Aufzeichnung von 5-10 Minuten: grün innerhalb des Bereichs, gelb im Grenzbereich, rot außerhalb, grau ohne Referenz.",
         "legendPersonal": "Grün im Bereich, gelb an der Grenze, rot außerhalb, grau ohne Referenz. Wo angegeben, gilt der Bereich nach Alter und Geschlecht (25.-75. Perzentil der Gruppe); für die übrigen Parameter ist er ein Richtwert für gesunde Erwachsene, Aufzeichnung von 5-10 Minuten.",
         "status": {
@@ -4030,6 +4108,7 @@
           "out": "Außerhalb des Bereichs"
         },
         "title": "Indikativer Referenzbereich: {from}–{to} (gesunder Erwachsener, Aufzeichnung von 5-10 Minuten)",
+        "titleIndicative": "Richtbereich {from}–{to}: keine Ampel, das LF/HF-Verhältnis wird zusammen mit den anderen Parametern gelesen",
         "titlePersonal": "Bereich nach Alter und Geschlecht (25.-75. Perzentil der Gruppe): {from}–{to}"
       },
       "signalQuality": "Signalqualität",
@@ -4866,6 +4945,7 @@
       "noNotes": "Zu dieser Messung sind keine Anmerkungen hinterlegt.",
       "notesTitle": "Anmerkungen zur Messung",
       "params": {
+        "approximateEntropy": "Approximative Entropie (ApEn)",
         "baevsky": "Baevsky-Stressindex",
         "cv": "VK der RR-Intervalle",
         "dfaAlpha1": "DFA α1",
@@ -5280,16 +5360,7 @@
       "stress": "Stress",
       "stressLong": "Stressindex"
     },
-    "outOf100": "{n} von 100",
-    "range": {
-      "belowAverage": "Unter dem Durchschnitt",
-      "excellent": "Ausgezeichnet",
-      "good": "Gut",
-      "low": "Niedrig",
-      "normal": "Im Normbereich",
-      "outOfRange": "Außerhalb des Normbereichs",
-      "reference": "Referenzbereich"
-    }
+    "outOf100": "{n} von 100"
   },
   "settings": {
     "account": {
@@ -5773,7 +5844,7 @@
         },
         "zones": {
           "feature": "Metabolische Zonen live",
-          "us": "4 Zonen"
+          "us": "5 Zonen"
         }
       },
       "titleEm": "In einer Tabelle.",
@@ -5822,8 +5893,12 @@
       "titleLead": "Metabolische Zonen.",
       "zones": [
         {
+          "title": "Erholung",
+          "body": "Aktive Erholung, sehr niedrige Intensität, Nervensystem im Erholungsmodus."
+        },
+        {
           "title": "Rein aerobe Zone",
-          "body": "Aktive Erholung, langer Grundlagenlauf, Aufbau der aeroben Basis."
+          "body": "Langer Grundlagenlauf, Aufbau der aeroben Basis."
         },
         {
           "title": "Übergang (VT1 überschritten)",
@@ -5866,7 +5941,7 @@
       "items": [
         "HF live mit laufender Grafik",
         "Rollierende RMSSD zur Überwachung der Erholung",
-        "DFA Alpha1 mit den 4 farbigen Zonen",
+        "DFA Alpha1 mit den 5 farbigen Zonen",
         "Tags während der Aktivität (Sprintstart, Tempowechsel, Pause, Ende des Aufwärmens)",
         "TRIMP am Ende der Sitzung automatisch berechnet"
       ],
@@ -5905,7 +5980,7 @@
       "description": "Das Sport-Modul ist bereits im Einsatz. Das finden Sie heute in der App und im Web-Dashboard, und an diesen zwei Dingen arbeiten wir gerade.",
       "eyebrow": "Das Sport-Modul heute",
       "have": [
-        "DFA Alpha1 in Echtzeit mit den 4 Zonen",
+        "DFA Alpha1 in Echtzeit mit den 5 Zonen",
         "TRIMP, ACWR und CTL/ATL/TSB mit automatischen Alerts",
         "Schwellentest VT1/VT2",
         "Team Live für mehrere Sportler",

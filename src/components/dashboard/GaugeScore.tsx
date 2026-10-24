@@ -1,18 +1,19 @@
 'use client'
 
 // Tachimetro semicircolare identico a quello dell'app Flutter:
-//  - Stress  → arco a 5 segmenti colorati fissi (verde→rosso) + ago
+//  - Stress  → arco a 5 segmenti colorati fissi (verde→rosso scuro) + ago
 //              (replica GaugePainter di stress_gauge.dart)
 //  - Altri   → arco grigio di sfondo + riempimento proporzionale al valore
 //              nel colore della zona + ago
 //              (replica _MiniGaugePainter di proprietary_score_card.dart)
-//  Sotto l'arco: numero grande, "/ 100", badge della zona
-//  (soglie da proprietary_scores.dart; etichette dal namespace `scores.bands`).
+//  Sotto l'arco: numero grande, "/ 100", badge della zona.
+//  Segmenti, tacche, colori ed etichette vengono tutti da `gauge-zones`
+//  (confini dell'Appendice A: Stress 30/50/70/85, gli altri 25/45/65/85).
 
 import { useLocale, useTranslations } from 'next-intl'
 import { num } from '@/lib/format'
 
-import { zoneFor, type GaugeColorScheme } from '@/lib/gauge-zones'
+import { ZONES, zoneBounds, zoneFor, scoreDeltaTone, type GaugeColorScheme } from '@/lib/gauge-zones'
 export type { GaugeColorScheme } from '@/lib/gauge-zones'
 
 type Props = {
@@ -31,14 +32,18 @@ export const GAUGE_PRINT_WIDTH = 150
 // Palette allineata ad AppColors dell'app
 const TRACK = '#E2E6EA' // AppColors.borderLight
 
-// Segmenti dell'arco Stress, identici a _kZones di stress_gauge.dart
-const STRESS_ARC_SEGMENTS = [
-  { start: 0, end: 20, color: '#2E746C' }, // Equilibrio (teal dark)
-  { start: 20, end: 40, color: '#2ECC71' }, // Basso
-  { start: 40, end: 60, color: '#F39C12' }, // Medio
-  { start: 60, end: 80, color: '#E67E22' }, // Alto
-  { start: 80, end: 100, color: '#E74C3C' }, // Affaticamento
-]
+// Segmenti dell'arco a colori fissi: uno per fascia di `gauge-zones`
+// (per lo Stress: 0-30 verde, 30-50 giallo, 50-70 arancio, 70-85 rosso,
+// 85-100 rosso scuro). Le tacche bianche cadono sui confini delle fasce.
+function arcSegments(scheme: GaugeColorScheme): Array<{ start: number; end: number; color: string }> {
+  let start = 0
+  return ZONES[scheme].map((z) => {
+    const end = Math.min(100, z.max)
+    const seg = { start, end, color: z.color }
+    start = end
+    return seg
+  })
+}
 
 // Punto sull'arco: 0 → estremo sinistro (180°), 100 → estremo destro (360°)
 // Coordinate arrotondate a tre decimali: seno e coseno di Node (server) e del
@@ -64,12 +69,14 @@ export function GaugeScore({ value, label, colorScheme, delta, print = false }: 
   const zone = zoneFor(colorScheme, v)
   const zoneLabel = t(`bands.${colorScheme}.${zone.labelKey}`)
 
-  // Variazione rispetto alla precedente: colore per segno (su, giù), neutro
-  // rispetto alla direzione "buona" dello score, che dipende dalla scala.
+  // Variazione rispetto alla precedente: colore per verso del "meglio" dello
+  // score (per lo Stress scendere è meglio); sotto SCORE_STABLE_DELTA (10
+  // punti, decisione 9) la variazione è "stabile" e resta neutra.
   const hasDelta = hasValue && delta != null && Number.isFinite(delta)
   const d = hasDelta ? Math.round(delta as number) : 0
   const deltaText = d === 0 ? t('deltaUnchanged') : `${d > 0 ? '▲ +' : '▼ '}${num(d, 0, locale)}`
-  const deltaTone = d > 0 ? 'text-emerald-700' : d < 0 ? 'text-red-700' : 'text-anthracite-lighter'
+  const tone = scoreDeltaTone(colorScheme, d)
+  const deltaTone = tone === 'better' ? 'text-emerald-700' : tone === 'worse' ? 'text-red-700' : 'text-anthracite-lighter'
 
   // Geometria (stesse proporzioni dei painter dell'app)
   const W = 200
@@ -97,8 +104,8 @@ export function GaugeScore({ value, label, colorScheme, delta, print = false }: 
       >
         {colorScheme === 'stress' ? (
           <>
-            {/* Arco a segmenti colorati fissi (come GaugePainter) */}
-            {STRESS_ARC_SEGMENTS.map((s) => (
+            {/* Arco a segmenti colorati fissi (come GaugePainter), una fascia per segmento */}
+            {arcSegments(colorScheme).map((s) => (
               <path
                 key={s.start}
                 d={arcPath(cx, cy, r, s.start / 100, s.end / 100)}
@@ -107,9 +114,9 @@ export function GaugeScore({ value, label, colorScheme, delta, print = false }: 
                 fill="none"
               />
             ))}
-            {/* Linee di separazione tra le zone */}
+            {/* Linee di separazione tra le zone, sui confini delle fasce */}
             {hasValue &&
-              [20, 40, 60, 80].map((b) => {
+              zoneBounds(colorScheme).map((b) => {
                 const inner = polar(cx, cy, r - sw / 2 - 1, b / 100)
                 const outer = polar(cx, cy, r + sw / 2 + 1, b / 100)
                 return (

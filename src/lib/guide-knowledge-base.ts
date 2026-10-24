@@ -196,16 +196,22 @@ parasimpatico. Range: 0-25 insufficiente, 25-45 scarso, 45-65
 moderato, 65-85 buono, 85-100 ottimale.
 
 Equilibrio (0-100): bilanciamento tra simpatico e
-parasimpatico. Non è "più alto = meglio", il valore ottimale è
-nella zona centrale. Troppo sbilanciato in entrambe le
-direzioni è problematico.
+parasimpatico. Lo score è alto quando i due rami sono in
+equilibrio e scende quando uno dei due prevale, in qualsiasi
+direzione. Range: 0-25 sbilanciamento forte, 25-45
+sbilanciamento moderato, 45-65 sufficiente, 65-85 buono, 85-100
+ottimale.
 
 Energia (0-100): risorse energetiche complessive del sistema
-nervoso. Basato sulla potenza totale dello spettro HRV.
+nervoso. Basato sulla potenza totale dello spettro HRV. Range:
+0-25 esaurita, 25-45 bassa, 45-65 moderata, 65-85 buona, 85-100
+piena.
 
 Adattamento (0-100): capacità di recupero e adattamento del
 sistema nervoso autonomo. Più è alto, più il corpo assorbe bene
 i carichi della giornata e torna rapidamente all'equilibrio.
+Range: 0-25 fragile, 25-45 da migliorare, 45-65 ridotta, 65-85
+buona, 85-100 eccellente.
 
 Stress Index Composito: valore unico 0-100 che sintetizza
 Stress, Recupero, Equilibrio ed Energia. Si vede nel tachimetro
@@ -215,7 +221,10 @@ soprattutto se confronti più sessioni dello stesso cliente.
 I parametri avanzati: sotto gli score trovi i dettagli per
 dominio (Time Domain, Frequency Domain, Non-linear, Geometric).
 Ogni parametro ha un semaforo (verde, giallo, rosso) basato sui
-range normativi per età e sesso del cliente. Non serve
+range di riferimento del manuale Master HRV (adulto sano a
+riposo, misurazione con fascia ECG). Per RMSSD e SDNN, se nel
+profilo del cliente ci sono età e sesso, il range è quello della
+sua fascia (Nunan 2010, Voss 2015). Non serve
 conoscerli tutti per usare l'app, gli score sono sufficienti
 nella pratica quotidiana. I parametri avanzati servono se vuoi
 approfondire un caso specifico o confrontare con la
@@ -248,9 +257,9 @@ Aggiungere un cliente: tappa + nella lista clienti, compila
 l'anagrafica (nome, cognome, data di nascita, sesso, fumatore,
 atleta, livello di attività).
 
-Perché l'anagrafica è importante: età e sesso servono per la
-normalizzazione dei parametri. Senza questi dati i semafori
-verde/giallo/rosso non possono essere calcolati correttamente,
+Perché l'anagrafica è importante: età e sesso servono per gli
+score e per i range di RMSSD e SDNN per fascia di età e sesso.
+Senza questi dati l'app usa i range generici del manuale,
 quindi compilala sempre, anche quando hai fretta.
 
 Storico: ogni misurazione viene salvata e associata al cliente.
@@ -292,8 +301,10 @@ Stress Index, Batteria, Nessuna restrizione.
 
 "I valori sembrano strani":
 Verifica che la fascia fosse ben posizionata e bagnata.
-Controlla l'artifact rate, se è sopra il 5% la misurazione
-potrebbe non essere affidabile. Il cliente si è mosso o ha
+Controlla la percentuale di artefatti: sotto il 5% la
+misurazione è pienamente valida; tra il 5 e il 15% è
+utilizzabile, ma leggi con cautela i parametri non lineari;
+sopra il 15% ripeti la misurazione. Il cliente si è mosso o ha
 parlato durante la misurazione? Il movimento crea artefatti.
 
 "Non riesco a vedere i dati sulla dashboard web":
@@ -364,11 +375,14 @@ I risultati (i 5 score):
 - Energia: risorse autonomiche disponibili.
 - Adattamento: capacità di recupero e adattamento.
 
-Come interpretare:
-- 60-85: zona ottimale.
-- 40-60: valori normali, attenzione alle abitudini.
-- Sotto 40: possibile stress, sonno scarso, malattia.
-- Sotto 25: possibile sovrallenamento o esaurimento.
+Come interpretare lo score Recupero (al mattino è lo score più
+utile da seguire; queste fasce valgono solo per il Recupero, per
+lo Stress e gli altri score vedi la sezione 5):
+- 85-100: ottimale.
+- 65-85: buono.
+- 45-65: moderato, attenzione alle abitudini.
+- 25-45: scarso, possibile stress, sonno insufficiente, malessere.
+- 0-25: insufficiente, possibile sovrallenamento o esaurimento.
 Un singolo valore basso non è motivo di allarme. Quello che
 conta è il trend.
 
@@ -428,12 +442,15 @@ Come si usa passo per passo:
 - Dopo: termina, compila questionario RPE 1-10, energia, dolori,
   umore.
 
-Le 4 zone metaboliche:
-- Verde Aerobica: molto sostenibile, fondo lungo.
-- Gialla Transizione: media, tra soglia aerobica e anaerobica.
-- Arancione Anaerobica: alta, sostenibile solo per tempi
-  limitati.
-- Rossa Massimale: estrema, pochi minuti.
+Le 5 zone metaboliche (DFA alpha1):
+- Blu Recupero (alpha1 sopra 1,0): recupero attivo, intensità
+  molto bassa.
+- Verde Aerobica (0,75-1,0): molto sostenibile, fondo lungo.
+- Gialla Transizione (0,50-0,75): media, tra soglia aerobica e
+  anaerobica.
+- Arancione Anaerobica (0,30-0,50): alta, sostenibile solo per
+  tempi limitati.
+- Rossa Massimale (sotto 0,30): estrema, pochi minuti.
 Vedere in tempo reale in quale zona stai lavorando ti permette
 di dosare l'allenamento.
 

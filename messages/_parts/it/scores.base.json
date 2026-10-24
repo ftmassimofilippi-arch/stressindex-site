@@ -45,15 +45,6 @@
       "excellent": "Eccellente"
     }
   },
-  "range": {
-    "low": "Basso",
-    "belowAverage": "Sotto media",
-    "normal": "Nella norma",
-    "good": "Buono",
-    "excellent": "Eccellente",
-    "outOfRange": "Fuori norma",
-    "reference": "Range di riferimento"
-  },
   "outOf100": "{n} su 100",
   "disclaimer": "Indicatori di benessere generale. Non sostituiscono il parere di un medico."
 }

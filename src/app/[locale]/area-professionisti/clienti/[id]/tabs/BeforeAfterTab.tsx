@@ -8,6 +8,7 @@ import { DateRangePicker, defaultRange, type DateRange } from '@/components/dash
 import { formatMeasuredDate, formatMeasuredTime, intervalloGiorniIta, measuredDayKey, measuredInstant, num } from '@/lib/format'
 import {
   deltaVerdict,
+  deltaVerdictPct,
   pairBeforeAfter,
   pairMorningCoherence,
   SCORE_DELTA_ROWS,
@@ -52,10 +53,12 @@ function toRows(measurements: MeasurementAnalytics[], clientId: string, excluded
 }
 
 // Freccia = direzione reale del numero, colore = significato (per lo Stress
-// il calo è verde). Stessa regola del Confronto dell'app.
-function DeltaCell({ a, b, higherIsBetter, digits = 0, unit, stableBelow = 3 }: { a: number | null; b: number | null; higherIsBetter: boolean; digits?: number; unit?: string; stableBelow?: number }) {
+// il calo è verde). Stessa regola del Confronto dell'app. "Stabile" sotto
+// `STABLE_DELTA` (decisione 9): 10 punti sugli score, 10% sui parametri
+// (`pct`).
+function DeltaCell({ a, b, higherIsBetter, digits = 0, unit, pct = false }: { a: number | null; b: number | null; higherIsBetter: boolean; digits?: number; unit?: string; pct?: boolean }) {
   const locale = useLocale()
-  const verdict = deltaVerdict(a, b, higherIsBetter, stableBelow)
+  const verdict = pct ? deltaVerdictPct(a, b, higherIsBetter) : deltaVerdict(a, b, higherIsBetter)
   if (a == null || b == null) return <span className="text-anthracite-lighter">—</span>
   const delta = b - a
   const tone = verdict === 'improved' ? 'text-emerald-700' : verdict === 'declined' ? 'text-red-700' : 'text-anthracite-lighter'
@@ -176,7 +179,7 @@ export function BeforeAfterTab({ client, measurements, professionistaId, exclude
                   <div key={r.key} className="rounded-xl border border-surface-border bg-surface px-3 py-2 min-w-0">
                     <div className="text-[11px] uppercase tracking-wide text-anthracite-lighter truncate">{tScores(`names.${r.nameKey}`)}</div>
                     <div className="text-lg font-serif text-anthracite mt-0.5">
-                      <DeltaCell a={0} b={r.avg} higherIsBetter={r.higherIsBetter} digits={1} stableBelow={2} />
+                      <DeltaCell a={0} b={r.avg} higherIsBetter={r.higherIsBetter} digits={1} />
                     </div>
                     <div className="text-[10px] text-anthracite-lighter">{t('pairsCount', { count: r.n })}</div>
                   </div>
@@ -243,7 +246,8 @@ function StartNowRow({ name, color, score, summary: s, spark }: { name: string; 
     : s.verdict === 'improved' ? tPanel('improved', { pct: pctAbs })
     : s.verdict === 'declined' ? tPanel('declined', { pct: pctAbs })
     : `${s.pct > 0 ? '+' : ''}${num(s.pct, 0, locale)}%`
-  const arrow = s.pct == null ? '' : Math.abs(s.pct) < 0.5 ? '→' : s.pct > 0 ? '↑' : '↓'
+  // Freccia piatta quando il verdetto è stabile (fascia della partenza), altrimenti il verso del numero.
+  const arrow = s.pct == null ? '' : s.verdict === 'stable' || s.pct === 0 ? '→' : s.pct > 0 ? '↑' : '↓'
   const verdict = s.start == null || s.now == null ? t('verdictUnknown')
     : s.provisional ? t('verdictProvisional', { n: s.startProvisional || s.band == null ? s.startN : s.nowN })
     : s.verdict === 'stable' ? t('verdictStable')
@@ -330,10 +334,10 @@ function PairsTable({ rows, client, qs, typeLabel }: { rows: PairRowData[]; clie
                   </LinkCell>
                 ))}
                 <LinkCell href={href} className="text-right">
-                  <DeltaCell a={p.pre.rmssd} b={p.post.rmssd} higherIsBetter digits={1} unit="ms" stableBelow={2} />
+                  <DeltaCell a={p.pre.rmssd} b={p.post.rmssd} higherIsBetter digits={1} unit="ms" pct />
                 </LinkCell>
                 <LinkCell href={href} className="text-right">
-                  <DeltaCell a={p.pre.mean_hr} b={p.post.mean_hr} higherIsBetter={false} unit="bpm" stableBelow={2} />
+                  <DeltaCell a={p.pre.mean_hr} b={p.post.mean_hr} higherIsBetter={false} unit="bpm" pct />
                 </LinkCell>
                 <LinkCell href={href} className="text-right">
                   <span className="text-teal-dark text-sm whitespace-nowrap">{t('compare')}</span>

@@ -2,12 +2,13 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from './supabase-server'
 import { reportDataError } from './data-error'
 import { age } from './format'
-import { normProfileFromClient, rangesFromNormRows, type ClientNorms } from './hrv-norms'
+import { NORM_METRIC_FIELD, normProfileFromClient, rangesFromNormRows, type ClientNorms } from './hrv-norms'
 
 export type { ClientNorms }
 
 // Range di riferimento per età, sesso e attività del cliente, letti da
-// `hrv_norms` (policy `hrv_norms_lettura_loggati`). Solo i range: nessuno
+// `hrv_norms` (policy `hrv_norms_lettura_loggati`). Solo i range, e solo per
+// le metriche di NORM_METRIC_FIELD (RMSSD e SDNN dal 23/10/2026): nessuno
 // score si ricalcola qui. Se la tabella non risponde l'errore va a Sentry e
 // la pagina resta sui range generici: mai una pagina rotta per un di più.
 
@@ -29,6 +30,7 @@ export async function loadClientNorms(client: ClienteNorme, supabase?: SupabaseC
       .eq('sex', p.profile.sex)
       .eq('age_group', p.profile.ageGroup)
       .eq('fitness', p.profile.fitness)
+      .in('metric', Object.keys(NORM_METRIC_FIELD))
     if (error) {
       reportDataError('loadClientNorms', error)
       return { kind: 'unavailable' }

@@ -8,7 +8,9 @@
     },
     "reference": {
       "titlePersonal": "Range for age and sex (25th-75th percentile of the group): {from}–{to}",
-      "legendPersonal": "Green inside the range, yellow at the edge, red outside, grey without reference. Where shown, the range is for age and sex (25th-75th percentile of the group); for the other parameters it is indicative for a healthy adult, 5-10 minute recording."
+      "legendPersonal": "Green inside the range, yellow at the edge, red outside, grey without reference. Where shown, the range is for age and sex (25th-75th percentile of the group); for the other parameters it is indicative for a healthy adult, 5-10 minute recording.",
+      "indicative": "(indicative)",
+      "titleIndicative": "Indicative range {from}–{to}: no colour, the LF/HF ratio is read together with the other parameters"
     },
     "norms": {
       "missingBoth": "Generic ranges: add sex and date of birth in the <link>personal details</link> to get ranges for age and sex.",

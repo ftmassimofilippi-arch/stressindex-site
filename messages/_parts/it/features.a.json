@@ -45,8 +45,8 @@
       "nonlinear": "Non-linear",
       "geometric": "Geometric"
     },
-    "calloutLead": "Range normativi automatici.",
-    "calloutBody": "Ogni parametro ha un semaforo colorato basato sui range normativi per età e sesso del cliente (Nunan 2010, Voss 2015). Non devi ricordare i valori di riferimento, l’app lo fa per te."
+    "calloutLead": "Range di riferimento automatici.",
+    "calloutBody": "Ogni parametro ha un semaforo colorato basato sui range di riferimento del manuale Master HRV (adulto sano a riposo, misurazione con fascia ECG). Per RMSSD e SDNN, se nel profilo del cliente ci sono età e sesso, il range è quello della sua fascia (Nunan 2010, Voss 2015). Non devi ricordare i valori di riferimento, l’app lo fa per te."
   },
   "tests": {
     "eyebrow": "Tipi di test",
@@ -82,7 +82,7 @@
     "items": [
       "Header personalizzato con nome, titolo e studio",
       "5 score proprietari con grafico a barre colorato",
-      "25+ parametri HRV con range normativi e semaforo",
+      "25+ parametri HRV con range di riferimento e semaforo",
       "Grafici HRV: Poincaré, ritmogramma RR, spettro PSD",
       "Disclaimer legale e generazione tracciata"
     ],

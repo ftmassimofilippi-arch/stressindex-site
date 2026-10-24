@@ -45,15 +45,6 @@
       "excellent": "Excellent"
     }
   },
-  "range": {
-    "low": "Low",
-    "belowAverage": "Below average",
-    "normal": "In range",
-    "good": "Good",
-    "excellent": "Excellent",
-    "outOfRange": "Out of range",
-    "reference": "Reference range"
-  },
   "outOf100": "{n} out of 100",
   "disclaimer": "General wellness indicators. They do not replace a doctor's advice."
 }
