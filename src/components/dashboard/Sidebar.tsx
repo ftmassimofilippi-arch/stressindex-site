@@ -3,7 +3,7 @@
 import { Link } from '@/i18n/navigation'
 import { usePathname } from '@/i18n/navigation'
 import { useTranslations } from 'next-intl'
-import { Home, Users, BarChart3, Settings, LogOut, Menu, X, Building2, ShieldCheck, Dumbbell, Radio, SunMoon, GraduationCap } from 'lucide-react'
+import { Home, Users, BarChart3, Settings, LogOut, Menu, X, Building2, ShieldCheck, Dumbbell, Radio, SunMoon, Share2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from '@/i18n/navigation'
@@ -71,7 +71,7 @@ const MONITORING_ITEM: NavItem = {
 const TRAINER_SHARE_ITEM: NavItem = {
   href: TRAINER_SHARE_PATH,
   labelKey: 'trainerShare',
-  icon: GraduationCap,
+  icon: Share2,
 }
 
 const SUPERADMIN_ITEM: NavItem = {

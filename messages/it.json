@@ -1852,7 +1852,7 @@
       "atleta": "Atleta",
       "casiDidattici": "Casi didattici",
       "clienti": "Clienti",
-      "condividiFormatore": "Condividi con il formatore",
+      "condividiFormatore": "Condivisione formatore",
       "confronto": "Confronto",
       "impostazioni": "Impostazioni",
       "misurazione": "Misurazione",
@@ -1944,7 +1944,7 @@
       "superadmin": "Super Admin",
       "teamLive": "Team Live",
       "today": "Oggi",
-      "trainerShare": "Master HRV"
+      "trainerShare": "Condivisione formatore"
     },
     "scope": {
       "all": "Tutta la piattaforma",
@@ -2021,7 +2021,7 @@
       "revoke": "Revoca",
       "selectedCount": "{count, plural, =0 {Nessun soggetto selezionato} one {# soggetto selezionato} other {# soggetti selezionati}}",
       "shareButton": "Condividi",
-      "title": "Condividi con il formatore",
+      "title": "Condivisione formatore",
       "toast": {
         "revoked": "Condivisione revocata.",
         "shared": "{count, plural, one {Condivisione attivata} other {# condivisioni attivate}}. Massimo vedrà solo il codice caso."
@@ -4322,7 +4322,7 @@
       "title": "Termini di Servizio | Stress Index"
     },
     "trainerShare": {
-      "title": "Condividi con il formatore"
+      "title": "Condivisione formatore"
     }
   },
   "monitoring": {

@@ -1852,7 +1852,7 @@
       "atleta": "Sportler",
       "casiDidattici": "Lehrfälle",
       "clienti": "Klienten",
-      "condividiFormatore": "Mit dem Dozenten teilen",
+      "condividiFormatore": "Mit Trainer teilen",
       "confronto": "Vergleich",
       "impostazioni": "Einstellungen",
       "misurazione": "Messung",
@@ -1944,7 +1944,7 @@
       "superadmin": "Super Admin",
       "teamLive": "Team Live",
       "today": "Heute",
-      "trainerShare": "Master HRV"
+      "trainerShare": "Mit Trainer teilen"
     },
     "scope": {
       "all": "Gesamte Plattform",
@@ -2021,7 +2021,7 @@
       "revoke": "Widerrufen",
       "selectedCount": "{count, plural, =0 {Nichts ausgewählt} one {# ausgewählt} other {# ausgewählt}}",
       "shareButton": "Teilen",
-      "title": "Mit dem Dozenten teilen",
+      "title": "Mit Trainer teilen",
       "toast": {
         "revoked": "Freigabe widerrufen.",
         "shared": "{count, plural, one {Freigabe aktiviert} other {# Freigaben aktiviert}}. Massimo sieht nur den Fallcode."
@@ -4322,7 +4322,7 @@
       "title": "Nutzungsbedingungen | Stress Index"
     },
     "trainerShare": {
-      "title": "Mit dem Dozenten teilen"
+      "title": "Mit Trainer teilen"
     }
   },
   "monitoring": {

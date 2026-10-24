@@ -1,14 +1,14 @@
 {
   "nav": {
-    "trainerShare": "Master HRV"
+    "trainerShare": "Share with trainer"
   },
   "breadcrumb": {
-    "condividiFormatore": "Share with the trainer",
+    "condividiFormatore": "Share with trainer",
     "casiDidattici": "Teaching cases"
   },
   "trainerShare": {
     "badge": "Master HRV",
-    "title": "Share with the trainer",
+    "title": "Share with trainer",
     "consentText": "Choose which measurements to share with Massimo Filippi, trainer of the Master HRV, to be used as case studies during the course. Your clients will not be identifiable: Massimo will only see initials, year of birth, sex and the measurement data. He will not see full names, contact details, notes or health information. Sharing expires automatically after 90 days and you can revoke it at any time from this page. By sharing a client's data you confirm that you have informed them and have their consent to this educational use.",
     "chooseTitle": "What to share",
     "myMeasurements": "My measurements",

@@ -1,14 +1,14 @@
 {
   "nav": {
-    "trainerShare": "Master HRV"
+    "trainerShare": "Condivisione formatore"
   },
   "breadcrumb": {
-    "condividiFormatore": "Condividi con il formatore",
+    "condividiFormatore": "Condivisione formatore",
     "casiDidattici": "Casi didattici"
   },
   "trainerShare": {
     "badge": "Master HRV",
-    "title": "Condividi con il formatore",
+    "title": "Condivisione formatore",
     "consentText": "Scegli quali misurazioni condividere con Massimo Filippi, formatore del Master HRV, per usarle come casi di studio durante il corso. I tuoi clienti non saranno identificabili: Massimo vedrà solo le iniziali, l'anno di nascita, il sesso e i dati delle misurazioni. Non vedrà nomi completi, contatti, note o informazioni sulla salute. La condivisione scade automaticamente dopo 90 giorni e puoi revocarla in qualsiasi momento da questa pagina. Condividendo i dati di un cliente confermi di averlo informato e di avere il suo consenso a questo uso didattico.",
     "chooseTitle": "Che cosa condividere",
     "myMeasurements": "Le mie misurazioni",

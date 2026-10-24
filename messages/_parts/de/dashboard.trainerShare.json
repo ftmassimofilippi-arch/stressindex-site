@@ -1,14 +1,14 @@
 {
   "nav": {
-    "trainerShare": "Master HRV"
+    "trainerShare": "Mit Trainer teilen"
   },
   "breadcrumb": {
-    "condividiFormatore": "Mit dem Dozenten teilen",
+    "condividiFormatore": "Mit Trainer teilen",
     "casiDidattici": "Lehrfälle"
   },
   "trainerShare": {
     "badge": "Master HRV",
-    "title": "Mit dem Dozenten teilen",
+    "title": "Mit Trainer teilen",
     "consentText": "Wählen Sie, welche Messungen Sie mit Massimo Filippi, Dozent des Master HRV, teilen möchten, damit sie im Kurs als Fallbeispiele dienen. Ihre Klienten sind nicht identifizierbar: Massimo sieht nur Initialen, Geburtsjahr, Geschlecht und die Messdaten. Er sieht keine vollständigen Namen, Kontaktdaten, Notizen oder Gesundheitsinformationen. Die Freigabe läuft nach 90 Tagen automatisch ab und kann jederzeit auf dieser Seite widerrufen werden. Mit der Freigabe der Daten eines Klienten bestätigen Sie, dass Sie ihn informiert haben und seine Einwilligung zu dieser Nutzung zu Lehrzwecken vorliegt.",
     "chooseTitle": "Was geteilt wird",
     "myMeasurements": "Meine Messungen",
